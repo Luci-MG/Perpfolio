@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Dashboard</title>
+<style>
+  :root {
+    --bg: #f9f9f8;
+    --surface: #ffffff;
+    --surface2: #f1f0eb;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --text2: #666660;
+    --text3: #999992;
+    --green: #27500a; --green-bg: #eaf3de;
+    --red: #791f1f;   --red-bg: #fcebeb;
+    --blue: #0c447c;  --blue-bg: #e6f1fb;
+    --purple: #3c3489; --purple-bg: #eeedfe;
+    --amber: #633806; --amber-bg: #faeeda;
+    --success: #1d9e75;
+    --danger: #e24b4a;
+    --warning: #ba7517;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --hl: #7f77dd;
+    --bn: #ef9f27;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --surface: #252523; --surface2: #2e2e2b;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --text: #f0ede8; --text2: #a0a099; --text3: #666660;
+      --green: #c0dd97; --green-bg: #27500a;
+      --red: #f09595; --red-bg: #501313;
+      --blue: #85b7eb; --blue-bg: #042c53;
+      --purple: #afa9ec; --purple-bg: #26215c;
+      --amber: #fac775; --amber-bg: #412402;
+      --success: #5dcaa5; --danger: #f09595; --warning: #fac775;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; }
+  .app { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .topbar h1 { font-size: 20px; font-weight: 500; }
+  .topbar .meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .btn { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 14px; font-size: 12px; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background .15s; }
+  .btn:hover { background: var(--surface2); }
+  .btn svg { width: 14px; height: 14px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; margin-right: 4px; }
+  .status-dot.error { background: var(--danger); }
+  .status-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .metric { background: var(--surface2); border-radius: var(--radius); padding: 14px; }
+  .metric .label { font-size: 11px; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+  .metric .val { font-size: 22px; font-weight: 500; }
+  .metric .sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .metric .breakdown { margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--border); display: flex; flex-direction: column; gap: 3px; }
+  .metric .b-row { display: flex; align-items: center; gap: 5px; font-size: 11px; }
+  .metric .b-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .metric .b-label { color: var(--text3); }
+  .metric .b-val { margin-left: auto; font-weight: 500; }
+  .up { color: var(--success); } .dn { color: var(--danger); } .nu { color: var(--text3); }
+
+  .section-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin: 0 0 10px; }
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px; }
+  .exch-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .exch-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .exch-name { font-size: 14px; font-weight: 500; }
+  .exch-stats { font-size: 11px; color: var(--text2); margin-left: auto; display: flex; gap: 14px; }
+
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 700px; }
+  th { text-align: left; color: var(--text3); font-weight: 500; padding: 0 8px 8px 0; border-bottom: 0.5px solid var(--border); white-space: nowrap; }
+  td { padding: 9px 8px 9px 0; border-bottom: 0.5px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .pair { font-weight: 500; } .pair-sub { font-size: 10px; color: var(--text3); }
+  .badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+  .b-long  { background: var(--green-bg);  color: var(--green); }
+  .b-short { background: var(--red-bg);    color: var(--red); }
+  .b-hedged{ background: var(--purple-bg); color: var(--purple); }
+  .b-naked { background: var(--blue-bg);   color: var(--blue); }
+  .b-warn  { background: var(--amber-bg);  color: var(--amber); }
+  .b-active{ background: var(--purple-bg); color: var(--purple); }
+
+  .section-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+
+  .pos-tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+  .pos-tile { background: var(--surface2); border-radius: var(--radius); padding: 13px; }
+  .ptile-head { display: flex; align-items: center; gap: 5px; margin-bottom: 7px; }
+  .ptile-pair { font-weight: 500; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ptile-mark { font-size: 20px; font-weight: 500; line-height: 1.1; }
+  .ptile-mark-sub { font-size: 10px; color: var(--text3); margin-bottom: 9px; margin-top: 1px; }
+  .ptile-rows { display: flex; flex-direction: column; }
+  .ptile-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; padding: 3px 0; border-bottom: 0.5px solid var(--border); }
+  .ptile-row:last-child { border-bottom: none; }
+  .ptile-label { color: var(--text2); }
+
+  .risk-note { font-size: 11px; color: var(--text2); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+  .widget-section { margin-top: 8px; }
+  .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .mrow { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 5px 0; border-bottom: 0.5px solid var(--border); }
+  .mrow:last-child { border-bottom: none; }
+  .mrow .ml { color: var(--text2); }
+  .mrow .mr { font-weight: 500; }
+  .mbar-wrap { height: 5px; background: var(--surface2); border-radius: 3px; margin: 10px 0 3px; overflow: hidden; }
+  .mbar { height: 100%; border-radius: 3px; transition: width .3s; }
+  .mbar-label { font-size: 10px; color: var(--text3); margin-bottom: 12px; }
+
+
+  .error-banner { background: var(--red-bg); color: var(--red); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; font-size: 13px; display: none; }
+  .loader { text-align: center; padding: 60px; color: var(--text3); font-size: 13px; }
+  .spin { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--text2); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .refresh-ico { animation: none; }
+  .refreshing .refresh-ico { animation: spin .7s linear infinite; }
+
+  /* 3-way view tabs */
+  .view-tabs { display: flex; background: var(--surface); border: 0.5px solid var(--border2); border-radius: 6px; overflow: hidden; }
+  .view-tab { padding: 5px 13px; font-size: 11px; color: var(--text2); cursor: pointer; border: none; background: none; transition: background .15s, color .15s; white-space: nowrap; font-family: inherit; }
+  .view-tab:not(:last-child) { border-right: 0.5px solid var(--border2); }
+  .view-tab.active { background: var(--surface2); color: var(--text); font-weight: 500; }
+  .view-tab:hover:not(.active) { background: var(--surface2); }
+
+  /* Donut charts */
+  .donut { width: 80px; height: 80px; border-radius: 50%; position: relative; flex-shrink: 0; }
+  .donut-hole { position: absolute; inset: 12px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .donut-pct { font-size: 13px; font-weight: 600; line-height: 1; }
+  .donut-sub { font-size: 9px; color: var(--text3); }
+  .donut-wrap { display: flex; align-items: center; gap: 16px; margin: 10px 0 14px; }
+  .donut-legend { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  .donut-leg-row { display: flex; justify-content: space-between; font-size: 11px; }
+  .donut-leg-label { color: var(--text2); }
+
+  /* Funding rate viz */
+  .fviz-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .fviz-exch { font-size: 9px; font-weight: 600; width: 16px; flex-shrink: 0; text-align: center; }
+  .fviz-label { font-size: 11px; color: var(--text2); width: 85px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fviz-track { flex: 1; height: 16px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .fviz-fill { height: 100%; border-radius: 4px; min-width: 2px; }
+  .fviz-val { font-size: 10px; font-weight: 500; width: 90px; flex-shrink: 0; text-align: right; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div>
+      <h1>Portfolio dashboard</h1>
+      <div class="meta">
+        <span class="status-dot loading" id="statusDot"></span>
+        <span id="statusText">Connecting…</span>
+      </div>
+    </div>
+    <button class="btn" id="refreshBtn" onclick="fetchData()">
+      <svg class="refresh-ico" id="refreshIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="error-banner" id="errBanner"></div>
+  <div class="loader" id="loader"><span class="spin"></span>Loading dashboard…</div>
+  <div id="content" style="display:none"></div>
+</div>
+
+<script>
+let autoRefresh;
+let lastData = null;
+let posView = 'tiles';
+
+function fmt(n, decimals=2) {
+  const num = parseFloat(n);
+  if (isNaN(num)) return '—';
+  return num.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function fmtUsd(n) { return '$' + fmt(n); }
+function fmtPnl(n) {
+  const num = parseFloat(n);
+  if (isNaN(num)) return '—';
+  const cls = num >= 0 ? 'up' : 'dn';
+  const sign = num >= 0 ? '+' : '';
+  return `<span class="${cls}">${sign}$${fmt(Math.abs(num))}</span>`;
+}
+function badge(text, cls) { return `<span class="badge ${cls}">${text}</span>`; }
+function sideBadge(side) { return badge(side, side === 'Long' || side === 'Buy' ? 'b-long' : 'b-short'); }
+function liqDist(p) {
+  return (p.mark > 0 && p.liqPrice > 0) ? Math.abs(p.mark - p.liqPrice) / p.mark * 100 : 999;
+}
+
+function setView(v) {
+  posView = v;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
+  if (lastData) render(lastData);
+}
+
+function renderPositions(positions) {
+  if (!positions.length) return '<p style="font-size:12px;color:var(--text3);padding:8px 0">No open positions</p>';
+  if (posView === 'tiles') return renderPositionTiles(positions);
+  return `<div class="tbl-wrap"><table>
+    <tr>
+      <th>Pair</th><th>Side</th><th>Lev.</th><th>Size</th>
+      <th>Entry</th><th>Current</th><th>Liq. price</th><th>uPnL</th><th>Funding/8h</th><th>Daily cost</th>
+    </tr>
+    ${positions.map(p => {
+      const dist = liqDist(p);
+      const liqStyle = dist < 10 ? 'color:var(--danger);font-weight:600' : dist < 30 ? 'color:var(--warning)' : '';
+      const costDay = (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
+      return `<tr>
+        <td><span class="pair">${p.pair}</span><div class="pair-sub">${p.type}</div></td>
+        <td>${sideBadge(p.side)}</td>
+        <td>${p.leverage}</td>
+        <td>${p.size}<div class="pair-sub">${fmtUsd(p.sizeUsd)}</div></td>
+        <td>${fmtUsd(p.entry)}</td>
+        <td>${fmtUsd(p.mark)}</td>
+        <td style="${liqStyle}">${fmtUsd(p.liqPrice)}<div class="pair-sub">${dist < 999 ? fmt(dist,1)+'% away' : '—'}</div></td>
+        <td>${fmtPnl(p.upnl)}</td>
+        <td>${p.funding8h}</td>
+        <td>${fmtPnl(costDay)}</td>
+      </tr>`;
+    }).join('')}
+  </table></div>`;
+}
+
+function renderPositionTiles(positions) {
+  return `<div class="pos-tile-grid">
+    ${positions.map(p => {
+      const dist = liqDist(p);
+      const distCls = dist < 10 ? 'danger' : dist < 30 ? 'warning' : 'success';
+      const barWidth = dist < 999 ? Math.max(0, Math.min(100, 100 - dist)) : 0;
+      const barColor = dist < 10 ? 'var(--danger)' : dist < 30 ? 'var(--warning)' : 'var(--success)';
+      const costDay = (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
+      return `<div class="pos-tile">
+        <div class="ptile-head">
+          <span class="ptile-pair">${p.pair}</span>
+          ${sideBadge(p.side)}
+          <span style="font-size:10px;color:var(--text3)">${p.leverage}</span>
+        </div>
+        <div class="ptile-mark">${fmtUsd(p.mark)}</div>
+        <div class="ptile-mark-sub">current price</div>
+        <div style="height:5px;background:var(--border);border-radius:3px;margin:8px 0 3px;overflow:hidden">
+          <div style="height:100%;border-radius:3px;width:${barWidth}%;background:${barColor};transition:width .4s"></div>
+        </div>
+        <div style="font-size:10px;color:var(--${distCls});margin-bottom:7px">${dist < 999 ? fmt(dist,1)+'% to liquidation' : 'No liquidation price'}</div>
+        <div class="ptile-rows">
+          <div class="ptile-row"><span class="ptile-label">Size</span><span>${p.size} <span style="color:var(--text3)">(${fmtUsd(p.sizeUsd)})</span></span></div>
+          <div class="ptile-row"><span class="ptile-label">Entry</span><span>${fmtUsd(p.entry)}</span></div>
+          <div class="ptile-row"><span class="ptile-label">Liq. price</span><span style="color:var(--${distCls})">${fmtUsd(p.liqPrice)}</span></div>
+          <div class="ptile-row"><span class="ptile-label">uPnL</span><span>${fmtPnl(p.upnl)}</span></div>
+          <div class="ptile-row"><span class="ptile-label">Funding/8h</span><span>${p.funding8h}</span></div>
+          <div class="ptile-row"><span class="ptile-label">Daily cost</span><span>${fmtPnl(costDay)}</span></div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderOrdersFor(orders) {
+  if (!orders.length) return '<p style="font-size:12px;color:var(--text3);padding:8px 0">No open orders</p>';
+  return `<div class="tbl-wrap"><table>
+    <tr>
+      <th>Pair</th><th>Side</th><th>Type</th><th>Price</th><th>Size</th><th>Reduce Only</th>
+    </tr>
+    ${orders.map(o => `<tr>
+      <td><span class="pair">${o.pair}</span></td>
+      <td>${sideBadge(o.side)}</td>
+      <td style="color:var(--text2)">${o.type}</td>
+      <td>${fmtUsd(o.price)}</td>
+      <td>${o.size}</td>
+      <td>${o.reduceOnly ? badge('Reduce', 'b-warn') : '<span style="color:var(--text3)">—</span>'}</td>
+    </tr>`).join('')}
+  </table></div>`;
+}
+
+
+function renderWidgets(data) {
+  const allPos = [...data.hyperliquid.positions, ...data.binance.positions];
+
+  const hl = data.hyperliquid, bn = data.binance;
+  const hlPct = parseFloat(hl.marginPct), bnPct = parseFloat(bn.marginPct);
+  const hlColor = hlPct > 80 ? 'var(--danger)' : hlPct > 50 ? 'var(--warning)' : 'var(--hl)';
+  const bnColor = bnPct > 80 ? 'var(--danger)' : bnPct > 50 ? 'var(--warning)' : 'var(--bn)';
+
+  const hlDonut = `<div class="donut" style="background:conic-gradient(${hlColor} ${hlPct}%, var(--surface2) ${hlPct}% 100%)">
+    <div class="donut-hole"><span class="donut-pct" style="color:${hlColor}">${hlPct}%</span><span class="donut-sub">used</span></div>
+  </div>`;
+  const bnDonut = `<div class="donut" style="background:conic-gradient(${bnColor} ${bnPct}%, var(--surface2) ${bnPct}% 100%)">
+    <div class="donut-hole"><span class="donut-pct" style="color:${bnColor}">${bnPct}%</span><span class="donut-sub">used</span></div>
+  </div>`;
+
+  const hlCard = `<div class="card">
+    <div class="exch-header" style="margin-bottom:4px">
+      <span class="exch-dot" style="background:var(--hl)"></span>
+      <span class="exch-name">Hyperliquid</span>
+    </div>
+    <div class="donut-wrap">
+      ${hlDonut}
+      <div class="donut-legend">
+        <div class="donut-leg-row"><span class="donut-leg-label">Equity</span><span style="font-weight:500">${fmtUsd(hl.equity)}</span></div>
+        <div class="donut-leg-row"><span class="donut-leg-label">Margin used</span><span style="font-weight:500">${fmtUsd(hl.marginUsed)}</span></div>
+        <div class="donut-leg-row"><span class="donut-leg-label">Free margin</span><span style="font-weight:500">${fmtUsd(hl.freeMargin)}</span></div>
+      </div>
+    </div>
+  </div>`;
+
+  const bnCard = `<div class="card">
+    <div class="exch-header" style="margin-bottom:4px">
+      <span class="exch-dot" style="background:var(--bn)"></span>
+      <span class="exch-name">Binance</span>
+    </div>
+    <div class="donut-wrap">
+      ${bnDonut}
+      <div class="donut-legend">
+        <div class="donut-leg-row"><span class="donut-leg-label">Equity</span><span style="font-weight:500">${fmtUsd(bn.equity)}</span></div>
+        <div class="donut-leg-row"><span class="donut-leg-label">Margin used</span><span style="font-weight:500">${fmtUsd(bn.marginUsed)}</span></div>
+        <div class="donut-leg-row"><span class="donut-leg-label">Available</span><span style="font-weight:500">${fmtUsd(bn.freeMargin)}</span></div>
+        <div class="donut-leg-row"><span class="donut-leg-label">Maint. margin</span><span style="font-weight:500">${fmtUsd(bn.maintMargin)}</span></div>
+      </div>
+    </div>
+  </div>`;
+
+  if (!allPos.length) {
+    return `<p class="section-label">Margin health</p><div class="two-col">${hlCard}${bnCard}</div>`;
+  }
+
+  const enriched = allPos.map(p => {
+    const costDay = (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
+    return { ...p, costDay };
+  }).sort((a, b) => a.costDay - b.costDay);
+
+  const maxAbs = Math.max(...enriched.map(p => Math.abs(p.costDay)), 0.01);
+
+  const fundingRows = enriched.map(p => {
+    const pct = Math.abs(p.costDay) / maxAbs * 100;
+    const color = p.costDay >= 0 ? 'var(--success)' : 'var(--danger)';
+    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
+    const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
+    return `<div class="fviz-row">
+      <span class="fviz-exch" style="color:${exchColor}">${exchLabel}</span>
+      <span class="fviz-label" title="${p.pair}">${p.pair}</span>
+      <div class="fviz-track">
+        <div class="fviz-fill" style="width:${pct}%;background:${color}"></div>
+      </div>
+      <span class="fviz-val" style="color:${p.costDay >= 0 ? 'var(--success)' : 'var(--danger)'}">${p.costDay >= 0 ? '+' : ''}${fmtUsd(p.costDay)}/day</span>
+    </div>`;
+  }).join('');
+
+  return `
+    <p class="section-label">Margin health</p>
+    <div class="two-col" style="margin-bottom:24px">${hlCard}${bnCard}</div>
+
+    <p class="section-label">Daily funding cost per position</p>
+    <div class="card" style="margin-bottom:24px">
+      <div class="risk-note" style="margin-bottom:10px">
+        <span>Green = receiving · Red = paying · bar width proportional to daily USD cost</span>
+      </div>
+      ${fundingRows}
+    </div>`;
+}
+
+function render(data) {
+  lastData = data;
+  const s = data.summary;
+  const upnlNum = parseFloat(s.totalUpnl);
+  const hlUpnl = data.hyperliquid.positions.reduce((sum, p) => sum + p.upnl, 0);
+  const bnUpnl = data.binance.positions.reduce((sum, p) => sum + p.upnl, 0);
+  const hlOrders = data.hyperliquid.orders || [];
+  const bnOrders = data.binance.orders || [];
+  const totalOrders = hlOrders.length + bnOrders.length;
+
+  const sectionLabel = posView === 'orders' ? 'Open orders' : 'Open positions';
+  const tabsHtml = `<div class="view-tabs">
+    <button class="view-tab${posView==='tiles'?' active':''}" data-view="tiles" onclick="setView('tiles')">Tiles</button>
+    <button class="view-tab${posView==='list'?' active':''}" data-view="list" onclick="setView('list')">List</button>
+    <button class="view-tab${posView==='orders'?' active':''}" data-view="orders" onclick="setView('orders')">Orders${totalOrders ? ` <span style="background:var(--surface2);border-radius:10px;padding:0 5px;font-size:10px">${totalOrders}</span>` : ''}</button>
+  </div>`;
+
+  const hlContent = posView === 'orders' ? renderOrdersFor(hlOrders) : renderPositions(data.hyperliquid.positions);
+  const bnContent = posView === 'orders' ? renderOrdersFor(bnOrders) : renderPositions(data.binance.positions);
+
+  const content = `
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="label">Total equity</div>
+        <div class="val">${fmtUsd(s.totalEquity)}</div>
+        <div class="breakdown">
+          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${fmtUsd(data.hyperliquid.equity)}</span></div>
+          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${fmtUsd(data.binance.equity)}</span></div>
+        </div>
+      </div>
+      <div class="metric">
+        <div class="label">Unrealised PnL</div>
+        <div class="val ${upnlNum>=0?'up':'dn'}">${upnlNum>=0?'+':''}${fmtUsd(Math.abs(upnlNum))}</div>
+        <div class="breakdown">
+          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val ${hlUpnl>=0?'up':'dn'}">${hlUpnl>=0?'+':''}${fmtUsd(Math.abs(hlUpnl))}</span></div>
+          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val ${bnUpnl>=0?'up':'dn'}">${bnUpnl>=0?'+':''}${fmtUsd(Math.abs(bnUpnl))}</span></div>
+        </div>
+      </div>
+      <div class="metric">
+        <div class="label">Open positions</div>
+        <div class="val">${s.positionCount}</div>
+        <div class="breakdown">
+          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${data.hyperliquid.positions.length}</span></div>
+          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${data.binance.positions.length}</span></div>
+        </div>
+      </div>
+      <div class="metric">
+        <div class="label">Open orders</div>
+        <div class="val">${s.orderCount}</div>
+        <div class="breakdown">
+          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${hlOrders.length}</span></div>
+          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${bnOrders.length}</span></div>
+        </div>
+      </div>
+      <div class="metric">
+        <div class="label">Gross exposure</div>
+        <div class="val">${fmtUsd(s.totalExposure)}</div>
+        <div class="breakdown">
+          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${fmtUsd(s.hlExposure)}</span></div>
+          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${fmtUsd(s.bnExposure)}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-bar">
+      <p class="section-label" style="margin:0">${sectionLabel}</p>
+      ${tabsHtml}
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="exch-header">
+        <span class="exch-dot" style="background:var(--hl)"></span>
+        <span class="exch-name">Hyperliquid</span>
+        <span class="exch-stats">
+          <span>Equity: ${fmtUsd(data.hyperliquid.equity)}</span>
+          <span>Margin: ${data.hyperliquid.marginPct}%</span>
+        </span>
+      </div>
+      ${hlContent}
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <div class="exch-header">
+        <span class="exch-dot" style="background:var(--bn)"></span>
+        <span class="exch-name">Binance</span>
+        <span class="exch-stats">
+          <span>Equity: ${fmtUsd(data.binance.equity)}</span>
+          <span>Margin: ${data.binance.marginPct}%</span>
+          <span>Free: ${fmtUsd(data.binance.freeMargin)}</span>
+        </span>
+      </div>
+      ${bnContent}
+    </div>
+
+    ${renderWidgets(data)}
+  `;
+
+  document.getElementById('content').innerHTML = content;
+  document.getElementById('content').style.display = 'block';
+  document.getElementById('loader').style.display = 'none';
+}
+
+async function fetchData() {
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  const ico = document.getElementById('refreshIco');
+  const err = document.getElementById('errBanner');
+
+  dot.className = 'status-dot loading';
+  txt.textContent = 'Fetching…';
+  ico.style.animation = 'spin .7s linear infinite';
+  err.style.display = 'none';
+
+  try {
+    const res  = await fetch('/api/dashboard');
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Unknown error');
+    render(data);
+    const t = new Date(data.lastUpdated).toLocaleTimeString();
+    dot.className = 'status-dot';
+    txt.textContent = `Last updated ${t}`;
+  } catch (e) {
+    dot.className = 'status-dot error';
+    txt.textContent = 'Error fetching data';
+    err.style.display = 'block';
+    err.textContent = `Error: ${e.message}`;
+  } finally {
+    ico.style.animation = 'none';
+  }
+}
+
+fetchData();
+autoRefresh = setInterval(fetchData, 15000);
+</script>
+</body>
+</html>
