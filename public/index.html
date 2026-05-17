@@ -329,60 +329,74 @@ function drawThreadLines() {
 
   svg.innerHTML = '';
 
+  // Collect all threads with their road identity
+  const threads = [];
   Object.values(groups).forEach(tiles => {
     if (tiles.length < 2) return;
     const color = tiles[0].dataset.threadColor;
-
     for (let i = 0; i < tiles.length - 1; i++) {
       for (let j = i + 1; j < tiles.length; j++) {
         const rA = tiles[i].getBoundingClientRect();
         const rB = tiles[j].getBoundingClientRect();
-
-        // Vertical overlap means they share the same grid row
         const sameRow = rA.top < rB.bottom && rB.top < rA.bottom;
-
-        let d, x1, y1, x2, y2;
-
-        if (sameRow) {
-          // Same row: top-center → up → horizontal → down → top-center (U above tiles)
-          x1 = rA.left + rA.width / 2 - gr.left;
-          y1 = rA.top - gr.top;
-          x2 = rB.left + rB.width / 2 - gr.left;
-          y2 = rB.top - gr.top;
-          const upY = Math.min(y1, y2) - 12;
-          d = `M ${x1} ${y1} L ${x1} ${upY} L ${x2} ${upY} L ${x2} ${y2}`;
-        } else {
-          // Different rows: bottom-center → down to gap mid → horizontal → up to top-center (Z through gap)
-          const top = rA.top < rB.top ? rA : rB;
-          const bot = rA.top < rB.top ? rB : rA;
-          x1 = top.left + top.width / 2 - gr.left;
-          y1 = top.bottom - gr.top;
-          x2 = bot.left + bot.width / 2 - gr.left;
-          y2 = bot.top - gr.top;
-          const gapY = (y1 + y2) / 2;
-          d = `M ${x1} ${y1} L ${x1} ${gapY} L ${x2} ${gapY} L ${x2} ${y2}`;
-        }
-
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', d);
-        path.setAttribute('stroke', color);
-        path.setAttribute('stroke-width', '1');
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke-linecap', 'square');
-        path.setAttribute('stroke-linejoin', 'miter');
-        path.setAttribute('stroke-dasharray', '5 3');
-        path.setAttribute('opacity', '0.6');
-        path.style.animation = 'thread-march 1.2s linear infinite';
-        svg.appendChild(path);
-
-        for (const [px, py] of [[x1, y1], [x2, y2]]) {
-          const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          dot.setAttribute('cx', px); dot.setAttribute('cy', py);
-          dot.setAttribute('r', '2.8'); dot.setAttribute('fill', color);
-          dot.setAttribute('opacity', '0.85');
-          svg.appendChild(dot);
-        }
+        const topR = rA.top < rB.top ? rA : rB;
+        const botR = rA.top < rB.top ? rB : rA;
+        // Road key: same-row roads keyed by tile-top y; gap roads keyed by gap-mid y
+        const roadY = sameRow
+          ? Math.round(Math.min(rA.top, rB.top) - gr.top)
+          : Math.round((topR.bottom + botR.top) / 2 - gr.top);
+        threads.push({ rA, rB, color, sameRow, topR, botR, roadY });
       }
+    }
+  });
+
+  // Assign lane index per road so parallel threads don't overlap
+  const byRoad = {};
+  threads.forEach(t => { (byRoad[t.roadY] = byRoad[t.roadY] || []).push(t); });
+  Object.values(byRoad).forEach(lane => lane.forEach((t, i) => { t.lane = i; t.laneCount = lane.length; }));
+
+  const LANE_GAP = 3;
+  threads.forEach(({ rA, rB, color, sameRow, topR, botR, lane, laneCount }) => {
+    let d, x1, y1, x2, y2;
+
+    if (sameRow) {
+      // Top-center → right along tile top to side edge → dip into gap → cross → back up → left along tile top to top-center
+      const leftR  = rA.left < rB.left ? rA : rB;
+      const rightR = rA.left < rB.left ? rB : rA;
+      x1 = leftR.left  + leftR.width  / 2 - gr.left;  // top-center of left tile
+      y1 = leftR.top   - gr.top;
+      x2 = rightR.left + rightR.width / 2 - gr.left;  // top-center of right tile
+      y2 = rightR.top  - gr.top;
+      const ry = y1 - 5 - lane * LANE_GAP;
+      d = `M ${x1} ${y1} L ${x1} ${ry} L ${x2} ${ry} L ${x2} ${y2}`;
+    } else {
+      // Road is the row gap; lanes spread symmetrically around gap centre
+      x1 = topR.left + topR.width / 2 - gr.left;
+      y1 = topR.bottom - gr.top;
+      x2 = botR.left + botR.width / 2 - gr.left;
+      y2 = botR.top - gr.top;
+      const laneY = (y1 + y2) / 2 + (lane - (laneCount - 1) / 2) * LANE_GAP;
+      d = `M ${x1} ${y1} L ${x1} ${laneY} L ${x2} ${laneY} L ${x2} ${y2}`;
+    }
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '1');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-linecap', 'square');
+    path.setAttribute('stroke-linejoin', 'miter');
+    path.setAttribute('stroke-dasharray', '5 3');
+    path.setAttribute('opacity', '0.6');
+    path.style.animation = 'thread-march 1.2s linear infinite';
+    svg.appendChild(path);
+
+    for (const [px, py] of [[x1, y1], [x2, y2]]) {
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+      dot.setAttribute('r', '2.8'); dot.setAttribute('fill', color);
+      dot.setAttribute('opacity', '0.85');
+      svg.appendChild(dot);
     }
   });
 }
