@@ -90,7 +90,9 @@
   .section-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 
   .pos-tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
-  .pos-tile { background: var(--surface2); border-radius: var(--radius); padding: 13px; }
+  .pos-tile { background: var(--surface2); border-radius: var(--radius); padding: 13px; cursor: grab; user-select: none; transition: opacity .15s, transform .15s; }
+  .pos-tile.dragging { opacity: 0.35; cursor: grabbing; }
+  .pos-tile.drag-over { outline: 1.5px dashed var(--text2) !important; outline-offset: 2px; }
   .ptile-head { display: flex; align-items: center; gap: 5px; margin-bottom: 7px; }
   .ptile-pair { font-weight: 500; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ptile-mark { font-size: 20px; font-weight: 500; line-height: 1.1; }
@@ -177,6 +179,9 @@ let autoRefresh;
 let lastData = null;
 let posView = 'tiles';
 let exchFilter = new Set(['hyperliquid', 'binance']);
+let tileOrder = [];
+
+function posId(p) { return `${p.exchange}:${p.pair}:${p.side}`; }
 
 function fmt(n, decimals=2) {
   const num = parseFloat(n);
@@ -249,8 +254,16 @@ function renderPositions(positions) {
 }
 
 function renderPositionTiles(positions) {
+  // Preserve user-defined drag order across re-renders
+  const posMap = {};
+  positions.forEach(p => { posMap[posId(p)] = p; });
+  const orderedIds = tileOrder.filter(id => posMap[id]);
+  const newIds = positions.filter(p => !orderedIds.includes(posId(p))).map(posId);
+  tileOrder = [...orderedIds, ...newIds];
+  const orderedPositions = tileOrder.map(id => posMap[id]).filter(Boolean);
+
   const pairGroups = {};
-  positions.forEach(p => {
+  orderedPositions.forEach(p => {
     const key = normalizePairKey(p.pair);
     if (!pairGroups[key]) pairGroups[key] = [];
     pairGroups[key].push(p);
@@ -274,9 +287,9 @@ function renderPositionTiles(positions) {
     });
   }
 
-  const compact = positions.length > 10;
+  const compact = orderedPositions.length > 10;
 
-  const tiles = positions.map(p => {
+  const tiles = orderedPositions.map(p => {
     const key = normalizePairKey(p.pair);
     const tc = threadColorMap[key];
     const dist = liqDist(p);
@@ -297,7 +310,7 @@ function renderPositionTiles(positions) {
       ? `<span title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.55;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`
       : '';
 
-    return `<div class="pos-tile"${threadAttrs} style="${outlineStyle}">
+    return `<div class="pos-tile" draggable="true" data-pos-id="${posId(p)}"${threadAttrs} style="${outlineStyle}">
       <div class="ptile-head">
         <span class="ptile-pair">${p.pair}</span>
         ${threadDot}
@@ -326,12 +339,113 @@ function renderPositionTiles(positions) {
   return `<div class="pos-tile-grid-wrap"><div class="pos-tile-grid" id="ptile-grid">${tiles}</div><svg id="thread-svg" aria-hidden="true"></svg></div>`;
 }
 
+function initTileDrag() {
+  const grid = document.getElementById('ptile-grid');
+  if (!grid) return;
+  let dragSrc = null;
+
+  grid.querySelectorAll('.pos-tile').forEach(tile => {
+    tile.addEventListener('dragstart', e => {
+      dragSrc = tile;
+      tile.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', tile.dataset.posId);
+    });
+
+    tile.addEventListener('dragend', () => {
+      tile.classList.remove('dragging');
+      grid.querySelectorAll('.pos-tile').forEach(t => t.classList.remove('drag-over'));
+      dragSrc = null;
+    });
+
+    tile.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (tile !== dragSrc) {
+        grid.querySelectorAll('.pos-tile').forEach(t => t.classList.remove('drag-over'));
+        tile.classList.add('drag-over');
+      }
+    });
+
+    tile.addEventListener('dragleave', e => {
+      if (!tile.contains(e.relatedTarget)) tile.classList.remove('drag-over');
+    });
+
+    tile.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragSrc || dragSrc === tile) return;
+      const allTiles = [...grid.querySelectorAll('.pos-tile')];
+      const srcIdx = allTiles.indexOf(dragSrc);
+      const tgtIdx = allTiles.indexOf(tile);
+      if (srcIdx < tgtIdx) grid.insertBefore(dragSrc, tile.nextSibling);
+      else grid.insertBefore(dragSrc, tile);
+      tileOrder = [...grid.querySelectorAll('.pos-tile')].map(t => t.dataset.posId);
+      tile.classList.remove('drag-over');
+      requestAnimationFrame(drawThreadLines);
+    });
+  });
+}
+
 function drawThreadLines() {
   const svg = document.getElementById('thread-svg');
   const grid = document.getElementById('ptile-grid');
   if (!svg || !grid) return;
 
   const gr = grid.getBoundingClientRect();
+  const gw = gr.right - gr.left;
+
+  // ── Build row buckets (group tiles by same top-coordinate ±4px) ──────────
+  const allTiles = [...grid.querySelectorAll('.pos-tile')];
+  const rowBuckets = [];
+  allTiles.forEach(t => {
+    const r = t.getBoundingClientRect();
+    let b = rowBuckets.find(b => Math.abs(b.top - r.top) < 4);
+    if (!b) { b = { top: r.top, bottom: r.bottom, tiles: [] }; rowBuckets.push(b); }
+    b.bottom = Math.max(b.bottom, r.bottom);
+    b.tiles.push({ el: t, rect: r });
+  });
+  rowBuckets.sort((a, b) => a.top - b.top);
+
+  // Center-y of the gap between rows[i] and rows[i+1]
+  const rowGapY = rowBuckets.map((b, i) =>
+    i < rowBuckets.length - 1 ? (b.bottom + rowBuckets[i + 1].top) / 2 : null
+  );
+
+  function getRowIdx(el) {
+    return rowBuckets.findIndex(b => b.tiles.some(t => t.el === el));
+  }
+
+  // Find an x (relative to grid) that lies in a column gap of every intermediate row.
+  // Falls back to just outside the grid edge if no common gap exists.
+  function findPassX(interRows, preferX) {
+    if (!interRows.length) return preferX;
+    const freeSets = interRows.map(row => {
+      const occ = row.tiles.map(t => [t.rect.left - gr.left, t.rect.right - gr.left])
+        .sort((a, b) => a[0] - b[0]);
+      const free = [];
+      let cur = 0;
+      occ.forEach(([l, r]) => { if (l > cur + 2) free.push([cur, l]); cur = Math.max(cur, r); });
+      if (cur < gw - 2) free.push([cur, gw]);
+      return free;
+    });
+    // Intersect all free sets
+    let common = freeSets[0];
+    for (let i = 1; i < freeSets.length && common.length; i++) {
+      const out = [];
+      common.forEach(([a1, a2]) => freeSets[i].forEach(([b1, b2]) => {
+        const l = Math.max(a1, b1), r = Math.min(a2, b2);
+        if (r > l + 2) out.push([l, r]);
+      }));
+      common = out;
+    }
+    if (!common.length) return preferX < gw / 2 ? -14 : gw + 14;
+    // Midpoint of the interval closest to preferX
+    let best = (common[0][0] + common[0][1]) / 2;
+    common.forEach(([l, r]) => { const m = (l + r) / 2; if (Math.abs(m - preferX) < Math.abs(best - preferX)) best = m; });
+    return best;
+  }
+
+  // ── Gather thread pairs ───────────────────────────────────────────────────
   const groups = {};
   grid.querySelectorAll('[data-thread]').forEach(el => {
     const k = el.dataset.thread;
@@ -341,7 +455,6 @@ function drawThreadLines() {
 
   svg.innerHTML = '';
 
-  // Collect all threads with their road identity
   const threads = [];
   Object.values(groups).forEach(tiles => {
     if (tiles.length < 2) return;
@@ -350,45 +463,63 @@ function drawThreadLines() {
       for (let j = i + 1; j < tiles.length; j++) {
         const rA = tiles[i].getBoundingClientRect();
         const rB = tiles[j].getBoundingClientRect();
-        const sameRow = rA.top < rB.bottom && rB.top < rA.bottom;
-        const topR = rA.top < rB.top ? rA : rB;
-        const botR = rA.top < rB.top ? rB : rA;
-        // Road key: same-row roads keyed by tile-top y; gap roads keyed by gap-mid y
-        const roadY = sameRow
-          ? Math.round(Math.min(rA.top, rB.top) - gr.top)
-          : Math.round((topR.bottom + botR.top) / 2 - gr.top);
-        threads.push({ rA, rB, color, sameRow, topR, botR, roadY });
+        const rowA = getRowIdx(tiles[i]);
+        const rowB = getRowIdx(tiles[j]);
+        const sameRow = Math.abs(rA.top - rB.top) < 4;
+        const topRowIdx = Math.min(rowA, rowB);
+        const botRowIdx = Math.max(rowA, rowB);
+        // Road key for lane assignment
+        const roadKey = sameRow ? `sr-${topRowIdx}` : `gap-${topRowIdx}-${botRowIdx}`;
+        threads.push({ rA, rB, color, sameRow, rowA, rowB, topRowIdx, botRowIdx, roadKey });
       }
     }
   });
 
-  // Assign lane index per road so parallel threads don't overlap
+  // Assign lanes so parallel threads don't overlap
   const byRoad = {};
-  threads.forEach(t => { (byRoad[t.roadY] = byRoad[t.roadY] || []).push(t); });
+  threads.forEach(t => { (byRoad[t.roadKey] = byRoad[t.roadKey] || []).push(t); });
   Object.values(byRoad).forEach(lane => lane.forEach((t, i) => { t.lane = i; t.laneCount = lane.length; }));
 
   const LANE_GAP = 3;
-  threads.forEach(({ rA, rB, color, sameRow, topR, botR, lane, laneCount }) => {
-    let d, x1, y1, x2, y2;
+
+  threads.forEach(({ rA, rB, color, sameRow, rowA, rowB, topRowIdx, botRowIdx, lane, laneCount }) => {
+    let d, dotA, dotB;
+    const lo = (lane - (laneCount - 1) / 2) * LANE_GAP;
 
     if (sameRow) {
-      // Top-center → right along tile top to side edge → dip into gap → cross → back up → left along tile top to top-center
-      const leftR  = rA.left < rB.left ? rA : rB;
-      const rightR = rA.left < rB.left ? rB : rA;
-      x1 = leftR.left  + leftR.width  / 2 - gr.left;  // top-center of left tile
-      y1 = leftR.top   - gr.top;
-      x2 = rightR.left + rightR.width / 2 - gr.left;  // top-center of right tile
-      y2 = rightR.top  - gr.top;
-      const ry = y1 - 5 - lane * LANE_GAP;
-      d = `M ${x1} ${y1} L ${x1} ${ry} L ${x2} ${ry} L ${x2} ${y2}`;
+      // Route above both tiles
+      const leftR  = rA.left <= rB.left ? rA : rB;
+      const rightR = rA.left <= rB.left ? rB : rA;
+      const lx1 = leftR.left  + leftR.width  / 2 - gr.left;
+      const ly1 = leftR.top   - gr.top;
+      const lx2 = rightR.left + rightR.width / 2 - gr.left;
+      const ly2 = rightR.top  - gr.top;
+      const ry = ly1 - 5 - lane * LANE_GAP;
+      d = `M ${lx1} ${ly1} L ${lx1} ${ry} L ${lx2} ${ry} L ${lx2} ${ly2}`;
+      dotA = [lx1, ly1]; dotB = [lx2, ly2];
     } else {
-      // Road is the row gap; lanes spread symmetrically around gap centre
-      x1 = topR.left + topR.width / 2 - gr.left;
-      y1 = topR.bottom - gr.top;
-      x2 = botR.left + botR.width / 2 - gr.left;
-      y2 = botR.top - gr.top;
-      const laneY = (y1 + y2) / 2 + (lane - (laneCount - 1) / 2) * LANE_GAP;
-      d = `M ${x1} ${y1} L ${x1} ${laneY} L ${x2} ${laneY} L ${x2} ${y2}`;
+      // Top/bottom tile geometry
+      const topIsA = rowA <= rowB;
+      const tR = topIsA ? rA : rB;
+      const bR = topIsA ? rB : rA;
+      const tx = tR.left + tR.width / 2 - gr.left;
+      const ty = tR.bottom - gr.top;
+      const bx = bR.left + bR.width / 2 - gr.left;
+      const by = bR.top  - gr.top;
+      dotA = [tx, ty]; dotB = [bx, by];
+
+      if (botRowIdx === topRowIdx + 1) {
+        // Adjacent rows — single horizontal highway through the row gap
+        const gy = rowGapY[topRowIdx] - gr.top + lo;
+        d = `M ${tx} ${ty} L ${tx} ${gy} L ${bx} ${gy} L ${bx} ${by}`;
+      } else {
+        // Multi-row span — route through column gaps of intermediate rows
+        const interRows = rowBuckets.slice(topRowIdx + 1, botRowIdx);
+        const passX = findPassX(interRows, (tx + bx) / 2) + lo;
+        const topGY = rowGapY[topRowIdx]     - gr.top + lo;
+        const botGY = rowGapY[botRowIdx - 1] - gr.top + lo;
+        d = `M ${tx} ${ty} L ${tx} ${topGY} L ${passX} ${topGY} L ${passX} ${botGY} L ${bx} ${botGY} L ${bx} ${by}`;
+      }
     }
 
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -403,7 +534,7 @@ function drawThreadLines() {
     path.style.animation = 'thread-march 1.2s linear infinite';
     svg.appendChild(path);
 
-    for (const [px, py] of [[x1, y1], [x2, y2]]) {
+    for (const [px, py] of [dotA, dotB]) {
       const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       dot.setAttribute('cx', px); dot.setAttribute('cy', py);
       dot.setAttribute('r', '2.8'); dot.setAttribute('fill', color);
@@ -651,7 +782,7 @@ function render(data) {
   document.getElementById('content').style.display = 'block';
   document.getElementById('loader').style.display = 'none';
   document.getElementById('sidebar').innerHTML = sidebarContent;
-  if (posView === 'tiles') requestAnimationFrame(drawThreadLines);
+  if (posView === 'tiles') { requestAnimationFrame(drawThreadLines); initTileDrag(); }
 }
 
 async function fetchData() {
