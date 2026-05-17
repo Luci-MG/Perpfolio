@@ -307,48 +307,42 @@ function renderMarginHealth(data) {
   const hlColor = hlPct > 80 ? 'var(--danger)' : hlPct > 50 ? 'var(--warning)' : 'var(--hl)';
   const bnColor = bnPct > 80 ? 'var(--danger)' : bnPct > 50 ? 'var(--warning)' : 'var(--bn)';
 
-  const hlDonut = `<div class="donut" style="background:conic-gradient(${hlColor} ${hlPct}%, var(--surface2) ${hlPct}% 100%)">
-    <div class="donut-hole"><span class="donut-pct" style="color:${hlColor}">${hlPct}%</span><span class="donut-sub">used</span></div>
-  </div>`;
-  const bnDonut = `<div class="donut" style="background:conic-gradient(${bnColor} ${bnPct}%, var(--surface2) ${bnPct}% 100%)">
-    <div class="donut-hole"><span class="donut-pct" style="color:${bnColor}">${bnPct}%</span><span class="donut-sub">used</span></div>
-  </div>`;
+  const makeDonut = (pct, color) => `
+    <div style="width:60px;height:60px;border-radius:50%;background:conic-gradient(${color} ${pct}%, var(--surface2) ${pct}% 100%);position:relative;flex-shrink:0;margin:0 auto 8px">
+      <div style="position:absolute;inset:9px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column">
+        <span style="font-size:11px;font-weight:600;line-height:1;color:${color}">${pct}%</span>
+        <span style="font-size:8px;color:var(--text3)">used</span>
+      </div>
+    </div>`;
 
-  const hlCard = `<div class="card">
-    <div class="exch-header" style="margin-bottom:4px">
-      <span class="exch-dot" style="background:var(--hl)"></span>
-      <span class="exch-name">Hyperliquid</span>
-    </div>
-    <div class="donut-wrap">
-      ${hlDonut}
-      <div class="donut-legend">
-        <div class="donut-leg-row"><span class="donut-leg-label">Equity</span><span style="font-weight:500">${fmtUsd(hl.equity)}</span></div>
-        <div class="donut-leg-row"><span class="donut-leg-label">Margin used</span><span style="font-weight:500">${fmtUsd(hl.marginUsed)}</span></div>
-        <div class="donut-leg-row"><span class="donut-leg-label">Free margin</span><span style="font-weight:500">${fmtUsd(hl.freeMargin)}</span></div>
+  const legRow = (label, val) => `<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0"><span style="color:var(--text3)">${label}</span><span style="font-weight:500">${val}</span></div>`;
+
+  return `<div style="margin-top:10px">
+    <div class="card" style="margin-bottom:0;background:var(--surface2);border:none">
+      <p class="section-label" style="margin-bottom:10px">Margin health</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--hl);display:inline-block;flex-shrink:0"></span>
+            <span style="font-size:11px;font-weight:500">HL</span>
+          </div>
+          ${makeDonut(hlPct, hlColor)}
+          ${legRow('Equity', fmtUsd(hl.equity))}
+          ${legRow('Used', fmtUsd(hl.marginUsed))}
+          ${legRow('Free', fmtUsd(hl.freeMargin))}
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--bn);display:inline-block;flex-shrink:0"></span>
+            <span style="font-size:11px;font-weight:500">BN</span>
+          </div>
+          ${makeDonut(bnPct, bnColor)}
+          ${legRow('Equity', fmtUsd(bn.equity))}
+          ${legRow('Used', fmtUsd(bn.marginUsed))}
+          ${legRow('Free', fmtUsd(bn.freeMargin))}
+        </div>
       </div>
     </div>
-  </div>`;
-
-  const bnCard = `<div class="card">
-    <div class="exch-header" style="margin-bottom:4px">
-      <span class="exch-dot" style="background:var(--bn)"></span>
-      <span class="exch-name">Binance</span>
-    </div>
-    <div class="donut-wrap">
-      ${bnDonut}
-      <div class="donut-legend">
-        <div class="donut-leg-row"><span class="donut-leg-label">Equity</span><span style="font-weight:500">${fmtUsd(bn.equity)}</span></div>
-        <div class="donut-leg-row"><span class="donut-leg-label">Margin used</span><span style="font-weight:500">${fmtUsd(bn.marginUsed)}</span></div>
-        <div class="donut-leg-row"><span class="donut-leg-label">Available</span><span style="font-weight:500">${fmtUsd(bn.freeMargin)}</span></div>
-        <div class="donut-leg-row"><span class="donut-leg-label">Maint. margin</span><span style="font-weight:500">${fmtUsd(bn.maintMargin)}</span></div>
-      </div>
-    </div>
-  </div>`;
-
-  return `<div>
-    <p class="section-label">Margin health</p>
-    ${hlCard}
-    ${bnCard}
   </div>`;
 }
 
@@ -483,7 +477,7 @@ function render(data) {
   `;
 
   const sidebarContent = `
-    <div class="metric-stack" style="margin-top:12px">
+    <div class="metric-stack" style="margin-top:4px">
       <div class="metric">
         <div class="label">Total equity</div>
         <div class="val">${fmtUsd(s.totalEquity)}</div>
@@ -492,36 +486,40 @@ function render(data) {
           <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${fmtUsd(data.binance.equity)}</span></div>
         </div>
       </div>
-      <div class="metric">
-        <div class="label">Unrealised PnL</div>
-        <div class="val ${upnlNum>=0?'up':'dn'}">${upnlNum>=0?'+':''}${fmtUsd(Math.abs(upnlNum))}</div>
-        <div class="breakdown">
-          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val ${hlUpnl>=0?'up':'dn'}">${hlUpnl>=0?'+':''}${fmtUsd(Math.abs(hlUpnl))}</span></div>
-          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val ${bnUpnl>=0?'up':'dn'}">${bnUpnl>=0?'+':''}${fmtUsd(Math.abs(bnUpnl))}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="metric">
+          <div class="label">uPnL</div>
+          <div class="val ${upnlNum>=0?'up':'dn'}" style="font-size:16px">${upnlNum>=0?'+':''}${fmtUsd(Math.abs(upnlNum))}</div>
+          <div class="breakdown">
+            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val ${hlUpnl>=0?'up':'dn'}">${hlUpnl>=0?'+':''}${fmtUsd(Math.abs(hlUpnl))}</span></div>
+            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val ${bnUpnl>=0?'up':'dn'}">${bnUpnl>=0?'+':''}${fmtUsd(Math.abs(bnUpnl))}</span></div>
+          </div>
+        </div>
+        <div class="metric">
+          <div class="label">Exposure</div>
+          <div class="val" style="font-size:16px">${fmtUsd(s.totalExposure)}</div>
+          <div class="breakdown">
+            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${fmtUsd(s.hlExposure)}</span></div>
+            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${fmtUsd(s.bnExposure)}</span></div>
+          </div>
         </div>
       </div>
-      <div class="metric">
-        <div class="label">Open positions</div>
-        <div class="val">${s.positionCount}</div>
-        <div class="breakdown">
-          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${data.hyperliquid.positions.length}</span></div>
-          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${data.binance.positions.length}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="metric">
+          <div class="label">Positions</div>
+          <div class="val">${s.positionCount}</div>
+          <div class="breakdown">
+            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${data.hyperliquid.positions.length}</span></div>
+            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${data.binance.positions.length}</span></div>
+          </div>
         </div>
-      </div>
-      <div class="metric">
-        <div class="label">Open orders</div>
-        <div class="val">${s.orderCount}</div>
-        <div class="breakdown">
-          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${hlOrders.length}</span></div>
-          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${bnOrders.length}</span></div>
-        </div>
-      </div>
-      <div class="metric">
-        <div class="label">Gross exposure</div>
-        <div class="val">${fmtUsd(s.totalExposure)}</div>
-        <div class="breakdown">
-          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${fmtUsd(s.hlExposure)}</span></div>
-          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${fmtUsd(s.bnExposure)}</span></div>
+        <div class="metric">
+          <div class="label">Orders</div>
+          <div class="val">${s.orderCount}</div>
+          <div class="breakdown">
+            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${hlOrders.length}</span></div>
+            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${bnOrders.length}</span></div>
+          </div>
         </div>
       </div>
     </div>
