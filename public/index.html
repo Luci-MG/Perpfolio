@@ -149,6 +149,11 @@
   .fviz-track { flex: 1; height: 16px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
   .fviz-fill { height: 100%; border-radius: 4px; min-width: 2px; }
   .fviz-val { font-size: 10px; font-weight: 500; width: 90px; flex-shrink: 0; text-align: right; white-space: nowrap; }
+
+  /* Hedge thread connections */
+  .pos-tile-grid-wrap { position: relative; }
+  #thread-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  @keyframes thread-march { from { stroke-dashoffset: 16 } to { stroke-dashoffset: 0 } }
 </style>
 </head>
 <body>
@@ -200,6 +205,14 @@ function liqDist(p) {
   return (p.mark > 0 && p.liqPrice > 0) ? Math.abs(p.mark - p.liqPrice) / p.mark * 100 : 999;
 }
 
+const THREAD_PALETTE = [
+  '#c87c6a', '#6a8fc8', '#6ac87e', '#c8b46a', '#976ac8', '#6ac8be', '#c86aa2', '#a8c86a'
+];
+
+function normalizePairKey(pair) {
+  return pair.replace(/-PERP$/i, '').replace(/\/(USDT?|USD)$/i, '').toUpperCase();
+}
+
 function setView(v) {
   posView = v;
   document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
@@ -244,39 +257,118 @@ function renderPositions(positions) {
 }
 
 function renderPositionTiles(positions) {
-  return `<div class="pos-tile-grid">
-    ${positions.map(p => {
-      const dist = liqDist(p);
-      const distCls = dist < 10 ? 'danger' : dist < 30 ? 'warning' : 'success';
-      const barWidth = dist < 999 ? Math.max(0, Math.min(100, 100 - dist)) : 0;
-      const barColor = dist < 10 ? 'var(--danger)' : dist < 30 ? 'var(--warning)' : 'var(--success)';
-      const costDay = (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
-      const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-      const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
-      return `<div class="pos-tile">
-        <div class="ptile-head">
-          <span class="ptile-pair">${p.pair}</span>
-          <span style="font-size:9px;font-weight:600;color:${exchColor};border:0.5px solid ${exchColor};border-radius:3px;padding:1px 4px;flex-shrink:0">${exchLabel}</span>
-          ${sideBadge(p.side)}
-          <span style="font-size:10px;color:var(--text3)">${p.leverage}</span>
-        </div>
-        <div class="ptile-mark">${fmtUsd(p.mark)}</div>
-        <div class="ptile-mark-sub">current price</div>
-        <div style="height:5px;background:var(--border);border-radius:3px;margin:8px 0 3px;overflow:hidden">
-          <div style="height:100%;border-radius:3px;width:${barWidth}%;background:${barColor};transition:width .4s"></div>
-        </div>
-        <div style="font-size:10px;color:var(--${distCls});margin-bottom:7px">${dist < 999 ? fmt(dist,1)+'% to liquidation' : 'No liquidation price'}</div>
-        <div class="ptile-rows">
-          <div class="ptile-row"><span class="ptile-label">Size</span><span>${p.size} <span style="color:var(--text3)">(${fmtUsd(p.sizeUsd)})</span></span></div>
-          <div class="ptile-row"><span class="ptile-label">Entry</span><span>${fmtUsd(p.entry)}</span></div>
-          <div class="ptile-row"><span class="ptile-label">Liq. price</span><span style="color:var(--${distCls})">${fmtUsd(p.liqPrice)}</span></div>
-          <div class="ptile-row"><span class="ptile-label">uPnL</span><span>${fmtPnl(p.upnl)}</span></div>
-          <div class="ptile-row"><span class="ptile-label">Funding/8h</span><span>${p.funding8h}</span></div>
-          <div class="ptile-row"><span class="ptile-label">Daily cost</span><span>${fmtPnl(costDay)}</span></div>
-        </div>
-      </div>`;
-    }).join('')}
-  </div>`;
+  const pairGroups = {};
+  positions.forEach(p => {
+    const key = normalizePairKey(p.pair);
+    if (!pairGroups[key]) pairGroups[key] = [];
+    pairGroups[key].push(p);
+  });
+
+  let ci = 0;
+  const threadColorMap = {};
+  for (const [key, grp] of Object.entries(pairGroups)) {
+    if (grp.some(p => p.side === 'Long') && grp.some(p => p.side === 'Short')) {
+      threadColorMap[key] = THREAD_PALETTE[ci++ % THREAD_PALETTE.length];
+    }
+  }
+
+  const tiles = positions.map(p => {
+    const key = normalizePairKey(p.pair);
+    const tc = threadColorMap[key];
+    const dist = liqDist(p);
+    const distCls = dist < 10 ? 'danger' : dist < 30 ? 'warning' : 'success';
+    const barWidth = dist < 999 ? Math.max(0, Math.min(100, 100 - dist)) : 0;
+    const barColor = dist < 10 ? 'var(--danger)' : dist < 30 ? 'var(--warning)' : 'var(--success)';
+    const costDay = (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
+    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
+    const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
+    const threadAttrs = tc ? ` data-thread="${key}" data-thread-color="${tc}"` : '';
+    const outlineStyle = tc ? `outline:1.5px solid ${tc}50;outline-offset:-1px;` : '';
+    const threadDot = tc ? `<span style="width:5px;height:5px;border-radius:50%;background:${tc};flex-shrink:0;opacity:0.9;box-shadow:0 0 4px ${tc}88"></span>` : '';
+
+    return `<div class="pos-tile"${threadAttrs} style="${outlineStyle}">
+      <div class="ptile-head">
+        <span class="ptile-pair">${p.pair}</span>
+        ${threadDot}
+        <span style="font-size:9px;font-weight:600;color:${exchColor};border:0.5px solid ${exchColor};border-radius:3px;padding:1px 4px;flex-shrink:0">${exchLabel}</span>
+        ${sideBadge(p.side)}
+        <span style="font-size:10px;color:var(--text3)">${p.leverage}</span>
+      </div>
+      <div class="ptile-mark">${fmtUsd(p.mark)}</div>
+      <div class="ptile-mark-sub">current price</div>
+      <div style="height:5px;background:var(--border);border-radius:3px;margin:8px 0 3px;overflow:hidden">
+        <div style="height:100%;border-radius:3px;width:${barWidth}%;background:${barColor};transition:width .4s"></div>
+      </div>
+      <div style="font-size:10px;color:var(--${distCls});margin-bottom:7px">${dist < 999 ? fmt(dist,1)+'% to liquidation' : 'No liquidation price'}</div>
+      <div class="ptile-rows">
+        <div class="ptile-row"><span class="ptile-label">Size</span><span>${p.size} <span style="color:var(--text3)">(${fmtUsd(p.sizeUsd)})</span></span></div>
+        <div class="ptile-row"><span class="ptile-label">Entry</span><span>${fmtUsd(p.entry)}</span></div>
+        <div class="ptile-row"><span class="ptile-label">Liq. price</span><span style="color:var(--${distCls})">${fmtUsd(p.liqPrice)}</span></div>
+        <div class="ptile-row"><span class="ptile-label">uPnL</span><span>${fmtPnl(p.upnl)}</span></div>
+        <div class="ptile-row"><span class="ptile-label">Funding/8h</span><span>${p.funding8h}</span></div>
+        <div class="ptile-row"><span class="ptile-label">Daily cost</span><span>${fmtPnl(costDay)}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="pos-tile-grid-wrap"><div class="pos-tile-grid" id="ptile-grid">${tiles}</div><svg id="thread-svg" aria-hidden="true"></svg></div>`;
+}
+
+function drawThreadLines() {
+  const svg = document.getElementById('thread-svg');
+  const grid = document.getElementById('ptile-grid');
+  if (!svg || !grid) return;
+
+  const gr = grid.getBoundingClientRect();
+  const groups = {};
+  grid.querySelectorAll('[data-thread]').forEach(el => {
+    const k = el.dataset.thread;
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(el);
+  });
+
+  svg.innerHTML = '';
+
+  Object.values(groups).forEach(tiles => {
+    if (tiles.length < 2) return;
+    const color = tiles[0].dataset.threadColor;
+
+    for (let i = 0; i < tiles.length - 1; i++) {
+      for (let j = i + 1; j < tiles.length; j++) {
+        const rA = tiles[i].getBoundingClientRect();
+        const rB = tiles[j].getBoundingClientRect();
+        const x1 = rA.left + rA.width / 2 - gr.left;
+        const y1 = rA.top + rA.height / 2 - gr.top;
+        const x2 = rB.left + rB.width / 2 - gr.left;
+        const y2 = rB.top + rB.height / 2 - gr.top;
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        const dx = x2 - x1, dy = y2 - y1;
+        const len = Math.hypot(dx, dy) || 1;
+        const sag = Math.min(52, len * 0.2);
+        const cx = mx - (dy / len) * sag;
+        const cy = my + (dx / len) * sag;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+        path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', '1');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-dasharray', '5 3');
+        path.setAttribute('opacity', '0.6');
+        path.style.animation = 'thread-march 1.2s linear infinite';
+        svg.appendChild(path);
+
+        for (const [px, py] of [[x1, y1], [x2, y2]]) {
+          const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+          dot.setAttribute('r', '2.8'); dot.setAttribute('fill', color);
+          dot.setAttribute('opacity', '0.85');
+          svg.appendChild(dot);
+        }
+      }
+    }
+  });
 }
 
 function renderOrdersFor(orders) {
@@ -530,6 +622,7 @@ function render(data) {
   document.getElementById('content').style.display = 'block';
   document.getElementById('loader').style.display = 'none';
   document.getElementById('sidebar').innerHTML = sidebarContent;
+  if (posView === 'tiles') requestAnimationFrame(drawThreadLines);
 }
 
 async function fetchData() {
@@ -563,6 +656,7 @@ async function fetchData() {
 
 fetchData();
 autoRefresh = setInterval(fetchData, 15000);
+window.addEventListener('resize', () => { if (posView === 'tiles') requestAnimationFrame(drawThreadLines); });
 </script>
 </body>
 </html>
