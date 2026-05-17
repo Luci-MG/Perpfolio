@@ -172,6 +172,7 @@
 let autoRefresh;
 let lastData = null;
 let posView = 'tiles';
+let exchFilter = new Set(['hyperliquid', 'binance']);
 
 function fmt(n, decimals=2) {
   const num = parseFloat(n);
@@ -198,6 +199,13 @@ function setView(v) {
   if (lastData) render(lastData);
 }
 
+function toggleExch(exch) {
+  if (exchFilter.has(exch) && exchFilter.size === 1) return;
+  if (exchFilter.has(exch)) exchFilter.delete(exch);
+  else exchFilter.add(exch);
+  if (lastData) render(lastData);
+}
+
 function renderPositions(positions) {
   if (!positions.length) return '<p style="font-size:12px;color:var(--text3);padding:8px 0">No open positions</p>';
   if (posView === 'tiles') return renderPositionTiles(positions);
@@ -210,8 +218,10 @@ function renderPositions(positions) {
       const dist = liqDist(p);
       const liqStyle = dist < 10 ? 'color:var(--danger);font-weight:600' : dist < 30 ? 'color:var(--warning)' : '';
       const costDay = (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
+      const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
+      const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
       return `<tr>
-        <td><span class="pair">${p.pair}</span><div class="pair-sub">${p.type}</div></td>
+        <td><span class="pair">${p.pair}</span><div class="pair-sub" style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span><span>${p.type}</span></div></td>
         <td>${sideBadge(p.side)}</td>
         <td>${p.leverage}</td>
         <td>${p.size}<div class="pair-sub">${fmtUsd(p.sizeUsd)}</div></td>
@@ -234,9 +244,12 @@ function renderPositionTiles(positions) {
       const barWidth = dist < 999 ? Math.max(0, Math.min(100, 100 - dist)) : 0;
       const barColor = dist < 10 ? 'var(--danger)' : dist < 30 ? 'var(--warning)' : 'var(--success)';
       const costDay = (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
+      const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
+      const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
       return `<div class="pos-tile">
         <div class="ptile-head">
           <span class="ptile-pair">${p.pair}</span>
+          <span style="font-size:9px;font-weight:600;color:${exchColor};border:0.5px solid ${exchColor};border-radius:3px;padding:1px 4px;flex-shrink:0">${exchLabel}</span>
           ${sideBadge(p.side)}
           <span style="font-size:10px;color:var(--text3)">${p.leverage}</span>
         </div>
@@ -265,14 +278,18 @@ function renderOrdersFor(orders) {
     <tr>
       <th>Pair</th><th>Side</th><th>Type</th><th>Price</th><th>Size</th><th>Reduce Only</th>
     </tr>
-    ${orders.map(o => `<tr>
-      <td><span class="pair">${o.pair}</span></td>
+    ${orders.map(o => {
+      const exchColor = o.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
+      const exchLabel = o.exchange === 'hyperliquid' ? 'HL' : 'BN';
+      return `<tr>
+      <td><span class="pair">${o.pair}</span><div class="pair-sub" style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span></div></td>
       <td>${sideBadge(o.side)}</td>
       <td style="color:var(--text2)">${o.type}</td>
       <td>${fmtUsd(o.price)}</td>
       <td>${o.size}</td>
       <td>${o.reduceOnly ? badge('Reduce', 'b-warn') : '<span style="color:var(--text3)">—</span>'}</td>
-    </tr>`).join('')}
+    </tr>`;
+    }).join('')}
   </table></div>`;
 }
 
@@ -379,8 +396,66 @@ function render(data) {
     <button class="view-tab${posView==='orders'?' active':''}" data-view="orders" onclick="setView('orders')">Orders${totalOrders ? ` <span style="background:var(--surface2);border-radius:10px;padding:0 5px;font-size:10px">${totalOrders}</span>` : ''}</button>
   </div>`;
 
-  const hlContent = posView === 'orders' ? renderOrdersFor(hlOrders) : renderPositions(data.hyperliquid.positions);
-  const bnContent = posView === 'orders' ? renderOrdersFor(bnOrders) : renderPositions(data.binance.positions);
+  const exchTabsHtml = `<div class="view-tabs">
+    <button class="view-tab${exchFilter.has('hyperliquid')?' active':''}" data-exch="hyperliquid" onclick="toggleExch('hyperliquid')" style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--hl);flex-shrink:0;display:inline-block"></span>HL</button>
+    <button class="view-tab${exchFilter.has('binance')?' active':''}" data-exch="binance" onclick="toggleExch('binance')" style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--bn);flex-shrink:0;display:inline-block"></span>BN</button>
+  </div>`;
+
+  const showHL = exchFilter.has('hyperliquid');
+  const showBN = exchFilter.has('binance');
+
+  const filteredPositions = [
+    ...(showHL ? data.hyperliquid.positions : []),
+    ...(showBN ? data.binance.positions : [])
+  ];
+  const filteredOrders = [
+    ...(showHL ? hlOrders : []),
+    ...(showBN ? bnOrders : [])
+  ];
+  const unifiedContent = posView === 'orders' ? renderOrdersFor(filteredOrders) : renderPositions(filteredPositions);
+
+  let cardHeader;
+  if (showHL && showBN) {
+    cardHeader = `<div class="exch-header" style="gap:0">
+      <span style="display:flex;align-items:center;gap:8px;flex:1">
+        <span class="exch-dot" style="background:var(--hl)"></span>
+        <span class="exch-name">Hyperliquid</span>
+        <span class="exch-stats">
+          <span>Eq: ${fmtUsd(data.hyperliquid.equity)}</span>
+          <span>Margin: ${data.hyperliquid.marginPct}%</span>
+        </span>
+      </span>
+      <span style="width:0.5px;height:14px;background:var(--border2);flex-shrink:0;margin:0 12px"></span>
+      <span style="display:flex;align-items:center;gap:8px;flex:1">
+        <span class="exch-dot" style="background:var(--bn)"></span>
+        <span class="exch-name">Binance</span>
+        <span class="exch-stats">
+          <span>Eq: ${fmtUsd(data.binance.equity)}</span>
+          <span>Margin: ${data.binance.marginPct}%</span>
+          <span>Free: ${fmtUsd(data.binance.freeMargin)}</span>
+        </span>
+      </span>
+    </div>`;
+  } else if (showHL) {
+    cardHeader = `<div class="exch-header">
+      <span class="exch-dot" style="background:var(--hl)"></span>
+      <span class="exch-name">Hyperliquid</span>
+      <span class="exch-stats">
+        <span>Equity: ${fmtUsd(data.hyperliquid.equity)}</span>
+        <span>Margin: ${data.hyperliquid.marginPct}%</span>
+      </span>
+    </div>`;
+  } else {
+    cardHeader = `<div class="exch-header">
+      <span class="exch-dot" style="background:var(--bn)"></span>
+      <span class="exch-name">Binance</span>
+      <span class="exch-stats">
+        <span>Equity: ${fmtUsd(data.binance.equity)}</span>
+        <span>Margin: ${data.binance.marginPct}%</span>
+        <span>Free: ${fmtUsd(data.binance.freeMargin)}</span>
+      </span>
+    </div>`;
+  }
 
   const content = `
     <div class="metric-grid">
@@ -427,33 +502,16 @@ function render(data) {
     </div>
 
     <div class="section-bar">
-      <p class="section-label" style="margin:0">${sectionLabel}</p>
+      <div style="display:flex;align-items:center;gap:8px">
+        <p class="section-label" style="margin:0">${sectionLabel}</p>
+        ${exchTabsHtml}
+      </div>
       ${tabsHtml}
     </div>
 
-    <div class="card" style="margin-bottom:12px">
-      <div class="exch-header">
-        <span class="exch-dot" style="background:var(--hl)"></span>
-        <span class="exch-name">Hyperliquid</span>
-        <span class="exch-stats">
-          <span>Equity: ${fmtUsd(data.hyperliquid.equity)}</span>
-          <span>Margin: ${data.hyperliquid.marginPct}%</span>
-        </span>
-      </div>
-      ${hlContent}
-    </div>
-
     <div class="card" style="margin-bottom:24px">
-      <div class="exch-header">
-        <span class="exch-dot" style="background:var(--bn)"></span>
-        <span class="exch-name">Binance</span>
-        <span class="exch-stats">
-          <span>Equity: ${fmtUsd(data.binance.equity)}</span>
-          <span>Margin: ${data.binance.marginPct}%</span>
-          <span>Free: ${fmtUsd(data.binance.freeMargin)}</span>
-        </span>
-      </div>
-      ${bnContent}
+      ${cardHeader}
+      ${unifiedContent}
     </div>
 
     ${renderWidgets(data)}
