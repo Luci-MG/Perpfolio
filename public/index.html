@@ -43,7 +43,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; }
   .app { padding: 24px; }
-  .sidebar-header { padding-bottom: 14px; margin-bottom: 4px; border-bottom: 0.5px solid var(--border); }
+  .sidebar-header { padding-bottom: 8px; margin-bottom: 0; border-bottom: 0.5px solid var(--border); }
   .sidebar-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
   .sidebar-meta { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text3); }
   .btn-circle { width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 0.5px solid var(--border2); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; margin-left: auto; transition: background .15s; }
@@ -141,14 +141,6 @@
   .donut-legend { display: flex; flex-direction: column; gap: 5px; flex: 1; }
   .donut-leg-row { display: flex; justify-content: space-between; font-size: 11px; }
   .donut-leg-label { color: var(--text2); }
-
-  /* Funding rate viz */
-  .fviz-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-  .fviz-exch { font-size: 9px; font-weight: 600; width: 16px; flex-shrink: 0; text-align: center; }
-  .fviz-label { font-size: 11px; color: var(--text2); width: 85px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .fviz-track { flex: 1; height: 16px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
-  .fviz-fill { height: 100%; border-radius: 4px; min-width: 2px; }
-  .fviz-val { font-size: 10px; font-weight: 500; width: 90px; flex-shrink: 0; text-align: right; white-space: nowrap; }
 
   /* Hedge thread connections */
   .pos-tile-grid-wrap { position: relative; }
@@ -272,6 +264,8 @@ function renderPositionTiles(positions) {
     }
   }
 
+  const compact = positions.length > 10;
+
   const tiles = positions.map(p => {
     const key = normalizePairKey(p.pair);
     const tc = threadColorMap[key];
@@ -305,8 +299,8 @@ function renderPositionTiles(positions) {
         <div class="ptile-row"><span class="ptile-label">Entry</span><span>${fmtUsd(p.entry)}</span></div>
         <div class="ptile-row"><span class="ptile-label">Liq. price</span><span style="color:var(--${distCls})">${fmtUsd(p.liqPrice)}</span></div>
         <div class="ptile-row"><span class="ptile-label">uPnL</span><span>${fmtPnl(p.upnl)}</span></div>
-        <div class="ptile-row"><span class="ptile-label">Funding/8h</span><span>${p.funding8h}</span></div>
-        <div class="ptile-row"><span class="ptile-label">Daily cost</span><span>${fmtPnl(costDay)}</span></div>
+        ${!compact ? `<div class="ptile-row"><span class="ptile-label">Funding/8h</span><span>${p.funding8h}</span></div>` : ''}
+        ${!compact ? `<div class="ptile-row"><span class="ptile-label">Daily cost</span><span>${fmtPnl(costDay)}</span></div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -430,76 +424,63 @@ function renderMarginHealth(data) {
   const bnColor = bnPct > 80 ? 'var(--danger)' : bnPct > 50 ? 'var(--warning)' : 'var(--bn)';
 
   const makeDonut = (pct, color) => `
-    <div style="width:60px;height:60px;border-radius:50%;background:conic-gradient(${color} ${pct}%, var(--surface2) ${pct}% 100%);position:relative;flex-shrink:0;margin:0 auto 8px">
-      <div style="position:absolute;inset:9px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column">
-        <span style="font-size:11px;font-weight:600;line-height:1;color:${color}">${pct}%</span>
-        <span style="font-size:8px;color:var(--text3)">used</span>
+    <div style="width:44px;height:44px;border-radius:50%;background:conic-gradient(${color} ${pct}%, var(--surface2) ${pct}% 100%);position:relative;margin:0 auto 6px">
+      <div style="position:absolute;inset:7px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center">
+        <span style="font-size:9px;font-weight:600;color:${color}">${pct}%</span>
       </div>
     </div>`;
 
-  const legRow = (label, val) => `<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0"><span style="color:var(--text3)">${label}</span><span style="font-weight:500">${val}</span></div>`;
+  const legRow = (label, val) => `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0"><span style="color:var(--text3)">${label}</span><span style="font-weight:500">${val}</span></div>`;
 
-  return `<div style="margin-top:10px">
-    <div class="card" style="margin-bottom:0;background:var(--surface2);border:none">
+  const exchBlock = (dot, label, pct, color, exch) => `
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:5px">
+        <span style="width:5px;height:5px;border-radius:50%;background:${dot};display:inline-block;flex-shrink:0"></span>
+        <span style="font-size:10px;font-weight:500">${label}</span>
+      </div>
+      ${makeDonut(pct, color)}
+      ${legRow('Eq', fmtUsd(exch.equity))}
+      ${legRow('Used', fmtUsd(exch.marginUsed))}
+      ${legRow('Free', fmtUsd(exch.freeMargin))}
+    </div>`;
+
+  return `<div style="margin-top:8px">
+    <div class="card" style="margin-bottom:0;background:var(--surface2);border:none;padding:10px 12px">
       <p class="section-label" style="margin-bottom:10px">Margin health</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
-            <span style="width:6px;height:6px;border-radius:50%;background:var(--hl);display:inline-block;flex-shrink:0"></span>
-            <span style="font-size:11px;font-weight:500">HL</span>
-          </div>
-          ${makeDonut(hlPct, hlColor)}
-          ${legRow('Equity', fmtUsd(hl.equity))}
-          ${legRow('Used', fmtUsd(hl.marginUsed))}
-          ${legRow('Free', fmtUsd(hl.freeMargin))}
-        </div>
-        <div>
-          <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
-            <span style="width:6px;height:6px;border-radius:50%;background:var(--bn);display:inline-block;flex-shrink:0"></span>
-            <span style="font-size:11px;font-weight:500">BN</span>
-          </div>
-          ${makeDonut(bnPct, bnColor)}
-          ${legRow('Equity', fmtUsd(bn.equity))}
-          ${legRow('Used', fmtUsd(bn.marginUsed))}
-          ${legRow('Free', fmtUsd(bn.freeMargin))}
-        </div>
+      <div style="display:flex;gap:10px">
+        ${exchBlock('var(--hl)', 'HL', hlPct, hlColor, hl)}
+        <div style="width:0.5px;background:var(--border);flex-shrink:0"></div>
+        ${exchBlock('var(--bn)', 'BN', bnPct, bnColor, bn)}
       </div>
     </div>
   </div>`;
 }
 
-function renderFundingChart(data) {
-  const allPos = [...data.hyperliquid.positions, ...data.binance.positions];
-  if (!allPos.length) return '';
 
-  const enriched = allPos.map(p => {
-    const costDay = (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
-    return { ...p, costDay };
-  }).sort((a, b) => a.costDay - b.costDay);
-
-  const maxAbs = Math.max(...enriched.map(p => Math.abs(p.costDay)), 0.01);
-
-  const fundingRows = enriched.map(p => {
-    const pct = Math.abs(p.costDay) / maxAbs * 100;
-    const color = p.costDay >= 0 ? 'var(--success)' : 'var(--danger)';
-    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-    const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
-    return `<div class="fviz-row">
-      <span class="fviz-exch" style="color:${exchColor}">${exchLabel}</span>
-      <span class="fviz-label" title="${p.pair}">${p.pair}</span>
-      <div class="fviz-track">
-        <div class="fviz-fill" style="width:${pct}%;background:${color}"></div>
+function renderDailyFundingWidget(data) {
+  const calcCost = positions => positions.reduce((sum, p) => sum + (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3, 0);
+  const hlCost = calcCost(data.hyperliquid.positions);
+  const bnCost = calcCost(data.binance.positions);
+  const totalCost = hlCost + bnCost;
+  const color = n => n >= 0 ? 'var(--success)' : 'var(--danger)';
+  const sign = n => n >= 0 ? '+' : '';
+  return `
+    <div class="card" style="margin-top:8px;background:var(--surface2);border:none;padding:10px 12px">
+      <p class="section-label" style="margin-bottom:8px">Daily funding</p>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:5px">
+        <span class="${totalCost >= 0 ? 'up' : 'dn'}" style="font-size:15px;font-weight:600">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</span>
+        <span style="font-size:10px;color:var(--text3)">/day</span>
       </div>
-      <span class="fviz-val" style="color:${p.costDay >= 0 ? 'var(--success)' : 'var(--danger)'}">${p.costDay >= 0 ? '+' : ''}${fmtUsd(p.costDay)}/day</span>
-    </div>`;
-  }).join('');
-
-  return `<p class="section-label">Daily funding cost per position</p>
-    <div class="card" style="margin-bottom:24px">
-      <div class="risk-note" style="margin-bottom:10px">
-        <span>Green = receiving · Red = paying · bar width proportional to daily USD cost</span>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;justify-content:space-between;font-size:10px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--hl);display:inline-block"></span><span style="color:var(--text3)">HL</span></span>
+          <span style="color:${color(hlCost)};font-weight:500">${sign(hlCost)}${fmtUsd(Math.abs(hlCost))}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--bn);display:inline-block"></span><span style="color:var(--text3)">BN</span></span>
+          <span style="color:${color(bnCost)};font-weight:500">${sign(bnCost)}${fmtUsd(Math.abs(bnCost))}</span>
+        </div>
       </div>
-      ${fundingRows}
     </div>`;
 }
 
@@ -595,11 +576,10 @@ function render(data) {
       ${unifiedContent}
     </div>
 
-    ${renderFundingChart(data)}
   `;
 
   const sidebarContent = `
-    <div class="metric-stack" style="margin-top:4px">
+    <div class="metric-stack" style="margin-top:2px">
       <div class="metric">
         <div class="label">Total equity</div>
         <div class="val">${fmtUsd(s.totalEquity)}</div>
@@ -646,6 +626,7 @@ function render(data) {
       </div>
     </div>
     ${renderMarginHealth(data)}
+    ${renderDailyFundingWidget(data)}
   `;
 
   document.getElementById('content').innerHTML = mainContent;
