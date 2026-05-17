@@ -264,6 +264,16 @@ function renderPositionTiles(positions) {
     }
   }
 
+  // Build stop-loss order lookup: exchange:normalizedPair:side → true
+  const slSet = new Set();
+  if (lastData) {
+    [...(lastData.hyperliquid?.orders || []), ...(lastData.binance?.orders || [])].forEach(o => {
+      if (o.reduceOnly || (o.type && o.type.toLowerCase().includes('stop'))) {
+        slSet.add(`${o.exchange}:${normalizePairKey(o.pair)}:${o.side}`);
+      }
+    });
+  }
+
   const compact = positions.length > 10;
 
   const tiles = positions.map(p => {
@@ -280,6 +290,13 @@ function renderPositionTiles(positions) {
     const outlineStyle = tc ? `outline:1.5px solid ${tc}50;outline-offset:-1px;` : '';
     const threadDot = tc ? `<span style="width:5px;height:5px;border-radius:50%;background:${tc};flex-shrink:0;opacity:0.9;box-shadow:0 0 4px ${tc}88"></span>` : '';
 
+    const isHedged = !!tc;
+    const slSide = p.side === 'Long' ? 'Sell' : 'Buy';
+    const hasStopLoss = slSet.has(`${p.exchange}:${key}:${slSide}`);
+    const noSlBadge = (!isHedged && !hasStopLoss)
+      ? `<span title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.55;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`
+      : '';
+
     return `<div class="pos-tile"${threadAttrs} style="${outlineStyle}">
       <div class="ptile-head">
         <span class="ptile-pair">${p.pair}</span>
@@ -287,6 +304,7 @@ function renderPositionTiles(positions) {
         <span style="font-size:9px;font-weight:600;color:${exchColor};border:0.5px solid ${exchColor};border-radius:3px;padding:1px 4px;flex-shrink:0">${exchLabel}</span>
         ${sideBadge(p.side)}
         <span style="font-size:10px;color:var(--text3)">${p.leverage}</span>
+        ${noSlBadge}
       </div>
       <div class="ptile-mark">${fmtUsd(p.mark)}</div>
       <div class="ptile-mark-sub">current price</div>
