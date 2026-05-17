@@ -337,23 +337,39 @@ function drawThreadLines() {
       for (let j = i + 1; j < tiles.length; j++) {
         const rA = tiles[i].getBoundingClientRect();
         const rB = tiles[j].getBoundingClientRect();
-        const x1 = rA.left + rA.width / 2 - gr.left;
-        const y1 = rA.top + rA.height / 2 - gr.top;
-        const x2 = rB.left + rB.width / 2 - gr.left;
-        const y2 = rB.top + rB.height / 2 - gr.top;
-        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-        const dx = x2 - x1, dy = y2 - y1;
-        const len = Math.hypot(dx, dy) || 1;
-        const sag = Math.min(52, len * 0.2);
-        const cx = mx - (dy / len) * sag;
-        const cy = my + (dx / len) * sag;
+
+        // Vertical overlap means they share the same grid row
+        const sameRow = rA.top < rB.bottom && rB.top < rA.bottom;
+
+        let d, x1, y1, x2, y2;
+
+        if (sameRow) {
+          // Same row: top-center → up → horizontal → down → top-center (U above tiles)
+          x1 = rA.left + rA.width / 2 - gr.left;
+          y1 = rA.top - gr.top;
+          x2 = rB.left + rB.width / 2 - gr.left;
+          y2 = rB.top - gr.top;
+          const upY = Math.min(y1, y2) - 12;
+          d = `M ${x1} ${y1} L ${x1} ${upY} L ${x2} ${upY} L ${x2} ${y2}`;
+        } else {
+          // Different rows: bottom-center → down to gap mid → horizontal → up to top-center (Z through gap)
+          const top = rA.top < rB.top ? rA : rB;
+          const bot = rA.top < rB.top ? rB : rA;
+          x1 = top.left + top.width / 2 - gr.left;
+          y1 = top.bottom - gr.top;
+          x2 = bot.left + bot.width / 2 - gr.left;
+          y2 = bot.top - gr.top;
+          const gapY = (y1 + y2) / 2;
+          d = `M ${x1} ${y1} L ${x1} ${gapY} L ${x2} ${gapY} L ${x2} ${y2}`;
+        }
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+        path.setAttribute('d', d);
         path.setAttribute('stroke', color);
         path.setAttribute('stroke-width', '1');
         path.setAttribute('fill', 'none');
-        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linecap', 'square');
+        path.setAttribute('stroke-linejoin', 'miter');
         path.setAttribute('stroke-dasharray', '5 3');
         path.setAttribute('opacity', '0.6');
         path.style.animation = 'thread-march 1.2s linear infinite';
