@@ -188,6 +188,18 @@
   .calc-res-label { color: var(--text2); }
   .calc-res-val { font-weight: 600; }
 
+  /* Sidebar bottom row: funding + calc tiles */
+  .sb-bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; align-items: stretch; }
+  .sb-funding { background: var(--surface2); border-radius: var(--radius); padding: 10px 12px; min-width: 0; }
+  .calc-tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .calc-tile { background: var(--surface2); border-radius: var(--radius); padding: 0; cursor: pointer; border: 0.5px solid transparent; transition: border-color .15s, background .15s; display: flex; align-items: center; justify-content: center; min-height: 52px; }
+  .calc-tile:hover { background: var(--surface); border-color: var(--border2); }
+  .calc-tile.empty { cursor: default; opacity: 0.25; }
+  .calc-tile.empty:hover { background: var(--surface2); border-color: transparent; }
+  .calc-tile-icon { color: var(--text3); }
+  .calc-tile-icon svg { width: 16px; height: 16px; display: block; }
+  .calc-tile:hover .calc-tile-icon { color: var(--text2); }
+
   /* Hedge thread connections */
   .pos-tile-grid-wrap { position: relative; }
   #thread-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
@@ -812,22 +824,64 @@ function renderDailyFundingWidget(data) {
   const totalCost = hlCost + bnCost;
   const color = n => n >= 0 ? 'var(--success)' : 'var(--danger)';
   const sign = n => n >= 0 ? '+' : '';
+  // Returns inner content only — wrapper is built by renderSidebarBottomRow
   return `
-    <div class="card" style="margin-top:8px;background:var(--surface2);border:none;padding:10px 12px">
-      <p class="section-label" style="margin-bottom:8px">Daily funding</p>
-      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:5px">
-        <span class="${totalCost >= 0 ? 'up' : 'dn'}" style="font-size:15px;font-weight:600">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</span>
-        <span style="font-size:10px;color:var(--text3)">/day</span>
+    <p class="section-label" style="margin-bottom:8px">Daily funding</p>
+    <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:5px">
+      <span class="${totalCost >= 0 ? 'up' : 'dn'}" style="font-size:15px;font-weight:600">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</span>
+      <span style="font-size:10px;color:var(--text3)">/day</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <div style="display:flex;justify-content:space-between;font-size:10px">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--hl);display:inline-block"></span><span style="color:var(--text3)">HL</span></span>
+        <span style="color:${color(hlCost)};font-weight:500">${sign(hlCost)}${fmtUsd(Math.abs(hlCost))}</span>
       </div>
-      <div style="display:flex;flex-direction:column;gap:2px">
-        <div style="display:flex;justify-content:space-between;font-size:10px">
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--hl);display:inline-block"></span><span style="color:var(--text3)">HL</span></span>
-          <span style="color:${color(hlCost)};font-weight:500">${sign(hlCost)}${fmtUsd(Math.abs(hlCost))}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:10px">
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--bn);display:inline-block"></span><span style="color:var(--text3)">BN</span></span>
-          <span style="color:${color(bnCost)};font-weight:500">${sign(bnCost)}${fmtUsd(Math.abs(bnCost))}</span>
-        </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--bn);display:inline-block"></span><span style="color:var(--text3)">BN</span></span>
+        <span style="color:${color(bnCost)};font-weight:500">${sign(bnCost)}${fmtUsd(Math.abs(bnCost))}</span>
+      </div>
+    </div>`;
+}
+
+function renderCalcTiles() {
+  const tiles = [
+    {
+      tab: 'pnl',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
+      label: 'P&L',
+      sub: 'Profit & loss'
+    },
+    {
+      tab: 'avg',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+      label: 'Avg Down/Up',
+      sub: 'Blended entry'
+    },
+    {
+      tab: 'liq',
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+      label: 'Liq Price',
+      sub: 'Estimate liq'
+    },
+    null  // empty slot — reserved
+  ];
+
+  const tileHtml = tiles.map(t => {
+    if (!t) return `<div class="calc-tile empty"><div class="calc-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div></div>`;
+    return `<div class="calc-tile" onclick="openCalcFromSidebar('${t.tab}')" title="${t.label}">
+      <div class="calc-tile-icon">${t.icon}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="calc-tile-grid">${tileHtml}</div>`;
+}
+
+function renderSidebarBottomRow(data) {
+  return `
+    <div class="sb-bottom-row">
+      <div class="sb-funding">${renderDailyFundingWidget(data)}</div>
+      <div style="min-width:0">
+        ${renderCalcTiles()}
       </div>
     </div>`;
 }
@@ -974,7 +1028,7 @@ function render(data) {
       </div>
     </div>
     ${renderMarginHealth(data)}
-    ${renderDailyFundingWidget(data)}
+    ${renderSidebarBottomRow(data)}
   `;
 
   document.getElementById('content').innerHTML = mainContent;
@@ -1107,6 +1161,11 @@ function openCalc(type) {
   // Open the right tab
   switchCalcTab(type);
   document.getElementById('calcOverlay').classList.add('open');
+}
+
+function openCalcFromSidebar(tab) {
+  ctxPosition = null;
+  openCalc(tab);
 }
 
 function closeCalc(id) { document.getElementById(id).classList.remove('open'); }
