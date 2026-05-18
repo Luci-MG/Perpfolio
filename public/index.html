@@ -213,9 +213,12 @@
   .hedge-popup { position: fixed; z-index: 2000; pointer-events: none; display: none; }
   .hedge-popup.show { display: block; }
   .hedge-popup.pinned { pointer-events: auto; }
+  .hedge-popup.pinned .hedge-popup-inner { cursor: default; }
+  .hedge-popup.dragging-popup { user-select: none; }
   .hedge-pin-close { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
   .hedge-pin-close:hover { color: var(--text); }
-  .hedge-popup-inner { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); box-shadow: 0 6px 24px rgba(0,0,0,0.18); padding: 12px 14px; min-width: 220px; max-width: 280px; }
+  .hedge-popup-inner { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); box-shadow: 0 6px 24px rgba(0,0,0,0.18); padding: 12px 14px; min-width: 220px; max-width: 280px; cursor: grab; }
+  .hedge-popup-inner:active { cursor: grabbing; }
   .hedge-popup-title { font-size: 11px; font-weight: 600; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
   .hedge-popup-sub { font-size: 10px; color: var(--text3); margin-bottom: 10px; }
   .hedge-bar-wrap { height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden; margin-bottom: 3px; display: flex; }
@@ -685,13 +688,16 @@ function showHedgePopup(content, x, y, pinned = false) {
   const inner = document.getElementById('hedgePopupInner');
   // If already pinned, don't overwrite with hover
   if (hedgePinned && !pinned) return;
+  // Clean up previous drag before re-initialising
+  destroyHedgeDrag(popup);
   hedgePinned = pinned;
   inner.innerHTML = pinned
-    ? `<button class="hedge-pin-close" onclick="hideHedgePopup()">&#x2715;</button>${content}`
+    ? `<button class="hedge-pin-close" onclick="hideHedgePopup(true)">&#x2715;</button>${content}`
     : content;
   popup.classList.toggle('pinned', pinned);
   popup.classList.add('show');
   positionHedgePopup(x, y);
+  if (pinned) initHedgeDrag(popup);
 }
 
 function hideHedgePopup(force = false) {
@@ -699,6 +705,56 @@ function hideHedgePopup(force = false) {
   hedgePinned = false;
   const popup = document.getElementById('hedgePopup');
   popup.classList.remove('show', 'pinned');
+  destroyHedgeDrag(popup);
+}
+
+function initHedgeDrag(popup) {
+  const inner = document.getElementById('hedgePopupInner');
+  let isDragging = false, startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+  function onMouseDown(e) {
+    // Ignore close button clicks
+    if (e.target.classList.contains('hedge-pin-close') || e.target.closest('.hedge-pin-close')) return;
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    origLeft = parseInt(popup.style.left, 10) || 0;
+    origTop  = parseInt(popup.style.top,  10) || 0;
+    popup.classList.add('dragging-popup');
+    e.preventDefault();
+  }
+
+  function onMouseMove(e) {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    const pw = popup.offsetWidth, ph = popup.offsetHeight;
+    const newLeft = Math.max(0, Math.min(window.innerWidth  - pw, origLeft + dx));
+    const newTop  = Math.max(0, Math.min(window.innerHeight - ph, origTop  + dy));
+    popup.style.left = newLeft + 'px';
+    popup.style.top  = newTop  + 'px';
+  }
+
+  function onMouseUp() {
+    if (!isDragging) return;
+    isDragging = false;
+    popup.classList.remove('dragging-popup');
+  }
+
+  inner.addEventListener('mousedown', onMouseDown);
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+
+  // Store cleanup refs on the popup element
+  popup._dragCleanup = () => {
+    inner.removeEventListener('mousedown', onMouseDown);
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  };
+}
+
+function destroyHedgeDrag(popup) {
+  if (popup._dragCleanup) { popup._dragCleanup(); popup._dragCleanup = null; }
 }
 
 function onThreadClick(threadKey, x, y) {
