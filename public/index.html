@@ -1036,39 +1036,75 @@ function renderOrdersFor(orders) {
 
 function renderMarginHealth(data) {
   const hl = data.hyperliquid, bn = data.binance;
-  const hlPct = parseFloat(hl.marginPct), bnPct = parseFloat(bn.marginPct);
-  const hlColor = hlPct > 80 ? 'var(--danger)' : hlPct > 50 ? 'var(--warning)' : 'var(--hl)';
-  const bnColor = bnPct > 80 ? 'var(--danger)' : bnPct > 50 ? 'var(--warning)' : 'var(--bn)';
+  const hlPct = Math.min(parseFloat(hl.marginPct) || 0, 100);
+  const bnPct = Math.min(parseFloat(bn.marginPct) || 0, 100);
 
-  const makeDonut = (pct, color) => `
-    <div style="width:44px;height:44px;border-radius:50%;background:conic-gradient(${color} ${pct}%, var(--surface2) ${pct}% 100%);position:relative;margin:0 auto 6px">
-      <div style="position:absolute;inset:7px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center">
-        <span style="font-size:9px;font-weight:600;color:${color}">${pct}%</span>
+  // Per-exchange color
+  const exchColor = (pct, base) => pct > 80 ? 'var(--danger)' : pct > 50 ? 'var(--warning)' : base;
+  const hlCol = exchColor(hlPct, 'var(--hl)');
+  const bnCol = exchColor(bnPct, 'var(--bn)');
+
+  // Overall status — use worst of the two
+  const worstPct = Math.max(hlPct, bnPct);
+  const [statusLabel, statusCol, statusBg] =
+    worstPct > 80 ? ['Critical', 'var(--red)',   'var(--red-bg)']
+  : worstPct > 50 ? ['Warning',  'var(--amber)', 'var(--amber-bg)']
+  :                 ['Healthy',  'var(--green)',  'var(--green-bg)'];
+
+  // Combined bar: HL segment + BN segment, widths proportional to their used margin
+  // Total equity across both exchanges for proportional sizing of segments
+  const hlEq = parseFloat(hl.equity) || 1;
+  const bnEq = parseFloat(bn.equity) || 1;
+  const totalEq = hlEq + bnEq;
+  // Each exchange's bar width = its share of total equity
+  // Filled portion = its margin utilisation
+  const hlShare = hlEq / totalEq * 100;   // how wide HL's segment is (% of bar)
+  const bnShare = bnEq / totalEq * 100;
+
+  // Free margin total
+  const totalFree = (parseFloat(hl.freeMargin) || 0) + (parseFloat(bn.freeMargin) || 0);
+  const totalUsed = (parseFloat(hl.marginUsed) || 0) + (parseFloat(bn.marginUsed) || 0);
+
+  // Per-exchange row: dot + label + % + mini bar
+  const exchRow = (dotCol, label, pct, col, border = true) => `
+    <div style="display:flex;align-items:center;gap:7px;padding:4px 0;${border ? 'border-bottom:0.5px solid var(--border)' : ''}">
+      <span style="width:5px;height:5px;border-radius:50%;background:${dotCol};flex-shrink:0"></span>
+      <span style="font-size:10px;font-weight:500;min-width:18px">${label}</span>
+      <span style="font-size:10px;font-weight:700;color:${col};min-width:32px">${fmt(pct, 1)}%</span>
+      <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${col};border-radius:2px;transition:width .4s"></div>
       </div>
     </div>`;
 
-  const legRow = (label, val) => `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0"><span style="color:var(--text3)">${label}</span><span style="font-weight:500">${val}</span></div>`;
-
-  const exchBlock = (dot, label, pct, color, exch) => `
-    <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:5px">
-        <span style="width:5px;height:5px;border-radius:50%;background:${dot};display:inline-block;flex-shrink:0"></span>
-        <span style="font-size:10px;font-weight:500">${label}</span>
-      </div>
-      ${makeDonut(pct, color)}
-      ${legRow('Eq', fmtUsd(exch.equity))}
-      ${legRow('Used', fmtUsd(exch.marginUsed))}
-      ${legRow('Free', fmtUsd(exch.freeMargin))}
-    </div>`;
+  // Stacked bar: HL portion | BN portion, each filled by their utilisation
+  const hlUsedW  = hlShare  * hlPct  / 100;
+  const hlFreeW  = hlShare  * (1 - hlPct  / 100);
+  const bnUsedW  = bnShare  * bnPct  / 100;
+  const bnFreeW  = bnShare  * (1 - bnPct  / 100);
 
   return `<div style="margin-top:8px">
     <div class="card" style="margin-bottom:0;background:var(--surface2);border:none;padding:10px 12px">
-      <p class="section-label" style="margin-bottom:10px">Margin health</p>
-      <div style="display:flex;gap:10px">
-        ${exchBlock('var(--hl)', 'HL', hlPct, hlColor, hl)}
-        <div style="width:0.5px;background:var(--border);flex-shrink:0"></div>
-        ${exchBlock('var(--bn)', 'BN', bnPct, bnColor, bn)}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <p class="section-label" style="margin:0">Margin health</p>
+        <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:${statusBg};color:${statusCol}">${statusLabel}</span>
       </div>
+
+      <!-- Combined stacked bar -->
+      <div style="height:7px;border-radius:4px;overflow:hidden;display:flex;margin-bottom:4px;background:var(--border)">
+        <div style="width:${hlUsedW}%;background:${hlCol};transition:width .4s" title="HL used"></div>
+        <div style="width:${hlFreeW}%;background:${hlCol}30;transition:width .4s" title="HL free"></div>
+        <div style="width:1px;background:var(--surface2);flex-shrink:0"></div>
+        <div style="width:${bnUsedW}%;background:${bnCol};transition:width .4s" title="BN used"></div>
+        <div style="width:${bnFreeW}%;background:${bnCol}30;transition:width .4s" title="BN free"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-bottom:9px">
+        <span>Used <span style="font-weight:600;color:var(--text2)">${fmtUsd(totalUsed)}</span></span>
+        <span>Free <span style="font-weight:600;color:var(--success)">${fmtUsd(totalFree)}</span></span>
+      </div>
+
+      <!-- Per-exchange rows -->
+      ${exchRow('var(--hl)', 'HL', hlPct, hlCol, true)}
+      ${exchRow('var(--bn)', 'BN', bnPct, bnCol, false)}
     </div>
   </div>`;
 }
