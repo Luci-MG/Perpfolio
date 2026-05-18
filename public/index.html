@@ -93,6 +93,7 @@
   .pos-tile { background: var(--surface2); border-radius: var(--radius); padding: 13px; cursor: grab; user-select: none; transition: opacity .15s, transform .15s; }
   .pos-tile.dragging { opacity: 0.35; cursor: grabbing; }
   .pos-tile.drag-over { outline: 1.5px dashed var(--text2) !important; outline-offset: 2px; }
+  .pos-tile.hedge-target { outline: 1.5px solid var(--success) !important; outline-offset: 2px; background: var(--green-bg) !important; }
   .ptile-head { display: flex; align-items: center; gap: 5px; margin-bottom: 7px; }
   .ptile-pair { font-weight: 500; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ptile-mark { font-size: 20px; font-weight: 500; line-height: 1.1; }
@@ -202,8 +203,32 @@
 
   /* Hedge thread connections */
   .pos-tile-grid-wrap { position: relative; }
-  #thread-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  #thread-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  #thread-svg .thread-hit { pointer-events: stroke; cursor: pointer; }
+  #thread-svg .thread-hit:hover + .thread-path { opacity: 1 !important; stroke-width: 2 !important; }
+  #thread-svg .thread-path { pointer-events: none; }
   @keyframes thread-march { from { stroke-dashoffset: 16 } to { stroke-dashoffset: 0 } }
+
+  /* Hedge preview popup */
+  .hedge-popup { position: fixed; z-index: 2000; pointer-events: none; display: none; }
+  .hedge-popup.show { display: block; }
+  .hedge-popup.pinned { pointer-events: auto; }
+  .hedge-pin-close { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+  .hedge-pin-close:hover { color: var(--text); }
+  .hedge-popup-inner { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); box-shadow: 0 6px 24px rgba(0,0,0,0.18); padding: 12px 14px; min-width: 220px; max-width: 280px; }
+  .hedge-popup-title { font-size: 11px; font-weight: 600; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+  .hedge-popup-sub { font-size: 10px; color: var(--text3); margin-bottom: 10px; }
+  .hedge-bar-wrap { height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden; margin-bottom: 3px; display: flex; }
+  .hedge-bar-long { height: 100%; background: var(--success); border-radius: 3px 0 0 3px; transition: width .2s; }
+  .hedge-bar-short { height: 100%; background: var(--danger); border-radius: 0 3px 3px 0; transition: width .2s; }
+  .hedge-bar-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--text3); margin-bottom: 10px; }
+  .hedge-rows { display: flex; flex-direction: column; gap: 0; }
+  .hedge-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; font-size: 11px; }
+  .hedge-row:not(:last-child) { border-bottom: 0.5px solid var(--border); }
+  .hedge-row-label { color: var(--text2); }
+  .hedge-row-val { font-weight: 600; }
+  .hedge-ratio-ring { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; position: relative; }
+  .hedge-ratio-hole { position: absolute; inset: 6px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -381,6 +406,11 @@
   </div>
 </div>
 
+<!-- Hedge preview popup -->
+<div class="hedge-popup" id="hedgePopup">
+  <div class="hedge-popup-inner" id="hedgePopupInner"></div>
+</div>
+
 <script>
 let autoRefresh;
 let lastData = null;
@@ -546,10 +576,165 @@ function renderPositionTiles(positions) {
   return `<div class="pos-tile-grid-wrap"><div class="pos-tile-grid" id="ptile-grid">${tiles}</div><svg id="thread-svg" aria-hidden="true"></svg></div>`;
 }
 
+// ── Hedge popup helpers ───────────────────────────────────────────────────
+function buildHedgePopup(srcPos, tgtPos) {
+  const longP  = srcPos.side === 'Long' ? srcPos : tgtPos;
+  const shortP = srcPos.side === 'Short' ? srcPos : tgtPos;
+
+  const longSz  = longP.sizeUsd;
+  const shortSz = shortP.sizeUsd;
+  const total   = longSz + shortSz;
+  const netExp  = longSz - shortSz;             // positive = net long, negative = net short
+  const smaller = Math.min(longSz, shortSz);
+  const hedgeRatio = total > 0 ? (smaller / Math.max(longSz, shortSz)) * 100 : 0;
+  const longPct  = total > 0 ? (longSz  / total) * 100 : 50;
+  const shortPct = total > 0 ? (shortSz / total) * 100 : 50;
+
+  const netUpnl  = (longP.upnl || 0) + (shortP.upnl || 0);
+  const netUpnlCol = netUpnl >= 0 ? 'var(--success)' : 'var(--danger)';
+  const sign = n => n >= 0 ? '+' : '';
+
+  // Funding net: if hedged, long pays when rate positive, short receives
+  const longFundingDay  = -(longP.fundingRate  / 100) * longP.sizeUsd  * 3;
+  const shortFundingDay =  (shortP.fundingRate / 100) * shortP.sizeUsd * 3;
+  const netFundingDay   = longFundingDay + shortFundingDay;
+
+  // Avg entry delta
+  const entryDelta = shortP.entry - longP.entry;
+  const entryDeltaCol = entryDelta >= 0 ? 'var(--success)' : 'var(--danger)';
+
+  // Hedge quality label
+  const label = hedgeRatio >= 95 ? 'Full hedge' : hedgeRatio >= 70 ? 'Partial hedge' : hedgeRatio >= 40 ? 'Light hedge' : 'Skewed';
+  const labelCol = hedgeRatio >= 95 ? 'var(--success)' : hedgeRatio >= 70 ? 'var(--warning)' : 'var(--danger)';
+
+  // Mini donut via conic-gradient
+  const donutGrad = `conic-gradient(var(--success) ${longPct}%, var(--danger) ${longPct}% 100%)`;
+
+  const sameExch = longP.exchange === shortP.exchange;
+  const exchNote = sameExch ? '' : `<span style="font-size:9px;color:var(--text3);margin-left:auto">cross-exchange</span>`;
+
+  return `
+    <div class="hedge-popup-title">
+      <div style="width:10px;height:10px;border-radius:50%;background:${labelCol};flex-shrink:0"></div>
+      ${longP.pair} hedge
+      ${exchNote}
+    </div>
+    <div class="hedge-popup-sub">${label} · ${fmt(hedgeRatio, 1)}% matched</div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="hedge-ratio-ring" style="background:${donutGrad}">
+        <div class="hedge-ratio-hole" style="color:${labelCol}">${fmt(hedgeRatio,0)}%</div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="hedge-bar-wrap">
+          <div class="hedge-bar-long"  style="width:${longPct}%"></div>
+          <div class="hedge-bar-short" style="width:${shortPct}%"></div>
+        </div>
+        <div class="hedge-bar-labels">
+          <span style="color:var(--success)">L ${fmtUsd(longSz)}</span>
+          <span style="color:var(--danger)">S ${fmtUsd(shortSz)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hedge-rows">
+      <div class="hedge-row">
+        <span class="hedge-row-label">Net exposure</span>
+        <span class="hedge-row-val" style="color:${netExp >= 0 ? 'var(--success)' : 'var(--danger)'}">
+          ${netExp >= 0 ? 'Long' : 'Short'} ${fmtUsd(Math.abs(netExp))}
+        </span>
+      </div>
+      <div class="hedge-row">
+        <span class="hedge-row-label">Combined uPnL</span>
+        <span class="hedge-row-val" style="color:${netUpnlCol}">${sign(netUpnl)}${fmtUsd(Math.abs(netUpnl))}</span>
+      </div>
+      <div class="hedge-row">
+        <span class="hedge-row-label">Long entry</span>
+        <span class="hedge-row-val">${fmtUsd(longP.entry)}</span>
+      </div>
+      <div class="hedge-row">
+        <span class="hedge-row-label">Short entry</span>
+        <span class="hedge-row-val">${fmtUsd(shortP.entry)}</span>
+      </div>
+      <div class="hedge-row">
+        <span class="hedge-row-label">Entry spread</span>
+        <span class="hedge-row-val" style="color:${entryDeltaCol}">${sign(entryDelta)}${fmtUsd(Math.abs(entryDelta))}</span>
+      </div>
+      <div class="hedge-row">
+        <span class="hedge-row-label">Net funding/day</span>
+        <span class="hedge-row-val" style="color:${netFundingDay >= 0 ? 'var(--success)' : 'var(--danger)'}">
+          ${sign(netFundingDay)}${fmtUsd(Math.abs(netFundingDay))}
+        </span>
+      </div>
+    </div>`;
+}
+
+let hedgePinned = false;
+
+function positionHedgePopup(x, y) {
+  const popup = document.getElementById('hedgePopup');
+  const pw = 280, ph = 300;
+  const left = x + 16 + pw > window.innerWidth  ? x - pw - 8 : x + 16;
+  const top  = y + 16 + ph > window.innerHeight ? y - ph - 8 : y + 16;
+  popup.style.left = left + 'px';
+  popup.style.top  = top  + 'px';
+}
+
+function showHedgePopup(content, x, y, pinned = false) {
+  const popup = document.getElementById('hedgePopup');
+  const inner = document.getElementById('hedgePopupInner');
+  // If already pinned, don't overwrite with hover
+  if (hedgePinned && !pinned) return;
+  hedgePinned = pinned;
+  inner.innerHTML = pinned
+    ? `<button class="hedge-pin-close" onclick="hideHedgePopup()">&#x2715;</button>${content}`
+    : content;
+  popup.classList.toggle('pinned', pinned);
+  popup.classList.add('show');
+  positionHedgePopup(x, y);
+}
+
+function hideHedgePopup(force = false) {
+  if (hedgePinned && !force) return;
+  hedgePinned = false;
+  const popup = document.getElementById('hedgePopup');
+  popup.classList.remove('show', 'pinned');
+}
+
+function onThreadClick(threadKey, x, y) {
+  // If clicking the same thread that's already pinned, toggle it off
+  const popup = document.getElementById('hedgePopup');
+  if (hedgePinned && popup.dataset.threadKey === threadKey) {
+    hideHedgePopup(true);
+    return;
+  }
+  if (!lastData) return;
+  const all = [...(lastData.hyperliquid?.positions||[]), ...(lastData.binance?.positions||[])];
+  const matches = all.filter(p => normalizePairKey(p.pair) === threadKey);
+  const longP  = matches.find(p => p.side === 'Long');
+  const shortP = matches.find(p => p.side === 'Short');
+  if (!longP || !shortP) return;
+  const content = buildHedgePopup(longP, shortP);
+  popup.dataset.threadKey = threadKey;
+  showHedgePopup(content, x, y, true);
+}
+
+function isHedgePair(srcTile, tgtTile) {
+  try {
+    const a = JSON.parse(srcTile.dataset.pos);
+    const b = JSON.parse(tgtTile.dataset.pos);
+    return normalizePairKey(a.pair) === normalizePairKey(b.pair)
+        && a.side !== b.side
+        && (a.side === 'Long' || a.side === 'Short')
+        && (b.side === 'Long' || b.side === 'Short');
+  } catch { return false; }
+}
+
 function initTileDrag() {
   const grid = document.getElementById('ptile-grid');
   if (!grid) return;
   let dragSrc = null;
+  let hedgeTarget = null;
 
   grid.querySelectorAll('.pos-tile').forEach(tile => {
     tile.addEventListener('contextmenu', e => {
@@ -565,26 +750,67 @@ function initTileDrag() {
 
     tile.addEventListener('dragend', () => {
       tile.classList.remove('dragging');
-      grid.querySelectorAll('.pos-tile').forEach(t => t.classList.remove('drag-over'));
+      grid.querySelectorAll('.pos-tile').forEach(t => {
+        t.classList.remove('drag-over');
+        t.classList.remove('hedge-target');
+      });
       dragSrc = null;
+      hedgeTarget = null;
+      hideHedgePopup(true);
     });
 
     tile.addEventListener('dragover', e => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
-      if (tile !== dragSrc) {
-        grid.querySelectorAll('.pos-tile').forEach(t => t.classList.remove('drag-over'));
+      if (tile === dragSrc) return;
+
+      grid.querySelectorAll('.pos-tile').forEach(t => {
+        t.classList.remove('drag-over');
+        t.classList.remove('hedge-target');
+      });
+
+      if (isHedgePair(dragSrc, tile)) {
+        tile.classList.add('hedge-target');
+        hedgeTarget = tile;
+        try {
+          const srcPos = JSON.parse(dragSrc.dataset.pos);
+          const tgtPos = JSON.parse(tile.dataset.pos);
+          // enrich with fundingRate + upnl from lastData
+          const enrich = p => {
+            if (!lastData) return p;
+            const all = [...(lastData.hyperliquid?.positions||[]), ...(lastData.binance?.positions||[])];
+            const match = all.find(x => x.exchange === p.exchange && normalizePairKey(x.pair) === normalizePairKey(p.pair) && x.side === p.side);
+            return match ? { ...p, upnl: match.upnl, fundingRate: match.fundingRate } : p;
+          };
+          showHedgePopup(buildHedgePopup(enrich(srcPos), enrich(tgtPos)), e.clientX, e.clientY, false);
+        } catch { hideHedgePopup(true); }
+      } else {
         tile.classList.add('drag-over');
+        hedgeTarget = null;
+        hideHedgePopup(true);
       }
     });
 
     tile.addEventListener('dragleave', e => {
-      if (!tile.contains(e.relatedTarget)) tile.classList.remove('drag-over');
+      if (!tile.contains(e.relatedTarget)) {
+        tile.classList.remove('drag-over');
+        tile.classList.remove('hedge-target');
+        if (hedgeTarget === tile) {
+          hedgeTarget = null;
+          hideHedgePopup(true);
+        }
+      }
     });
 
     tile.addEventListener('drop', e => {
       e.preventDefault();
+      hideHedgePopup(true);
       if (!dragSrc || dragSrc === tile) return;
+      // If it's a hedge pair — don't reorder, just dismiss
+      if (isHedgePair(dragSrc, tile)) {
+        tile.classList.remove('hedge-target');
+        return;
+      }
       const allTiles = [...grid.querySelectorAll('.pos-tile')];
       const srcIdx = allTiles.indexOf(dragSrc);
       const tgtIdx = allTiles.indexOf(tile);
@@ -594,6 +820,17 @@ function initTileDrag() {
       tile.classList.remove('drag-over');
       requestAnimationFrame(drawThreadLines);
     });
+  });
+
+  // Update popup position as mouse moves over the grid
+  grid.addEventListener('dragover', e => {
+    const popup = document.getElementById('hedgePopup');
+    if (!popup.classList.contains('show')) return;
+    const pw = 280, ph = 260;
+    const left = e.clientX + 16 + pw > window.innerWidth  ? e.clientX - pw - 8 : e.clientX + 16;
+    const top  = e.clientY + 16 + ph > window.innerHeight ? e.clientY - ph - 8 : e.clientY + 16;
+    popup.style.left = left + 'px';
+    popup.style.top  = top  + 'px';
   });
 }
 
@@ -667,7 +904,7 @@ function drawThreadLines() {
   svg.innerHTML = '';
 
   const threads = [];
-  Object.values(groups).forEach(tiles => {
+  Object.entries(groups).forEach(([threadKey, tiles]) => {
     if (tiles.length < 2) return;
     const color = tiles[0].dataset.threadColor;
     for (let i = 0; i < tiles.length - 1; i++) {
@@ -681,7 +918,7 @@ function drawThreadLines() {
         const botRowIdx = Math.max(rowA, rowB);
         // Road key for lane assignment
         const roadKey = sameRow ? `sr-${topRowIdx}` : `gap-${topRowIdx}-${botRowIdx}`;
-        threads.push({ rA, rB, color, sameRow, rowA, rowB, topRowIdx, botRowIdx, roadKey });
+        threads.push({ rA, rB, color, sameRow, rowA, rowB, topRowIdx, botRowIdx, roadKey, threadKey });
       }
     }
   });
@@ -693,7 +930,7 @@ function drawThreadLines() {
 
   const LANE_GAP = 3;
 
-  threads.forEach(({ rA, rB, color, sameRow, rowA, rowB, topRowIdx, botRowIdx, lane, laneCount }) => {
+  threads.forEach(({ rA, rB, color, sameRow, rowA, rowB, topRowIdx, botRowIdx, lane, laneCount, threadKey }) => {
     let d, dotA, dotB;
     const lo = (lane - (laneCount - 1) / 2) * LANE_GAP;
 
@@ -733,6 +970,7 @@ function drawThreadLines() {
       }
     }
 
+    // Visible dashed path
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', d);
     path.setAttribute('stroke', color);
@@ -742,8 +980,27 @@ function drawThreadLines() {
     path.setAttribute('stroke-linejoin', 'miter');
     path.setAttribute('stroke-dasharray', '5 3');
     path.setAttribute('opacity', '0.6');
+    path.classList.add('thread-path');
     path.style.animation = 'thread-march 1.2s linear infinite';
+    path.style.transition = 'opacity .15s, stroke-width .15s';
     svg.appendChild(path);
+
+    // Invisible wider hit-target path for click/hover
+    const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    hit.setAttribute('d', d);
+    hit.setAttribute('stroke', 'transparent');
+    hit.setAttribute('stroke-width', '10');
+    hit.setAttribute('fill', 'none');
+    hit.classList.add('thread-hit');
+    // Store thread key on the element so click handler can look up positions
+    hit.dataset.threadKey = threadKey;
+    hit.addEventListener('mouseenter', () => { path.style.opacity = '1'; path.setAttribute('stroke-width', '2'); });
+    hit.addEventListener('mouseleave', () => { path.style.opacity = '0.6'; path.setAttribute('stroke-width', '1'); });
+    hit.addEventListener('click', e => {
+      e.stopPropagation();
+      onThreadClick(hit.dataset.threadKey, e.clientX, e.clientY);
+    });
+    svg.appendChild(hit);
 
     for (const [px, py] of [dotA, dotB]) {
       const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -1089,9 +1346,16 @@ function hideCtxMenu() {
   document.getElementById('ctxMenu').classList.remove('open');
 }
 
-document.addEventListener('click', hideCtxMenu);
+document.addEventListener('click', e => {
+  hideCtxMenu();
+  // Close pinned hedge popup if click is outside it
+  const popup = document.getElementById('hedgePopup');
+  if (hedgePinned && popup && !popup.contains(e.target)) {
+    hideHedgePopup(true);
+  }
+});
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { hideCtxMenu(); closeCalc('calcOverlay'); }
+  if (e.key === 'Escape') { hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); }
 });
 
 function switchCalcTab(tab) {
