@@ -144,6 +144,36 @@
   .donut-leg-row { display: flex; justify-content: space-between; font-size: 11px; }
   .donut-leg-label { color: var(--text2); }
 
+  /* Context menu */
+  .ctx-menu { position: fixed; z-index: 1000; background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); box-shadow: 0 4px 16px rgba(0,0,0,0.15); padding: 4px 0; min-width: 180px; display: none; }
+  .ctx-menu.open { display: block; }
+  .ctx-item { display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 12px; cursor: pointer; color: var(--text); transition: background .12s; }
+  .ctx-item:hover { background: var(--surface2); }
+  .ctx-item svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--text2); }
+  .ctx-sep { height: 0.5px; background: var(--border); margin: 3px 0; }
+  .ctx-label { padding: 5px 14px 2px; font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* Calculator modal */
+  .calc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1100; display: none; align-items: center; justify-content: center; }
+  .calc-overlay.open { display: flex; }
+  .calc-modal { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); padding: 20px; width: 320px; max-width: calc(100vw - 32px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+  .calc-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .calc-sub { font-size: 11px; color: var(--text3); margin-bottom: 16px; }
+  .calc-field { margin-bottom: 11px; }
+  .calc-field label { display: block; font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .calc-field input { width: 100%; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; color: var(--text); font-family: inherit; outline: none; transition: border-color .15s; }
+  .calc-field input:focus { border-color: var(--hl); }
+  .calc-btn { width: 100%; padding: 9px; border-radius: var(--radius); border: none; background: var(--hl); color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 4px; transition: opacity .15s; }
+  .calc-btn:hover { opacity: 0.88; }
+  .calc-result { margin-top: 14px; padding: 12px; background: var(--surface2); border-radius: var(--radius); font-size: 12px; display: none; }
+  .calc-result.show { display: block; }
+  .calc-res-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; }
+  .calc-res-row:not(:last-child) { border-bottom: 0.5px solid var(--border); }
+  .calc-res-label { color: var(--text2); }
+  .calc-res-val { font-weight: 600; }
+  .calc-close { float: right; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; line-height: 1; padding: 0; margin-top: -2px; }
+  .calc-close:hover { color: var(--text); }
+
   /* Hedge thread connections */
   .pos-tile-grid-wrap { position: relative; }
   #thread-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
@@ -170,6 +200,61 @@
         </div>
       </div>
       <div id="sidebar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Right-click context menu -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-label">Calculators</div>
+  <div class="ctx-item" onclick="openCalc('pnl')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    P&amp;L Calculator
+  </div>
+  <div class="ctx-item" onclick="openCalc('avg')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Average Down Calculator
+  </div>
+</div>
+
+<!-- P&L Calculator Modal -->
+<div class="calc-overlay" id="pnlOverlay" onclick="closeCalcOnBg(event,'pnlOverlay')">
+  <div class="calc-modal">
+    <button class="calc-close" onclick="closeCalc('pnlOverlay')">&#x2715;</button>
+    <div class="calc-title">P&amp;L Calculator</div>
+    <div class="calc-sub" id="pnlSub">Estimate profit or loss for a position</div>
+    <div class="calc-field"><label>Entry price</label><input id="pnlEntry" type="number" placeholder="0.00" oninput="calcPnl()"></div>
+    <div class="calc-field"><label>Amount invested (USDT)</label><input id="pnlInvested" type="number" placeholder="0.00" oninput="calcPnl()"></div>
+    <div class="calc-field"><label>Current / exit price</label><input id="pnlCurrent" type="number" placeholder="0.00" oninput="calcPnl()"></div>
+    <div class="calc-field"><label>Side</label>
+      <select id="pnlSide" onchange="calcPnl()" style="width:100%;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+        <option value="Long">Long</option>
+        <option value="Short">Short</option>
+      </select>
+    </div>
+    <div class="calc-result" id="pnlResult">
+      <div class="calc-res-row"><span class="calc-res-label">Position size</span><span class="calc-res-val" id="pnlSize">—</span></div>
+      <div class="calc-res-row"><span class="calc-res-label">P&amp;L</span><span class="calc-res-val" id="pnlPnl">—</span></div>
+      <div class="calc-res-row"><span class="calc-res-label">Return</span><span class="calc-res-val" id="pnlRoi">—</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Average Down Calculator Modal -->
+<div class="calc-overlay" id="avgOverlay" onclick="closeCalcOnBg(event,'avgOverlay')">
+  <div class="calc-modal">
+    <button class="calc-close" onclick="closeCalc('avgOverlay')">&#x2715;</button>
+    <div class="calc-title">Average Down Calculator</div>
+    <div class="calc-sub" id="avgSub">Find how much to add to reach a target average</div>
+    <div class="calc-field"><label>Current entry price</label><input id="avgEntry" type="number" placeholder="0.00" oninput="calcAvg()"></div>
+    <div class="calc-field"><label>Amount invested (USDT)</label><input id="avgInvested" type="number" placeholder="0.00" oninput="calcAvg()"></div>
+    <div class="calc-field"><label>New entry price</label><input id="avgNewEntry" type="number" placeholder="0.00" oninput="calcAvg()"></div>
+    <div class="calc-field"><label>Target average price</label><input id="avgTarget" type="number" placeholder="0.00" oninput="calcAvg()"></div>
+    <div class="calc-result" id="avgResult">
+      <div class="calc-res-row"><span class="calc-res-label">Additional USDT needed</span><span class="calc-res-val" id="avgAdd">—</span></div>
+      <div class="calc-res-row"><span class="calc-res-label">New position size</span><span class="calc-res-val" id="avgNewSize">—</span></div>
+      <div class="calc-res-row"><span class="calc-res-label">Achieved average</span><span class="calc-res-val" id="avgAchieved">—</span></div>
+      <div class="calc-res-row"><span class="calc-res-label">Total invested</span><span class="calc-res-val" id="avgTotal">—</span></div>
     </div>
   </div>
 </div>
@@ -310,7 +395,7 @@ function renderPositionTiles(positions) {
       ? `<span title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.55;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`
       : '';
 
-    return `<div class="pos-tile" draggable="true" data-pos-id="${posId(p)}"${threadAttrs} style="${outlineStyle}">
+    return `<div class="pos-tile" draggable="true" data-pos-id="${posId(p)}"${threadAttrs} style="${outlineStyle}" data-pos='${JSON.stringify({pair:p.pair,side:p.side,entry:p.entry,mark:p.mark,sizeUsd:p.sizeUsd,leverage:p.leverage,exchange:p.exchange})}'>
       <div class="ptile-head">
         <span class="ptile-pair">${p.pair}</span>
         ${threadDot}
@@ -324,11 +409,11 @@ function renderPositionTiles(positions) {
       <div style="height:5px;background:var(--border);border-radius:3px;margin:8px 0 3px;overflow:hidden">
         <div style="height:100%;border-radius:3px;width:${barWidth}%;background:${barColor};transition:width .4s"></div>
       </div>
-      <div style="font-size:10px;color:var(--${distCls});margin-bottom:7px">${dist < 999 ? fmt(dist,1)+'% to liquidation' : 'No liquidation price'}</div>
+      <div style="font-size:10px;color:var(--${distCls});margin-bottom:7px;display:flex;justify-content:space-between;align-items:center"><span>${dist < 999 ? fmt(dist,1)+'% to liquidation' : 'No liquidation price'}</span>${dist < 999 ? `<span style="color:${barColor};font-size:10px">Liq ${fmtUsd(p.liqPrice)}</span>` : ''}</div>
       <div class="ptile-rows">
         <div class="ptile-row"><span class="ptile-label">Size</span><span>${p.size} <span style="color:var(--text3)">(${fmtUsd(p.sizeUsd)})</span></span></div>
         <div class="ptile-row"><span class="ptile-label">Entry</span><span>${fmtUsd(p.entry)}</span></div>
-        <div class="ptile-row"><span class="ptile-label">Liq. price</span><span style="color:var(--${distCls})">${fmtUsd(p.liqPrice)}</span></div>
+
         <div class="ptile-row"><span class="ptile-label">uPnL</span><span>${fmtPnl(p.upnl)}</span></div>
         ${!compact ? `<div class="ptile-row"><span class="ptile-label">Funding/8h</span><span>${p.funding8h}</span></div>` : ''}
         ${!compact ? `<div class="ptile-row"><span class="ptile-label">Daily cost</span><span>${fmtPnl(costDay)}</span></div>` : ''}
@@ -345,6 +430,10 @@ function initTileDrag() {
   let dragSrc = null;
 
   grid.querySelectorAll('.pos-tile').forEach(tile => {
+    tile.addEventListener('contextmenu', e => {
+      try { showCtxMenu(e, JSON.parse(tile.dataset.pos)); } catch(_) { showCtxMenu(e, null); }
+    });
+
     tile.addEventListener('dragstart', e => {
       dragSrc = tile;
       tile.classList.add('dragging');
@@ -812,6 +901,117 @@ async function fetchData() {
   } finally {
     ico.style.animation = 'none';
   }
+}
+
+// ── Context menu & calculators ────────────────────────────────────────────
+let ctxPosition = null;
+
+function showCtxMenu(e, posData) {
+  e.preventDefault();
+  ctxPosition = posData;
+  const menu = document.getElementById('ctxMenu');
+  menu.classList.add('open');
+  const x = Math.min(e.clientX, window.innerWidth - menu.offsetWidth - 8);
+  const y = Math.min(e.clientY, window.innerHeight - menu.offsetHeight - 8);
+  menu.style.left = x + 'px';
+  menu.style.top  = y + 'px';
+}
+
+function hideCtxMenu() {
+  document.getElementById('ctxMenu').classList.remove('open');
+}
+
+document.addEventListener('click', hideCtxMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { hideCtxMenu(); closeCalc('pnlOverlay'); closeCalc('avgOverlay'); } });
+
+function openCalc(type) {
+  hideCtxMenu();
+  const p = ctxPosition;
+  if (type === 'pnl') {
+    if (p) {
+      document.getElementById('pnlSub').textContent = p.pair + ' · ' + p.side;
+      document.getElementById('pnlEntry').value    = p.entry   || '';
+      document.getElementById('pnlCurrent').value  = p.mark    || '';
+      // derive invested from sizeUsd / leverage number
+      const lev = parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1;
+      document.getElementById('pnlInvested').value = p.sizeUsd ? fmt(p.sizeUsd / lev, 2) : '';
+      document.getElementById('pnlSide').value     = p.side === 'Short' ? 'Short' : 'Long';
+    } else {
+      document.getElementById('pnlSub').textContent = 'Estimate profit or loss for a position';
+      ['pnlEntry','pnlInvested','pnlCurrent'].forEach(id => document.getElementById(id).value = '');
+    }
+    document.getElementById('pnlResult').classList.remove('show');
+    document.getElementById('pnlOverlay').classList.add('open');
+    calcPnl();
+  } else {
+    if (p) {
+      document.getElementById('avgSub').textContent = p.pair + ' · ' + p.side;
+      document.getElementById('avgEntry').value   = p.entry   || '';
+      const lev = parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1;
+      document.getElementById('avgInvested').value = p.sizeUsd ? fmt(p.sizeUsd / lev, 2) : '';
+      document.getElementById('avgNewEntry').value  = p.mark    || '';
+    } else {
+      document.getElementById('avgSub').textContent = 'Find how much to add to reach a target average';
+      ['avgEntry','avgInvested','avgNewEntry','avgTarget'].forEach(id => document.getElementById(id).value = '');
+    }
+    document.getElementById('avgResult').classList.remove('show');
+    document.getElementById('avgOverlay').classList.add('open');
+    calcAvg();
+  }
+}
+
+function closeCalc(id) { document.getElementById(id).classList.remove('open'); }
+function closeCalcOnBg(e, id) { if (e.target === document.getElementById(id)) closeCalc(id); }
+
+function calcPnl() {
+  const entry    = parseFloat(document.getElementById('pnlEntry').value);
+  const invested = parseFloat(document.getElementById('pnlInvested').value);
+  const current  = parseFloat(document.getElementById('pnlCurrent').value);
+  const side     = document.getElementById('pnlSide').value;
+  const res      = document.getElementById('pnlResult');
+  if (!entry || !invested || !current) { res.classList.remove('show'); return; }
+
+  const qty     = invested / entry;
+  const pnl     = side === 'Long' ? (current - entry) * qty : (entry - current) * qty;
+  const roi     = (pnl / invested) * 100;
+  const pnlCol  = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
+  const sign    = pnl >= 0 ? '+' : '';
+
+  document.getElementById('pnlSize').textContent  = fmt(qty, 4) + ' units';
+  document.getElementById('pnlPnl').innerHTML     = `<span style="color:${pnlCol}">${sign}$${fmt(Math.abs(pnl))}</span>`;
+  document.getElementById('pnlRoi').innerHTML     = `<span style="color:${pnlCol}">${sign}${fmt(roi, 2)}%</span>`;
+  res.classList.add('show');
+}
+
+function calcAvg() {
+  const entry    = parseFloat(document.getElementById('avgEntry').value);
+  const invested = parseFloat(document.getElementById('avgInvested').value);
+  const newEntry = parseFloat(document.getElementById('avgNewEntry').value);
+  const target   = parseFloat(document.getElementById('avgTarget').value);
+  const res      = document.getElementById('avgResult');
+  if (!entry || !invested || !newEntry || !target) { res.classList.remove('show'); return; }
+
+  // current qty at old entry
+  const qtyOld = invested / entry;
+  // we want: (invested + X) / (qtyOld + X/newEntry) = target
+  // solve for X: target * qtyOld + target * X/newEntry = invested + X
+  // X * (target/newEntry - 1) = invested - target * qtyOld ... wait sign depends
+  // General: X = (target * qtyOld - invested) / (1 - target / newEntry)
+  const numerator   = target * qtyOld - invested;
+  const denominator = 1 - target / newEntry;
+  if (Math.abs(denominator) < 1e-10) { res.classList.remove('show'); return; }
+  const addAmt = numerator / denominator;
+  if (addAmt < 0) { res.classList.remove('show'); return; }
+
+  const newQty      = qtyOld + addAmt / newEntry;
+  const totalInvest = invested + addAmt;
+  const achieved    = totalInvest / newQty;
+
+  document.getElementById('avgAdd').textContent      = '$' + fmt(addAmt);
+  document.getElementById('avgNewSize').textContent  = fmt(newQty, 4) + ' units';
+  document.getElementById('avgAchieved').textContent = '$' + fmt(achieved);
+  document.getElementById('avgTotal').textContent    = '$' + fmt(totalInvest);
+  res.classList.add('show');
 }
 
 fetchData();
