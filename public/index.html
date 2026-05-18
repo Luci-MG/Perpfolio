@@ -156,23 +156,37 @@
   /* Calculator modal */
   .calc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1100; display: none; align-items: center; justify-content: center; }
   .calc-overlay.open { display: flex; }
-  .calc-modal { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); padding: 20px; width: 320px; max-width: calc(100vw - 32px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
-  .calc-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-  .calc-sub { font-size: 11px; color: var(--text3); margin-bottom: 16px; }
-  .calc-field { margin-bottom: 11px; }
-  .calc-field label { display: block; font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
-  .calc-field input { width: 100%; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; color: var(--text); font-family: inherit; outline: none; transition: border-color .15s; }
-  .calc-field input:focus { border-color: var(--hl); }
-  .calc-btn { width: 100%; padding: 9px; border-radius: var(--radius); border: none; background: var(--hl); color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; margin-top: 4px; transition: opacity .15s; }
-  .calc-btn:hover { opacity: 0.88; }
-  .calc-result { margin-top: 14px; padding: 12px; background: var(--surface2); border-radius: var(--radius); font-size: 12px; display: none; }
+  .calc-modal { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); padding: 0; width: 360px; max-width: calc(100vw - 32px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); overflow: hidden; }
+  .calc-header { padding: 16px 18px 0; }
+  .calc-header-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .calc-title { font-size: 14px; font-weight: 600; }
+  .calc-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .calc-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 17px; line-height: 1; padding: 0; flex-shrink: 0; }
+  .calc-close:hover { color: var(--text); }
+  /* Tab bar */
+  .calc-tabs { display: flex; border-bottom: 0.5px solid var(--border); }
+  .calc-tab { flex: 1; padding: 7px 4px; font-size: 11px; font-weight: 500; color: var(--text3); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit; transition: color .15s, border-color .15s; white-space: nowrap; }
+  .calc-tab.active { color: var(--hl); border-bottom-color: var(--hl); }
+  .calc-tab:hover:not(.active) { color: var(--text2); }
+  /* Body */
+  .calc-body { padding: 16px 18px 18px; }
+  .calc-field { margin-bottom: 10px; }
+  .calc-field label { display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .calc-field label .lbl-toggle { font-size: 10px; color: var(--hl); cursor: pointer; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .calc-field label .lbl-toggle:hover { opacity: 0.8; }
+  .calc-field input, .calc-field select { width: 100%; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; color: var(--text); font-family: inherit; outline: none; transition: border-color .15s; }
+  .calc-field input:focus, .calc-field select:focus { border-color: var(--hl); }
+  .calc-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .calc-mode-toggle { display: flex; background: var(--surface2); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; border: 0.5px solid var(--border); }
+  .calc-mode-btn { flex: 1; padding: 5px 8px; font-size: 11px; color: var(--text2); background: none; border: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
+  .calc-mode-btn.active { background: var(--hl); color: #fff; font-weight: 500; }
+  .calc-result { margin-top: 12px; padding: 11px 12px; background: var(--surface2); border-radius: var(--radius); font-size: 12px; display: none; }
   .calc-result.show { display: block; }
+  .calc-result-warn { font-size: 11px; color: var(--warning); padding: 4px 0 0; }
   .calc-res-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; }
   .calc-res-row:not(:last-child) { border-bottom: 0.5px solid var(--border); }
   .calc-res-label { color: var(--text2); }
   .calc-res-val { font-weight: 600; }
-  .calc-close { float: right; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; line-height: 1; padding: 0; margin-top: -2px; }
-  .calc-close:hover { color: var(--text); }
 
   /* Hedge thread connections */
   .pos-tile-grid-wrap { position: relative; }
@@ -213,48 +227,144 @@
   </div>
   <div class="ctx-item" onclick="openCalc('avg')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Average Down Calculator
+    Average Down / Up
+  </div>
+  <div class="ctx-item" onclick="openCalc('liq')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Liquidation Price
   </div>
 </div>
 
-<!-- P&L Calculator Modal -->
-<div class="calc-overlay" id="pnlOverlay" onclick="closeCalcOnBg(event,'pnlOverlay')">
+<!-- Unified Calculator Modal -->
+<div class="calc-overlay" id="calcOverlay" onclick="closeCalcOnBg(event,'calcOverlay')">
   <div class="calc-modal">
-    <button class="calc-close" onclick="closeCalc('pnlOverlay')">&#x2715;</button>
-    <div class="calc-title">P&amp;L Calculator</div>
-    <div class="calc-sub" id="pnlSub">Estimate profit or loss for a position</div>
-    <div class="calc-field"><label>Entry price</label><input id="pnlEntry" type="number" placeholder="0.00" oninput="calcPnl()"></div>
-    <div class="calc-field"><label>Amount invested (USDT)</label><input id="pnlInvested" type="number" placeholder="0.00" oninput="calcPnl()"></div>
-    <div class="calc-field"><label>Current / exit price</label><input id="pnlCurrent" type="number" placeholder="0.00" oninput="calcPnl()"></div>
-    <div class="calc-field"><label>Side</label>
-      <select id="pnlSide" onchange="calcPnl()" style="width:100%;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
-        <option value="Long">Long</option>
-        <option value="Short">Short</option>
-      </select>
+    <div class="calc-header">
+      <div class="calc-header-row">
+        <div>
+          <div class="calc-title" id="calcTitle">Calculator</div>
+          <div class="calc-sub" id="calcSub"></div>
+        </div>
+        <button class="calc-close" onclick="closeCalc('calcOverlay')">&#x2715;</button>
+      </div>
     </div>
-    <div class="calc-result" id="pnlResult">
-      <div class="calc-res-row"><span class="calc-res-label">Position size</span><span class="calc-res-val" id="pnlSize">—</span></div>
-      <div class="calc-res-row"><span class="calc-res-label">P&amp;L</span><span class="calc-res-val" id="pnlPnl">—</span></div>
-      <div class="calc-res-row"><span class="calc-res-label">Return</span><span class="calc-res-val" id="pnlRoi">—</span></div>
+    <div class="calc-tabs">
+      <button class="calc-tab" id="tab-pnl" onclick="switchCalcTab('pnl')">P&amp;L</button>
+      <button class="calc-tab" id="tab-avg" onclick="switchCalcTab('avg')">Avg Down/Up</button>
+      <button class="calc-tab" id="tab-liq" onclick="switchCalcTab('liq')">Liq Price</button>
     </div>
-  </div>
-</div>
 
-<!-- Average Down Calculator Modal -->
-<div class="calc-overlay" id="avgOverlay" onclick="closeCalcOnBg(event,'avgOverlay')">
-  <div class="calc-modal">
-    <button class="calc-close" onclick="closeCalc('avgOverlay')">&#x2715;</button>
-    <div class="calc-title">Average Down Calculator</div>
-    <div class="calc-sub" id="avgSub">Find how much to add to reach a target average</div>
-    <div class="calc-field"><label>Current entry price</label><input id="avgEntry" type="number" placeholder="0.00" oninput="calcAvg()"></div>
-    <div class="calc-field"><label>Amount invested (USDT)</label><input id="avgInvested" type="number" placeholder="0.00" oninput="calcAvg()"></div>
-    <div class="calc-field"><label>New entry price</label><input id="avgNewEntry" type="number" placeholder="0.00" oninput="calcAvg()"></div>
-    <div class="calc-field"><label>Target average price</label><input id="avgTarget" type="number" placeholder="0.00" oninput="calcAvg()"></div>
-    <div class="calc-result" id="avgResult">
-      <div class="calc-res-row"><span class="calc-res-label">Additional USDT needed</span><span class="calc-res-val" id="avgAdd">—</span></div>
-      <div class="calc-res-row"><span class="calc-res-label">New position size</span><span class="calc-res-val" id="avgNewSize">—</span></div>
-      <div class="calc-res-row"><span class="calc-res-label">Achieved average</span><span class="calc-res-val" id="avgAchieved">—</span></div>
-      <div class="calc-res-row"><span class="calc-res-label">Total invested</span><span class="calc-res-val" id="avgTotal">—</span></div>
+    <!-- ── P&L tab ── -->
+    <div class="calc-body" id="calcBody-pnl">
+      <div class="calc-mode-toggle">
+        <button class="calc-mode-btn active" id="pnlMode-std" onclick="setPnlMode('std')">P&amp;L from exit</button>
+        <button class="calc-mode-btn" id="pnlMode-rev" onclick="setPnlMode('rev')">Target exit price</button>
+      </div>
+      <div class="calc-field-row">
+        <div class="calc-field">
+          <label>Side</label>
+          <select id="pnlSide" onchange="calcPnl()">
+            <option value="Long">Long</option>
+            <option value="Short">Short</option>
+          </select>
+        </div>
+        <div class="calc-field">
+          <label>Leverage</label>
+          <input id="pnlLev" type="number" min="1" max="200" placeholder="1" oninput="calcPnl()">
+        </div>
+      </div>
+      <div class="calc-field">
+        <label>Entry price</label>
+        <input id="pnlEntry" type="number" placeholder="0.00" oninput="calcPnl()">
+      </div>
+      <div class="calc-field">
+        <label>
+          <span id="pnlSizeLbl">Amount invested (USDT)</span>
+          <span class="lbl-toggle" onclick="togglePnlSizeMode()">Switch to qty</span>
+        </label>
+        <input id="pnlInvested" type="number" placeholder="0.00" oninput="calcPnl()">
+      </div>
+      <!-- Standard mode: exit price field -->
+      <div class="calc-field" id="pnlExitWrap">
+        <label>Exit price</label>
+        <input id="pnlCurrent" type="number" placeholder="0.00" oninput="calcPnl()">
+      </div>
+      <!-- Reverse mode: target return field -->
+      <div class="calc-field" id="pnlTargetWrap" style="display:none">
+        <label>Target return (%)</label>
+        <input id="pnlTargetRoi" type="number" placeholder="e.g. 50" oninput="calcPnl()">
+      </div>
+      <div class="calc-result" id="pnlResult">
+        <div class="calc-res-row"><span class="calc-res-label">Position size</span><span class="calc-res-val" id="pnlSize">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Margin used</span><span class="calc-res-val" id="pnlMargin">—</span></div>
+        <div class="calc-res-row" id="pnlPnlRow"><span class="calc-res-label">P&amp;L</span><span class="calc-res-val" id="pnlPnl">—</span></div>
+        <div class="calc-res-row" id="pnlRoiRow"><span class="calc-res-label">Return on margin</span><span class="calc-res-val" id="pnlRoi">—</span></div>
+        <div class="calc-res-row" id="pnlExitRow" style="display:none"><span class="calc-res-label">Exit price needed</span><span class="calc-res-val" id="pnlExitPrice">—</span></div>
+      </div>
+    </div>
+
+    <!-- ── Average Down/Up tab ── -->
+    <div class="calc-body" id="calcBody-avg" style="display:none">
+      <div class="calc-field">
+        <label>Leverage</label>
+        <input id="avgLev" type="number" min="1" max="200" placeholder="1" oninput="calcAvg()">
+      </div>
+      <div class="calc-field">
+        <label>Current entry price</label>
+        <input id="avgEntry" type="number" placeholder="0.00" oninput="calcAvg()">
+      </div>
+      <div class="calc-field">
+        <label>
+          <span id="avgSizeLbl">Amount invested (USDT)</span>
+          <span class="lbl-toggle" onclick="toggleAvgSizeMode()">Switch to qty</span>
+        </label>
+        <input id="avgInvested" type="number" placeholder="0.00" oninput="calcAvg()">
+      </div>
+      <div class="calc-field">
+        <label>New entry price <span style="color:var(--text3);font-size:9px;text-transform:none;letter-spacing:0">(avg down = lower, up = higher)</span></label>
+        <input id="avgNewEntry" type="number" placeholder="0.00" oninput="calcAvg()">
+      </div>
+      <div class="calc-field">
+        <label>Target average price</label>
+        <input id="avgTarget" type="number" placeholder="0.00" oninput="calcAvg()">
+      </div>
+      <div class="calc-result" id="avgResult">
+        <div class="calc-res-row"><span class="calc-res-label">Additional USDT needed</span><span class="calc-res-val" id="avgAdd">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Additional margin</span><span class="calc-res-val" id="avgAddMargin">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">New position size</span><span class="calc-res-val" id="avgNewSize">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Achieved average</span><span class="calc-res-val" id="avgAchieved">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Total notional</span><span class="calc-res-val" id="avgTotal">—</span></div>
+        <div id="avgWarnWrap"></div>
+      </div>
+    </div>
+
+    <!-- ── Liquidation Price tab ── -->
+    <div class="calc-body" id="calcBody-liq" style="display:none">
+      <div class="calc-field-row">
+        <div class="calc-field">
+          <label>Side</label>
+          <select id="liqSide" onchange="calcLiq()">
+            <option value="Long">Long</option>
+            <option value="Short">Short</option>
+          </select>
+        </div>
+        <div class="calc-field">
+          <label>Leverage</label>
+          <input id="liqLev" type="number" min="1" max="200" placeholder="10" oninput="calcLiq()">
+        </div>
+      </div>
+      <div class="calc-field">
+        <label>Entry price</label>
+        <input id="liqEntry" type="number" placeholder="0.00" oninput="calcLiq()">
+      </div>
+      <div class="calc-field">
+        <label>Maintenance margin rate (%) <span style="color:var(--text3);font-size:9px;text-transform:none;letter-spacing:0">default 0.5%</span></label>
+        <input id="liqMmr" type="number" placeholder="0.5" step="0.1" oninput="calcLiq()">
+      </div>
+      <div class="calc-result" id="liqResult">
+        <div class="calc-res-row"><span class="calc-res-label">Liquidation price</span><span class="calc-res-val" id="liqPrice">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Distance to liq</span><span class="calc-res-val" id="liqDist">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Max adverse move</span><span class="calc-res-val" id="liqMove">—</span></div>
+      </div>
     </div>
   </div>
 </div>
@@ -905,6 +1015,10 @@ async function fetchData() {
 
 // ── Context menu & calculators ────────────────────────────────────────────
 let ctxPosition = null;
+let activeCalcTab = 'pnl';
+let pnlMode = 'std';        // 'std' | 'rev'
+let pnlSizeMode = 'usdt';  // 'usdt' | 'qty'
+let avgSizeMode = 'usdt';  // 'usdt' | 'qty'
 
 function showCtxMenu(e, posData) {
   e.preventDefault();
@@ -922,95 +1036,275 @@ function hideCtxMenu() {
 }
 
 document.addEventListener('click', hideCtxMenu);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { hideCtxMenu(); closeCalc('pnlOverlay'); closeCalc('avgOverlay'); } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { hideCtxMenu(); closeCalc('calcOverlay'); }
+});
+
+function switchCalcTab(tab) {
+  activeCalcTab = tab;
+  ['pnl','avg','liq'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`calcBody-${t}`).style.display = t === tab ? '' : 'none';
+  });
+  const titles = { pnl: 'P&L Calculator', avg: 'Average Down / Up', liq: 'Liquidation Price' };
+  document.getElementById('calcTitle').textContent = titles[tab];
+  if (tab === 'pnl') calcPnl();
+  if (tab === 'avg') calcAvg();
+  if (tab === 'liq') calcLiq();
+}
 
 function openCalc(type) {
   hideCtxMenu();
   const p = ctxPosition;
-  if (type === 'pnl') {
-    if (p) {
-      document.getElementById('pnlSub').textContent = p.pair + ' · ' + p.side;
-      document.getElementById('pnlEntry').value    = p.entry   || '';
-      document.getElementById('pnlCurrent').value  = p.mark    || '';
-      // derive invested from sizeUsd / leverage number
-      const lev = parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1;
+  const lev = p ? (parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1) : null;
+
+  // Pre-fill P&L tab
+  if (p) {
+    document.getElementById('pnlSide').value    = p.side === 'Short' ? 'Short' : 'Long';
+    document.getElementById('pnlEntry').value   = p.entry || '';
+    document.getElementById('pnlCurrent').value = p.mark  || '';
+    document.getElementById('pnlLev').value     = lev || '';
+    // size mode: invested = notional / lev
+    if (pnlSizeMode === 'usdt') {
       document.getElementById('pnlInvested').value = p.sizeUsd ? fmt(p.sizeUsd / lev, 2) : '';
-      document.getElementById('pnlSide').value     = p.side === 'Short' ? 'Short' : 'Long';
     } else {
-      document.getElementById('pnlSub').textContent = 'Estimate profit or loss for a position';
-      ['pnlEntry','pnlInvested','pnlCurrent'].forEach(id => document.getElementById(id).value = '');
+      const qty = p.sizeUsd && p.entry ? fmt(p.sizeUsd / p.entry, 6) : '';
+      document.getElementById('pnlInvested').value = qty;
     }
-    document.getElementById('pnlResult').classList.remove('show');
-    document.getElementById('pnlOverlay').classList.add('open');
-    calcPnl();
   } else {
-    if (p) {
-      document.getElementById('avgSub').textContent = p.pair + ' · ' + p.side;
-      document.getElementById('avgEntry').value   = p.entry   || '';
-      const lev = parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1;
-      document.getElementById('avgInvested').value = p.sizeUsd ? fmt(p.sizeUsd / lev, 2) : '';
-      document.getElementById('avgNewEntry').value  = p.mark    || '';
-    } else {
-      document.getElementById('avgSub').textContent = 'Find how much to add to reach a target average';
-      ['avgEntry','avgInvested','avgNewEntry','avgTarget'].forEach(id => document.getElementById(id).value = '');
-    }
-    document.getElementById('avgResult').classList.remove('show');
-    document.getElementById('avgOverlay').classList.add('open');
-    calcAvg();
+    ['pnlEntry','pnlInvested','pnlCurrent','pnlLev','pnlTargetRoi'].forEach(id => document.getElementById(id).value = '');
   }
+  document.getElementById('pnlResult').classList.remove('show');
+
+  // Pre-fill Avg tab
+  if (p) {
+    document.getElementById('avgEntry').value   = p.entry || '';
+    document.getElementById('avgNewEntry').value = p.mark || '';
+    document.getElementById('avgLev').value     = lev || '';
+    if (avgSizeMode === 'usdt') {
+      document.getElementById('avgInvested').value = p.sizeUsd ? fmt(p.sizeUsd / lev, 2) : '';
+    } else {
+      document.getElementById('avgInvested').value = p.sizeUsd && p.entry ? fmt(p.sizeUsd / p.entry, 6) : '';
+    }
+  } else {
+    ['avgEntry','avgInvested','avgNewEntry','avgTarget','avgLev'].forEach(id => document.getElementById(id).value = '');
+  }
+  document.getElementById('avgResult').classList.remove('show');
+
+  // Pre-fill Liq tab
+  if (p) {
+    document.getElementById('liqSide').value  = p.side === 'Short' ? 'Short' : 'Long';
+    document.getElementById('liqEntry').value = p.entry || '';
+    document.getElementById('liqLev').value   = lev || '';
+  } else {
+    ['liqEntry','liqLev'].forEach(id => document.getElementById(id).value = '');
+  }
+  document.getElementById('liqResult').classList.remove('show');
+
+  // Set subtitle
+  document.getElementById('calcSub').textContent = p ? `${p.pair} · ${p.side}` : '';
+
+  // Open the right tab
+  switchCalcTab(type);
+  document.getElementById('calcOverlay').classList.add('open');
 }
 
 function closeCalc(id) { document.getElementById(id).classList.remove('open'); }
 function closeCalcOnBg(e, id) { if (e.target === document.getElementById(id)) closeCalc(id); }
 
+// ── P&L mode helpers ──────────────────────────────────────────────────────
+function setPnlMode(mode) {
+  pnlMode = mode;
+  document.getElementById('pnlMode-std').classList.toggle('active', mode === 'std');
+  document.getElementById('pnlMode-rev').classList.toggle('active', mode === 'rev');
+  document.getElementById('pnlExitWrap').style.display   = mode === 'std' ? '' : 'none';
+  document.getElementById('pnlTargetWrap').style.display = mode === 'rev' ? '' : 'none';
+  document.getElementById('pnlPnlRow').style.display    = mode === 'std' ? '' : 'none';
+  document.getElementById('pnlRoiRow').style.display    = mode === 'std' ? '' : 'none';
+  document.getElementById('pnlExitRow').style.display   = mode === 'rev' ? '' : 'none';
+  document.getElementById('pnlResult').classList.remove('show');
+  calcPnl();
+}
+
+function togglePnlSizeMode() {
+  const entry = parseFloat(document.getElementById('pnlEntry').value);
+  const cur   = parseFloat(document.getElementById('pnlInvested').value);
+  if (pnlSizeMode === 'usdt') {
+    pnlSizeMode = 'qty';
+    document.getElementById('pnlSizeLbl').textContent = 'Position size (units)';
+    document.querySelector('[onclick="togglePnlSizeMode()"]').textContent = 'Switch to USDT';
+    // convert USDT → qty using entry price
+    if (cur && entry) document.getElementById('pnlInvested').value = fmt(cur / entry, 6);
+  } else {
+    pnlSizeMode = 'usdt';
+    document.getElementById('pnlSizeLbl').textContent = 'Amount invested (USDT)';
+    document.querySelector('[onclick="togglePnlSizeMode()"]').textContent = 'Switch to qty';
+    // convert qty → USDT using entry price
+    if (cur && entry) document.getElementById('pnlInvested').value = fmt(cur * entry, 2);
+  }
+  calcPnl();
+}
+
+function toggleAvgSizeMode() {
+  const entry = parseFloat(document.getElementById('avgEntry').value);
+  const cur   = parseFloat(document.getElementById('avgInvested').value);
+  if (avgSizeMode === 'usdt') {
+    avgSizeMode = 'qty';
+    document.getElementById('avgSizeLbl').textContent = 'Position size (units)';
+    document.querySelector('[onclick="toggleAvgSizeMode()"]').textContent = 'Switch to USDT';
+    if (cur && entry) document.getElementById('avgInvested').value = fmt(cur / entry, 6);
+  } else {
+    avgSizeMode = 'usdt';
+    document.getElementById('avgSizeLbl').textContent = 'Amount invested (USDT)';
+    document.querySelector('[onclick="toggleAvgSizeMode()"]').textContent = 'Switch to qty';
+    if (cur && entry) document.getElementById('avgInvested').value = fmt(cur * entry, 2);
+  }
+  calcAvg();
+}
+
+// ── Calculator logic ───────────────────────────────────────────────────────
 function calcPnl() {
-  const entry    = parseFloat(document.getElementById('pnlEntry').value);
-  const invested = parseFloat(document.getElementById('pnlInvested').value);
-  const current  = parseFloat(document.getElementById('pnlCurrent').value);
-  const side     = document.getElementById('pnlSide').value;
-  const res      = document.getElementById('pnlResult');
-  if (!entry || !invested || !current) { res.classList.remove('show'); return; }
+  const entry   = parseFloat(document.getElementById('pnlEntry').value);
+  const rawSize = parseFloat(document.getElementById('pnlInvested').value);
+  const side    = document.getElementById('pnlSide').value;
+  const lev     = parseFloat(document.getElementById('pnlLev').value) || 1;
+  const res     = document.getElementById('pnlResult');
 
-  const qty     = invested / entry;
-  const pnl     = side === 'Long' ? (current - entry) * qty : (entry - current) * qty;
-  const roi     = (pnl / invested) * 100;
-  const pnlCol  = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
-  const sign    = pnl >= 0 ? '+' : '';
+  if (!entry || !rawSize) { res.classList.remove('show'); return; }
 
-  document.getElementById('pnlSize').textContent  = fmt(qty, 4) + ' units';
-  document.getElementById('pnlPnl').innerHTML     = `<span style="color:${pnlCol}">${sign}$${fmt(Math.abs(pnl))}</span>`;
-  document.getElementById('pnlRoi').innerHTML     = `<span style="color:${pnlCol}">${sign}${fmt(roi, 2)}%</span>`;
+  // Resolve qty and margin
+  let qty, margin;
+  if (pnlSizeMode === 'qty') {
+    qty    = rawSize;
+    margin = (qty * entry) / lev;
+  } else {
+    // rawSize = margin (USDT invested)
+    margin = rawSize;
+    qty    = (margin * lev) / entry;
+  }
+  const notional = qty * entry;
+
+  document.getElementById('pnlSize').textContent   = fmt(qty, 6) + ' units';
+  document.getElementById('pnlMargin').textContent = '$' + fmt(margin);
+
+  if (pnlMode === 'std') {
+    const current = parseFloat(document.getElementById('pnlCurrent').value);
+    if (!current) { res.classList.remove('show'); return; }
+    const pnl    = side === 'Long' ? (current - entry) * qty : (entry - current) * qty;
+    const roi    = (pnl / margin) * 100;
+    const pnlCol = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
+    const sign   = pnl >= 0 ? '+' : '';
+    document.getElementById('pnlPnl').innerHTML = `<span style="color:${pnlCol}">${sign}$${fmt(Math.abs(pnl))}</span>`;
+    document.getElementById('pnlRoi').innerHTML = `<span style="color:${pnlCol}">${sign}${fmt(roi, 2)}%</span>`;
+  } else {
+    // Reverse: solve for exit price given target ROI %
+    const targetRoi = parseFloat(document.getElementById('pnlTargetRoi').value);
+    if (isNaN(targetRoi)) { res.classList.remove('show'); return; }
+    const targetPnl  = margin * targetRoi / 100;
+    // pnl = (exit - entry) * qty   (Long)   →  exit = entry + pnl/qty
+    // pnl = (entry - exit) * qty   (Short)  →  exit = entry - pnl/qty
+    const exitPrice = side === 'Long' ? entry + targetPnl / qty : entry - targetPnl / qty;
+    const col = targetRoi >= 0 ? 'var(--success)' : 'var(--danger)';
+    document.getElementById('pnlExitPrice').innerHTML = `<span style="color:${col}">$${fmt(exitPrice)}</span>`;
+  }
+
   res.classList.add('show');
 }
 
 function calcAvg() {
   const entry    = parseFloat(document.getElementById('avgEntry').value);
-  const invested = parseFloat(document.getElementById('avgInvested').value);
+  const rawSize  = parseFloat(document.getElementById('avgInvested').value);
   const newEntry = parseFloat(document.getElementById('avgNewEntry').value);
   const target   = parseFloat(document.getElementById('avgTarget').value);
+  const lev      = parseFloat(document.getElementById('avgLev').value) || 1;
   const res      = document.getElementById('avgResult');
-  if (!entry || !invested || !newEntry || !target) { res.classList.remove('show'); return; }
+  const warnEl   = document.getElementById('avgWarnWrap');
+  warnEl.innerHTML = '';
 
-  // current qty at old entry
-  const qtyOld = invested / entry;
-  // we want: (invested + X) / (qtyOld + X/newEntry) = target
-  // solve for X: target * qtyOld + target * X/newEntry = invested + X
-  // X * (target/newEntry - 1) = invested - target * qtyOld ... wait sign depends
-  // General: X = (target * qtyOld - invested) / (1 - target / newEntry)
-  const numerator   = target * qtyOld - invested;
+  if (!entry || !rawSize || !newEntry || !target) { res.classList.remove('show'); return; }
+
+  // Resolve current qty (notional units)
+  let qtyOld, marginOld;
+  if (avgSizeMode === 'qty') {
+    qtyOld    = rawSize;
+    marginOld = (qtyOld * entry) / lev;
+  } else {
+    // rawSize = margin (USDT)
+    marginOld = rawSize;
+    qtyOld    = (marginOld * lev) / entry;
+  }
+  const notionalOld = qtyOld * entry;   // total position notional
+
+  // Solve: (notionalOld + X_notional) / (qtyOld + X_notional/newEntry) = target
+  // where X_notional is additional notional to add
+  // Rearranges to: X_notional = (target * qtyOld - notionalOld) / (1 - target/newEntry)
+  const numerator   = target * qtyOld - notionalOld;
   const denominator = 1 - target / newEntry;
+
   if (Math.abs(denominator) < 1e-10) { res.classList.remove('show'); return; }
-  const addAmt = numerator / denominator;
-  if (addAmt < 0) { res.classList.remove('show'); return; }
+  const addNotional = numerator / denominator;
+  const addMargin   = addNotional / lev;
+  const isAvgUp     = newEntry > entry;
 
-  const newQty      = qtyOld + addAmt / newEntry;
-  const totalInvest = invested + addAmt;
-  const achieved    = totalInvest / newQty;
+  if (addNotional < 0) {
+    // Target is not reachable by adding at this price — inform user
+    res.classList.remove('show');
+    const warn = document.createElement('p');
+    warn.className = 'calc-result-warn';
+    warn.style.cssText = 'display:block;margin-top:10px;padding:8px 10px;background:var(--amber-bg);color:var(--amber);border-radius:var(--radius);font-size:11px';
+    warn.textContent = `Target average $${fmt(target)} is not reachable by adding at $${fmt(newEntry)}. Try a different new entry or target.`;
+    warnEl.appendChild(warn);
+    return;
+  }
 
-  document.getElementById('avgAdd').textContent      = '$' + fmt(addAmt);
-  document.getElementById('avgNewSize').textContent  = fmt(newQty, 4) + ' units';
+  const addQty      = addNotional / newEntry;
+  const newQty      = qtyOld + addQty;
+  const totalNotional = notionalOld + addNotional;
+  const achieved    = totalNotional / newQty;
+
+  document.getElementById('avgAdd').textContent      = '$' + fmt(addNotional);
+  document.getElementById('avgAddMargin').textContent = '$' + fmt(addMargin) + ` (${lev}× lev)`;
+  document.getElementById('avgNewSize').textContent  = fmt(newQty, 6) + ' units';
   document.getElementById('avgAchieved').textContent = '$' + fmt(achieved);
-  document.getElementById('avgTotal').textContent    = '$' + fmt(totalInvest);
+  document.getElementById('avgTotal').textContent    = '$' + fmt(totalNotional);
+
+  if (isAvgUp) {
+    warnEl.innerHTML = '<p style="margin-top:6px;padding:6px 8px;background:var(--amber-bg);color:var(--amber);border-radius:var(--radius);font-size:11px">Averaging up — adding at a higher price than current entry.</p>';
+  }
+
+  res.classList.add('show');
+}
+
+function calcLiq() {
+  const entry = parseFloat(document.getElementById('liqEntry').value);
+  const lev   = parseFloat(document.getElementById('liqLev').value);
+  const side  = document.getElementById('liqSide').value;
+  const mmrRaw = parseFloat(document.getElementById('liqMmr').value);
+  const mmr   = isNaN(mmrRaw) ? 0.5 : mmrRaw;   // default 0.5%
+  const res   = document.getElementById('liqResult');
+  if (!entry || !lev) { res.classList.remove('show'); return; }
+
+  // Cross-margin liq price estimate (simplified, linear):
+  // For Long:  liqPrice = entry * (1 - 1/lev + mmr/100)
+  // For Short: liqPrice = entry * (1 + 1/lev - mmr/100)
+  // This matches most perp exchange formulas for cross-margin without funding.
+  const mmrFrac = mmr / 100;
+  let liqPrice;
+  if (side === 'Long') {
+    liqPrice = entry * (1 - 1 / lev + mmrFrac);
+  } else {
+    liqPrice = entry * (1 + 1 / lev - mmrFrac);
+  }
+  liqPrice = Math.max(0, liqPrice);
+
+  const dist = Math.abs(entry - liqPrice) / entry * 100;
+  const move = Math.abs(entry - liqPrice);
+  const col  = dist < 10 ? 'var(--danger)' : dist < 30 ? 'var(--warning)' : 'var(--success)';
+
+  document.getElementById('liqPrice').innerHTML = `<span style="color:${col}">$${fmt(liqPrice)}</span>`;
+  document.getElementById('liqDist').innerHTML  = `<span style="color:${col}">${fmt(dist, 2)}%</span>`;
+  document.getElementById('liqMove').textContent = '$' + fmt(move) + ' per unit';
+
   res.classList.add('show');
 }
 
