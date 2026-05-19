@@ -194,6 +194,11 @@
   .calc-res-label { color: var(--text2); }
   .calc-res-val { font-weight: 600; }
 
+  /* Sidebar numbers hidden state */
+  .sidebar-nums-hidden .val,
+  .sidebar-nums-hidden .b-val,
+  .sidebar-nums-hidden .sb-num { filter: blur(6px); user-select: none; }
+
   /* Sidebar bottom row: funding + calc tiles */
   .sb-bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; align-items: stretch; }
   .sb-funding { background: var(--surface2); border-radius: var(--radius); padding: 10px 12px; min-width: 0; }
@@ -320,9 +325,14 @@
         <div class="sidebar-meta">
           <span class="status-dot loading" id="statusDot"></span>
           <span id="statusText">Connecting…</span>
-          <button class="btn-circle" onclick="fetchData()" title="Refresh">
-            <svg class="refresh-ico" id="refreshIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
-          </button>
+          <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
+            <button class="btn-circle" style="margin-left:0" onclick="fetchData()" title="Refresh">
+              <svg class="refresh-ico" id="refreshIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+            </button>
+            <button class="btn-circle" style="margin-left:0" id="eyeBtn" onclick="toggleSidebarVisibility()" title="Hide numbers">
+              <svg id="eyeIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
       </div>
       <div id="sidebar"></div>
@@ -1224,7 +1234,7 @@ function renderMarginHealth(data) {
     <div style="display:flex;align-items:center;gap:7px;padding:4px 0;${border ? 'border-bottom:0.5px solid var(--border)' : ''}">
       <span style="width:5px;height:5px;border-radius:50%;background:${dotCol};flex-shrink:0"></span>
       <span style="font-size:10px;font-weight:500;min-width:18px">${label}</span>
-      <span style="font-size:10px;font-weight:700;color:${col};min-width:32px">${fmt(pct, 1)}%</span>
+      <span class="sb-num" style="font-size:10px;font-weight:700;color:${col};min-width:32px">${fmt(pct, 1)}%</span>
       <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
         <div style="height:100%;width:${pct}%;background:${col};border-radius:2px;transition:width .4s"></div>
       </div>
@@ -1252,8 +1262,8 @@ function renderMarginHealth(data) {
         <div style="width:${bnFreeW}%;background:${bnCol}30;transition:width .4s" title="BN free"></div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-bottom:9px">
-        <span>Used <span style="font-weight:600;color:var(--text2)">${fmtUsd(totalUsed)}</span></span>
-        <span>Free <span style="font-weight:600;color:var(--success)">${fmtUsd(totalFree)}</span></span>
+        <span>Used <span class="sb-num" style="font-weight:600;color:var(--text2)">${fmtUsd(totalUsed)}</span></span>
+        <span>Free <span class="sb-num" style="font-weight:600;color:var(--success)">${fmtUsd(totalFree)}</span></span>
       </div>
 
       <!-- Per-exchange rows -->
@@ -1275,17 +1285,17 @@ function renderDailyFundingWidget(data) {
   return `
     <p class="section-label" style="margin-bottom:8px">Daily funding</p>
     <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:5px">
-      <span class="${totalCost >= 0 ? 'up' : 'dn'}" style="font-size:15px;font-weight:600">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</span>
+      <span class="sb-num ${totalCost >= 0 ? 'up' : 'dn'}" style="font-size:15px;font-weight:600">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</span>
       <span style="font-size:10px;color:var(--text3)">/day</span>
     </div>
     <div style="display:flex;flex-direction:column;gap:2px">
       <div style="display:flex;justify-content:space-between;font-size:10px">
         <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--hl);display:inline-block"></span><span style="color:var(--text3)">HL</span></span>
-        <span style="color:${color(hlCost)};font-weight:500">${sign(hlCost)}${fmtUsd(Math.abs(hlCost))}</span>
+        <span class="sb-num" style="color:${color(hlCost)};font-weight:500">${sign(hlCost)}${fmtUsd(Math.abs(hlCost))}</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:10px">
         <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--bn);display:inline-block"></span><span style="color:var(--text3)">BN</span></span>
-        <span style="color:${color(bnCost)};font-weight:500">${sign(bnCost)}${fmtUsd(Math.abs(bnCost))}</span>
+        <span class="sb-num" style="color:${color(bnCost)};font-weight:500">${sign(bnCost)}${fmtUsd(Math.abs(bnCost))}</span>
       </div>
     </div>`;
 }
@@ -1495,6 +1505,23 @@ async function fetchData() {
     err.textContent = `Error: ${e.message}`;
   } finally {
     ico.style.animation = 'none';
+  }
+}
+
+// ── Sidebar visibility toggle ─────────────────────────────────────────────
+let sidebarHidden = false;
+function toggleSidebarVisibility() {
+  sidebarHidden = !sidebarHidden;
+  const sidebar = document.getElementById('sidebar');
+  const eyeIco  = document.getElementById('eyeIco');
+  const eyeBtn  = document.getElementById('eyeBtn');
+  sidebar.classList.toggle('sidebar-nums-hidden', sidebarHidden);
+  if (sidebarHidden) {
+    eyeIco.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    eyeBtn.title = 'Show numbers';
+  } else {
+    eyeIco.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    eyeBtn.title = 'Hide numbers';
   }
 }
 
