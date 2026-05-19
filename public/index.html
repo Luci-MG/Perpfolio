@@ -1343,7 +1343,6 @@ function render(data) {
   const bnOrders = data.binance.orders || [];
   const totalOrders = hlOrders.length + bnOrders.length;
 
-  const sectionLabel = posView === 'orders' ? 'Open orders' : 'Open positions';
   const tabsHtml = `<div class="view-tabs">
     <button class="view-tab${posView==='tiles'?' active':''}" data-view="tiles" onclick="setView('tiles')">Tiles</button>
     <button class="view-tab${posView==='list'?' active':''}" data-view="list" onclick="setView('list')">List</button>
@@ -1366,6 +1365,9 @@ function render(data) {
     ...(showHL ? hlOrders : []),
     ...(showBN ? bnOrders : [])
   ];
+  const sectionLabel = posView === 'orders'
+    ? `Open orders <span style="background:var(--surface2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:400;color:var(--text2);vertical-align:middle">${filteredOrders.length}</span>`
+    : `Open positions <span style="background:var(--surface2);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:400;color:var(--text2);vertical-align:middle">${filteredPositions.length}</span>`;
   const unifiedContent = posView === 'orders' ? renderOrdersFor(filteredOrders) : renderPositions(filteredPositions);
 
   let cardHeader;
@@ -1452,24 +1454,6 @@ function render(data) {
           <div class="breakdown">
             <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${fmtUsd(s.hlExposure)}</span></div>
             <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${fmtUsd(s.bnExposure)}</span></div>
-          </div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="metric">
-          <div class="label">Positions</div>
-          <div class="val">${s.positionCount}</div>
-          <div class="breakdown">
-            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${data.hyperliquid.positions.length}</span></div>
-            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${data.binance.positions.length}</span></div>
-          </div>
-        </div>
-        <div class="metric">
-          <div class="label">Orders</div>
-          <div class="val">${s.orderCount}</div>
-          <div class="breakdown">
-            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${hlOrders.length}</span></div>
-            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${bnOrders.length}</span></div>
           </div>
         </div>
       </div>
