@@ -92,8 +92,9 @@ async function getHyperliquidData() {
   const openOrders = (Array.isArray(rawOrders) ? rawOrders : []).map(o => ({
     pair:       `${o.coin}-PERP`,
     side:       o.side === 'B' ? 'Buy' : 'Sell',
-    type:       'Limit',
+    type:       o.orderType === 'Stop' ? 'Stop market' : 'Limit',
     price:      parseFloat(o.limitPx || 0),
+    stopPrice:  o.triggerPx ? parseFloat(o.triggerPx) : null,
     size:       `${parseFloat(o.sz || 0)} ${o.coin}`,
     reduceOnly: o.reduceOnly || false,
     exchange:   'hyperliquid'
@@ -108,11 +109,14 @@ async function getHyperliquidData() {
 }
 
 async function getBinanceData() {
-  const [account, positions, premiumIndex, rawOrders] = await Promise.all([
+  // Fetch regular open orders AND algo/conditional orders (TP/SL, trailing stop) in parallel.
+  // Algo orders live at a separate endpoint with a different response shape.
+  const [account, positions, premiumIndex, rawOrders, rawAlgo] = await Promise.all([
     binanceFetch('/fapi/v2/account'),
     binanceFetch('/fapi/v2/positionRisk'),
     fetch(`${BINANCE_BASE}/fapi/v1/premiumIndex`).then(r => r.ok ? r.json() : []),
-    binanceFetch('/fapi/v1/openOrders').catch(() => [])
+    binanceFetch('/fapi/v1/openOrders').catch(() => []),
+    binanceFetch('/fapi/v1/openAlgoOrders').catch(() => [])  // algo/conditional orders
   ]);
 
   const fundingMap = {};
@@ -149,19 +153,44 @@ async function getBinanceData() {
       };
     });
 
-  const openOrders = (Array.isArray(rawOrders) ? rawOrders : []).map(o => {
-    const asset = o.symbol.replace('USDT', '');
+  // Normalise regular open orders (LIMIT, STOP_MARKET, TAKE_PROFIT_MARKET, etc.)
+  const regularOrders = (Array.isArray(rawOrders) ? rawOrders : []).map(o => {
+    const asset   = o.symbol.replace('USDT', '');
     const typeStr = o.type ? (o.type.charAt(0) + o.type.slice(1).toLowerCase().replace(/_/g, ' ')) : 'Limit';
+    const stopPx  = parseFloat(o.stopPrice || 0);
     return {
       pair:       o.symbol.replace('USDT', '/USDT'),
       side:       o.side === 'BUY' ? 'Buy' : 'Sell',
       type:       typeStr,
       price:      parseFloat(o.price || 0),
+      stopPrice:  stopPx > 0 ? stopPx : null,
       size:       `${parseFloat(o.origQty || 0)} ${asset}`,
       reduceOnly: o.reduceOnly || false,
       exchange:   'binance'
     };
   });
+
+  // Normalise algo/conditional orders — different shape: algoId, orderType, triggerPrice, quantity
+  // These are TP/SL and trailing-stop orders placed via the algo endpoint.
+  const algoOrders = (Array.isArray(rawAlgo) ? rawAlgo : []).map(o => {
+    const asset      = o.symbol.replace('USDT', '');
+    const rawType    = o.orderType || o.algoType || 'Conditional';
+    const typeStr    = rawType.charAt(0) + rawType.slice(1).toLowerCase().replace(/_/g, ' ');
+    const triggerPx  = parseFloat(o.triggerPrice || 0);
+    const limitPx    = parseFloat(o.price || 0);
+    return {
+      pair:       o.symbol.replace('USDT', '/USDT'),
+      side:       o.side === 'BUY' ? 'Buy' : 'Sell',
+      type:       typeStr,
+      price:      limitPx > 0 ? limitPx : 0,
+      stopPrice:  triggerPx > 0 ? triggerPx : null,
+      size:       `${parseFloat(o.quantity || 0)} ${asset}`,
+      reduceOnly: o.reduceOnly || o.closePosition || false,
+      exchange:   'binance'
+    };
+  });
+
+  const openOrders = [...regularOrders, ...algoOrders];
 
   const equity      = parseFloat(account.totalWalletBalance || 0);
   const marginUsed  = parseFloat(account.totalInitialMargin || 0);

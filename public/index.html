@@ -625,12 +625,19 @@ function renderPositionTiles(positions) {
     }
   }
 
-  // Build stop-loss order lookup: exchange:normalizedPair:side → true
+  // Build two separate order lookup sets keyed exchange:normalizedPair:side
+  // slSet  — genuine stop-loss orders only (stop market/limit, or reduceOnly limit)
+  // tpSet  — take-profit orders (TP suppresses TP badge but NOT the SL glow)
   const slSet = new Set();
+  const tpSet = new Set();
   if (lastData) {
     [...(lastData.hyperliquid?.orders || []), ...(lastData.binance?.orders || [])].forEach(o => {
-      if (o.reduceOnly || (o.type && o.type.toLowerCase().includes('stop'))) {
-        slSet.add(`${o.exchange}:${normalizePairKey(o.pair)}:${o.side}`);
+      const t   = (o.type || '').toLowerCase();
+      const key = `${o.exchange}:${normalizePairKey(o.pair)}:${o.side}`;
+      if (t.includes('take profit')) {
+        tpSet.add(key);                         // TP only — does NOT count as SL
+      } else if (o.reduceOnly || t.includes('stop')) {
+        slSet.add(key);                         // genuine stop / reduceOnly = real SL
       }
     });
   }
@@ -653,7 +660,9 @@ function renderPositionTiles(positions) {
 
     const isHedged = !!tc;
     const slSide = p.side === 'Long' ? 'Sell' : 'Buy';
-    const hasStopLoss = slSet.has(`${p.exchange}:${key}:${slSide}`);
+    const orderKey = `${p.exchange}:${key}:${slSide}`;
+    const hasStopLoss = slSet.has(orderKey);   // only real stop orders count
+    // Show the SL glow if: not hedged AND no genuine stop order (TP alone does NOT suppress it)
     const noSlBadge = (!isHedged && !hasStopLoss)
       ? `<span class="sl-alert" title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`
       : '';
@@ -1176,20 +1185,37 @@ function drawThreadLines() {
   });
 }
 
+function orderTypeBadge(o) {
+  const t = (o.type || '').toLowerCase();
+  if (t.includes('take profit')) return badge(o.type, 'b-long');
+  if (t.includes('stop'))        return badge(o.type, 'b-short');
+  if (t === 'limit')             return `<span style="color:var(--text2)">${o.type}</span>`;
+  return `<span style="color:var(--text2)">${o.type}</span>`;
+}
+
 function renderOrdersFor(orders) {
   if (!orders.length) return '<p style="font-size:12px;color:var(--text3);padding:8px 0">No open orders</p>';
+  // Determine if any order has a stopPrice so we conditionally show the Trigger column
+  const hasStopPrices = orders.some(o => o.stopPrice && o.stopPrice > 0);
   return `<div class="tbl-wrap"><table>
     <tr>
-      <th>Pair</th><th>Side</th><th>Type</th><th>Price</th><th>Size</th><th>Reduce Only</th>
+      <th>Pair</th><th>Side</th><th>Type</th><th>Price</th>${hasStopPrices ? '<th>Trigger</th>' : ''}<th>Size</th><th>Reduce Only</th>
     </tr>
     ${orders.map(o => {
       const exchColor = o.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
       const exchLabel = o.exchange === 'hyperliquid' ? 'HL' : 'BN';
+      const t = (o.type || '').toLowerCase();
+      // For pure stop/TP market orders the limit price is 0 — show trigger instead in Price col
+      const priceDisplay = (o.price && o.price > 0) ? fmtUsd(o.price) : '<span style="color:var(--text3)">Market</span>';
+      const triggerDisplay = (o.stopPrice && o.stopPrice > 0)
+        ? `<span style="color:${t.includes('stop') ? 'var(--danger)' : 'var(--success)'};font-weight:500">${fmtUsd(o.stopPrice)}</span>`
+        : '<span style="color:var(--text3)">—</span>';
       return `<tr>
       <td><span class="pair">${o.pair}</span><div class="pair-sub" style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span></div></td>
       <td>${sideBadge(o.side)}</td>
-      <td style="color:var(--text2)">${o.type}</td>
-      <td>${fmtUsd(o.price)}</td>
+      <td>${orderTypeBadge(o)}</td>
+      <td>${priceDisplay}</td>
+      ${hasStopPrices ? `<td>${triggerDisplay}</td>` : ''}
       <td>${o.size}</td>
       <td>${o.reduceOnly ? badge('Reduce', 'b-warn') : '<span style="color:var(--text3)">—</span>'}</td>
     </tr>`;
