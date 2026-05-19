@@ -53,6 +53,11 @@
   .status-dot.error { background: var(--danger); }
   .status-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes sl-glow {
+    0%, 100% { opacity: 0.55; box-shadow: 0 0 0 0 rgba(226,75,74,0); }
+    50%       { opacity: 1;    box-shadow: 0 0 0 4px rgba(226,75,74,0.35), 0 0 8px 2px rgba(226,75,74,0.2); }
+  }
+  .sl-alert { animation: sl-glow 1.4s ease-in-out infinite; }
 
   .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 24px; }
   .metric { background: var(--surface2); border-radius: var(--radius); padding: 14px; }
@@ -547,7 +552,7 @@ function renderPositionTiles(positions) {
     const slSide = p.side === 'Long' ? 'Sell' : 'Buy';
     const hasStopLoss = slSet.has(`${p.exchange}:${key}:${slSide}`);
     const noSlBadge = (!isHedged && !hasStopLoss)
-      ? `<span title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.55;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`
+      ? `<span class="sl-alert" title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`
       : '';
 
     return `<div class="pos-tile" draggable="true" data-pos-id="${posId(p)}"${threadAttrs} style="${outlineStyle}" data-pos='${JSON.stringify({pair:p.pair,side:p.side,entry:p.entry,mark:p.mark,sizeUsd:p.sizeUsd,leverage:p.leverage,exchange:p.exchange})}'>
