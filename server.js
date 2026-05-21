@@ -159,12 +159,18 @@ async function getHyperliquidData() {
     exchange:   'hyperliquid'
   }));
 
-  const equity     = parseFloat(state.marginSummary?.accountValue || 0);
-  const marginUsed = parseFloat(state.marginSummary?.totalMarginUsed || 0);
-  const marginPct  = equity > 0 ? ((marginUsed / equity) * 100).toFixed(1) : '0.0';
-  const freeMargin = equity - marginUsed;
+  const equity      = parseFloat(state.marginSummary?.accountValue || 0);
+  const marginUsed  = parseFloat(state.marginSummary?.totalMarginUsed || 0);
+  const totalNtlPos = parseFloat(state.marginSummary?.totalNtlPos || 0);
+  // marginPct = marginUsed/equity is misleading for HL because accountValue
+  // includes spot collateral and perp margin is cross-shared. Expose raw
+  // values and let the frontend decide how to display.
+  const marginPct   = equity > 0 ? ((marginUsed / equity) * 100).toFixed(1) : '0.0';
+  const freeMargin  = equity - marginUsed;
+  // Account leverage = total notional exposure / account equity
+  const accountLeverage = equity > 0 ? (totalNtlPos / equity).toFixed(2) : '0.00';
 
-  return { equity, marginPct, marginUsed, freeMargin, openPositions, openOrders };
+  return { equity, marginPct, marginUsed, freeMargin, totalNtlPos, accountLeverage, openPositions, openOrders };
 }
 
 // ── Normalise a raw Binance REST order into dashboard shape ───────────────
