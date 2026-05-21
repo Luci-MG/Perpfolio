@@ -2083,25 +2083,26 @@ function buildUpnlDrawerContent(data) {
     ...data.binance.positions.map(p => ({ ...p, exchange: 'binance' }))
   ];
 
-  // ── totals ────────────────────────────────────────────────────────────
-  const totalUpnl  = allPos.reduce((s, p) => s + (p.upnl || 0), 0);
-  const hlUpnl     = data.hyperliquid.positions.reduce((s, p) => s + (p.upnl || 0), 0);
-  const bnUpnl     = data.binance.positions.reduce((s, p) => s + (p.upnl || 0), 0);
-  const totalMargin = allPos.reduce((s, p) => {
-    const lev = parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1;
-    return s + (p.sizeUsd || 0) / lev;
-  }, 0);
-  const overallRoi = totalMargin > 0 ? (totalUpnl / totalMargin) * 100 : 0;
+  const getLev    = p => parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1;
+  const getMargin = p => (p.sizeUsd || 0) / getLev(p);
+  const getRoi    = p => getMargin(p) > 0 ? (p.upnl || 0) / getMargin(p) * 100 : 0;
 
-  // Update subtitle
+  const totalUpnl   = allPos.reduce((s, p) => s + (p.upnl || 0), 0);
+  const totalMargin = allPos.reduce((s, p) => s + getMargin(p), 0);
+  const overallRoi  = totalMargin > 0 ? (totalUpnl / totalMargin) * 100 : 0;
+  const winners     = allPos.filter(p => (p.upnl || 0) > 0);
+  const losers      = allPos.filter(p => (p.upnl || 0) < 0);
+
   document.getElementById('upnlDrawerSub').textContent =
     `${allPos.length} position${allPos.length !== 1 ? 's' : ''} · as of last refresh`;
 
-  const sign  = n => n >= 0 ? '+' : '';
-  const col   = n => n >= 0 ? 'var(--success)' : 'var(--danger)';
-  const colCls= n => n >= 0 ? 'up' : 'dn';
+  const sign   = n => n >= 0 ? '+' : '';
+  const col    = n => n >= 0 ? 'var(--success)' : 'var(--danger)';
+  const colCls = n => n >= 0 ? 'up' : 'dn';
+  const RAW_SUCCESS = '#1d9e75';
+  const RAW_DANGER  = '#e24b4a';
 
-  // ── 1. summary strip ─────────────────────────────────────────────────
+  // ── 1. Summary strip ──────────────────────────────────────────────────
   const summaryHtml = `
     <div class="upnl-summary-strip">
       <div class="upnl-sum-cell">
@@ -2113,141 +2114,195 @@ function buildUpnlDrawerContent(data) {
         <div class="upnl-sum-val ${colCls(overallRoi)}">${sign(overallRoi)}${fmt(Math.abs(overallRoi), 2)}%</div>
       </div>
       <div class="upnl-sum-cell">
-        <div class="upnl-sum-label">Positions</div>
-        <div class="upnl-sum-val">${allPos.length}</div>
+        <div class="upnl-sum-label">W / L</div>
+        <div class="upnl-sum-val" style="font-size:15px">
+          <span style="color:var(--success)">${winners.length}</span><span style="color:var(--text3);font-weight:400;font-size:12px"> / </span><span style="color:var(--danger)">${losers.length}</span>
+        </div>
       </div>
     </div>`;
 
-  // ── 2. waterfall bar chart (sorted by uPnL desc) ─────────────────────
   if (!allPos.length) return summaryHtml + `<p style="font-size:12px;color:var(--text3)">No positions.</p>`;
 
-  const sorted = [...allPos].sort((a, b) => (b.upnl || 0) - (a.upnl || 0));
+  // ── 2. Treemap — area ∝ |uPnL|, colour = direction ───────────────────
+  // Simple squarified-ish layout: sort desc by |upnl|, fill rows greedily
+  const tmSorted = [...allPos].sort((a, b) => Math.abs(b.upnl||0) - Math.abs(a.upnl||0));
+  const totalAbs  = tmSorted.reduce((s, p) => s + Math.abs(p.upnl || 0), 0) || 1;
 
-  // Two-sided scale: left half = losses, right half = gains — always contained
-  const maxGain = Math.max(...sorted.map(p => p.upnl || 0), 0.01);
-  const maxLoss = Math.max(...sorted.map(p => -(p.upnl || 0)), 0.01);
-  // Zero line sits proportionally between the two sides (each side is 50% of track)
-  const zeroAt  = 50; // always centred; bars scale independently per side
+  // Each cell gets a flex-grow proportional to |upnl| — wrap in a flex container
+  // We split into rows of ~3 so shapes stay readable
+  const ROW_SIZE = Math.ceil(tmSorted.length / Math.ceil(tmSorted.length / 3));
+  const rows = [];
+  for (let i = 0; i < tmSorted.length; i += ROW_SIZE) rows.push(tmSorted.slice(i, i + ROW_SIZE));
 
-  const barRows = sorted.map(p => {
+  const tmRows = rows.map(row => {
+    const cells = row.map(p => {
+      const upnl    = p.upnl || 0;
+      const isPos   = upnl >= 0;
+      const weight  = Math.abs(upnl) / totalAbs;
+      const roi     = getRoi(p);
+      const intensity = Math.min(Math.abs(upnl) / (Math.abs(tmSorted[0]?.upnl) || 1), 1);
+      const baseR   = isPos ? 29  : 226;
+      const baseG   = isPos ? 158 : 75;
+      const baseB   = isPos ? 117 : 74;
+      const alpha   = 0.25 + intensity * 0.65;
+      const bg      = `rgba(${baseR},${baseG},${baseB},${alpha.toFixed(2)})`;
+      const shortName = p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'');
+      const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
+      const minH    = weight > 0.12 ? 64 : 48;
+      return `<div style="flex:${(weight*100).toFixed(2)};min-width:60px;min-height:${minH}px;background:${bg};border-radius:5px;padding:7px 8px;display:flex;flex-direction:column;justify-content:space-between;cursor:default;transition:filter .15s;border:1px solid rgba(255,255,255,0.06)"
+        title="${p.pair} · ${p.side} · ${sign(upnl)}${fmtUsd(Math.abs(upnl))} · ROI ${sign(roi)}${fmt(Math.abs(roi),2)}%"
+        onmouseenter="this.style.filter='brightness(1.18)'" onmouseleave="this.style.filter=''">
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.65)">${exchLabel} · ${p.side[0]}</div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${shortName}</div>
+          <div style="font-size:${weight > 0.1 ? 11 : 9}px;font-weight:700;color:#fff">${sign(upnl)}${fmtUsd(Math.abs(upnl))}</div>
+          ${weight > 0.08 ? `<div style="font-size:9px;color:rgba(255,255,255,0.65)">${sign(roi)}${fmt(Math.abs(roi),2)}%</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="display:flex;gap:4px;margin-bottom:4px">${cells}</div>`;
+  }).join('');
+
+  const treemapHtml = `
+    <div>
+      <div class="upnl-section-title">uPnL treemap <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— area = magnitude · colour = direction</span></div>
+      <div style="margin-bottom:2px">${tmRows}</div>
+      <div style="display:flex;gap:16px;font-size:10px;color:var(--text3)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:rgba(29,158,117,0.7);display:inline-block"></span>Profit</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:rgba(226,75,74,0.7);display:inline-block"></span>Loss</span>
+        <span style="margin-left:auto">Brighter = larger</span>
+      </div>
+    </div>`;
+
+  // ── 3. Scatter plot — uPnL (x) vs ROI% (y) per position ─────────────
+  const W = 320, H = 140;
+  const PAD = { t: 12, r: 12, b: 28, l: 48 };
+  const innerW = W - PAD.l - PAD.r;
+  const innerH = H - PAD.t - PAD.b;
+
+  const upnlVals = allPos.map(p => p.upnl || 0);
+  const roiAll   = allPos.map(getRoi);
+  const minUpnl  = Math.min(...upnlVals, 0);
+  const maxUpnl  = Math.max(...upnlVals, 0);
+  const minRoi   = Math.min(...roiAll, 0);
+  const maxRoi   = Math.max(...roiAll, 0);
+  const rangeUpnl = maxUpnl - minUpnl || 1;
+  const rangeRoi  = maxRoi  - minRoi  || 1;
+
+  const sx = v => PAD.l + ((v - minUpnl) / rangeUpnl) * innerW;
+  const sy = v => PAD.t + (1 - (v - minRoi) / rangeRoi) * innerH;
+  const zeroX = sx(0).toFixed(1);
+  const zeroY = sy(0).toFixed(1);
+
+  const dots = allPos.map(p => {
+    const x = sx(p.upnl || 0).toFixed(1);
+    const y = sy(getRoi(p)).toFixed(1);
+    const c = (p.upnl || 0) >= 0 ? RAW_SUCCESS : RAW_DANGER;
+    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
+    const shortName = p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'');
+    const r = Math.max(4, Math.min(9, 4 + p.sizeUsd / 20000));
+    return `<g>
+      <circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="${c}" opacity="0.75" stroke="${exchColor}" stroke-width="1.5"/>
+      <text x="${x}" y="${(parseFloat(y)-parseFloat(r)-2).toFixed(1)}" text-anchor="middle" font-size="7" fill="var(--text2)">${shortName}</text>
+    </g>`;
+  }).join('');
+
+  // axis labels
+  const xLabels = [minUpnl, 0, maxUpnl].filter((v,i,a)=>a.indexOf(v)===i).map(v => {
+    const x = sx(v).toFixed(1);
+    const lbl = v===0 ? '$0' : `${v>=0?'+':''}${fmtUsd(Math.abs(v))}`;
+    return `<text x="${x}" y="${(H-8).toFixed(0)}" text-anchor="middle" font-size="8" fill="var(--text3)">${lbl}</text>
+      <line x1="${x}" y1="${PAD.t}" x2="${x}" y2="${(H-PAD.b).toFixed(0)}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2 2"/>`;
+  }).join('');
+
+  const yLabels = [minRoi, 0, maxRoi].filter((v,i,a)=>a.indexOf(v)===i).map(v => {
+    const y = sy(v).toFixed(1);
+    const lbl = `${v>=0?'+':''}${fmt(Math.abs(v),1)}%`;
+    return `<text x="${(PAD.l-4).toFixed(0)}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="8" fill="var(--text3)">${lbl}</text>
+      <line x1="${PAD.l}" y1="${y}" x2="${(W-PAD.r).toFixed(0)}" y2="${y}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2 2"/>`;
+  }).join('');
+
+  const scatterHtml = `
+    <div>
+      <div class="upnl-section-title">uPnL vs ROI scatter <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— dot size = notional</span></div>
+      <div style="position:relative;width:100%">
+        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;overflow:visible">
+          ${yLabels}
+          ${xLabels}
+          <!-- quadrant lines -->
+          <line x1="${zeroX}" y1="${PAD.t}" x2="${zeroX}" y2="${(H-PAD.b).toFixed(0)}" stroke="var(--border2)" stroke-width="1"/>
+          <line x1="${PAD.l}" y1="${zeroY}" x2="${(W-PAD.r).toFixed(0)}" y2="${zeroY}" stroke="var(--border2)" stroke-width="1"/>
+          ${dots}
+          <!-- axis labels -->
+          <text x="${(W/2).toFixed(0)}" y="${(H-1).toFixed(0)}" text-anchor="middle" font-size="8" fill="var(--text3)">uPnL ($)</text>
+          <text x="9" y="${(H/2).toFixed(0)}" text-anchor="middle" font-size="8" fill="var(--text3)" transform="rotate(-90,9,${(H/2).toFixed(0)})">ROI %</text>
+        </svg>
+      </div>
+    </div>`;
+
+  // ── 4. Ranked leaderboard — sorted by ROI%, each row is a self-contained ──
+  //        stat strip: rank · pair · side badge · ROI pill · uPnL · progress arc
+  const lbSorted = [...allPos].sort((a, b) => getRoi(b) - getRoi(a));
+  const maxAbsUpnl = Math.max(...lbSorted.map(p => Math.abs(p.upnl || 0)), 0.01);
+
+  // Mini SVG arc: draws a partial circle (stroke-dasharray trick) 0–100%
+  const arc = (pct, color) => {
+    const r = 10, circ = 2 * Math.PI * r;
+    const dash = (Math.min(pct, 100) / 100 * circ).toFixed(2);
+    const gap  = (circ - parseFloat(dash)).toFixed(2);
+    return `<svg width="28" height="28" viewBox="0 0 28 28" style="flex-shrink:0;transform:rotate(-90deg)">
+      <circle cx="14" cy="14" r="${r}" fill="none" stroke="var(--border)" stroke-width="3.5"/>
+      <circle cx="14" cy="14" r="${r}" fill="none" stroke="${color}" stroke-width="3.5"
+        stroke-dasharray="${dash} ${gap}" stroke-linecap="round"/>
+    </svg>`;
+  };
+
+  const lbRows = lbSorted.map((p, i) => {
     const upnl      = p.upnl || 0;
-    const lev       = parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1;
-    const margin    = p.sizeUsd / lev;
-    const roi       = margin > 0 ? (upnl / margin) * 100 : 0;
+    const roi       = getRoi(p);
+    const isPos     = upnl >= 0;
     const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
     const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
-    const isPos     = upnl >= 0;
-    const barColor  = isPos ? 'var(--success)' : 'var(--danger)';
-    // Each side occupies exactly 50% of the track width, scaled to its own max
-    const barPct    = isPos
-      ? (upnl / maxGain) * 50          // grows rightward from 50%
-      : ((-upnl) / maxLoss) * 50;      // grows leftward from 50%
-    const barLeft   = isPos ? zeroAt : zeroAt - barPct;
+    const shortName = p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'');
+    const roiColor  = isPos ? 'var(--success)' : 'var(--danger)';
+    const roiBg     = isPos ? 'var(--green-bg)' : 'var(--red-bg)';
+    const roiTxt    = isPos ? 'var(--green)' : 'var(--red)';
+    // bar width: proportion of max |uPnL| across all positions
+    const barW      = (Math.abs(upnl) / maxAbsUpnl * 100).toFixed(1);
+    // arc pct: |ROI| as % of the max |ROI| in the set (so best = full circle)
+    const maxAbsRoi = Math.max(...lbSorted.map(p => Math.abs(getRoi(p))), 0.01);
+    const arcPct    = Math.abs(roi) / maxAbsRoi * 100;
+    const rankColor = i === 0 ? '#f5a623' : i === 1 ? '#a0a099' : i === 2 ? '#c07a3a' : 'var(--text3)';
 
-    return `<div class="upnl-bar-row">
-      <div class="upnl-bar-pair" title="${p.pair}">
-        <span style="font-size:9px;font-weight:700;color:${exchColor};margin-right:3px">${exchLabel}</span>${p.pair}
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">
+      <!-- rank -->
+      <span style="font-size:10px;font-weight:700;color:${rankColor};width:14px;text-align:center;flex-shrink:0">${i+1}</span>
+      <!-- arc progress -->
+      ${arc(arcPct, roiColor)}
+      <!-- pair + exchange -->
+      <div style="min-width:0;flex:1">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
+          <span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${shortName}</span>
+          <span style="font-size:8px;font-weight:700;color:${exchColor};border:0.5px solid ${exchColor};border-radius:3px;padding:0 3px;flex-shrink:0">${exchLabel}</span>
+          <span style="font-size:8px;font-weight:600;padding:1px 5px;border-radius:10px;background:${roiBg};color:${roiTxt};flex-shrink:0">${roi>=0?'+':''}${fmt(Math.abs(roi),2)}%</span>
+        </div>
+        <!-- uPnL progress bar -->
+        <div style="height:4px;background:var(--surface2);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${barW}%;background:${roiColor};border-radius:2px;transition:width .4s;opacity:0.8"></div>
+        </div>
       </div>
-      <div class="upnl-bar-track">
-        <div class="upnl-bar-zero" style="left:${zeroAt}%"></div>
-        <div class="upnl-bar-fill" style="left:${barLeft.toFixed(1)}%;width:${barPct.toFixed(1)}%;background:${barColor};opacity:0.82"></div>
-      </div>
-      <div class="upnl-bar-val ${colCls(upnl)}">${sign(upnl)}${fmtUsd(Math.abs(upnl))}</div>
-      <div class="upnl-bar-roi">${roi >= 0 ? '+' : '-'}${fmt(Math.abs(roi),2)}%</div>
+      <!-- uPnL value -->
+      <span style="font-size:11px;font-weight:700;color:${roiColor};flex-shrink:0;text-align:right;min-width:60px">${upnl>=0?'+':''}${fmtUsd(Math.abs(upnl))}</span>
     </div>`;
   }).join('');
 
-  const waterfallHtml = `
+  const leaderboardHtml = `
     <div>
-      <div class="upnl-section-title">Per position <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— sorted by uPnL</span></div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px">
-        <span style="font-size:10px;color:var(--text3);width:64px;text-align:right">uPnL</span>
-        <span style="font-size:10px;color:var(--text3);width:44px;text-align:right">ROI%</span>
-      </div>
-      ${barRows}
+      <div class="upnl-section-title">ROI leaderboard <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— arc = ROI% · bar = uPnL magnitude</span></div>
+      ${lbRows}
     </div>`;
 
-  // ── 3. HL vs BN split visual ─────────────────────────────────────────
-  const hlAbs  = Math.abs(hlUpnl);
-  const bnAbs  = Math.abs(bnUpnl);
-  const total2 = hlAbs + bnAbs || 1;
-  const hlPct  = hlAbs / total2 * 100;
-  const bnPct  = bnAbs / total2 * 100;
-  // donut: HL (green/red segment) then BN
-  const hlColor = col(hlUpnl);
-  const bnColor = col(bnUpnl);
-  const hlDeg   = hlPct * 3.6;
-  const donutGrad = `conic-gradient(${hlColor} 0deg ${hlDeg}deg, ${bnColor} ${hlDeg}deg 360deg)`;
-
-  const splitHtml = `
-    <div>
-      <div class="upnl-section-title">Exchange split</div>
-      <div class="upnl-donut-row">
-        <div style="width:72px;height:72px;border-radius:50%;background:${donutGrad};position:relative;flex-shrink:0">
-          <div style="position:absolute;inset:12px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column;">
-            <span style="font-size:11px;font-weight:700;color:${col(totalUpnl)}">${sign(totalUpnl)}${fmtUsd(Math.abs(totalUpnl))}</span>
-          </div>
-        </div>
-        <div class="upnl-donut-labels">
-          <div class="upnl-donut-leg">
-            <span class="upnl-donut-leg-dot" style="background:${hlColor}"></span>
-            <span class="upnl-donut-leg-pair">Hyperliquid (${fmt(hlPct,0)}%)</span>
-            <span class="upnl-donut-leg-val ${colCls(hlUpnl)}">${sign(hlUpnl)}${fmtUsd(hlAbs)}</span>
-          </div>
-          <div class="upnl-donut-leg">
-            <span class="upnl-donut-leg-dot" style="background:${bnColor}"></span>
-            <span class="upnl-donut-leg-pair">Binance (${fmt(bnPct,0)}%)</span>
-            <span class="upnl-donut-leg-val ${colCls(bnUpnl)}">${sign(bnUpnl)}${fmtUsd(bnAbs)}</span>
-          </div>
-          <div style="border-top:0.5px solid var(--border);margin-top:4px;padding-top:6px;display:flex;justify-content:space-between;font-size:10px">
-            <span style="color:var(--text3)">Winners</span>
-            <span style="font-weight:600;color:var(--success)">${sorted.filter(p=>(p.upnl||0)>0).length} pos</span>
-            <span style="color:var(--text3)">Losers</span>
-            <span style="font-weight:600;color:var(--danger)">${sorted.filter(p=>(p.upnl||0)<0).length} pos</span>
-          </div>
-        </div>
-      </div>
-    </div>`;
-
-  // ── 4. ROI% scatter (horizontal lollipop) ────────────────────────────
-  const marginRoi  = p => {
-    const lev = parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1;
-    const margin = p.sizeUsd / lev;
-    return margin > 0 ? (p.upnl || 0) / margin * 100 : 0;
-  };
-  const roiSorted = [...allPos].sort((a, b) => marginRoi(b) - marginRoi(a));
-  const roiVals    = roiSorted.map(marginRoi);
-  const maxRoiGain = Math.max(...roiVals, 0.01);
-  const maxRoiLoss = Math.max(...roiVals.map(v => -v), 0.01);
-  const roiZeroAt  = 50; // always centred
-
-  const roiRows = roiSorted.map((p, i) => {
-    const roi    = roiVals[i];
-    const isPos  = roi >= 0;
-    const barPct = isPos
-      ? (roi / maxRoiGain) * 50
-      : ((-roi) / maxRoiLoss) * 50;
-    const barLeft= isPos ? roiZeroAt : roiZeroAt - barPct;
-    const dotLeft= isPos ? roiZeroAt + barPct : roiZeroAt - barPct;
-    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-    return `<div class="upnl-bar-row">
-      <div class="upnl-bar-pair" title="${p.pair}" style="color:${exchColor}">${p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'')}</div>
-      <div class="upnl-bar-track">
-        <div class="upnl-bar-zero" style="left:${roiZeroAt}%"></div>
-        <div class="upnl-bar-fill" style="left:${barLeft.toFixed(1)}%;width:${barPct.toFixed(1)}%;background:${col(roi)};opacity:0.7;height:3px;top:50%;transform:translateY(-50%)"></div>
-        <div style="position:absolute;left:${dotLeft.toFixed(1)}%;top:50%;transform:translate(-50%,-50%);width:7px;height:7px;border-radius:50%;background:${col(roi)};border:1.5px solid var(--surface)"></div>
-      </div>
-      <div class="upnl-bar-roi ${colCls(roi)}" style="width:52px">${roi >= 0 ? '+' : '-'}${fmt(Math.abs(roi),2)}%</div>
-    </div>`;
-  }).join('');
-
-  const roiHtml = `
-    <div>
-      <div class="upnl-section-title">ROI % on margin <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— sorted best to worst</span></div>
-      ${roiRows}
-    </div>`;
-
-  return summaryHtml + waterfallHtml + splitHtml + roiHtml;
+  return summaryHtml + treemapHtml + scatterHtml + leaderboardHtml;
 }
 
 // ── Funding Drawer ────────────────────────────────────────────────────────
