@@ -278,6 +278,33 @@
   .exp-pair-seg  { height: 100%; display: flex; align-items: center; justify-content: center; transition: width .4s; }
   .exp-pair-seg-lbl { font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.85); white-space: nowrap; overflow: hidden; }
 
+  /* ── Funding drawer heatmap / bubble viz ────────────────────────────── */
+  .fund-bubble-grid { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; padding: 4px 0 8px; }
+  .fund-bubble { border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; flex-shrink: 0; transition: transform .15s; cursor: default; position: relative; }
+  .fund-bubble:hover { transform: scale(1.08); z-index: 1; }
+  .fund-bubble-label { font-size: 9px; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+  .fund-bubble-val   { font-size: 8px; color: rgba(255,255,255,0.8); text-align: center; pointer-events: none; }
+
+  .fund-heat-grid { display: grid; gap: 4px; }
+  .fund-heat-cell { border-radius: 5px; padding: 7px 8px; display: flex; flex-direction: column; gap: 2px; min-width: 0; transition: filter .15s; }
+  .fund-heat-cell:hover { filter: brightness(1.12); }
+  .fund-heat-name { font-size: 10px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fund-heat-cost { font-size: 11px; font-weight: 700; color: #fff; }
+  .fund-heat-rate { font-size: 9px; color: rgba(255,255,255,0.72); }
+  .fund-heat-side { font-size: 8px; color: rgba(255,255,255,0.6); }
+
+  .fund-exch-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fund-exch-card  { border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .fund-exch-card-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; opacity: .75; }
+  .fund-exch-card-val   { font-size: 18px; font-weight: 700; line-height: 1; }
+  .fund-exch-card-sub   { font-size: 10px; opacity: .7; }
+  .fund-exch-heat-bar   { height: 4px; border-radius: 2px; margin-top: 6px; background: rgba(255,255,255,0.18); overflow: hidden; }
+  .fund-exch-heat-fill  { height: 100%; border-radius: 2px; background: rgba(255,255,255,0.55); transition: width .4s; }
+
+  .fund-area-wrap { position: relative; width: 100%; }
+  .fund-area-wrap svg { display: block; width: 100%; overflow: visible; }
+  .fund-area-axis { display: flex; justify-content: space-between; font-size: 9px; color: var(--text3); margin-top: 3px; }
+
   /* Hedge thread connections */
   .pos-tile-grid-wrap { position: relative; }
   #thread-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
@@ -2260,15 +2287,21 @@ function buildFundingDrawerContent(data) {
   const totalPaying    = paying.reduce((s, p) => s + Math.abs(calcCost(p)), 0);
   const totalReceiving = receiving.reduce((s, p) => s + calcCost(p), 0);
 
-  const sign = n => n >= 0 ? '+' : '';
-  const col  = n => n >= 0 ? 'var(--success)' : 'var(--danger)';
+  const sign   = n => n >= 0 ? '+' : '';
+  const col    = n => n >= 0 ? 'var(--success)' : 'var(--danger)';
   const colCls = n => n >= 0 ? 'up' : 'dn';
+  // raw hex for rgba mixing
+  const RAW_SUCCESS = '#1d9e75';
+  const RAW_DANGER  = '#e24b4a';
 
   document.getElementById('fundDrawerSub').textContent =
     `${allPos.length} position${allPos.length !== 1 ? 's' : ''} · as of last refresh`;
 
   // ── 1. Summary strip ──────────────────────────────────────────────────
-  const annualised = totalCost * 365;
+  const annualised  = totalCost * 365;
+  const netRateBps  = allPos.length
+    ? allPos.reduce((s, p) => s + (p.fundingRate || 0), 0) / allPos.length
+    : 0;
   const summaryHtml = `
     <div class="upnl-summary-strip">
       <div class="upnl-sum-cell">
@@ -2280,160 +2313,200 @@ function buildFundingDrawerContent(data) {
         <div class="upnl-sum-val ${colCls(annualised)}">${sign(annualised)}${fmtUsd(Math.abs(annualised))}</div>
       </div>
       <div class="upnl-sum-cell">
-        <div class="upnl-sum-label">Positions</div>
-        <div class="upnl-sum-val">${allPos.length}</div>
+        <div class="upnl-sum-label">Avg rate/8h</div>
+        <div class="upnl-sum-val" style="font-size:13px;color:var(--text2)">${netRateBps >= 0 ? '+' : ''}${fmt(netRateBps, 4)}%</div>
       </div>
     </div>`;
 
-  // ── 2. Paying vs Receiving balance bar ────────────────────────────────
-  const totalAbsCost  = totalPaying + totalReceiving || 1;
-  const payingPct     = totalPaying    / totalAbsCost * 100;
-  const receivingPct  = totalReceiving / totalAbsCost * 100;
-  const payLabel      = payingPct    > 14 ? `Pay ${fmt(payingPct,0)}%`  : '';
-  const recLabel      = receivingPct > 14 ? `Rcv ${fmt(receivingPct,0)}%` : '';
+  // ── 2. Bubble grid — each position is a circle sized by notional, ─────
+  //        coloured by cost direction + intensity
+  const bubbleSorted = [...allPos].sort((a, b) => b.sizeUsd - a.sizeUsd);
+  const maxSize = bubbleSorted[0]?.sizeUsd || 1;
+  const maxAbsCost = Math.max(...bubbleSorted.map(p => Math.abs(calcCost(p))), 0.01);
+  const MIN_D = 44, MAX_D = 90;
 
-  const balanceHtml = `
-    <div>
-      <div class="upnl-section-title">Paying vs Receiving</div>
-      <div class="exp-ls-track">
-        <div class="exp-ls-short" style="width:${payingPct.toFixed(1)}%"><span class="exp-ls-lbl">${payLabel}</span></div>
-        <div class="exp-ls-long"  style="width:${receivingPct.toFixed(1)}%"><span class="exp-ls-lbl">${recLabel}</span></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px">
-        <span style="display:flex;align-items:center;gap:5px">
-          <span style="width:7px;height:7px;border-radius:50%;background:var(--danger);display:inline-block"></span>
-          <span style="color:var(--text2)">Paying (${paying.length})</span>
-          <span style="font-weight:600;color:var(--danger)">-${fmtUsd(totalPaying)}</span>
-        </span>
-        <span style="display:flex;align-items:center;gap:5px">
-          <span style="font-weight:600;color:var(--success)">+${fmtUsd(totalReceiving)}</span>
-          <span style="color:var(--text2)">Receiving (${receiving.length})</span>
-          <span style="width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block"></span>
-        </span>
-      </div>
-    </div>`;
-
-  // ── 3. Per-position bar chart (sorted by daily cost, worst first) ─────
-  const sorted = [...allPos].sort((a, b) => calcCost(a) - calcCost(b)); // most negative first
-  const costs  = sorted.map(calcCost);
-  const maxGain = Math.max(...costs, 0.01);
-  const maxLoss = Math.max(...costs.map(v => -v), 0.01);
-  const zeroAt  = 50;
-
-  const barRows = sorted.map((p, i) => {
-    const cost      = costs[i];
-    const isPos     = cost >= 0;
-    const barPct    = isPos
-      ? (cost  / maxGain) * 50
-      : ((-cost) / maxLoss) * 50;
-    const barLeft   = isPos ? zeroAt : zeroAt - barPct;
-    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
+  const bubbles = bubbleSorted.map(p => {
+    const cost      = calcCost(p);
+    const isPaying  = cost < 0;
+    const intensity = Math.min(Math.abs(cost) / maxAbsCost, 1); // 0–1
+    const diameter  = MIN_D + (p.sizeUsd / maxSize) * (MAX_D - MIN_D);
+    // colour: base exchange tint when neutral, bleed to danger/success by intensity
+    const baseR = isPaying ? 226 : 29;
+    const baseG = isPaying ? 75  : 158;
+    const baseB = isPaying ? 74  : 117;
+    const alpha = 0.35 + intensity * 0.55;  // 0.35–0.90
+    const bgCol = `rgba(${baseR},${baseG},${baseB},${alpha.toFixed(2)})`;
+    const borderCol = isPaying
+      ? `rgba(226,75,74,${(0.4 + intensity*0.5).toFixed(2)})`
+      : `rgba(29,158,117,${(0.4 + intensity*0.5).toFixed(2)})`;
+    const shortName = p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'');
     const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
-    const rate8h    = p.funding8h || (p.fundingRate != null ? `${p.fundingRate >= 0 ? '+' : ''}${fmt(p.fundingRate, 4)}%` : '—');
-
-    return `<div class="upnl-bar-row">
-      <div class="upnl-bar-pair" title="${p.pair}">
-        <span style="font-size:9px;font-weight:700;color:${exchColor};margin-right:3px">${exchLabel}</span>${p.pair}
-      </div>
-      <div class="upnl-bar-track">
-        <div class="upnl-bar-zero" style="left:${zeroAt}%"></div>
-        <div class="upnl-bar-fill" style="left:${barLeft.toFixed(1)}%;width:${barPct.toFixed(1)}%;background:${col(cost)};opacity:0.82"></div>
-      </div>
-      <div class="upnl-bar-val ${colCls(cost)}">${sign(cost)}${fmtUsd(Math.abs(cost))}</div>
-      <div class="upnl-bar-roi" style="width:52px;font-size:9px;color:var(--text3)">${rate8h}</div>
+    const rate8h    = p.funding8h || `${p.fundingRate >= 0 ? '+' : ''}${fmt(p.fundingRate,4)}%`;
+    const fs = diameter < 54 ? 8 : diameter < 68 ? 9 : 10;
+    const showCost = diameter >= 58;
+    return `<div class="fund-bubble" title="${p.pair} · ${p.side} · ${sign(cost)}${fmtUsd(Math.abs(cost))}/day · rate ${rate8h}"
+      style="width:${diameter.toFixed(0)}px;height:${diameter.toFixed(0)}px;background:${bgCol};border:1.5px solid ${borderCol};">
+      <span class="fund-bubble-label" style="font-size:${fs}px">${shortName}</span>
+      <span class="fund-bubble-val" style="font-size:${fs-1}px">${exchLabel} ${p.side[0]}</span>
+      ${showCost ? `<span class="fund-bubble-val" style="font-size:${fs-1}px">${sign(cost)}${fmtUsd(Math.abs(cost))}</span>` : ''}
     </div>`;
   }).join('');
 
-  const perPosHtml = `
+  const bubbleHtml = `
     <div>
-      <div class="upnl-section-title">Per position <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— worst first</span></div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px">
-        <span style="font-size:10px;color:var(--text3);width:64px;text-align:right">/day</span>
-        <span style="font-size:10px;color:var(--text3);width:52px;text-align:right">Rate/8h</span>
-      </div>
-      ${barRows}
-    </div>`;
-
-  // ── 4. Exchange split donut ───────────────────────────────────────────
-  const hlAbs    = Math.abs(hlCost);
-  const bnAbs    = Math.abs(bnCost);
-  const total2   = hlAbs + bnAbs || 1;
-  const hlPct    = hlAbs / total2 * 100;
-  const bnPct    = bnAbs / total2 * 100;
-  const hlColor  = col(hlCost);
-  const bnColor  = col(bnCost);
-  const hlDeg    = hlPct * 3.6;
-  const donutGrad = `conic-gradient(${hlColor} 0deg ${hlDeg}deg, ${bnColor} ${hlDeg}deg 360deg)`;
-
-  const splitHtml = `
-    <div>
-      <div class="upnl-section-title">Exchange split</div>
-      <div class="upnl-donut-row">
-        <div style="width:72px;height:72px;border-radius:50%;background:${donutGrad};position:relative;flex-shrink:0">
-          <div style="position:absolute;inset:12px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column;">
-            <span style="font-size:10px;font-weight:700;color:${col(totalCost)}">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</span>
-            <span style="font-size:8px;color:var(--text3)">/day</span>
-          </div>
-        </div>
-        <div class="upnl-donut-labels">
-          <div class="upnl-donut-leg">
-            <span class="upnl-donut-leg-dot" style="background:${hlColor}"></span>
-            <span class="upnl-donut-leg-pair">Hyperliquid (${fmt(hlPct,0)}%)</span>
-            <span class="upnl-donut-leg-val ${colCls(hlCost)}">${sign(hlCost)}${fmtUsd(hlAbs)}</span>
-          </div>
-          <div class="upnl-donut-leg">
-            <span class="upnl-donut-leg-dot" style="background:${bnColor}"></span>
-            <span class="upnl-donut-leg-pair">Binance (${fmt(bnPct,0)}%)</span>
-            <span class="upnl-donut-leg-val ${colCls(bnCost)}">${sign(bnCost)}${fmtUsd(bnAbs)}</span>
-          </div>
-          <div style="border-top:0.5px solid var(--border);margin-top:4px;padding-top:6px;display:flex;justify-content:space-between;font-size:10px">
-            <span style="color:var(--text3)">Paying</span>
-            <span style="font-weight:600;color:var(--danger)">${paying.length} pos</span>
-            <span style="color:var(--text3)">Receiving</span>
-            <span style="font-weight:600;color:var(--success)">${receiving.length} pos</span>
-          </div>
-        </div>
+      <div class="upnl-section-title">Position bubbles <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— size = notional · colour = cost intensity</span></div>
+      <div class="fund-bubble-grid">${bubbles}</div>
+      <div style="display:flex;gap:16px;font-size:10px;color:var(--text3);margin-top:2px">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:rgba(226,75,74,0.7);display:inline-block"></span>Paying</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:rgba(29,158,117,0.7);display:inline-block"></span>Receiving</span>
+        <span style="margin-left:auto">Brighter = higher cost</span>
       </div>
     </div>`;
 
-  // ── 5. Rate scatter (horizontal lollipop — rate/8h ranked) ───────────
-  const rateSorted = [...allPos].sort((a, b) => (a.fundingRate || 0) - (b.fundingRate || 0));
-  const rates      = rateSorted.map(p => p.fundingRate || 0);
-  const maxRatePos = Math.max(...rates, 0.0001);
-  const maxRateNeg = Math.max(...rates.map(v => -v), 0.0001);
-  const rateZero   = 50;
+  // ── 3. Heatmap tile grid — one tile per position, ─────────────────────
+  //        background intensity = |rate|, sorted worst → best
+  const heatSorted = [...allPos].sort((a, b) => calcCost(a) - calcCost(b));
+  const cols = Math.min(Math.ceil(Math.sqrt(heatSorted.length)), 4);
 
-  const rateRows = rateSorted.map((p, i) => {
-    const rate      = rates[i];
-    // Funding rate sign convention: positive rate = longs pay, so flip for display
-    const costSign  = p.side === 'Long' ? -rate : rate; // positive = receiving
-    const isPos     = costSign >= 0;
-    const barPct    = isPos
-      ? (rate  / maxRatePos) * 50
-      : ((-rate) / maxRateNeg) * 50;
-    const barLeft   = isPos ? rateZero : rateZero - barPct;
-    const dotLeft   = isPos ? rateZero + barPct : rateZero - barPct;
-    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-    const barColor  = col(costSign);
-    return `<div class="upnl-bar-row">
-      <div class="upnl-bar-pair" title="${p.pair}" style="color:${exchColor}">${p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'')}</div>
-      <div class="upnl-bar-track">
-        <div class="upnl-bar-zero" style="left:${rateZero}%"></div>
-        <div class="upnl-bar-fill" style="left:${barLeft.toFixed(1)}%;width:${barPct.toFixed(1)}%;background:${barColor};opacity:0.7;height:3px;top:50%;transform:translateY(-50%)"></div>
-        <div style="position:absolute;left:${dotLeft.toFixed(1)}%;top:50%;transform:translate(-50%,-50%);width:7px;height:7px;border-radius:50%;background:${barColor};border:1.5px solid var(--surface)"></div>
-      </div>
-      <div class="upnl-bar-roi ${colCls(costSign)}" style="width:52px">${rate >= 0 ? '+' : ''}${fmt(rate, 4)}%</div>
+  const heatCells = heatSorted.map(p => {
+    const cost      = calcCost(p);
+    const isPaying  = cost < 0;
+    const intensity = Math.min(Math.abs(cost) / maxAbsCost, 1);
+    const baseR = isPaying ? 226 : 29;
+    const baseG = isPaying ? 75  : 158;
+    const baseB = isPaying ? 74  : 117;
+    const alpha = 0.28 + intensity * 0.62;
+    const bgCol = `rgba(${baseR},${baseG},${baseB},${alpha.toFixed(2)})`;
+    const shortName = p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'');
+    const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
+    const rate8h    = p.funding8h || `${p.fundingRate >= 0 ? '+' : ''}${fmt(p.fundingRate,4)}%`;
+    return `<div class="fund-heat-cell" style="background:${bgCol}" title="${p.pair} · ${p.side}">
+      <div class="fund-heat-name">${shortName}</div>
+      <div class="fund-heat-cost">${sign(cost)}${fmtUsd(Math.abs(cost))}</div>
+      <div class="fund-heat-rate">${rate8h}/8h</div>
+      <div class="fund-heat-side">${exchLabel} · ${p.side}</div>
     </div>`;
   }).join('');
 
-  const rateHtml = `
+  const heatHtml = `
     <div>
-      <div class="upnl-section-title">Funding rate / 8h <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— highest first</span></div>
-      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Green = receiving, Red = paying (for your side)</div>
-      ${rateRows}
+      <div class="upnl-section-title">Cost heatmap <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— darker = higher cost · worst first</span></div>
+      <div class="fund-heat-grid" style="grid-template-columns:repeat(${cols},1fr)">${heatCells}</div>
     </div>`;
 
-  return summaryHtml + balanceHtml + perPosHtml + splitHtml + rateHtml;
+  // ── 4. Exchange comparison cards ──────────────────────────────────────
+  const hlMaxAbsCost = Math.max(Math.abs(hlCost), Math.abs(bnCost), 0.01);
+  const mkCard = (label, cost, nPos, dotColor) => {
+    const isPaying  = cost < 0;
+    const intensity = Math.min(Math.abs(cost) / hlMaxAbsCost, 1);
+    const baseR = isPaying ? 226 : 29;
+    const baseG = isPaying ? 75  : 158;
+    const baseB = isPaying ? 74  : 117;
+    const alpha = 0.22 + intensity * 0.55;
+    const bg    = `rgba(${baseR},${baseG},${baseB},${alpha.toFixed(2)})`;
+    const barW  = (Math.abs(cost) / hlMaxAbsCost * 100).toFixed(1);
+    return `<div class="fund-exch-card" style="background:${bg}">
+      <div class="fund-exch-card-label" style="color:#fff">${label}</div>
+      <div class="fund-exch-card-val" style="color:#fff">${sign(cost)}${fmtUsd(Math.abs(cost))}</div>
+      <div class="fund-exch-card-sub" style="color:rgba(255,255,255,0.7)">${nPos} position${nPos!==1?'s':''} · /day</div>
+      <div class="fund-exch-heat-bar"><div class="fund-exch-heat-fill" style="width:${barW}%"></div></div>
+    </div>`;
+  };
+
+  const exchHtml = `
+    <div>
+      <div class="upnl-section-title">Exchange comparison</div>
+      <div class="fund-exch-cards">
+        ${mkCard('Hyperliquid', hlCost, hlPos.length, 'var(--hl)')}
+        ${mkCard('Binance', bnCost, bnPos.length, 'var(--bn)')}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:6px;padding:0 2px">
+        <span>Net total: <span class="${colCls(totalCost)}" style="font-weight:600">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}/day</span></span>
+        <span>Paying: <span style="color:var(--danger);font-weight:600">${paying.length}</span> · Receiving: <span style="color:var(--success);font-weight:600">${receiving.length}</span></span>
+      </div>
+    </div>`;
+
+  // ── 5. Cumulative cost burn-down — SVG area chart ─────────────────────
+  // Sorted best→worst, running total as you "add" each position
+  const burnSorted = [...allPos].sort((a, b) => calcCost(b) - calcCost(a)); // best first
+  let running = 0;
+  const points = [{ x: 0, y: 0 }];
+  burnSorted.forEach((p, i) => {
+    running += calcCost(p);
+    points.push({ x: i + 1, y: running });
+  });
+
+  const W = 320, H = 90, PAD = { t: 8, r: 8, b: 20, l: 44 };
+  const innerW = W - PAD.l - PAD.r;
+  const innerH = H - PAD.t - PAD.b;
+  const ys = points.map(p => p.y);
+  const minY = Math.min(...ys, 0);
+  const maxY = Math.max(...ys, 0);
+  const rangeY = maxY - minY || 1;
+  const scaleX = i => PAD.l + (i / (points.length - 1 || 1)) * innerW;
+  const scaleY = v => PAD.t + (1 - (v - minY) / rangeY) * innerH;
+  const zeroY  = scaleY(0);
+
+  // Build SVG path
+  const linePts = points.map((p, i) => `${scaleX(i).toFixed(1)},${scaleY(p.y).toFixed(1)}`).join(' ');
+  const areaPath = `M ${scaleX(0).toFixed(1)} ${zeroY.toFixed(1)} `
+    + points.map((p, i) => `L ${scaleX(i).toFixed(1)} ${scaleY(p.y).toFixed(1)}`).join(' ')
+    + ` L ${scaleX(points.length-1).toFixed(1)} ${zeroY.toFixed(1)} Z`;
+
+  const finalY = scaleY(running);
+  const areaCol = running >= 0 ? RAW_SUCCESS : RAW_DANGER;
+  const lineCol = running >= 0 ? RAW_SUCCESS : RAW_DANGER;
+
+  // Y axis ticks
+  const yTicks = [minY, 0, maxY].filter((v,i,a) => a.indexOf(v) === i);
+  const yTickHtml = yTicks.map(v => {
+    const y = scaleY(v).toFixed(1);
+    const lbl = v === 0 ? '$0' : `${v >= 0 ? '+' : ''}${fmtUsd(Math.abs(v))}`;
+    return `<text x="${(PAD.l - 4).toFixed(0)}" y="${y}" text-anchor="end" dominant-baseline="middle"
+      font-size="8" fill="var(--text3)">${lbl}</text>
+      <line x1="${PAD.l}" y1="${y}" x2="${(W - PAD.r).toFixed(0)}" y2="${y}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2 2"/>`;
+  }).join('');
+
+  // X axis labels (first, mid, last)
+  const xLabels = [0, Math.floor((burnSorted.length)/2), burnSorted.length].map(i => {
+    const px = scaleX(i).toFixed(1);
+    const lbl = i === 0 ? 'Best' : i === burnSorted.length ? 'Worst' : '←';
+    return `<text x="${px}" y="${(H - 4).toFixed(0)}" text-anchor="middle" font-size="8" fill="var(--text3)">${lbl}</text>`;
+  }).join('');
+
+  // Dot at each data point
+  const dots = points.slice(1).map((p, i) => {
+    const cost = calcCost(burnSorted[i]);
+    const dotCol = cost >= 0 ? RAW_SUCCESS : RAW_DANGER;
+    return `<circle cx="${scaleX(i+1).toFixed(1)}" cy="${scaleY(p.y).toFixed(1)}" r="2.5" fill="${dotCol}" stroke="var(--surface)" stroke-width="1"/>`;
+  }).join('');
+
+  const burnHtml = `
+    <div>
+      <div class="upnl-section-title">Cumulative daily cost <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— best to worst position added</span></div>
+      <div class="fund-area-wrap">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px">
+          ${yTickHtml}
+          <!-- zero line -->
+          <line x1="${PAD.l}" y1="${zeroY.toFixed(1)}" x2="${(W-PAD.r).toFixed(0)}" y2="${zeroY.toFixed(1)}"
+            stroke="var(--border2)" stroke-width="1"/>
+          <!-- area fill -->
+          <path d="${areaPath}" fill="${areaCol}" opacity="0.18"/>
+          <!-- line -->
+          <polyline points="${linePts}" fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <!-- dots -->
+          ${dots}
+          <!-- x labels -->
+          ${xLabels}
+        </svg>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:2px">
+        <span>Net: <span class="${colCls(running)}" style="font-weight:600">${sign(running)}${fmtUsd(Math.abs(running))}/day</span></span>
+        <span>${burnSorted.length} position${burnSorted.length!==1?'s':''}</span>
+      </div>
+    </div>`;
+
+  return summaryHtml + bubbleHtml + heatHtml + exchHtml + burnHtml;
 }
 
 fetchData();
