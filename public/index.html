@@ -1269,75 +1269,129 @@ function renderMarginHealth(data) {
 
   // ── Binance: standard margin utilisation % ────────────────────────────
   const bnPct = Math.min(parseFloat(bn.marginPct) || 0, 100);
-  const bnCol = bnPct > 80 ? 'var(--danger)' : bnPct > 50 ? 'var(--warning)' : 'var(--bn)';
+  const bnCol = bnPct > 80 ? '#e24b4a' : bnPct > 50 ? '#ba7517' : '#ef9f27';
+  const bnColVar = bnPct > 80 ? 'var(--danger)' : bnPct > 50 ? 'var(--warning)' : 'var(--bn)';
 
-  // ── Hyperliquid: account leverage (notional / equity) ─────────────────
-  // marginPct is misleading for HL — a perp-only trader will always show ~100%
-  // because margin used ≈ account equity. Use leverage ratio instead.
-  const hlLev     = parseFloat(hl.accountLeverage) || 0;
-  const hlNtl     = parseFloat(hl.totalNtlPos)     || 0;
-  const hlEq      = parseFloat(hl.equity)           || 1;
-  const hlMarginUsed = parseFloat(hl.marginUsed)   || 0;
-  const hlFree    = parseFloat(hl.freeMargin)       || 0;
-  // Colour leverage: >10× red, >5× amber, else HL purple
-  const hlLevCol  = hlLev > 10 ? 'var(--danger)' : hlLev > 5 ? 'var(--warning)' : 'var(--hl)';
-  // Cap gauge at 20× for display purposes
-  const hlLevBarW = Math.min(hlLev / 20 * 100, 100).toFixed(1);
+  // ── Hyperliquid: margin utilisation (marginUsed / equity) ────────────
+  const hlEquity     = parseFloat(hl.equity)     || 0;
+  const hlMarginUsed = parseFloat(hl.marginUsed) || 0;
+  const hlFree       = parseFloat(hl.freeMargin) || 0;
+  const hlPct        = hlEquity > 0 ? Math.min((hlMarginUsed / hlEquity) * 100, 100) : 0;
+  const hlCol        = hlPct > 80 ? '#e24b4a' : hlPct > 50 ? '#ba7517' : '#7f77dd';
+  const hlColVar     = hlPct > 80 ? 'var(--danger)' : hlPct > 50 ? 'var(--warning)' : 'var(--hl)';
 
-  // ── Overall status — based only on BN margin% + HL leverage ──────────
-  const bnCritical = bnPct > 80;
-  const bnWarning  = bnPct > 50;
-  const hlCritical = hlLev > 10;
-  const hlWarning  = hlLev > 5;
+  // ── Overall status ────────────────────────────────────────────────────
   const [statusLabel, statusCol, statusBg] =
-    (bnCritical || hlCritical) ? ['Critical', 'var(--red)',   'var(--red-bg)']
-  : (bnWarning  || hlWarning)  ? ['Warning',  'var(--amber)', 'var(--amber-bg)']
+    (bnPct > 80 || hlPct > 80) ? ['Critical', 'var(--red)',   'var(--red-bg)']
+  : (bnPct > 50 || hlPct > 50) ? ['Warning',  'var(--amber)', 'var(--amber-bg)']
   :                              ['Healthy',  'var(--green)',  'var(--green-bg)'];
 
   // ── BN totals ─────────────────────────────────────────────────────────
   const bnFree = parseFloat(bn.freeMargin) || 0;
   const bnUsed = parseFloat(bn.marginUsed) || 0;
 
+  // ── SVG arc gauge helper ──────────────────────────────────────────────
+  // Draws a half-circle (180°) gauge. cx/cy = center, r = radius, pct = 0-100.
+  // Returns SVG path strings for track + fill + needle.
+  function arcGaugeSVG(id, pct, fillColor, label, sublabel, valText, w) {
+    const cx = w / 2, cy = w * 0.54, r = w * 0.38;
+    const stroke = w * 0.07;
+    // Arc from 180° to 0° (left to right = 0% to 100%)
+    // SVG arc: start at (cx - r, cy), sweep 180° to (cx + r, cy)
+    const trackPath = `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`;
+    // Fill arc from 180° to (180° - pct*1.8°)
+    const angle = Math.PI - (pct / 100) * Math.PI; // radians from left
+    const ex = cx + r * Math.cos(angle);
+    const ey = cy - r * Math.sin(angle);
+    const largeArc = pct > 50 ? 1 : 0;
+    const fillPath = pct > 0
+      ? `M ${cx - r} ${cy} A ${r} ${r} 0 ${largeArc} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`
+      : '';
+    // Needle: line from center to arc at current angle, slightly inside
+    const nr = r - stroke * 0.1;
+    const nx = cx + nr * Math.cos(angle);
+    const ny = cy - nr * Math.sin(angle);
+    // Tick marks at 0, 25, 50, 75, 100%
+    const ticks = [0, 25, 50, 75, 100].map(t => {
+      const ta = Math.PI - (t / 100) * Math.PI;
+      const inner = r - stroke * 0.8;
+      const outer = r + stroke * 0.05;
+      return `<line x1="${(cx + inner * Math.cos(ta)).toFixed(1)}" y1="${(cy - inner * Math.sin(ta)).toFixed(1)}"
+                    x2="${(cx + outer * Math.cos(ta)).toFixed(1)}" y2="${(cy - outer * Math.sin(ta)).toFixed(1)}"
+                    stroke="var(--bg)" stroke-width="1.2" stroke-linecap="round"/>`;
+    }).join('');
+
+    return `<svg id="${id}" viewBox="0 0 ${w} ${cy + stroke}" width="${w}" height="${cy + stroke + 2}" style="display:block;overflow:visible">
+      <!-- track -->
+      <path d="${trackPath}" fill="none" stroke="var(--border2)" stroke-width="${stroke}" stroke-linecap="butt"/>
+      <!-- zone colours (green→amber→red) rendered as layered arcs behind fill -->
+      <path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${(cx + r * Math.cos(Math.PI * 0.5)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.5)).toFixed(2)}" fill="none" stroke="#1d9e75" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.13"/>
+      <path d="M ${(cx + r * Math.cos(Math.PI * 0.5)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.5)).toFixed(2)} A ${r} ${r} 0 0 1 ${(cx + r * Math.cos(Math.PI * 0.2)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.2)).toFixed(2)}" fill="none" stroke="#ba7517" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.18"/>
+      <path d="M ${(cx + r * Math.cos(Math.PI * 0.2)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.2)).toFixed(2)} A ${r} ${r} 0 0 1 ${cx + r} ${cy}" fill="none" stroke="#e24b4a" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.22"/>
+      <!-- fill arc -->
+      ${fillPath ? `<path d="${fillPath}" fill="none" stroke="${fillColor}" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.9"/>` : ''}
+      <!-- tick marks -->
+      ${ticks}
+      <!-- needle -->
+      ${pct > 0 ? `<line x1="${cx}" y1="${cy}" x2="${nx.toFixed(2)}" y2="${ny.toFixed(2)}" stroke="${fillColor}" stroke-width="1.5" stroke-linecap="round" opacity="0.95"/>
+      <circle cx="${cx}" cy="${cy}" r="3" fill="${fillColor}" opacity="0.95"/>` : ''}
+      <!-- center label -->
+      <text x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="13" font-weight="700" fill="${fillColor}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${valText}</text>
+      <text x="${cx}" y="${(cy + 7).toFixed(1)}" text-anchor="middle" font-size="8" fill="var(--text3)" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">${sublabel}</text>
+    </svg>`;
+  }
+
+  const gaugeW = 124;
+  const hlSvg = arcGaugeSVG('mg-hl', hlPct, hlCol, 'HL', 'margin used', fmt(hlPct,1)+'%', gaugeW);
+  const bnSvg = arcGaugeSVG('mg-bn', bnPct, bnCol, 'BN', 'margin used', fmt(bnPct,1)+'%', gaugeW);
+
   return `<div style="margin-top:8px">
     <div class="card" style="margin-bottom:0;background:var(--surface2);border:none;padding:10px 12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <p class="section-label" style="margin:0">Margin health</p>
         <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:${statusBg};color:${statusCol}">${statusLabel}</span>
       </div>
 
-      <!-- HL: leverage gauge -->
-      <div style="padding:4px 0;border-bottom:0.5px solid var(--border);margin-bottom:4px">
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
-          <span style="width:5px;height:5px;border-radius:50%;background:var(--hl);flex-shrink:0"></span>
-          <span style="font-size:10px;font-weight:500">HL</span>
-          <span style="font-size:9px;color:var(--text3);margin-left:1px">account leverage</span>
-          <span class="sb-num" style="font-size:11px;font-weight:700;color:${hlLevCol};margin-left:auto">${fmt(hlLev, 2)}×</span>
+      <!-- Dual arc gauges side by side -->
+      <div style="display:flex;align-items:flex-end;justify-content:space-around;gap:4px;margin:0 -4px 2px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0;flex:1">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--hl);flex-shrink:0"></span>
+            <span style="font-size:9px;font-weight:600;color:var(--text2)">HL</span>
+          </div>
+          ${hlSvg}
         </div>
-        <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:3px">
-          <div style="height:100%;width:${hlLevBarW}%;background:${hlLevCol};border-radius:2px;transition:width .4s"></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0;flex:1">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--bn);flex-shrink:0"></span>
+            <span style="font-size:9px;font-weight:600;color:var(--text2)">BN</span>
+          </div>
+          ${bnSvg}
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
-          <span>Notional <span class="sb-num" style="color:var(--text2);font-weight:600">${fmtUsd(hlNtl)}</span></span>
-          <span>Margin used <span class="sb-num" style="color:var(--text2);font-weight:600">${fmtUsd(hlMarginUsed)}</span></span>
-          <span style="color:var(--success)">Free <span class="sb-num" style="font-weight:600">${fmtUsd(hlFree)}</span></span>
-        </div>
-        <div style="font-size:9px;color:var(--text3);margin-top:2px;font-style:italic">Cross-margin · shared with spot</div>
       </div>
 
-      <!-- BN: margin utilisation % -->
-      <div style="padding:4px 0">
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
-          <span style="width:5px;height:5px;border-radius:50%;background:var(--bn);flex-shrink:0"></span>
-          <span style="font-size:10px;font-weight:500">BN</span>
-          <span style="font-size:9px;color:var(--text3);margin-left:1px">margin utilisation</span>
-          <span class="sb-num" style="font-size:11px;font-weight:700;color:${bnCol};margin-left:auto">${fmt(bnPct, 1)}%</span>
-        </div>
-        <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:3px">
-          <div style="height:100%;width:${bnPct}%;background:${bnCol};border-radius:2px;transition:width .4s"></div>
+      <!-- Detail rows -->
+      <div style="border-top:0.5px solid var(--border);padding-top:6px;display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
+          <span>HL equity</span>
+          <span class="sb-num" style="color:var(--text2);font-weight:600">${fmtUsd(hlEquity)}</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
-          <span>Used <span class="sb-num" style="color:var(--text2);font-weight:600">${fmtUsd(bnUsed)}</span></span>
-          <span style="color:var(--success)">Free <span class="sb-num" style="font-weight:600">${fmtUsd(bnFree)}</span></span>
+          <span>HL margin used</span>
+          <span class="sb-num" style="color:${hlColVar};font-weight:600">${fmtUsd(hlMarginUsed)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
+          <span>HL free</span>
+          <span class="sb-num" style="color:var(--success);font-weight:600">${fmtUsd(hlFree)}</span>
+        </div>
+        <div style="height:0.5px;background:var(--border);margin:2px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
+          <span>BN used</span>
+          <span class="sb-num" style="color:${bnColVar};font-weight:600">${fmtUsd(bnUsed)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
+          <span>BN free</span>
+          <span class="sb-num" style="color:var(--success);font-weight:600">${fmtUsd(bnFree)}</span>
         </div>
       </div>
     </div>

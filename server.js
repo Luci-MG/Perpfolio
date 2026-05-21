@@ -102,10 +102,11 @@ async function hlFetch(body) {
 }
 
 async function getHyperliquidData() {
-  const [state, meta, rawOrders] = await Promise.all([
+  const [state, meta, rawOrders, spotState] = await Promise.all([
     hlFetch({ type: 'clearinghouseState', user: HL_WALLET }),
     hlFetch({ type: 'metaAndAssetCtxs' }),
-    hlFetch({ type: 'openOrders', user: HL_WALLET }).catch(() => [])
+    hlFetch({ type: 'openOrders', user: HL_WALLET }).catch(() => []),
+    hlFetch({ type: 'spotClearinghouseState', user: HL_WALLET }).catch(() => null)
   ]);
 
   const assetMeta = meta[0]?.universe || [];
@@ -159,15 +160,15 @@ async function getHyperliquidData() {
     exchange:   'hyperliquid'
   }));
 
-  const equity      = parseFloat(state.marginSummary?.accountValue || 0);
+  // HL uses a unified cross-margin model: spot USDC is the actual account balance,
+  // and 'hold' is the portion locked as perp margin. marginSummary.accountValue is
+  // only the perp sub-account view — not the true wallet balance.
+  const spotUsdc    = (spotState?.balances || []).find(b => b.coin === 'USDC');
+  const equity      = spotUsdc ? parseFloat(spotUsdc.total) : parseFloat(state.marginSummary?.accountValue || 0);
   const marginUsed  = parseFloat(state.marginSummary?.totalMarginUsed || 0);
-  const totalNtlPos = parseFloat(state.marginSummary?.totalNtlPos || 0);
-  // marginPct = marginUsed/equity is misleading for HL because accountValue
-  // includes spot collateral and perp margin is cross-shared. Expose raw
-  // values and let the frontend decide how to display.
+  const totalNtlPos = openPositions.reduce((sum, p) => sum + p.sizeUsd, 0);
   const marginPct   = equity > 0 ? ((marginUsed / equity) * 100).toFixed(1) : '0.0';
   const freeMargin  = equity - marginUsed;
-  // Account leverage = total notional exposure / account equity
   const accountLeverage = equity > 0 ? (totalNtlPos / equity).toFixed(2) : '0.00';
 
   return { equity, marginPct, marginUsed, freeMargin, totalNtlPos, accountLeverage, openPositions, openOrders };
@@ -404,12 +405,14 @@ app.get('/api/dashboard', async (req, res) => {
       lastUpdated: new Date().toISOString(),
       summary,
       hyperliquid: {
-        equity:     hlData.equity.toFixed(2),
-        marginPct:  hlData.marginPct,
-        marginUsed: hlData.marginUsed.toFixed(2),
-        freeMargin: hlData.freeMargin.toFixed(2),
-        positions:  hlData.openPositions,
-        orders:     hlData.openOrders
+        equity:          hlData.equity.toFixed(2),
+        marginPct:       hlData.marginPct,
+        marginUsed:      hlData.marginUsed.toFixed(2),
+        freeMargin:      hlData.freeMargin.toFixed(2),
+        totalNtlPos:     hlData.totalNtlPos.toFixed(2),
+        accountLeverage: hlData.accountLeverage,
+        positions:       hlData.openPositions,
+        orders:          hlData.openOrders
       },
       binance: {
         equity:      bnData.equity.toFixed(2),
