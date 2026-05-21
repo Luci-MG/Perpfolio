@@ -199,6 +199,9 @@
   .sidebar-nums-hidden .b-val,
   .sidebar-nums-hidden .sb-num { filter: blur(6px); user-select: none; }
 
+  /* Hide mode: blur equity values in the open positions card header */
+  .nums-hidden .exch-equity { filter: blur(6px); user-select: none; }
+
   /* Sidebar bottom row: funding + calc tiles */
   .sb-bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; align-items: stretch; }
   .sb-funding { background: var(--surface2); border-radius: var(--radius); padding: 10px 12px; min-width: 0; }
@@ -1658,7 +1661,7 @@ function render(data) {
         <span class="exch-dot" style="background:var(--hl)"></span>
         <span class="exch-name">Hyperliquid</span>
         <span class="exch-stats">
-          <span>Eq: ${fmtUsd(data.hyperliquid.equity)}</span>
+          <span>Eq: <span class="exch-equity">${fmtUsd(data.hyperliquid.equity)}</span></span>
           <span>Margin: ${data.hyperliquid.marginPct}%</span>
         </span>
       </span>
@@ -1667,7 +1670,7 @@ function render(data) {
         <span class="exch-dot" style="background:var(--bn)"></span>
         <span class="exch-name">Binance</span>
         <span class="exch-stats">
-          <span>Eq: ${fmtUsd(data.binance.equity)}</span>
+          <span>Eq: <span class="exch-equity">${fmtUsd(data.binance.equity)}</span></span>
           <span>Margin: ${data.binance.marginPct}%</span>
           <span>Free: ${fmtUsd(data.binance.freeMargin)}</span>
         </span>
@@ -1678,7 +1681,7 @@ function render(data) {
       <span class="exch-dot" style="background:var(--hl)"></span>
       <span class="exch-name">Hyperliquid</span>
       <span class="exch-stats">
-        <span>Equity: ${fmtUsd(data.hyperliquid.equity)}</span>
+        <span>Equity: <span class="exch-equity">${fmtUsd(data.hyperliquid.equity)}</span></span>
         <span>Margin: ${data.hyperliquid.marginPct}%</span>
       </span>
     </div>`;
@@ -1687,7 +1690,7 @@ function render(data) {
       <span class="exch-dot" style="background:var(--bn)"></span>
       <span class="exch-name">Binance</span>
       <span class="exch-stats">
-        <span>Equity: ${fmtUsd(data.binance.equity)}</span>
+        <span>Equity: <span class="exch-equity">${fmtUsd(data.binance.equity)}</span></span>
         <span>Margin: ${data.binance.marginPct}%</span>
         <span>Free: ${fmtUsd(data.binance.freeMargin)}</span>
       </span>
@@ -1803,7 +1806,9 @@ function toggleSidebarVisibility() {
   const sidebar = document.getElementById('sidebar');
   const eyeIco  = document.getElementById('eyeIco');
   const eyeBtn  = document.getElementById('eyeBtn');
+  const app     = document.querySelector('.app');
   sidebar.classList.toggle('sidebar-nums-hidden', sidebarHidden);
+  app.classList.toggle('nums-hidden', sidebarHidden);
   if (sidebarHidden) {
     eyeIco.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
     eyeBtn.title = 'Show numbers';
