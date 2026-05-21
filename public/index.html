@@ -236,7 +236,7 @@
   /* waterfall bars */
   .upnl-bar-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid var(--border); }
   .upnl-bar-row:last-child { border-bottom: none; }
-  .upnl-bar-pair { font-size: 11px; font-weight: 500; width: 72px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .upnl-bar-pair { font-size: 11px; font-weight: 500; width: 86px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .upnl-bar-track { flex: 1; height: 14px; position: relative; display: flex; align-items: center; }
   .upnl-bar-zero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border2); }
   .upnl-bar-fill { position: absolute; height: 10px; border-radius: 2px; transition: width .4s; }
@@ -515,6 +515,19 @@
     <button class="upnl-close" onclick="closeUpnlDrawerForce()">&#x2715;</button>
   </div>
   <div class="upnl-drawer-body" id="upnlDrawerBody"></div>
+</div>
+
+<!-- Funding detail drawer -->
+<div class="upnl-overlay" id="fundOverlay" onclick="closeFundDrawer(event)"></div>
+<div class="upnl-drawer" id="fundDrawer">
+  <div class="upnl-drawer-head">
+    <div class="upnl-drawer-title">
+      <h2>Daily Funding</h2>
+      <p id="fundDrawerSub">Breakdown by position</p>
+    </div>
+    <button class="upnl-close" onclick="closeFundDrawerForce()">&#x2715;</button>
+  </div>
+  <div class="upnl-drawer-body" id="fundDrawerBody"></div>
 </div>
 
 <!-- Hedge preview popup -->
@@ -1309,7 +1322,7 @@ function renderDailyFundingWidget(data) {
   const sign = n => n >= 0 ? '+' : '';
   // Returns inner content only — wrapper is built by renderSidebarBottomRow
   return `
-    <p class="section-label" style="margin-bottom:8px">Daily funding</p>
+    <div class="label" style="margin-bottom:6px">Daily funding</div>
     <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:5px">
       <span class="sb-num ${totalCost >= 0 ? 'up' : 'dn'}" style="font-size:15px;font-weight:600">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</span>
       <span style="font-size:10px;color:var(--text3)">/day</span>
@@ -1362,7 +1375,7 @@ function renderCalcTiles() {
 function renderSidebarBottomRow(data) {
   return `
     <div class="sb-bottom-row">
-      <div class="sb-funding">${renderDailyFundingWidget(data)}</div>
+      <div class="sb-funding metric clickable" onclick="openFundDrawer()" title="Click to see funding breakdown" style="cursor:pointer">${renderDailyFundingWidget(data)}</div>
       <div style="min-width:0">
         ${renderCalcTiles()}
       </div>
@@ -1582,7 +1595,7 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); closeUpnlDrawerForce(); closeExpDrawerForce(); }
+  if (e.key === 'Escape') { hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); closeUpnlDrawerForce(); closeExpDrawerForce(); closeFundDrawerForce(); }
 });
 
 function switchCalcTab(tab) {
@@ -2208,6 +2221,219 @@ function buildUpnlDrawerContent(data) {
     </div>`;
 
   return summaryHtml + waterfallHtml + splitHtml + roiHtml;
+}
+
+// ── Funding Drawer ────────────────────────────────────────────────────────
+function openFundDrawer() {
+  if (!lastData) return;
+  document.getElementById('fundDrawerBody').innerHTML = buildFundingDrawerContent(lastData);
+  document.getElementById('fundOverlay').classList.add('open');
+  document.getElementById('fundDrawer').classList.add('open');
+}
+function closeFundDrawer(e) {
+  if (e && e.target !== document.getElementById('fundOverlay')) return;
+  closeFundDrawerForce();
+}
+function closeFundDrawerForce() {
+  document.getElementById('fundOverlay').classList.remove('open');
+  document.getElementById('fundDrawer').classList.remove('open');
+}
+
+function buildFundingDrawerContent(data) {
+  const allPos = [
+    ...data.hyperliquid.positions.map(p => ({ ...p, exchange: 'hyperliquid' })),
+    ...data.binance.positions.map(p => ({ ...p, exchange: 'binance' }))
+  ];
+
+  const calcCost = p => (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
+
+  if (!allPos.length) return `<p style="font-size:12px;color:var(--text3)">No open positions.</p>`;
+
+  const hlPos   = data.hyperliquid.positions;
+  const bnPos   = data.binance.positions;
+  const hlCost  = hlPos.reduce((s, p) => s + calcCost(p), 0);
+  const bnCost  = bnPos.reduce((s, p) => s + calcCost(p), 0);
+  const totalCost = hlCost + bnCost;
+
+  const paying    = allPos.filter(p => calcCost(p) < 0);
+  const receiving = allPos.filter(p => calcCost(p) >= 0);
+  const totalPaying    = paying.reduce((s, p) => s + Math.abs(calcCost(p)), 0);
+  const totalReceiving = receiving.reduce((s, p) => s + calcCost(p), 0);
+
+  const sign = n => n >= 0 ? '+' : '';
+  const col  = n => n >= 0 ? 'var(--success)' : 'var(--danger)';
+  const colCls = n => n >= 0 ? 'up' : 'dn';
+
+  document.getElementById('fundDrawerSub').textContent =
+    `${allPos.length} position${allPos.length !== 1 ? 's' : ''} · as of last refresh`;
+
+  // ── 1. Summary strip ──────────────────────────────────────────────────
+  const annualised = totalCost * 365;
+  const summaryHtml = `
+    <div class="upnl-summary-strip">
+      <div class="upnl-sum-cell">
+        <div class="upnl-sum-label">Net / day</div>
+        <div class="upnl-sum-val ${colCls(totalCost)}">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</div>
+      </div>
+      <div class="upnl-sum-cell">
+        <div class="upnl-sum-label">Annualised</div>
+        <div class="upnl-sum-val ${colCls(annualised)}">${sign(annualised)}${fmtUsd(Math.abs(annualised))}</div>
+      </div>
+      <div class="upnl-sum-cell">
+        <div class="upnl-sum-label">Positions</div>
+        <div class="upnl-sum-val">${allPos.length}</div>
+      </div>
+    </div>`;
+
+  // ── 2. Paying vs Receiving balance bar ────────────────────────────────
+  const totalAbsCost  = totalPaying + totalReceiving || 1;
+  const payingPct     = totalPaying    / totalAbsCost * 100;
+  const receivingPct  = totalReceiving / totalAbsCost * 100;
+  const payLabel      = payingPct    > 14 ? `Pay ${fmt(payingPct,0)}%`  : '';
+  const recLabel      = receivingPct > 14 ? `Rcv ${fmt(receivingPct,0)}%` : '';
+
+  const balanceHtml = `
+    <div>
+      <div class="upnl-section-title">Paying vs Receiving</div>
+      <div class="exp-ls-track">
+        <div class="exp-ls-short" style="width:${payingPct.toFixed(1)}%"><span class="exp-ls-lbl">${payLabel}</span></div>
+        <div class="exp-ls-long"  style="width:${receivingPct.toFixed(1)}%"><span class="exp-ls-lbl">${recLabel}</span></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px">
+        <span style="display:flex;align-items:center;gap:5px">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--danger);display:inline-block"></span>
+          <span style="color:var(--text2)">Paying (${paying.length})</span>
+          <span style="font-weight:600;color:var(--danger)">-${fmtUsd(totalPaying)}</span>
+        </span>
+        <span style="display:flex;align-items:center;gap:5px">
+          <span style="font-weight:600;color:var(--success)">+${fmtUsd(totalReceiving)}</span>
+          <span style="color:var(--text2)">Receiving (${receiving.length})</span>
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block"></span>
+        </span>
+      </div>
+    </div>`;
+
+  // ── 3. Per-position bar chart (sorted by daily cost, worst first) ─────
+  const sorted = [...allPos].sort((a, b) => calcCost(a) - calcCost(b)); // most negative first
+  const costs  = sorted.map(calcCost);
+  const maxGain = Math.max(...costs, 0.01);
+  const maxLoss = Math.max(...costs.map(v => -v), 0.01);
+  const zeroAt  = 50;
+
+  const barRows = sorted.map((p, i) => {
+    const cost      = costs[i];
+    const isPos     = cost >= 0;
+    const barPct    = isPos
+      ? (cost  / maxGain) * 50
+      : ((-cost) / maxLoss) * 50;
+    const barLeft   = isPos ? zeroAt : zeroAt - barPct;
+    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
+    const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
+    const rate8h    = p.funding8h || (p.fundingRate != null ? `${p.fundingRate >= 0 ? '+' : ''}${fmt(p.fundingRate, 4)}%` : '—');
+
+    return `<div class="upnl-bar-row">
+      <div class="upnl-bar-pair" title="${p.pair}">
+        <span style="font-size:9px;font-weight:700;color:${exchColor};margin-right:3px">${exchLabel}</span>${p.pair}
+      </div>
+      <div class="upnl-bar-track">
+        <div class="upnl-bar-zero" style="left:${zeroAt}%"></div>
+        <div class="upnl-bar-fill" style="left:${barLeft.toFixed(1)}%;width:${barPct.toFixed(1)}%;background:${col(cost)};opacity:0.82"></div>
+      </div>
+      <div class="upnl-bar-val ${colCls(cost)}">${sign(cost)}${fmtUsd(Math.abs(cost))}</div>
+      <div class="upnl-bar-roi" style="width:52px;font-size:9px;color:var(--text3)">${rate8h}</div>
+    </div>`;
+  }).join('');
+
+  const perPosHtml = `
+    <div>
+      <div class="upnl-section-title">Per position <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— worst first</span></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px">
+        <span style="font-size:10px;color:var(--text3);width:64px;text-align:right">/day</span>
+        <span style="font-size:10px;color:var(--text3);width:52px;text-align:right">Rate/8h</span>
+      </div>
+      ${barRows}
+    </div>`;
+
+  // ── 4. Exchange split donut ───────────────────────────────────────────
+  const hlAbs    = Math.abs(hlCost);
+  const bnAbs    = Math.abs(bnCost);
+  const total2   = hlAbs + bnAbs || 1;
+  const hlPct    = hlAbs / total2 * 100;
+  const bnPct    = bnAbs / total2 * 100;
+  const hlColor  = col(hlCost);
+  const bnColor  = col(bnCost);
+  const hlDeg    = hlPct * 3.6;
+  const donutGrad = `conic-gradient(${hlColor} 0deg ${hlDeg}deg, ${bnColor} ${hlDeg}deg 360deg)`;
+
+  const splitHtml = `
+    <div>
+      <div class="upnl-section-title">Exchange split</div>
+      <div class="upnl-donut-row">
+        <div style="width:72px;height:72px;border-radius:50%;background:${donutGrad};position:relative;flex-shrink:0">
+          <div style="position:absolute;inset:12px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column;">
+            <span style="font-size:10px;font-weight:700;color:${col(totalCost)}">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</span>
+            <span style="font-size:8px;color:var(--text3)">/day</span>
+          </div>
+        </div>
+        <div class="upnl-donut-labels">
+          <div class="upnl-donut-leg">
+            <span class="upnl-donut-leg-dot" style="background:${hlColor}"></span>
+            <span class="upnl-donut-leg-pair">Hyperliquid (${fmt(hlPct,0)}%)</span>
+            <span class="upnl-donut-leg-val ${colCls(hlCost)}">${sign(hlCost)}${fmtUsd(hlAbs)}</span>
+          </div>
+          <div class="upnl-donut-leg">
+            <span class="upnl-donut-leg-dot" style="background:${bnColor}"></span>
+            <span class="upnl-donut-leg-pair">Binance (${fmt(bnPct,0)}%)</span>
+            <span class="upnl-donut-leg-val ${colCls(bnCost)}">${sign(bnCost)}${fmtUsd(bnAbs)}</span>
+          </div>
+          <div style="border-top:0.5px solid var(--border);margin-top:4px;padding-top:6px;display:flex;justify-content:space-between;font-size:10px">
+            <span style="color:var(--text3)">Paying</span>
+            <span style="font-weight:600;color:var(--danger)">${paying.length} pos</span>
+            <span style="color:var(--text3)">Receiving</span>
+            <span style="font-weight:600;color:var(--success)">${receiving.length} pos</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── 5. Rate scatter (horizontal lollipop — rate/8h ranked) ───────────
+  const rateSorted = [...allPos].sort((a, b) => (a.fundingRate || 0) - (b.fundingRate || 0));
+  const rates      = rateSorted.map(p => p.fundingRate || 0);
+  const maxRatePos = Math.max(...rates, 0.0001);
+  const maxRateNeg = Math.max(...rates.map(v => -v), 0.0001);
+  const rateZero   = 50;
+
+  const rateRows = rateSorted.map((p, i) => {
+    const rate      = rates[i];
+    // Funding rate sign convention: positive rate = longs pay, so flip for display
+    const costSign  = p.side === 'Long' ? -rate : rate; // positive = receiving
+    const isPos     = costSign >= 0;
+    const barPct    = isPos
+      ? (rate  / maxRatePos) * 50
+      : ((-rate) / maxRateNeg) * 50;
+    const barLeft   = isPos ? rateZero : rateZero - barPct;
+    const dotLeft   = isPos ? rateZero + barPct : rateZero - barPct;
+    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
+    const barColor  = col(costSign);
+    return `<div class="upnl-bar-row">
+      <div class="upnl-bar-pair" title="${p.pair}" style="color:${exchColor}">${p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'')}</div>
+      <div class="upnl-bar-track">
+        <div class="upnl-bar-zero" style="left:${rateZero}%"></div>
+        <div class="upnl-bar-fill" style="left:${barLeft.toFixed(1)}%;width:${barPct.toFixed(1)}%;background:${barColor};opacity:0.7;height:3px;top:50%;transform:translateY(-50%)"></div>
+        <div style="position:absolute;left:${dotLeft.toFixed(1)}%;top:50%;transform:translate(-50%,-50%);width:7px;height:7px;border-radius:50%;background:${barColor};border:1.5px solid var(--surface)"></div>
+      </div>
+      <div class="upnl-bar-roi ${colCls(costSign)}" style="width:52px">${rate >= 0 ? '+' : ''}${fmt(rate, 4)}%</div>
+    </div>`;
+  }).join('');
+
+  const rateHtml = `
+    <div>
+      <div class="upnl-section-title">Funding rate / 8h <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">— highest first</span></div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Green = receiving, Red = paying (for your side)</div>
+      ${rateRows}
+    </div>`;
+
+  return summaryHtml + balanceHtml + perPosHtml + splitHtml + rateHtml;
 }
 
 fetchData();
