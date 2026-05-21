@@ -336,6 +336,30 @@
   .hedge-row-val { font-weight: 600; }
   .hedge-ratio-ring { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; position: relative; }
   .hedge-ratio-hole { position: absolute; inset: 6px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; }
+
+  /* ── Tile focus mode ─────────────────────────────────────────────────── */
+  /* Class lives on .pos-tile-grid-wrap so both the grid and the SVG sibling are in scope */
+  .grid-wrap-focused .pos-tile { opacity: 0.28; filter: saturate(0.3); transition: opacity .2s, filter .2s, transform .2s, box-shadow .2s; }
+  /* The focused tile and its threaded peer are at full brightness */
+  .grid-wrap-focused .pos-tile.tile-focused {
+    opacity: 1;
+    filter: saturate(1);
+    outline: 2px solid var(--focus-color, var(--text2)) !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--focus-glow, rgba(127,119,221,0.18));
+    transform: translateY(-2px);
+    z-index: 2;
+    position: relative;
+  }
+  /* Thread lines: dimmed when wrapper is in focus mode */
+  .grid-wrap-focused #thread-svg .thread-path { opacity: 0.1 !important; }
+  /* Disable clicks on non-focused thread hits; focused thread hit stays clickable */
+  .grid-wrap-focused #thread-svg .thread-hit:not(.thread-hit-focused) { pointer-events: none; }
+  /* Focused thread line: full brightness + thicker via filter trick */
+  .grid-wrap-focused #thread-svg .thread-path.thread-focused { opacity: 0.95 !important; stroke-width: 2px !important; }
+  /* Dim endpoint dots */
+  .grid-wrap-focused #thread-svg circle { opacity: 0.1; }
+  .grid-wrap-focused #thread-svg circle.thread-dot-focused { opacity: 0.95; }
 </style>
 </head>
 <body>
@@ -694,6 +718,7 @@ function renderPositionTiles(positions) {
     const costDay = (p.side === 'Long' ? -1 : 1) * (p.fundingRate / 100) * p.sizeUsd * 3;
     const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
     const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
+    const focusColor = tc || (p.exchange === 'hyperliquid' ? '#7f77dd' : '#ef9f27');
     const threadAttrs = tc ? ` data-thread="${key}" data-thread-color="${tc}"` : '';
     const outlineStyle = tc ? `outline:1.5px solid ${tc}50;outline-offset:-1px;` : '';
     const threadDot = tc ? `<span style="width:5px;height:5px;border-radius:50%;background:${tc};flex-shrink:0;opacity:0.9;box-shadow:0 0 4px ${tc}88"></span>` : '';
@@ -707,7 +732,7 @@ function renderPositionTiles(positions) {
       ? `<span class="sl-alert" title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`
       : '';
 
-    return `<div class="pos-tile" draggable="true" data-pos-id="${posId(p)}"${threadAttrs} style="${outlineStyle}" data-pos='${JSON.stringify({pair:p.pair,side:p.side,entry:p.entry,mark:p.mark,sizeUsd:p.sizeUsd,leverage:p.leverage,exchange:p.exchange})}'>
+    return `<div class="pos-tile" draggable="true" data-pos-id="${posId(p)}"${threadAttrs} data-focus-color="${focusColor}" style="${outlineStyle}" data-pos='${JSON.stringify({pair:p.pair,side:p.side,entry:p.entry,mark:p.mark,sizeUsd:p.sizeUsd,leverage:p.leverage,exchange:p.exchange})}'>
       <div class="ptile-head">
         <span class="ptile-pair">${p.pair}</span>
         ${threadDot}
@@ -1045,6 +1070,118 @@ function initTileDrag() {
     popup.style.left = left + 'px';
     popup.style.top  = top  + 'px';
   });
+
+  // ── Double-tap / double-click to focus tile + thread ─────────────────
+  const tapTimers = new WeakMap();
+  grid.querySelectorAll('.pos-tile').forEach(tile => {
+    // Double-click (desktop)
+    tile.addEventListener('dblclick', e => {
+      e.stopPropagation();
+      focusTile(tile);
+    });
+    // Double-tap (mobile): two taps within 300 ms
+    tile.addEventListener('touchend', e => {
+      if (tapTimers.has(tile)) {
+        clearTimeout(tapTimers.get(tile));
+        tapTimers.delete(tile);
+        e.preventDefault();   // prevent ghost click
+        focusTile(tile);
+      } else {
+        const t = setTimeout(() => tapTimers.delete(tile), 300);
+        tapTimers.set(tile, t);
+      }
+    });
+  });
+
+  // Click on empty grid area → clear focus
+  grid.addEventListener('click', e => {
+    if (!e.target.closest('.pos-tile')) clearTileFocus();
+  });
+}
+
+// ── Tile focus / unfocus ──────────────────────────────────────────────────
+// Unified focus state — either a tile posId (solo) or a threadKey (group)
+let _focusedTileId  = null;   // posId of solo-focused tile (no thread)
+let _focusedThreadKey = null; // threadKey when focus was entered via tile-with-thread or thread line
+
+function _applyFocus(threadKey, soloTile) {
+  const grid    = document.getElementById('ptile-grid');
+  const wrapper = grid && grid.closest('.pos-tile-grid-wrap');
+  if (!grid || !wrapper) return;
+
+  _focusedThreadKey = threadKey;
+  _focusedTileId    = soloTile ? soloTile.dataset.posId : null;
+
+  // Mark tiles and apply per-tile focus color
+  grid.querySelectorAll('.pos-tile').forEach(t => {
+    const focused = threadKey ? t.dataset.thread === threadKey
+                              : soloTile && t === soloTile;
+    t.classList.toggle('tile-focused', !!focused);
+    if (focused) {
+      const c = t.dataset.focusColor || '#7f77dd';
+      t.style.setProperty('--focus-color', c);
+      // Convert hex to rgba for the glow
+      const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+      t.style.setProperty('--focus-glow', `rgba(${r},${g},${b},0.22)`);
+    } else {
+      t.style.removeProperty('--focus-color');
+      t.style.removeProperty('--focus-glow');
+    }
+  });
+
+  // Put focus class on the wrapper so both #ptile-grid and #thread-svg are in scope
+  wrapper.classList.add('grid-wrap-focused');
+
+  // Mark SVG thread paths, hit targets and dots
+  const svg = document.getElementById('thread-svg');
+  if (svg) {
+    svg.querySelectorAll('.thread-path').forEach(p => {
+      p.classList.toggle('thread-focused', !!threadKey && p.dataset.threadKey === threadKey);
+    });
+    svg.querySelectorAll('.thread-hit').forEach(h => {
+      h.classList.toggle('thread-hit-focused', !!threadKey && h.dataset.threadKey === threadKey);
+    });
+    svg.querySelectorAll('circle').forEach(d => {
+      d.classList.toggle('thread-dot-focused', !!threadKey && d.dataset.threadKey === threadKey);
+    });
+  }
+}
+
+function focusTile(tile) {
+  const clickedId  = tile.dataset.posId;
+  const threadKey  = tile.dataset.thread || null;
+
+  // Toggle off if same tile/thread already focused
+  if (threadKey && _focusedThreadKey === threadKey) { clearTileFocus(); return; }
+  if (!threadKey && _focusedTileId === clickedId)   { clearTileFocus(); return; }
+
+  _applyFocus(threadKey, threadKey ? null : tile);
+}
+
+function focusThread(threadKey) {
+  // Toggle off if same thread already focused
+  if (_focusedThreadKey === threadKey) { clearTileFocus(); return; }
+  _applyFocus(threadKey, null);
+}
+
+function clearTileFocus() {
+  _focusedTileId    = null;
+  _focusedThreadKey = null;
+  const grid    = document.getElementById('ptile-grid');
+  if (!grid) return;
+  const wrapper = grid.closest('.pos-tile-grid-wrap');
+  if (wrapper) wrapper.classList.remove('grid-wrap-focused');
+  grid.querySelectorAll('.pos-tile').forEach(t => {
+    t.classList.remove('tile-focused');
+    t.style.removeProperty('--focus-color');
+    t.style.removeProperty('--focus-glow');
+  });
+  const svg = document.getElementById('thread-svg');
+  if (svg) {
+    svg.querySelectorAll('.thread-path').forEach(p => p.classList.remove('thread-focused'));
+    svg.querySelectorAll('.thread-hit').forEach(h => h.classList.remove('thread-hit-focused'));
+    svg.querySelectorAll('circle').forEach(d => d.classList.remove('thread-dot-focused'));
+  }
 }
 
 function drawThreadLines() {
@@ -1194,6 +1331,7 @@ function drawThreadLines() {
     path.setAttribute('stroke-dasharray', '5 3');
     path.setAttribute('opacity', '0.6');
     path.classList.add('thread-path');
+    path.dataset.threadKey = threadKey;
     path.style.animation = 'thread-march 1.2s linear infinite';
     path.style.transition = 'opacity .15s, stroke-width .15s';
     svg.appendChild(path);
@@ -1209,9 +1347,16 @@ function drawThreadLines() {
     hit.dataset.threadKey = threadKey;
     hit.addEventListener('mouseenter', () => { path.style.opacity = '1'; path.setAttribute('stroke-width', '2'); });
     hit.addEventListener('mouseleave', () => { path.style.opacity = '0.6'; path.setAttribute('stroke-width', '1'); });
+    // Single click → hedge popup immediately; double-click → focus thread
     hit.addEventListener('click', e => {
       e.stopPropagation();
       onThreadClick(hit.dataset.threadKey, e.clientX, e.clientY);
+    });
+    hit.addEventListener('dblclick', e => {
+      e.stopPropagation();
+      // Hide popup that single-click may have just opened, then focus
+      hideHedgePopup(true);
+      focusThread(hit.dataset.threadKey);
     });
     svg.appendChild(hit);
 
@@ -1220,6 +1365,7 @@ function drawThreadLines() {
       dot.setAttribute('cx', px); dot.setAttribute('cy', py);
       dot.setAttribute('r', '2.8'); dot.setAttribute('fill', color);
       dot.setAttribute('opacity', '0.85');
+      dot.dataset.threadKey = threadKey;
       svg.appendChild(dot);
     }
   });
@@ -1601,7 +1747,24 @@ function render(data) {
   document.getElementById('content').style.display = 'block';
   document.getElementById('loader').style.display = 'none';
   document.getElementById('sidebar').innerHTML = sidebarContent;
-  if (posView === 'tiles') { requestAnimationFrame(drawThreadLines); initTileDrag(); }
+  if (posView === 'tiles') {
+    requestAnimationFrame(() => {
+      drawThreadLines();
+      // Re-apply focus state after DOM/SVG rebuild (e.g. auto-refresh)
+      if (_focusedThreadKey) {
+        const grid = document.getElementById('ptile-grid');
+        const hasTiles = grid && grid.querySelector(`.pos-tile[data-thread="${_focusedThreadKey}"]`);
+        if (hasTiles) _applyFocus(_focusedThreadKey, null);
+        else clearTileFocus();
+      } else if (_focusedTileId) {
+        const grid = document.getElementById('ptile-grid');
+        const tile = grid && grid.querySelector(`.pos-tile[data-pos-id="${_focusedTileId}"]`);
+        if (tile) _applyFocus(null, tile);
+        else clearTileFocus();
+      }
+    });
+    initTileDrag();
+  }
 }
 
 async function fetchData() {
@@ -2626,6 +2789,13 @@ function buildFundingDrawerContent(data) {
 fetchData();
 autoRefresh = setInterval(fetchData, 15000);
 window.addEventListener('resize', () => { if (posView === 'tiles') requestAnimationFrame(drawThreadLines); });
+
+// Clear tile focus when clicking outside the tile grid
+document.addEventListener('click', e => {
+  if (!_focusedTileId) return;
+  const grid = document.getElementById('ptile-grid');
+  if (grid && !grid.contains(e.target)) clearTileFocus();
+});
 </script>
 </body>
 </html>
