@@ -1,0 +1,47 @@
+public/index.html
+  s_ce0783ce808ef4::t_9deab0608f084c 7,272-286
+public/js/stress.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-545
+public/js/unwind.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-610
+public/js/journal.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-454
+public/js/confluence-view.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-222
+public/js/boot.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-31
+public/js/hedge-ledger.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-194
+public/js/render.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-461
+public/js/drawers.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-667
+public/js/tiles-threads.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-612
+public/js/core.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-74
+public/js/positions.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-217
+public/js/stops.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-230
+public/css/app.css
+  s_ce0783ce808ef4::t_9deab0608f084c 1-663
+public/js/calculators.js
+  s_ce0783ce808ef4::t_9deab0608f084c 1-297
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d3dcdc302650de43b2edfd271229ea4ddf0067fb",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
