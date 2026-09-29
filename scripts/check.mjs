@@ -56,7 +56,7 @@ const pageSources = [htmlPath, ...walk(path.join(ROOT, 'public', 'js'), n => n.e
 for (const file of pageSources) {
   fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
     if (/fundingRate[^;\n]*\*\s*3\b/.test(line)) fail(`${rel(file)}:${i + 1} multiplies funding by 3 — use fundingPerDay(p)`);
-    if (/Error: \$\{(?!esc\()[^}]*\.error\}/.test(line)) fail(`${rel(file)}:${i + 1} renders an error message without esc()`);
+    if (/(?:Error|Failed): \$\{(?!esc\()[^}]*\.error\}/.test(line)) fail(`${rel(file)}:${i + 1} renders an error message without esc()`);
   });
 }
 

@@ -48,7 +48,7 @@
 - **Unwind planner: partial-size search** — candidates are whole legs or the full matched
   portion of a hedge. A continuous search over close fractions would find cheaper steps
 - **Unwind planner: no execution** — it produces a plan only; nothing is ever sent to an
-  exchange. Note the safety is in the code, not the key: the account reports `canTrade: true`
+  exchange. Use a key without trading permission so that safety does not rest on the code alone
 - **Journal: income capped at 3 months** by Binance, so the equity curve stops there while
   round-trip statistics reach further; the panel states both spans
 - **Journal: positions opened before the earliest reachable fill** are excluded from round

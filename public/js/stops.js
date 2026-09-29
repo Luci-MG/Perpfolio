@@ -174,7 +174,7 @@ function renderVolTile(p) {
     return `<div class="vol-tile">
       <div class="vt-head"><span class="pair">${p.pair}</span>
         <span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span></div>
-      <div style="font-size:11px;color:var(--danger);padding:8px 0">Failed: ${p.error}</div>
+      <div style="font-size:11px;color:var(--danger);padding:8px 0">Failed: ${esc(p.error)}</div>
     </div>`;
   }
 
