@@ -1,96 +1,129 @@
 # Crypto Portfolio Dashboard
 
-Unified real-time dashboard for Hyperliquid + Binance USDM Futures open positions and hedge book.
+Real-time dashboard and risk workbench for **Binance USDM Futures**, built for a hedged
+book — same-symbol long and short, cross margin, high leverage. Includes a read-only
+Hyperliquid view.
+
+Runs locally. Reads your account; never places an order.
 
 ## Stack
-- **Backend**: Node.js + Express (no database needed)
-- **Frontend**: Vanilla HTML/CSS/JS served by Express
-- **APIs**: Hyperliquid public REST · Binance signed REST (read-only)
+- **Backend**: Node.js + Express — `express`, `dotenv`, `ws`, nothing else
+- **Frontend**: one vanilla HTML/CSS/JS file, no framework, no build step
+- **APIs**: Binance signed REST + user-data websocket · Hyperliquid public REST
+- **Storage**: append-only NDJSON in `data/` (gitignored) for trade history — no database
 
 ---
 
 ## Setup
 
-### 1. Install Node.js
-Download from https://nodejs.org (v18+ recommended).
+**1. Node.js v18+** — https://nodejs.org
 
-### 2. Clone / download this project
+**2. Install**
 ```bash
 cd crypto-dashboard
 npm install
 ```
 
-### 3. Configure your credentials
+**3. Credentials**
 ```bash
 cp .env.example .env
 ```
-Open `.env` and fill in:
 
 | Variable | Where to get it |
 |---|---|
-| `BINANCE_API_KEY` | Binance → Profile → API Management → Create API → **Read Only** |
-| `BINANCE_API_SECRET` | Same page (shown once on creation) |
-| `HL_WALLET_ADDRESS` | Your Hyperliquid wallet address (public, e.g. `0xAbc…`) |
+| `BINANCE_API_KEY` | Binance → API Management → Create API |
+| `BINANCE_API_SECRET` | Same page, shown once |
+| `HL_WALLET_ADDRESS` | Your Hyperliquid wallet address (public, `0x…`) |
+| `PORT` | Optional, defaults to 3000 |
 
-**Binance tip**: when creating the API key, enable only "Read Info". Disable spot trading, futures trading, and withdrawals.
+**Enable "Read Info" only.** Disable spot trading, futures trading and withdrawals. This app
+never calls a trading endpoint, but that safety lives in the code — restrict the key so it
+does not depend on the code being right.
 
-### 4. Run locally
+**4. Run**
 ```bash
-npm start
+npm start        # http://localhost:3000
+npm run dev      # auto-restart on change
+npm test         # 110 tests, no dependencies
 ```
-Open http://localhost:3000 in your browser.
 
-For auto-restart on file changes during development:
+**5. Build the trade history** (once, for the Journal)
+
+Open the **Journal** tab → **Sync recent**, or:
 ```bash
-npm run dev
+curl "localhost:3000/api/history/sync?start=true&full=true"
 ```
+The full build takes about a minute and writes ~10MB to `data/`. After that a routine sync
+takes ~10s because it only re-reads symbols traded in the last week.
 
 ---
 
-## How it works
+## What's in it
 
-```
-Browser → GET /api/dashboard
-              ↓
-         server.js
-         ├── Hyperliquid: POST /info (no auth needed)
-         └── Binance FAPI: GET /fapi/v2/positionRisk (signed with HMAC-SHA256)
-              ↓
-         Hedge detection (auto-pairs opposite-side same-asset positions across exchanges)
-              ↓
-         JSON response → frontend renders dashboard
-```
+The main column has eight tabs; the sidebar has six tool buttons.
 
-The dashboard auto-refreshes every **30 seconds**.
+| Tab | What it answers |
+|---|---|
+| **Tiles / List / Orders** | what is open right now, and at what price |
+| **Stops** | volatility-adjusted stop width and size per position |
+| **Stress** | drag any coin's price and watch the shared margin pool drain, with markers where it liquidates |
+| **Unwind** | which positions to close, in what order, to free margin or restore buffer |
+| **Journal** | the account's history: account reconciliation, performance, behaviour, timing, symbols, costs, trades |
+| **Confluence** | pick any Binance perp (default BTC): 12 signals in 7 sources across 15m/1h/4h/1d, regime-gated, each with its own hit rate, edge over chance and a ✓/✗ only when that edge is statistically real |
 
----
+Sidebar tools (the icon block beside *Daily funding*):
 
-## Deploying online (when ready)
+| | |
+|---|---|
+| **P&L · Avg Down/Up · Liq Price** | quick calculators |
+| **Liquidation after close** ✂ | pick positions to close, get the exchange's liquidation price for everything left |
+| **Unwind simulator** 🎚 | close legs by hand and see what it frees, then move the market |
+| **Hedge ledger** ▦ | how much of the loss is already locked, what the hedge costs to hold, and how its margin inflates in a pump |
 
-### Railway (easiest)
-1. Push this folder to a GitHub repo
-2. Go to https://railway.app → New Project → Deploy from GitHub
-3. Add your `.env` variables in Railway's dashboard under Settings → Variables
-4. Done — Railway gives you a public URL
-
-### Render
-Same flow as Railway — connect GitHub repo, add env vars, deploy.
-
-### VPS (DigitalOcean / Hetzner)
-```bash
-npm install -g pm2
-pm2 start server.js --name dashboard
-pm2 save
-pm2 startup
-```
+Positions, orders and margin refresh every **15 seconds** (paused while the tab is hidden). The
+heavier panels load when you open their tab. The server shares one account read across every
+open tab for 10 seconds, so extra tabs cost no extra exchange quota, and a Binance rate-limit
+or ban pauses every call until it lifts. The last tab, coin and timeframes you used are
+remembered in the browser.
 
 ---
 
-## Customising hedge detection
+## A note on the numbers
 
-Hedges are auto-detected in `server.js` → `detectHedges()`. The logic:
-- Matches positions on the same asset across HL and Binance
-- Considers a pair a hedge if they are **opposite sides** (one long, one short)
-- Calculates offset ratio = smaller size / larger size
+Margin and liquidation figures are scored against Binance's own reported values on **every
+request** — maintenance margin, initial margin, equity, free margin and the published
+liquidation price. The panels show that error rather than asserting they are right, and the
+Stress tab refuses to show thresholds at all if the model cannot reconcile.
 
-To add manual hedge labels or cross-asset hedges, edit the `detectHedges` function.
+Where a figure is an extrapolation rather than a forecast — a liquidation price many
+multiples away from the mark — it is labelled as one.
+
+Trade history is cross-checked the same way: every fill's realised PnL lands in exactly one
+place — a closed round trip, one still open, or an "orphan" bucket for fills that closed a
+position opened before the earliest history Binance still serves — and the Journal says how
+big that bucket is.
+
+Equity is the exchange's margin balance (wallet plus unrealised PnL), and daily funding uses
+each symbol's own settlement interval (8h, 4h or 1h; Hyperliquid hourly).
+
+---
+
+## Deploying
+
+Local is the intended setup. The server listens on every network interface and has **no
+authentication** — anyone who can reach the port (including other devices on your Wi-Fi) can
+read your account and start a history sync. Keep it behind a firewall or on a trusted network.
+
+- **Railway / Render**: push to GitHub, add the `.env` variables in the dashboard, deploy
+- **VPS**: `npm install -g pm2 && pm2 start server.js --name dashboard && pm2 save`
+
+`public/index.html` is served by Express, so there is no separate frontend deploy.
+
+---
+
+## Architecture and design notes
+
+`CLAUDE.md` carries the detail: the margin maths and how it is calibrated, why a hedge's
+liquidation price behaves the way it does, the trade-history store, and a list of the
+mistakes that shaped the code. Its *Review 2026-09-29* section lists what the latest review
+fixed and the ranked roadmap; *Known gaps* lists what is still open.
