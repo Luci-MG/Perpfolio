@@ -8,7 +8,7 @@ Runs locally. Reads your account; never places an order.
 
 ## Stack
 - **Backend**: Node.js + Express — `express`, `dotenv`, `ws`, nothing else
-- **Frontend**: one vanilla HTML/CSS/JS file, no framework, no build step
+- **Frontend**: vanilla HTML/CSS/JS — markup, one stylesheet, thirteen plain scripts; no framework, no build step
 - **APIs**: Binance signed REST + user-data websocket · Hyperliquid public REST
 - **Storage**: append-only NDJSON in `data/` (gitignored) for trade history — no database
 
@@ -44,7 +44,7 @@ does not depend on the code being right.
 ```bash
 npm start        # http://localhost:3000
 npm run dev      # auto-restart on change
-npm test         # 110 tests, no dependencies
+npm run verify   # static checks + 152 tests (engines, every route, every view), no dependencies
 ```
 
 **5. Build the trade history** (once, for the Journal)
@@ -117,13 +117,15 @@ read your account and start a history sync. Keep it behind a firewall or on a tr
 - **Railway / Render**: push to GitHub, add the `.env` variables in the dashboard, deploy
 - **VPS**: `npm install -g pm2 && pm2 start server.js --name dashboard && pm2 save`
 
-`public/index.html` is served by Express, so there is no separate frontend deploy.
+`public/` (markup, `css/`, `js/`) is served by Express, so there is no separate frontend deploy.
 
 ---
 
 ## Architecture and design notes
 
-`CLAUDE.md` carries the detail: the margin maths and how it is calibrated, why a hedge's
-liquidation price behaves the way it does, the trade-history store, and a list of the
-mistakes that shaped the code. Its *Review 2026-09-29* section lists what the latest review
-fixed and the ranked roadmap; *Known gaps* lists what is still open.
+`CLAUDE.md` is the map and the rules; the detail is in `docs/`, one file per area:
+`architecture.md` (how the modules fit, and recipes for adding a route, a tab or a signal),
+`api.md`, `frontend.md`, `stress-engine.md` (the margin maths and how it is calibrated),
+`unwind.md`, `journal.md`, `confluence.md`, `stops.md`, `operations.md` (order feed, request
+budget, deployment), `changelog.md` (what the latest review fixed, and the roadmap) and
+`known-gaps.md`.

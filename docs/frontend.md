@@ -1,0 +1,110 @@
+# Frontend
+
+## Files
+
+`public/index.html` holds markup only, `public/css/app.css` every style, and `public/js/` the
+behaviour as thirteen **classic** scripts loaded in this order — no build step, no framework:
+
+| # | File | Holds |
+|---|---|---|
+| 1 | `core.js` | preferences, shared view state, `fmt*` / `esc` / badges — load-time code in later files calls these |
+| 2 | `positions.js` | `setView`, HL/BN filter, positions list and tiles, orders table |
+| 3 | `tiles-threads.js` | hedge popups, tile drag and focus, the hedge-thread SVG |
+| 4 | `stops.js` | Stops tab |
+| 5 | `stress.js` | Stress tab |
+| 6 | `hedge-ledger.js` | hedge-ledger drawer |
+| 7 | `confluence-view.js` | Confluence tab (the engine is the server's `confluence.js`) |
+| 8 | `journal.js` | Journal tab |
+| 9 | `unwind.js` | liquidation-after-close and unwind-simulator drawers, Unwind tab |
+| 10 | `render.js` | sidebar widgets, `render()`, `fetchData()` and the poll guard |
+| 11 | `calculators.js` | context menu and calculators |
+| 12 | `drawers.js` | exposure, uPnL and funding drawers |
+| 13 | `boot.js` | global listeners, first poll, refresh timer — must stay last |
+
+Why classic scripts and why the order matters: [`architecture.md`](architecture.md).
+
+- Polls `GET /api/dashboard` every **15 seconds** via `setInterval` — skipped while the tab is
+  hidden (and re-fetched on return), and never two at once (`pollInFlight`)
+- Manual refresh button triggers `fetchData()` immediately
+- A failed poll keeps the last good figures on screen and says `Stale — last good HH:MM`
+  rather than blanking the status line
+- The view, the confluence symbol and its timeframes are remembered per browser
+  (`loadPref`/`savePref`, `localStorage` under `dash:*`, every access wrapped so a blocked
+  store simply falls back to the defaults)
+- Below 900px wide the sidebar stacks under the main column
+- Dark mode via `prefers-color-scheme` media query with CSS variables
+- `lastData` cached globally so view toggles re-render instantly without re-fetching
+
+### Key JS functions
+| Function | Purpose |
+|---|---|
+| `fetchData()` | Polls `/api/dashboard`, calls `render(data)` |
+| `render(data)` | Rebuilds main column + sidebar; **leaves a mounted panel alone** (see below) |
+| `setView(v)` | Switches `posView`, lazily fetches that tab's data |
+| `renderPositions` / `renderPositionTiles` / `renderOrdersFor` | Tiles, list and order tables |
+| `renderMarginHealth(data)` | Sidebar SVG arc gauges for HL and BN margin use |
+| `renderSidebarBottomRow(data)` | Funding widget + `renderCalcTiles()` icon block |
+| `renderCalcTiles()` | The 3×2 icon grid: three calculators + three drawers |
+| `fmt` / `fmtUsd` / `fmtSignedUsd` / `fmtPrice` / `fmtPnl` | Number formatting |
+| `liqDist(p)` | `abs(mark − liqPrice) / mark × 100` |
+
+`esc()` escapes anything interpolated into markup from user input or an exchange/server
+string — attributes, titles and error messages.
+
+`fmtPnl` renders a negative as a red `$X` with **no minus sign** — colour carries the sign.
+That is fine for a PnL column and wrong for anything where the sign is the point, which is
+why `fmtSignedUsd` exists. `fmtPrice` scales decimals to the price magnitude; `fmtUsd` is
+always 2dp and turns a 1e-5 asset into `$0.00`.
+
+### View tabs — eight
+`posView` ∈ `tiles | list | orders | stops | stress | unwind | journal | confluence`, default `tiles`.
+`setView(v)` fetches on activation only: `stops` → `/api/volstops`, `stress` → `/api/riskbook`,
+`unwind` → `/api/deleverage`, `journal` → `/api/performance`, `confluence` → `/api/confluence`. The
+first four share the positions card; the last four replace it and hide the HL/BN filter and exchange header.
+
+**The mounted-panel rule.** The 15s poll calls `render()`, which would rebuild the whole main
+column — destroying a slider mid-drag or an input mid-edit. `render()` therefore leaves the
+panel alone whenever its mount marker (`#st-mounted`, `#uw-mounted`, `#cf-mounted`,
+`#vs-mounted`) is present, unless
+`rerenderStress()` set `riskForceRender`. Every deliberate rebuild goes through that helper.
+
+### Sidebar
+Top to bottom: `metric-stack` (total equity, uPnL, exposure — each with HL/BN breakdown and a
+click-through drawer), `renderMarginHealth()`, then `renderSidebarBottomRow()` — the daily
+funding widget beside `renderCalcTiles()`.
+
+**Margin health is an SVG arc gauge, not a donut.** The sweep never exceeds 180°, so the
+arc's `large-arc-flag` must always be `0`; it was `pct > 50 ? 1 : 0`, which drew the 225°
+complement and painted the fill out of the viewBox for every utilisation between 50% and
+100% — exactly the range worth looking at. A `conic-gradient` survives elsewhere, for the
+small long/short split donut only.
+
+### Drawers
+All at body level, outside `#sidebar`, so the poll's sidebar rebuild cannot wipe them:
+`openUpnlDrawer` · `openExpDrawer` · `openFundDrawer` (pre-existing) and `openLiqDrawer` ·
+`openSimDrawer` · `openHlDrawer` (this session). Each follows the same overlay + `.open`
+class pattern.
+
+---
+
+## CSS variables / theming
+```css
+--hl: #7f77dd        /* Hyperliquid purple */
+--bn: #ef9f27        /* Binance amber */
+--success: #1d9e75   /* green */
+--danger:  #e24b4a   /* red */
+--warning: #ba7517   /* amber */
+```
+Dark mode overrides via `@media (prefers-color-scheme: dark)`.
+
+**Grid overflow:** `.app-layout` uses `minmax(0, 1fr)` and `.main-col` carries `min-width: 0`.
+A CSS grid track defaults to `min-width: auto`, so one wide table widens the track and pushes
+content out under the sidebar rather than shrinking or scrolling. Any new wide element inside
+a grid needs `min-width: 0` on its track.
+
+Key layout classes: `.metric-grid`, `.metric .breakdown`, `.b-row`, `.view-tabs`, `.view-tab`, `.pos-tile-grid`, `.pos-tile`, `.rvc-grid`, `.rvc`, `.donut`, `.donut-hole`, `.fviz-row`, `.two-col`, `.card`.
+
+`renderCalcTiles()` is the icon-button block beside the funding tile: a `repeat(3, 1fr)` grid
+holding five tools and one reserved slot, two rows tall so it matches the funding tile's
+height. A tile either carries `tab` (opens the calculator modal) or `action` (raw onclick,
+used by the two drawers).
