@@ -1,0 +1,23 @@
+public/js/stops.js
+  s_ce0783ce808ef4::t_3b51d4d7c9ad42 177
+scripts/check.mjs
+  s_ce0783ce808ef4::t_3b51d4d7c9ad42 59
+docs/known-gaps.md
+  s_ce0783ce808ef4::t_3b51d4d7c9ad42 51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0205d119054b2fe1dfc2a95f5ab90db664ceda49",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
