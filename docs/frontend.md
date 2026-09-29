@@ -26,6 +26,8 @@ Why classic scripts and why the order matters: [`architecture.md`](architecture.
 - Polls `GET /api/dashboard` every **15 seconds** via `setInterval` — skipped while the tab is
   hidden (and re-fetched on return), and never two at once (`pollInFlight`)
 - Manual refresh button triggers `fetchData()` immediately
+- Each successful poll also reads `/api/health`; the header chip beside *Last updated* appears
+  only when the server reports a problem (docs/operations.md, *Health*)
 - A failed poll keeps the last good figures on screen and says `Stale — last good HH:MM`
   rather than blanking the status line
 - The view, the confluence symbol and its timeframes are remembered per browser

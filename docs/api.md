@@ -32,6 +32,7 @@
 | `GET /api/history/sync?start=true&full=true` | starts a history sync, returns progress | *history-store* |
 | `GET /api/confluence?symbol=&tfs=` | signals, regime, scores and track records per timeframe | *Confluence* |
 | `GET /api/symbols` | trading USDM perpetuals, for the confluence picker | *Confluence* |
+| `GET /api/health` | ban state, request weight, order-stream age and drift, snapshot ages, sync — one `ok`/`warn`/`bad` verdict with reasons; no exchange calls | *Operations* |
 | `GET /risk-engine.js` | the engine module, served to the browser | *Cross-Pool Stress Simulator* |
 
 Everything except `/api/dashboard` and `/api/volstops` is Binance-only. `/api/confluence` uses public

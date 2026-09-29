@@ -44,6 +44,9 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .btn-circle svg { width: 12px; height: 12px; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; margin-right: 4px; }
 .status-dot.error { background: var(--danger); }
+.health-chip { font-size: 10px; font-weight: 500; padding: 1px 6px; border-radius: 10px; margin-left: 6px; cursor: help; white-space: nowrap; }
+.health-chip.warn { background: var(--amber-bg); color: var(--amber); }
+.health-chip.bad { background: var(--red-bg); color: var(--red); }
 .status-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 @keyframes sl-glow {

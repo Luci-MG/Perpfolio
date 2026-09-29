@@ -407,6 +407,22 @@ function render(data) {
 let pollInFlight = false;
 let lastGoodAt = null;
 
+// The server's own view of whether the figures can be trusted — ban state, request weight,
+// order stream, snapshot age. Hidden while everything is fine; costs no exchange call.
+async function updateHealthChip() {
+  const el = document.getElementById('healthChip');
+  if (!el) return;
+  try {
+    const h = await (await fetch('/api/health')).json();
+    el.hidden = h.level === 'ok';
+    el.className = `health-chip ${h.level}`;
+    el.textContent = `${h.level === 'bad' ? '⛔' : '⚠'} ${h.reasons.length} issue${h.reasons.length === 1 ? '' : 's'}`;
+    el.title = h.reasons.map(r => `${r.level === 'bad' ? '⛔' : '⚠'} ${r.text}`).join('\n');
+  } catch (_) {
+    el.hidden = true;
+  }
+}
+
 async function fetchData() {
   if (pollInFlight) return;
   pollInFlight = true;
@@ -428,6 +444,7 @@ async function fetchData() {
     lastGoodAt = new Date(data.lastUpdated);
     dot.className = 'status-dot';
     txt.textContent = `Last updated ${lastGoodAt.toLocaleTimeString()}`;
+    updateHealthChip();
   } catch (e) {
     dot.className = 'status-dot error';
     txt.textContent = lastGoodAt

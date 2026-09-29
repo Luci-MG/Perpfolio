@@ -17,6 +17,7 @@ import { register as registerHedgeledger } from './routes/hedgeledger.js';
 import { register as registerDeleverage } from './routes/deleverage.js';
 import { register as registerConfluence } from './routes/confluence.js';
 import { register as registerAssets } from './routes/assets.js';
+import { register as registerHealth } from './routes/health.js';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,6 +32,7 @@ registerHedgeledger(app);
 registerDeleverage(app);
 registerConfluence(app);
 registerAssets(app);
+registerHealth(app);
 
 export { app, reconcileOrders };
 
@@ -63,7 +65,14 @@ function startServices() {
     console.warn('[bnWS] No BINANCE_API_KEY — skipping User Data Stream');
   }
 
-  app.listen(PORT, () => console.log(`Dashboard running → http://localhost:${PORT}`));
+  const server = app.listen(PORT, () => console.log(`Dashboard running → http://localhost:${PORT}`));
+
+  // Exit at once on a restart signal: `npm run dev` starts the new process straight away, and
+  // one still holding the port made it fail with EADDRINUSE whenever several files were saved
+  // together.
+  for (const signal of ['SIGTERM', 'SIGINT']) {
+    process.once(signal, () => { server.close(); process.exit(0); });
+  }
 }
 
 if (isMain) startServices();

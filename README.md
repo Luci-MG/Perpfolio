@@ -84,7 +84,9 @@ Positions, orders and margin refresh every **15 seconds** (paused while the tab 
 heavier panels load when you open their tab. The server shares one account read across every
 open tab for 10 seconds, so extra tabs cost no extra exchange quota, and a Binance rate-limit
 or ban pauses every call until it lifts. The last tab, coin and timeframes you used are
-remembered in the browser.
+remembered in the browser. A small chip beside *Last updated* appears whenever the server
+reports a problem — a rate-limit pause, a quiet order stream, stale data — with the reasons on
+hover.
 
 ---
 

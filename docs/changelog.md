@@ -1,5 +1,18 @@
 # Changelog and roadmap
 
+## Maintainability restructure (2026-09-29, after the review)
+
+No behaviour change except the two additions at the end; each step was checked against a
+golden snapshot of every route and a render of every view.
+
+| Step | What changed |
+|---|---|
+| Safety net | `test/fake-exchange.js` (synthetic hedged book, exchange-derived margin figures), `test/routes.test.js` (every route, exact calibration, ban guard, golden snapshot), `test/frontend.smoke.test.js` (every view and drawer rendered in a vm), `scripts/check.mjs` (syntax, assets, route-table drift, regression guards — it found four unescaped error messages on its first run), `npm run verify` |
+| Server | 2,065-line `server.js` → 69 lines of wiring + 13 `lib/` modules + 10 `routes/` files. Moved verbatim; imports generated from use; the account ↔ stress cycle broken by `lib/binance-meta.js` |
+| Frontend | 5,533-line `index.html` → 289 lines of markup + `css/app.css` + 13 ordered classic scripts |
+| Docs | `CLAUDE.md` 1,260 → ~140 lines of map and rules; every section moved verbatim into `docs/`; new `docs/architecture.md` with recipes |
+| Added | `GET /api/health` + header chip; clean exit on SIGTERM so `npm run dev` restarts never hit `EADDRINUSE` |
+
 ## Review 2026-09-29: what was fixed, what is next
 
 Four parallel read-only reviews (backend, maths engines, history/journal, frontend), each
@@ -44,8 +57,7 @@ status, remembered view, 900px breakpoint.
 - **Loopback binding and a POST-only sync start** — proposed, declined for now (see *Known gaps*).
 
 ### Next, ranked by value for effort
-1. **`/api/health` + a small status chip** — used weight, ban state, websocket age, last
-   reconcile drift, snapshot age. The server already tracks every one of these.
+1. ~~**`/api/health` + a small status chip**~~ — done, see *Maintainability restructure* below.
 2. **Funding-adjusted PnL per trip** — attach `FUNDING_FEE` rows to the open trip by symbol and
    time. On a hedged book held for days, carry is part of the result. Low effort.
 3. **Per-trip notes and tags** — `data/annotations.ndjson` keyed `symbol:positionSide:openTime`,

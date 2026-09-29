@@ -118,6 +118,16 @@ test('the engine is served to the browser', async () => {
   assert.match(body, /export function evalPool/);
 });
 
+test('health reports a verdict without calling any exchange', async () => {
+  const before = fake.calls.length;
+  const { status, body } = await get('/api/health');
+  assert.equal(status, 200);
+  assert.ok(['ok', 'warn', 'bad'].includes(body.level));
+  assert.equal(body.rate.weightLimit, 2400);
+  assert.ok(body.snapshotAgeMs.binance != null);
+  assert.equal(fake.calls.length, before);
+});
+
 test('route output matches the golden snapshot', () => {
   if (!fs.existsSync(GOLDEN) || process.env.UPDATE_GOLDEN) {
     fs.mkdirSync(path.dirname(GOLDEN), { recursive: true });

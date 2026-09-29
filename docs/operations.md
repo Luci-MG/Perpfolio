@@ -104,10 +104,29 @@ every confluence series — refuse to send until it passes. The old signed path 
 four times and public calls ignored status entirely, so a ban could be extended by the next
 poll. Every fetch also carries a 10s `AbortSignal.timeout`, so a hung socket cannot hang a route.
 
-### Still open
-- **Show `usedWeight1m` and the ban state in the UI** — the server tracks both; nothing
-  renders them yet. A `/api/health` route (ban, weight, websocket age, reconcile drift, cache
-  ages) is the natural home.
+### Health: `GET /api/health`
+One verdict — `ok`, `warn` or `bad`, with a reason per finding — on whether the figures on
+screen can be trusted, built from state the server already holds, so it makes **no exchange
+call** and rides along with every dashboard poll. `lib/health.js` (`assessHealth`, pure and
+unit-tested) applies the thresholds:
+
+| Finding | Level |
+|---|---|
+| Binance paused after a 418/429 (with seconds left) | bad |
+| request weight ≥ 1,800 of 2,400 (the sync throttle's ceiling) | bad |
+| request weight ≥ 1,200 | warn |
+| order stream not connected, or quiet > 10 min (key present) | warn |
+| last reconcile found drift | warn |
+| an account snapshot older than 2 min | warn |
+| last history sync failed | warn |
+
+The header chip beside *Last updated* is hidden while the verdict is `ok`; otherwise it shows
+⚠ or ⛔ with the issue count, and every reason in its tooltip.
+
+### Restarts under `npm run dev`
+`node --watch` starts the new process at once. When several files were saved in the same
+second, the old process still held the port and the restart failed with `EADDRINUSE`; the
+server now closes and exits immediately on SIGTERM/SIGINT.
 
 ### Latency: warm the slow caches at boot, fan out the rest
 `/api/riskbook` took **13.4s** on its first call. The costs were `exchangeInfo` (2.6s, ~1MB),
