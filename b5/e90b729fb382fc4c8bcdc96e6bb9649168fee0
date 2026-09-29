@@ -1,0 +1,61 @@
+lib/binance-account.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-162
+lib/history-sync.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-118
+routes/deleverage.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-77
+routes/hedgeledger.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-55
+lib/market-data.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-89
+routes/assets.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-10
+routes/performance.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-71
+routes/history.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-15
+lib/binance-client.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-80
+lib/analytics.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-59
+lib/pools.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-343
+routes/confluence.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-98
+lib/binance-meta.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-127
+lib/orders-stream.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-212
+routes/riskbook.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-37
+server.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-4,8-19,25-33,42
+lib/config.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-19
+lib/confluence-data.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-92
+lib/util.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-36
+routes/dashboard.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-62
+routes/volstops.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-269
+lib/hyperliquid.js
+  s_ce0783ce808ef4::t_c5745a211d0455 1-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b5e90b729fb382fc4c8bcdc96e6bb9649168fee0",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
