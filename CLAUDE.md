@@ -1,35 +1,82 @@
 # Crypto Portfolio Dashboard — CLAUDE.md
 
-## Project overview
-Unified real-time portfolio dashboard for **Hyperliquid** and **Binance USDM Futures** open positions, open orders, account info, and risk/funding analytics. Node.js Express backend + vanilla HTML/CSS/JS frontend. No database. No framework.
+Real-time portfolio dashboard and risk workbench for **Binance USDM Futures** (plus a read-only
+**Hyperliquid** view). Express backend, vanilla HTML/CSS/JS frontend. No framework, no build
+step, no dependency beyond express/dotenv/ws — tests and checks use Node built-ins only.
 
----
+Not a database, but not stateless either: account history is cached locally as append-only
+NDJSON in `data/` (gitignored) because Binance serves income for only three months and fills
+only through cursor paging.
+
+The book this was built against is a hedged one — same-symbol long and short on several
+symbols, cross margin, high leverage — and much of the design exists because that book breaks
+the naive version of each calculation.
+
+**Read before changing anything numeric:** the calibration rules in
+[`docs/stress-engine.md`](docs/stress-engine.md) (*Endpoint: `GET /api/riskbook`*). Every margin
+figure is scored against Binance's own reported numbers on every request, and the UI is
+expected to say so rather than assert correctness.
+
+## Where things are
+
+| Area | Read | Code |
+|---|---|---|
+| How the pieces fit, recipes for common changes | [`docs/architecture.md`](docs/architecture.md) | `server.js`, `lib/`, `routes/` |
+| Routes, payload shapes, exchange endpoints | [`docs/api.md`](docs/api.md) | `routes/`, `lib/binance-*.js`, `lib/hyperliquid.js` |
+| Views, mounted panels, drawers, theming | [`docs/frontend.md`](docs/frontend.md) | `public/js/`, `public/css/app.css` |
+| Volatility-adjusted stops | [`docs/stops.md`](docs/stops.md) | `vol-estimator.js`, `routes/volstops.js` |
+| Stress / liquidation maths, calibration | [`docs/stress-engine.md`](docs/stress-engine.md) | `risk-engine.js`, `lib/pools.js` |
+| Unwind planner and drawers | [`docs/unwind.md`](docs/unwind.md) | `risk-engine.js`, `routes/deleverage.js` |
+| Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `lib/history-sync.js` |
+| Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
+| Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |
+| What changed and what is next | [`docs/changelog.md`](docs/changelog.md) | — |
+| What is deliberately not done | [`docs/known-gaps.md`](docs/known-gaps.md) | — |
 
 ## Project structure
 ```
 crypto-dashboard/
-├── server.js          # Express backend — all API fetching, signing, data normalisation
-├── package.json       # Dependencies: express, dotenv
-├── .env               # Secret credentials (never commit this)
-├── .env.example       # Credential template
-├── README.md
+├── server.js              # wiring only — static files, routes, services when run directly
+├── lib/                   # exchange clients, caches, shared snapshot, history sync (see docs/architecture.md)
+├── routes/                # one register(app) per area
+├── risk-engine.js         # stress / liquidation / unwind maths — also served to the browser
+├── vol-estimator.js       # composite volatility for dynamic stops
+├── confluence.js          # market signals, regime gating, self-calibration
+├── trade-analytics.js     # round trips and statistics
+├── history-store.js       # append-only NDJSON cache
+├── *.test.js              # engine unit tests
+├── test/                  # fake exchange, route contract tests, golden snapshot, page smoke test
+├── scripts/check.mjs      # static checks
+├── docs/                  # design notes, one file per area
+├── data/                  # cached income + fills (gitignored)
+├── .env / .env.example    # credentials (never commit .env)
 └── public/
-    └── index.html     # Entire frontend — rendering, polling, styles (single file)
+    ├── index.html         # markup only
+    ├── css/app.css
+    └── js/                # 13 classic scripts, loaded in a fixed order (docs/frontend.md)
 ```
 
----
-
-## Running the project
+## Running and verifying
 
 ```bash
 npm install          # first time only
 npm start            # production
-npm run dev          # development with auto-restart (node --watch)
+npm run dev          # development, restarts on any imported file change
+npm run verify       # static checks + every test — run before every commit
+npm run coverage     # the same tests with Node's built-in coverage report
 ```
 
-Server runs on `http://localhost:3000` (or `$PORT` env var).
+`npm run verify` must stay green: it covers the engines, every route against a fake exchange
+(including exact calibration and the ban guard), a render of every view and drawer, and the
+checks in `scripts/check.mjs`. `UPDATE_GOLDEN=1 npm test` rewrites the route snapshot — only
+when a response is meant to change.
 
----
+First run of the Journal needs a history build: open the **Journal** tab and press **Sync
+recent**, or `curl "localhost:3000/api/history/sync?start=true&full=true"`. The full build is
+about a minute for a book with a few months of activity; afterwards a routine sync is
+~10s.
+
+Server runs on `http://localhost:3000` (or `$PORT`).
 
 ## Environment variables (`.env`)
 
@@ -39,187 +86,53 @@ Server runs on `http://localhost:3000` (or `$PORT` env var).
 | `BINANCE_API_SECRET` | Binance API secret (HMAC signing) |
 | `HL_WALLET_ADDRESS` | Hyperliquid public wallet address (`0x...`) |
 | `PORT` | Optional, defaults to 3000 |
+| `DASHBOARD_DATA_DIR` | Optional, where history is cached (defaults to `data/`; the tests use a temp dir) |
 
 Never log or expose these. Never commit `.env`.
 
----
-
-## API architecture
-
-### Hyperliquid
-- **Base URL**: `https://api.hyperliquid.xyz/info`
-- **Auth**: None required for reads — POST with wallet address in body
-- **Endpoints used**:
-  - `{ type: "clearinghouseState", user: HL_WALLET }` → positions, margin summary
-  - `{ type: "metaAndAssetCtxs" }` → asset metadata + mark prices + funding rates
-  - `{ type: "openOrders", user: HL_WALLET }` → pending limit orders
-
-### Binance USDM Futures
-- **Base URL**: `https://fapi.binance.com`
-- **Auth**: HMAC-SHA256 signed requests. Append `timestamp` + `signature` to every private request. Pass `X-MBX-APIKEY` header.
-- **Signing**: `HMAC-SHA256(queryString, BINANCE_API_SECRET)` — see `binanceSign()` in `server.js`
-- **Endpoints used**:
-  - `GET /fapi/v2/account` → equity, margin used, available balance
-  - `GET /fapi/v2/positionRisk` → all open positions with mark price, liq price
-  - `GET /fapi/v1/premiumIndex` → funding rates (public, no auth needed)
-  - `GET /fapi/v1/openOrders` → pending orders (signed)
-
-### Single dashboard endpoint
-```
-GET /api/dashboard
-```
-Returns unified JSON:
-```json
-{
-  "ok": true,
-  "lastUpdated": "ISO timestamp",
-  "summary": {
-    "totalEquity", "totalUpnl",
-    "positionCount", "orderCount",
-    "hlExposure", "bnExposure", "totalExposure"
-  },
-  "hyperliquid": {
-    "equity", "marginPct", "marginUsed", "freeMargin",
-    "positions": [...],
-    "orders": [...]
-  },
-  "binance": {
-    "equity", "marginPct", "marginUsed", "freeMargin", "maintMargin",
-    "positions": [...],
-    "orders": [...]
-  }
-}
-```
-
----
-
-## Position data shape
-Each position object (both exchanges, normalised — no realizedPnl):
-```js
-{
-  pair:        "BTC-PERP" | "BTC/USDT",
-  type:        "perpetual" | "futures",
-  side:        "Long" | "Short",
-  leverage:    "5×",
-  size:        "0.12 BTC",
-  sizeUsd:     7476.00,
-  entry:       62400.00,
-  mark:        62300.00,
-  liqPrice:    54100.00,
-  upnl:        -12.00,
-  fundingRate: 0.012,         // raw %, e.g. 0.012 = 0.012%
-  funding8h:   "+0.0120%",    // formatted string with sign
-  exchange:    "hyperliquid" | "binance"
-}
-```
-
-## Order data shape
-Each order object (both exchanges, normalised):
-```js
-{
-  pair:       "BTC-PERP" | "BTC/USDT",
-  side:       "Buy" | "Sell",
-  type:       "Limit" | "Stop market" | ...,
-  price:      62000.00,
-  size:       "0.1 BTC",
-  reduceOnly: false,
-  exchange:   "hyperliquid" | "binance"
-}
-```
-
----
-
-## Frontend (`public/index.html`)
-
-Single file — HTML + CSS + JS, no build step, no framework.
-
-- Polls `GET /api/dashboard` every **15 seconds** via `setInterval`
-- Manual refresh button triggers `fetchData()` immediately
-- Dark mode via `prefers-color-scheme` media query with CSS variables
-- `lastData` cached globally so view toggles re-render instantly without re-fetching
-
-### Key JS functions
-| Function | Purpose |
-|---|---|
-| `fetchData()` | Fetches API, calls `render(data)` |
-| `render(data)` | Builds metric tiles, positions/orders section, insights, widgets |
-| `setView(v)` | Switches `posView` ∈ `{'tiles','list','orders'}`, updates tab active state, re-renders |
-| `renderPositions(positions)` | Delegates to tile or list view based on `posView` |
-| `renderPositionTiles(positions)` | Grid of position cards (default view) |
-| `renderOrdersFor(orders)` | Table of open orders for one exchange |
-| `renderInsights(hlPos, bnPos)` | Visual risk card grid — one card per position |
-| `renderWidgets(data)` | Margin health donuts + daily funding cost bars |
-| `fmt(n, d)` / `fmtUsd(n)` / `fmtPnl(n)` | Number formatting helpers |
-| `liqDist(p)` | `abs(mark - liqPrice) / mark * 100` — liquidation distance % |
-
-### Metric tiles (top row)
-1. **Total equity** — with HL / BN breakdown
-2. **Unrealised PnL** — with HL / BN breakdown
-3. **Open positions** — count with HL / BN breakdown
-4. **Open orders** — count with HL / BN breakdown
-5. **Gross exposure** — notional USD with HL / BN breakdown
-
-### 3-way view toggle (Tiles | List | Orders)
-- Default: **Tiles**
-- `setView(v)` updates `posView`, toggles `.active` class on `.view-tab` buttons, re-renders via `render(lastData)`
-- Orders view shows per-exchange order tables (pair, side, type, price, size, reduce-only)
-
-### Risk & funding overview (visual cards)
-`renderInsights()` produces `.rvc-grid` of cards, sorted by proximity to liquidation:
-- **Danger bar**: fills toward 100% as position approaches liq (`barWidth = 100 - dist`, capped 0–100)
-- Bar color: red < 10%, amber < 30%, green ≥ 30%
-- Shows: notional, entry/current, liq price, uPnL, rate/8h, daily cost
-
-### Margin health (donut charts)
-CSS `conic-gradient` donuts showing margin utilisation % for HL and BN side-by-side.
-Color: red > 80%, amber > 50%, exchange color otherwise.
-
-### Daily funding cost chart
-Horizontal bar chart — one row per position, bar width proportional to daily cost vs max.
-Green = receiving funding, Red = paying funding.
-
----
-
-## CSS variables / theming
-```css
---hl: #7f77dd        /* Hyperliquid purple */
---bn: #ef9f27        /* Binance amber */
---success: #1d9e75   /* green */
---danger:  #e24b4a   /* red */
---warning: #ba7517   /* amber */
-```
-Dark mode overrides via `@media (prefers-color-scheme: dark)`.
-
-Key layout classes: `.metric-grid`, `.metric .breakdown`, `.b-row`, `.view-tabs`, `.view-tab`, `.pos-tile-grid`, `.pos-tile`, `.rvc-grid`, `.rvc`, `.donut`, `.donut-hole`, `.fviz-row`, `.two-col`, `.card`.
-
----
-
-## Known gaps / not yet implemented
-
-- **Binance spot** — only USDM futures; spot endpoint is `/api/v3/openOrders`
-- **PnL history / charts** — no time-series data stored
-- **WebSocket streaming** — currently REST polling; could switch to HL WebSocket (`wss://api.hyperliquid.xyz/ws`) and Binance user data stream for lower latency
-- **Authentication** — no login; assumes private/local deployment
-- **Alerts** — liq proximity warnings visible in risk cards but no push/sound alerts
-
----
-
-## Deployment notes
-
-- **Local**: `npm start` → `http://localhost:3000`
-- **Railway / Render**: push to GitHub, add env vars in dashboard, deploy
-- **VPS**: use `pm2 start server.js --name dashboard`
-- The app serves `public/index.html` as a static file — no separate frontend deployment needed
-
----
-
 ## Coding conventions
 
-- ES Modules (`import`/`export`) — `"type": "module"` in `package.json`
-- No TypeScript, no transpilation, no build step
-- All async functions use `async/await`, errors surfaced to `/api/dashboard` as `{ ok: false, error: "..." }`
-- Keep all exchange-fetching logic in `server.js` — frontend only renders, never calls exchanges directly
+- ES Modules on the server (`"type": "module"`); classic scripts in the browser, for the reason
+  in `docs/frontend.md`
+- No TypeScript, no transpilation, no build step, no new dependencies
+- All async functions use `async/await`; route errors return `{ ok: false, error: "..." }`
+- All exchange access lives in `lib/` — routes shape responses, the frontend only renders and
+  never calls an exchange directly
 - Backend sends raw floats/numbers; format at render time in the frontend
 - `parseFloat()` everywhere on exchange API responses — they return strings
-- Funding rate math: `(side === 'Long' ? -1 : 1) * (fundingRate / 100) * sizeUsd` — positive result = paying out
+- Funding rate math: `(side === 'Long' ? -1 : 1) * (fundingRate / 100) * sizeUsd` per settlement —
+  **positive = received**, negative = paid. `fundingPerDay(p)` in the frontend is the only place
+  the daily figure is computed
+- Funding **per day** is `rate × (24 / fundingIntervalHours) × notional`, never `× 3` — 8h, 4h
+  and 1h symbols all exist, and the declared interval can itself be wrong (`docs/journal.md`,
+  *Funding cadence*)
 - Null/absent data: return raw `null` from backend, render as `"—"` in frontend via `fmtPnl(null)` → NaN → `"—"`
+- A new doc belongs in `docs/`, linked from the table above — keep this file a map
+
+## Rules earned the hard way
+- **Never `await` inside a `for` loop over positions or assets.** Fan out with `Promise.all`
+  keyed by *asset*, not position. Serial loops were the whole of a 13.4s cold response
+- **A grid track needs `min-width: 0`.** It defaults to `min-width: auto`, so one wide table
+  widens the track and pushes content out under the sidebar instead of shrinking
+- **A range or input the user set is theirs.** Recomputing a "best fit" on the next event
+  discards it — auto-fit only when nothing has been chosen, and only ever grow
+- **Show the sample size next to every derived number.** A bucket with two trades can read
+  a five-figure loss and mean nothing
+- **Score models against the exchange's own figures on every request**, and put the error in
+  the UI. When a figure is an extrapolation, say so rather than printing false precision
+- **Treat a websocket cache as an accelerator, never as truth.** Reconcile against REST on a
+  timer; every drift cause then heals itself
+- **Equity is the margin balance, never the wallet.** `totalWalletBalance` leaves out
+  unrealised PnL; on this book it overstated equity nearly 4×, and stop sizing and
+  margin % were computed on it
+- **A sign is a glyph, not a colour.** Every local `sign()` helper emits `−`; colour only
+  reinforces. The project's own green/red pair fails deuteranopia (ΔE 3.2)
+- **Never interpolate user or exchange text into markup unescaped** — `esc()` for attributes
+  and error messages. The confluence symbol input reached `value="…"` before the server's
+  regex could reject it
+- **Cache only success.** A timestamp stamped on a failed fetch turned one 5xx into 24h of
+  empty symbol filters and 6h of every symbol assumed to settle every 8h
+- **Share reads across tabs.** Anything the 15s poll triggers must go through a shared
+  snapshot, or the exchange quota scales with open tabs
+- **Refactor against a snapshot.** Moves that should change nothing are checked by the golden
+  route snapshot and the page smoke test, not by eye

@@ -1,96 +1,47 @@
-# Crypto Portfolio Dashboard
+# Perpfolio
 
-Unified real-time dashboard for Hyperliquid + Binance USDM Futures open positions and hedge book.
+A self-hosted risk dashboard for **Binance USDM futures**, with a read-only Hyperliquid view.
+Built for hedged, cross-margined books. It reads your account and never places orders.
 
-## Stack
-- **Backend**: Node.js + Express (no database needed)
-- **Frontend**: Vanilla HTML/CSS/JS served by Express
-- **APIs**: Hyperliquid public REST · Binance signed REST (read-only)
-
----
-
-## Setup
-
-### 1. Install Node.js
-Download from https://nodejs.org (v18+ recommended).
-
-### 2. Clone / download this project
-```bash
-cd crypto-dashboard
-npm install
-```
-
-### 3. Configure your credentials
-```bash
-cp .env.example .env
-```
-Open `.env` and fill in:
-
-| Variable | Where to get it |
+| | |
 |---|---|
-| `BINANCE_API_KEY` | Binance → Profile → API Management → Create API → **Read Only** |
-| `BINANCE_API_SECRET` | Same page (shown once on creation) |
-| `HL_WALLET_ADDRESS` | Your Hyperliquid wallet address (public, e.g. `0xAbc…`) |
+| **Positions** | live positions, orders and margin, refreshed every 15s |
+| **Stops** | volatility-adjusted stop width and size per position |
+| **Stress** | move any price and watch the margin pool; exact liquidation and free-margin thresholds |
+| **Unwind** | which positions to close, and in what order, to free margin or restore buffer |
+| **Journal** | round trips, performance, behaviour, timing and costs, from your own fills |
+| **Confluence** | 12 signals across 15m–1d for any perpetual, each with its measured hit rate |
 
-**Binance tip**: when creating the API key, enable only "Read Info". Disable spot trading, futures trading, and withdrawals.
+Every margin figure is checked against what Binance itself reports, on every request, and the
+error is shown in the UI.
 
-### 4. Run locally
+## Quick start
+
 ```bash
-npm start
+npm install
+cp .env.example .env    # add your keys
+npm start               # http://localhost:3000
 ```
-Open http://localhost:3000 in your browser.
 
-For auto-restart on file changes during development:
+| Variable | |
+|---|---|
+| `BINANCE_API_KEY` / `BINANCE_API_SECRET` | a **read-only** key: enable *Read Info* only |
+| `HL_WALLET_ADDRESS` | optional, a public `0x…` address |
+| `PORT` | optional, default `3000` |
+
+The Journal needs a one-time history sync: **Journal → Sync recent**.
+
+## Security
+
+There is no login. Anyone who can reach the port can read the account, so run it locally or on a
+trusted network. Use a key without trading or withdrawal permissions.
+
+## Development
+
 ```bash
-npm run dev
+npm run dev      # restart on change
+npm run verify   # static checks and the full test suite
 ```
 
----
-
-## How it works
-
-```
-Browser → GET /api/dashboard
-              ↓
-         server.js
-         ├── Hyperliquid: POST /info (no auth needed)
-         └── Binance FAPI: GET /fapi/v2/positionRisk (signed with HMAC-SHA256)
-              ↓
-         Hedge detection (auto-pairs opposite-side same-asset positions across exchanges)
-              ↓
-         JSON response → frontend renders dashboard
-```
-
-The dashboard auto-refreshes every **30 seconds**.
-
----
-
-## Deploying online (when ready)
-
-### Railway (easiest)
-1. Push this folder to a GitHub repo
-2. Go to https://railway.app → New Project → Deploy from GitHub
-3. Add your `.env` variables in Railway's dashboard under Settings → Variables
-4. Done — Railway gives you a public URL
-
-### Render
-Same flow as Railway — connect GitHub repo, add env vars, deploy.
-
-### VPS (DigitalOcean / Hetzner)
-```bash
-npm install -g pm2
-pm2 start server.js --name dashboard
-pm2 save
-pm2 startup
-```
-
----
-
-## Customising hedge detection
-
-Hedges are auto-detected in `server.js` → `detectHedges()`. The logic:
-- Matches positions on the same asset across HL and Binance
-- Considers a pair a hedge if they are **opposite sides** (one long, one short)
-- Calculates offset ratio = smaller size / larger size
-
-To add manual hedge labels or cross-asset hedges, edit the `detectHedges` function.
+Node 18+. The only dependencies are Express, dotenv and ws, and there is no build step. Design
+notes are in [`docs/`](docs/); start with [`docs/architecture.md`](docs/architecture.md).
