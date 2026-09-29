@@ -1,0 +1,54 @@
+lib/util.js
+  s_ce0783ce808ef4::t_7d5cceeb87c0ba 20,27-28
+public/js/render.js
+  s_ce0783ce808ef4::t_7e4b59dba40c6d 410-425,447
+server.js
+  s_ce0783ce808ef4::t_787650462053eb 68-75
+  s_ce0783ce808ef4::t_7d5cceeb87c0ba 20,35
+routes/health.js
+  s_ce0783ce808ef4::t_7d5cceeb87c0ba 1-21
+lib/binance-account.js
+  s_ce0783ce808ef4::t_7d5cceeb87c0ba 19-20
+public/index.html
+  s_ce0783ce808ef4::t_7e4b59dba40c6d 23
+lib/orders-stream.js
+  s_ce0783ce808ef4::t_7d5cceeb87c0ba 202-209
+lib/health.js
+  s_ce0783ce808ef4::t_7d5cceeb87c0ba 1-29
+test/health.test.js
+  s_ce0783ce808ef4::t_216b2dbb58dd38 1-52
+docs/api.md
+  s_ce0783ce808ef4::t_7d5cceeb87c0ba 35
+test/routes.test.js
+  s_ce0783ce808ef4::t_216b2dbb58dd38 121-130
+public/css/app.css
+  s_ce0783ce808ef4::t_7e4b59dba40c6d 47-49
+lib/binance-client.js
+  s_ce0783ce808ef4::t_7d5cceeb87c0ba 36-41
+lib/hyperliquid.js
+  s_ce0783ce808ef4::t_7d5cceeb87c0ba 41-42
+README.md
+  s_ce0783ce808ef4::t_cfacf0ab22f5fb 87-89
+docs/changelog.md
+  s_ce0783ce808ef4::t_8194eefa6f4c87 3-15,60
+docs/frontend.md
+  s_ce0783ce808ef4::t_7e65ac10de8441 29-30
+docs/operations.md
+  s_ce0783ce808ef4::t_15e12dc3efe3f6 107-129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b572acf19a77ad92327fc4b707e1c2f15f5f73b3",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
