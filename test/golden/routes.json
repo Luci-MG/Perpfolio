@@ -1,0 +1,6032 @@
+{
+ "dashboard": {
+  "binance": {
+   "equity": "22940.00",
+   "freeMargin": "10723.33",
+   "maintMargin": "406.00",
+   "marginPct": "53.3",
+   "marginUsed": "12216.67",
+   "orders": [
+    {
+     "asset": "ETH",
+     "closePosition": false,
+     "exchange": "binance",
+     "pair": "ETH/USDT",
+     "positionSide": "LONG",
+     "price": 0,
+     "quote": "USDT",
+     "reduceOnly": true,
+     "side": "Sell",
+     "size": "3 ETH",
+     "sizeRaw": 3,
+     "stopPrice": 4600,
+     "symbol": "ETHUSDT",
+     "type": "Take profit market"
+    },
+    {
+     "asset": "BTC",
+     "closePosition": false,
+     "exchange": "binance",
+     "pair": "BTC/USDT",
+     "positionSide": "LONG",
+     "price": 95000,
+     "quote": "USDT",
+     "reduceOnly": false,
+     "side": "Buy",
+     "size": "0.1 BTC",
+     "sizeRaw": 0.1,
+     "stopPrice": null,
+     "symbol": "BTCUSDT",
+     "type": "Limit"
+    },
+    {
+     "asset": "BTC",
+     "closePosition": false,
+     "exchange": "binance",
+     "pair": "BTC/USDT",
+     "positionSide": "LONG",
+     "price": 0,
+     "quote": "USDT",
+     "reduceOnly": true,
+     "side": "Sell",
+     "size": "0.5 BTC",
+     "sizeRaw": 0.5,
+     "stopPrice": 90000,
+     "symbol": "BTCUSDT",
+     "type": "Stop market"
+    }
+   ],
+   "positions": [
+    {
+     "adlQuantile": 1,
+     "asset": "BTC",
+     "entry": 98000,
+     "exchange": "binance",
+     "funding8h": "+0.0100%",
+     "fundingIntervalHours": 8,
+     "fundingPerDayPct": 0.03,
+     "fundingRate": 0.01,
+     "isolated": false,
+     "isolatedWallet": 0,
+     "leverage": "10×",
+     "leverageRaw": 10,
+     "liqPrice": 0,
+     "mark": 100000,
+     "nextFundingTime": 1788224400000,
+     "pair": "BTC/USDT",
+     "positionSide": "LONG",
+     "prevDayPx": 0,
+     "quote": "USDT",
+     "reportedIm": 5000,
+     "reportedLiqPrice": 0,
+     "reportedMm": 200,
+     "side": "Long",
+     "size": "0.5 BTC",
+     "sizeRaw": 0.5,
+     "sizeUsd": 50000,
+     "symbol": "BTCUSDT",
+     "type": "futures",
+     "upnl": 1000
+    },
+    {
+     "adlQuantile": 1,
+     "asset": "BTC",
+     "entry": 103000,
+     "exchange": "binance",
+     "funding8h": "+0.0100%",
+     "fundingIntervalHours": 8,
+     "fundingPerDayPct": 0.03,
+     "fundingRate": 0.01,
+     "isolated": false,
+     "isolatedWallet": 0,
+     "leverage": "10×",
+     "leverageRaw": 10,
+     "liqPrice": 0,
+     "mark": 100000,
+     "nextFundingTime": 1788224400000,
+     "pair": "BTC/USDT",
+     "positionSide": "SHORT",
+     "prevDayPx": 0,
+     "quote": "USDT",
+     "reportedIm": 4000,
+     "reportedLiqPrice": 0,
+     "reportedMm": 150,
+     "side": "Short",
+     "size": "0.4 BTC",
+     "sizeRaw": -0.4,
+     "sizeUsd": 40000,
+     "symbol": "BTCUSDT",
+     "type": "futures",
+     "upnl": 1200
+    },
+    {
+     "adlQuantile": 1,
+     "asset": "ETH",
+     "entry": 4100,
+     "exchange": "binance",
+     "funding8h": "+0.0200%",
+     "fundingIntervalHours": 4,
+     "fundingPerDayPct": 0.12,
+     "fundingRate": 0.02,
+     "isolated": false,
+     "isolatedWallet": 0,
+     "leverage": "5×",
+     "leverageRaw": 5,
+     "liqPrice": 0,
+     "mark": 4000,
+     "nextFundingTime": 1788224400000,
+     "pair": "ETH/USDT",
+     "positionSide": "LONG",
+     "prevDayPx": 0,
+     "quote": "USDT",
+     "reportedIm": 2400,
+     "reportedLiqPrice": 0,
+     "reportedMm": 48,
+     "side": "Long",
+     "size": "3 ETH",
+     "sizeRaw": 3,
+     "sizeUsd": 12000,
+     "symbol": "ETHUSDT",
+     "type": "futures",
+     "upnl": -300
+    },
+    {
+     "adlQuantile": 1,
+     "asset": "ENA",
+     "entry": 0.27,
+     "exchange": "binance",
+     "funding8h": "+0.0150%",
+     "fundingIntervalHours": 4,
+     "fundingPerDayPct": 0.09,
+     "fundingRate": 0.015,
+     "isolated": false,
+     "isolatedWallet": 0,
+     "leverage": "3×",
+     "leverageRaw": 3,
+     "liqPrice": 0.12048192771084337,
+     "mark": 0.25,
+     "nextFundingTime": 1788224400000,
+     "pair": "ENA/USDC",
+     "positionSide": "LONG",
+     "prevDayPx": 0,
+     "quote": "USDC",
+     "reportedIm": 666.6666666666666,
+     "reportedLiqPrice": 0.12048192771084337,
+     "reportedMm": 8,
+     "side": "Long",
+     "size": "8000 ENA",
+     "sizeRaw": 8000,
+     "sizeUsd": 2000,
+     "symbol": "ENAUSDC",
+     "type": "futures",
+     "upnl": -160.00000000000014
+    }
+   ]
+  },
+  "hyperliquid": {
+   "accountLeverage": "1.33",
+   "equity": "3000.00",
+   "freeMargin": "2200.00",
+   "marginPct": "26.7",
+   "marginUsed": "800.00",
+   "orders": [],
+   "positions": [
+    {
+     "coin": "SOL",
+     "entry": 210,
+     "exchange": "hyperliquid",
+     "funding8h": "+0.0010%",
+     "fundingIntervalHours": 1,
+     "fundingRate": 0.001,
+     "leverage": "5×",
+     "liqPrice": 290,
+     "mark": 200,
+     "pair": "SOL-PERP",
+     "prevDayPx": 198,
+     "side": "Short",
+     "size": "20 SOL",
+     "sizeUsd": 4000,
+     "type": "perpetual",
+     "upnl": 200
+    }
+   ],
+   "totalNtlPos": "4000.00"
+  },
+  "ok": true,
+  "summary": {
+   "bnExposure": "104000.00",
+   "hlExposure": "4000.00",
+   "orderCount": 3,
+   "positionCount": 5,
+   "totalEquity": "25940.00",
+   "totalExposure": "108000.00",
+   "totalUpnl": "1940.00"
+  }
+ },
+ "volstops": {
+  "combined": {
+   "betaAdjustedNet": 9488,
+   "betaByAsset": {
+    "BTC": 1,
+    "ENA": -0.05,
+    "ETH": -0.014,
+    "SOL": 0.061
+   },
+   "bnEquity": 22940,
+   "hedgePairs": [
+    {
+     "beta": 0.061,
+     "corrBaseline": 0.0603,
+     "corrRecent": 0.0812,
+     "flags": [
+      "broken"
+     ],
+     "longAsset": "BTC",
+     "longNet": 10000,
+     "matchedBtcEquiv": 244,
+     "samples": 199,
+     "shortAsset": "SOL",
+     "shortNet": -4000,
+     "status": "broken",
+     "warning": "BTC long / SOL short: correlation 0.08 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+    },
+    {
+     "beta": -0.014,
+     "corrBaseline": -0.0147,
+     "corrRecent": -0.0071,
+     "flags": [
+      "broken"
+     ],
+     "longAsset": "BTC",
+     "longNet": 10000,
+     "matchedBtcEquiv": 168,
+     "samples": 199,
+     "shortAsset": "ETH",
+     "shortNet": 12000,
+     "status": "broken",
+     "warning": "BTC long / ETH short: correlation -0.01 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+    },
+    {
+     "beta": -0.05,
+     "corrBaseline": -0.0528,
+     "corrRecent": -0.1996,
+     "flags": [
+      "broken"
+     ],
+     "longAsset": "BTC",
+     "longNet": 10000,
+     "matchedBtcEquiv": 100,
+     "samples": 199,
+     "shortAsset": "ENA",
+     "shortNet": 2000,
+     "status": "broken",
+     "warning": "BTC long / ENA short: correlation -0.20 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+    }
+   ],
+   "hedgeWarnings": [
+    {
+     "asset": "BTC/SOL",
+     "beta": 0.061,
+     "corrBaseline": 0.0603,
+     "corrRecent": 0.0812,
+     "flags": [
+      "broken"
+     ],
+     "longAsset": "BTC",
+     "longNet": 10000,
+     "matchedBtcEquiv": 244,
+     "samples": 199,
+     "shortAsset": "SOL",
+     "shortNet": -4000,
+     "status": "broken",
+     "warning": "BTC long / SOL short: correlation 0.08 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+    },
+    {
+     "asset": "BTC/ETH",
+     "beta": -0.014,
+     "corrBaseline": -0.0147,
+     "corrRecent": -0.0071,
+     "flags": [
+      "broken"
+     ],
+     "longAsset": "BTC",
+     "longNet": 10000,
+     "matchedBtcEquiv": 168,
+     "samples": 199,
+     "shortAsset": "ETH",
+     "shortNet": 12000,
+     "status": "broken",
+     "warning": "BTC long / ETH short: correlation -0.01 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+    },
+    {
+     "asset": "BTC/ENA",
+     "beta": -0.05,
+     "corrBaseline": -0.0528,
+     "corrRecent": -0.1996,
+     "flags": [
+      "broken"
+     ],
+     "longAsset": "BTC",
+     "longNet": 10000,
+     "matchedBtcEquiv": 100,
+     "samples": 199,
+     "shortAsset": "ENA",
+     "shortNet": 2000,
+     "status": "broken",
+     "warning": "BTC long / ENA short: correlation -0.20 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+    }
+   ],
+   "hlEquity": 3000,
+   "nakedBtcEquiv": 9488,
+   "netByAsset": {
+    "BTC": 10000,
+    "ENA": 2000,
+    "ETH": 12000,
+    "SOL": -4000
+   },
+   "nettedSymbols": [
+    {
+     "asset": "BTC",
+     "netDelta": 10000
+    }
+   ],
+   "portfolioRegime": "medium",
+   "portfolioVolPct": 0.802,
+   "positionCount": 5,
+   "rawNet": 20000,
+   "regimeBasis": {
+    "bars": 186,
+    "percentile": 46.8
+   },
+   "regimeCounts": {
+    "extreme": 1,
+    "high": 0,
+    "low": 2,
+    "medium": 2
+   },
+   "totalDollarRisk": 947.6,
+   "totalEquity": 25940,
+   "unmatchedLong": 9488,
+   "unmatchedShort": 0
+  },
+  "ok": true,
+  "params": {
+   "k": 1.5,
+   "riskPct": 0.01
+  },
+  "positions": [
+   {
+    "accountSize": 3000,
+    "allowBreakout": true,
+    "allowMeanRev": true,
+    "allowTrend": true,
+    "backfilled": [],
+    "compositeVolPct": 0.705,
+    "direction": "short",
+    "dollarRisk": 30,
+    "entry": 210,
+    "entryPrice": 210,
+    "exchange": "hyperliquid",
+    "layers": {
+     "atrPct": 0.705,
+     "bbwAdj": 1,
+     "crossAdj": 1,
+     "crossCorr": 0.087,
+     "crossRatio": 1.01,
+     "fundingAdj": 1
+    },
+    "mark": 200,
+    "notionalValue": 2836.73,
+    "pair": "SOL-PERP",
+    "positionSize": 13.508249,
+    "regimeLabel": "low",
+    "regimeMult": 1,
+    "side": "Short",
+    "stopDistPct": 1.058,
+    "stopPrice": 212.2209,
+    "targetPrice": 205.5583
+   },
+   {
+    "accountSize": 22940,
+    "allowBreakout": false,
+    "allowMeanRev": true,
+    "allowTrend": true,
+    "backfilled": [],
+    "compositeVolPct": 0.812,
+    "direction": "long",
+    "dollarRisk": 229.4,
+    "entry": 98000,
+    "entryPrice": 98000,
+    "exchange": "binance",
+    "layers": {
+     "atrPct": 0.777,
+     "bbwAdj": 0.95,
+     "crossAdj": 1,
+     "crossCorr": 1,
+     "crossRatio": 1.01,
+     "fundingAdj": 1.1
+    },
+    "mark": 100000,
+    "notionalValue": 14125.17,
+    "pair": "BTC/USDT",
+    "positionSize": 0.144134,
+    "regimeLabel": "medium",
+    "regimeMult": 0.75,
+    "side": "Long",
+    "stopDistPct": 1.218,
+    "stopPrice": 96806.32,
+    "targetPrice": 100387.35
+   },
+   {
+    "accountSize": 22940,
+    "allowBreakout": false,
+    "allowMeanRev": true,
+    "allowTrend": true,
+    "backfilled": [],
+    "compositeVolPct": 0.812,
+    "direction": "short",
+    "dollarRisk": 229.4,
+    "entry": 103000,
+    "entryPrice": 103000,
+    "exchange": "binance",
+    "layers": {
+     "atrPct": 0.777,
+     "bbwAdj": 0.95,
+     "crossAdj": 1,
+     "crossCorr": 1,
+     "crossRatio": 1.01,
+     "fundingAdj": 1.1
+    },
+    "mark": 100000,
+    "notionalValue": 14125.17,
+    "pair": "BTC/USDT",
+    "positionSize": 0.137138,
+    "regimeLabel": "medium",
+    "regimeMult": 0.75,
+    "side": "Short",
+    "stopDistPct": 1.218,
+    "stopPrice": 104254.58,
+    "targetPrice": 100490.84
+   },
+   {
+    "accountSize": 22940,
+    "allowBreakout": false,
+    "allowMeanRev": false,
+    "allowTrend": false,
+    "backfilled": [],
+    "compositeVolPct": 1.002,
+    "direction": "long",
+    "dollarRisk": 229.4,
+    "entry": 4100,
+    "entryPrice": 4100,
+    "exchange": "binance",
+    "layers": {
+     "atrPct": 0.959,
+     "bbwAdj": 0.95,
+     "crossAdj": 1,
+     "crossCorr": 0.006,
+     "crossRatio": 1.01,
+     "fundingAdj": 1.1
+    },
+    "mark": 4000,
+    "notionalValue": 1526.73,
+    "pair": "ETH/USDT",
+    "positionSize": 0.372373,
+    "regimeLabel": "extreme",
+    "regimeMult": 0.1,
+    "side": "Long",
+    "stopDistPct": 1.503,
+    "stopPrice": 4038.4,
+    "targetPrice": 4223.21
+   },
+   {
+    "accountSize": 22940,
+    "allowBreakout": true,
+    "allowMeanRev": true,
+    "allowTrend": true,
+    "backfilled": [],
+    "compositeVolPct": 0.785,
+    "direction": "long",
+    "dollarRisk": 229.4,
+    "entry": 0.27,
+    "entryPrice": 0.27,
+    "exchange": "binance",
+    "layers": {
+     "atrPct": 0.714,
+     "bbwAdj": 1,
+     "crossAdj": 1,
+     "crossCorr": 0,
+     "crossRatio": 1.01,
+     "fundingAdj": 1.1
+    },
+    "mark": 0.25,
+    "notionalValue": 19480.72,
+    "pair": "ENA/USDC",
+    "positionSize": 72150.815148,
+    "regimeLabel": "low",
+    "regimeMult": 1,
+    "side": "Long",
+    "stopDistPct": 1.178,
+    "stopPrice": 0.266821,
+    "targetPrice": 0.276359
+   }
+  ]
+ },
+ "riskbook": {
+  "account": {
+   "availableBalance": 10723.33,
+   "crossWalletBalance": 21200,
+   "marginAssets": {
+    "USDC": {
+     "availableBalance": 373.33333333333314,
+     "initialMargin": 666.6666666666666,
+     "maintMargin": 8,
+     "marginBalance": 1039.9999999999998,
+     "maxWithdrawAmount": 373.33333333333314,
+     "openOrderInitialMargin": 0,
+     "positionInitialMargin": 666.6666666666666,
+     "unrealizedProfit": -160.00000000000023,
+     "wallet": 1200
+    },
+    "USDT": {
+     "availableBalance": 10350,
+     "initialMargin": 11550,
+     "maintMargin": 398,
+     "marginBalance": 21900,
+     "maxWithdrawAmount": 10350,
+     "openOrderInitialMargin": 150,
+     "positionInitialMargin": 11400,
+     "unrealizedProfit": 1900,
+     "wallet": 20000
+    }
+   },
+   "marginBalance": 22940,
+   "multiAssetsMode": false,
+   "orderFeed": {
+    "lastDrift": 2
+   },
+   "reportedMaintMargin": 406
+  },
+  "isolated": [],
+  "ok": true,
+  "pools": [
+   {
+    "adl": [
+     {
+      "asset": "BTC",
+      "key": "BTCUSDT:LONG",
+      "quantile": 1,
+      "side": "Long"
+     },
+     {
+      "asset": "BTC",
+      "key": "BTCUSDT:SHORT",
+      "quantile": 1,
+      "side": "Short"
+     },
+     {
+      "asset": "ETH",
+      "key": "ETHUSDT:LONG",
+      "quantile": 1,
+      "side": "Long"
+     }
+    ],
+    "baseline": [
+     {
+      "asset": "BTC",
+      "crossesTierDown": false,
+      "crossesTierUp": false,
+      "drainDown": -95.5,
+      "drainUp": 95.5,
+      "freeDrainDown": -10,
+      "freeDrainUp": 10,
+      "freeZeroDown": null,
+      "freeZeroDownPct": null,
+      "freeZeroUp": null,
+      "freeZeroUpPct": null,
+      "killDown": null,
+      "killDownFrozen": null,
+      "killDownPct": null,
+      "killUp": null,
+      "killUpFrozen": null,
+      "killUpPct": null,
+      "mark": 100000,
+      "netDelta": 10000,
+      "safeDownBuffer": 11861.64,
+      "safeUpBuffer": 21502,
+      "scannedDownPct": 99.9,
+      "scannedUpPct": 300,
+      "sigmaDown": null,
+      "sigmaUp": null
+     },
+     {
+      "asset": "ETH",
+      "crossesTierDown": false,
+      "crossesTierUp": false,
+      "drainDown": -119.52,
+      "drainUp": 119.52,
+      "freeDrainDown": -96,
+      "freeDrainUp": 96,
+      "freeZeroDown": null,
+      "freeZeroDownPct": null,
+      "freeZeroUp": null,
+      "freeZeroUpPct": null,
+      "killDown": null,
+      "killDownFrozen": null,
+      "killDownPct": null,
+      "killUp": null,
+      "killUpFrozen": null,
+      "killUpPct": null,
+      "mark": 4000,
+      "netDelta": 12000,
+      "safeDownBuffer": 9561.95,
+      "safeUpBuffer": 21502,
+      "scannedDownPct": 99.9,
+      "scannedUpPct": 300,
+      "sigmaDown": null,
+      "sigmaUp": null
+     }
+    ],
+    "books": {
+     "BTC": {
+      "asks": [
+       [
+        "100050",
+        "5"
+       ],
+       [
+        "100099.99999999999",
+        "5"
+       ],
+       [
+        "100150",
+        "5"
+       ],
+       [
+        "100200",
+        "5"
+       ],
+       [
+        "100250",
+        "5"
+       ],
+       [
+        "100299.99999999999",
+        "5"
+       ],
+       [
+        "100350",
+        "5"
+       ],
+       [
+        "100400",
+        "5"
+       ],
+       [
+        "100450",
+        "5"
+       ],
+       [
+        "100499.99999999999",
+        "5"
+       ],
+       [
+        "100550",
+        "5"
+       ],
+       [
+        "100600",
+        "5"
+       ],
+       [
+        "100650",
+        "5"
+       ],
+       [
+        "100699.99999999999",
+        "5"
+       ],
+       [
+        "100750",
+        "5"
+       ],
+       [
+        "100800",
+        "5"
+       ],
+       [
+        "100850",
+        "5"
+       ],
+       [
+        "100899.99999999999",
+        "5"
+       ],
+       [
+        "100950",
+        "5"
+       ],
+       [
+        "101000",
+        "5"
+       ]
+      ],
+      "bids": [
+       [
+        "99950",
+        "5"
+       ],
+       [
+        "99900",
+        "5"
+       ],
+       [
+        "99850",
+        "5"
+       ],
+       [
+        "99800",
+        "5"
+       ],
+       [
+        "99750",
+        "5"
+       ],
+       [
+        "99700",
+        "5"
+       ],
+       [
+        "99650",
+        "5"
+       ],
+       [
+        "99600",
+        "5"
+       ],
+       [
+        "99550",
+        "5"
+       ],
+       [
+        "99500",
+        "5"
+       ],
+       [
+        "99450",
+        "5"
+       ],
+       [
+        "99400",
+        "5"
+       ],
+       [
+        "99350",
+        "5"
+       ],
+       [
+        "99300",
+        "5"
+       ],
+       [
+        "99250",
+        "5"
+       ],
+       [
+        "99200",
+        "5"
+       ],
+       [
+        "99150",
+        "5"
+       ],
+       [
+        "99100",
+        "5"
+       ],
+       [
+        "99050",
+        "5"
+       ],
+       [
+        "99000",
+        "5"
+       ]
+      ]
+     },
+     "ETH": {
+      "asks": [
+       [
+        "4002",
+        "5"
+       ],
+       [
+        "4003.9999999999995",
+        "5"
+       ],
+       [
+        "4006",
+        "5"
+       ],
+       [
+        "4008",
+        "5"
+       ],
+       [
+        "4010",
+        "5"
+       ],
+       [
+        "4011.9999999999995",
+        "5"
+       ],
+       [
+        "4014.0000000000005",
+        "5"
+       ],
+       [
+        "4016",
+        "5"
+       ],
+       [
+        "4018",
+        "5"
+       ],
+       [
+        "4019.9999999999995",
+        "5"
+       ],
+       [
+        "4022.0000000000005",
+        "5"
+       ],
+       [
+        "4024",
+        "5"
+       ],
+       [
+        "4026",
+        "5"
+       ],
+       [
+        "4027.9999999999995",
+        "5"
+       ],
+       [
+        "4030.0000000000005",
+        "5"
+       ],
+       [
+        "4032",
+        "5"
+       ],
+       [
+        "4034",
+        "5"
+       ],
+       [
+        "4035.9999999999995",
+        "5"
+       ],
+       [
+        "4038.0000000000005",
+        "5"
+       ],
+       [
+        "4040",
+        "5"
+       ]
+      ],
+      "bids": [
+       [
+        "3998",
+        "5"
+       ],
+       [
+        "3996",
+        "5"
+       ],
+       [
+        "3994",
+        "5"
+       ],
+       [
+        "3992",
+        "5"
+       ],
+       [
+        "3990",
+        "5"
+       ],
+       [
+        "3988",
+        "5"
+       ],
+       [
+        "3986",
+        "5"
+       ],
+       [
+        "3984",
+        "5"
+       ],
+       [
+        "3982",
+        "5"
+       ],
+       [
+        "3980",
+        "5"
+       ],
+       [
+        "3978",
+        "5"
+       ],
+       [
+        "3976",
+        "5"
+       ],
+       [
+        "3974",
+        "5"
+       ],
+       [
+        "3972",
+        "5"
+       ],
+       [
+        "3970",
+        "5"
+       ],
+       [
+        "3968",
+        "5"
+       ],
+       [
+        "3966",
+        "5"
+       ],
+       [
+        "3964",
+        "5"
+       ],
+       [
+        "3962",
+        "5"
+       ],
+       [
+        "3960",
+        "5"
+       ]
+      ]
+     }
+    },
+    "calibration": {
+     "equityErrPct": 0,
+     "estimatedBrackets": false,
+     "freeAnchored": true,
+     "freeErrPct": 0,
+     "freeReserved": 150,
+     "imErrPct": 0,
+     "mmErrPct": 0,
+     "modelEquity": 21900,
+     "modelFree": 10350,
+     "modelIm": 11400,
+     "modelMm": 398,
+     "openOrderHold": 150,
+     "perPosition": [
+      {
+       "errPct": 0,
+       "key": "BTCUSDT:LONG",
+       "modelMm": 200,
+       "reportedMm": 200
+      },
+      {
+       "errPct": 0,
+       "key": "BTCUSDT:SHORT",
+       "modelMm": 150,
+       "reportedMm": 150
+      },
+      {
+       "errPct": 0,
+       "key": "ETHUSDT:LONG",
+       "modelMm": 48,
+       "reportedMm": 48
+      }
+     ],
+     "reportedEquity": 21900,
+     "reportedFree": 10350,
+     "reportedIm": 11400,
+     "reportedMm": 398,
+     "tierMode": "combined",
+     "transferable": 10350,
+     "trustworthy": true
+    },
+    "fees": {
+     "BTC": {
+      "maker": 0.0002,
+      "taker": 0.0005
+     },
+     "ETH": {
+      "maker": 0.0002,
+      "taker": 0.0005
+     }
+    },
+    "filters": {
+     "BTC": {
+      "contractType": "PERPETUAL",
+      "minNotional": "5",
+      "minQty": "0.001",
+      "quoteAsset": "USDT",
+      "status": "TRADING",
+      "stepSize": "0.001",
+      "tickSize": "0.1"
+     },
+     "ETH": {
+      "contractType": "PERPETUAL",
+      "minNotional": "5",
+      "minQty": "0.001",
+      "quoteAsset": "USDT",
+      "status": "TRADING",
+      "stepSize": "0.001",
+      "tickSize": "0.01"
+     }
+    },
+    "hedgedSymbols": [
+     "BTCUSDT"
+    ],
+    "liqCheck": [
+     {
+      "analyticErrPct": null,
+      "analyticKill": null,
+      "crossesTier": false,
+      "errPct": null,
+      "exchangeSaysUnreachable": false,
+      "frozenErrPct": null,
+      "frozenKill": null,
+      "illConditioned": false,
+      "key": "BTCUSDT:LONG",
+      "modelKill": null,
+      "modelSaysUnreachable": true,
+      "modelSide": null,
+      "movePerOnePctEquity": null,
+      "reportedLiqPrice": null
+     },
+     {
+      "analyticErrPct": null,
+      "analyticKill": null,
+      "crossesTier": false,
+      "errPct": null,
+      "exchangeSaysUnreachable": false,
+      "frozenErrPct": null,
+      "frozenKill": null,
+      "illConditioned": false,
+      "key": "BTCUSDT:SHORT",
+      "modelKill": null,
+      "modelSaysUnreachable": true,
+      "modelSide": null,
+      "movePerOnePctEquity": null,
+      "reportedLiqPrice": null
+     },
+     {
+      "analyticErrPct": null,
+      "analyticKill": null,
+      "crossesTier": false,
+      "errPct": null,
+      "exchangeSaysUnreachable": false,
+      "frozenErrPct": null,
+      "frozenKill": null,
+      "illConditioned": false,
+      "key": "ETHUSDT:LONG",
+      "modelKill": null,
+      "modelSaysUnreachable": true,
+      "modelSide": null,
+      "movePerOnePctEquity": null,
+      "reportedLiqPrice": null
+     }
+    ],
+    "marginAsset": "USDT",
+    "marks": {
+     "BTC": 100000,
+     "ETH": 4000
+    },
+    "opts": {
+     "perSideTiers": false
+    },
+    "pool": {
+     "collateral": 20000,
+     "freeReserved": 150,
+     "orders": [
+      {
+       "asset": "ETH",
+       "closePosition": false,
+       "positionSide": "LONG",
+       "q": 3,
+       "reduceOnly": true,
+       "side": "Sell",
+       "trigger": 4600,
+       "type": "Take profit market"
+      },
+      {
+       "asset": "BTC",
+       "closePosition": false,
+       "positionSide": "LONG",
+       "q": 0.5,
+       "reduceOnly": true,
+       "side": "Sell",
+       "trigger": 90000,
+       "type": "Stop market"
+      }
+     ],
+     "positions": [
+      {
+       "asset": "BTC",
+       "brackets": [
+        {
+         "cum": 0,
+         "maintMarginRatio": 0.004,
+         "notionalCap": 50000,
+         "notionalFloor": 0
+        },
+        {
+         "cum": 50,
+         "maintMarginRatio": 0.005,
+         "notionalCap": 250000,
+         "notionalFloor": 50000
+        },
+        {
+         "cum": 1300,
+         "maintMarginRatio": 0.01,
+         "notionalCap": 10000000,
+         "notionalFloor": 250000
+        }
+       ],
+       "entry": 98000,
+       "estimated": false,
+       "key": "BTCUSDT:LONG",
+       "leverage": 10,
+       "mark": 100000,
+       "notionalCoef": 1,
+       "positionSide": "LONG",
+       "q": 0.5,
+       "symbol": "BTCUSDT"
+      },
+      {
+       "asset": "BTC",
+       "brackets": [
+        {
+         "cum": 0,
+         "maintMarginRatio": 0.004,
+         "notionalCap": 50000,
+         "notionalFloor": 0
+        },
+        {
+         "cum": 50,
+         "maintMarginRatio": 0.005,
+         "notionalCap": 250000,
+         "notionalFloor": 50000
+        },
+        {
+         "cum": 1300,
+         "maintMarginRatio": 0.01,
+         "notionalCap": 10000000,
+         "notionalFloor": 250000
+        }
+       ],
+       "entry": 103000,
+       "estimated": false,
+       "key": "BTCUSDT:SHORT",
+       "leverage": 10,
+       "mark": 100000,
+       "notionalCoef": 1,
+       "positionSide": "SHORT",
+       "q": -0.4,
+       "symbol": "BTCUSDT"
+      },
+      {
+       "asset": "ETH",
+       "brackets": [
+        {
+         "cum": 0,
+         "maintMarginRatio": 0.004,
+         "notionalCap": 50000,
+         "notionalFloor": 0
+        },
+        {
+         "cum": 50,
+         "maintMarginRatio": 0.005,
+         "notionalCap": 250000,
+         "notionalFloor": 50000
+        },
+        {
+         "cum": 1300,
+         "maintMarginRatio": 0.01,
+         "notionalCap": 10000000,
+         "notionalFloor": 250000
+        }
+       ],
+       "entry": 4100,
+       "estimated": false,
+       "key": "ETHUSDT:LONG",
+       "leverage": 5,
+       "mark": 4000,
+       "notionalCoef": 1,
+       "positionSide": "LONG",
+       "q": 3,
+       "symbol": "ETHUSDT"
+      }
+     ]
+    },
+    "reported": {
+     "availableBalance": 10350,
+     "initialMargin": 11550,
+     "maintMargin": 398,
+     "marginBalance": 21900,
+     "maxWithdrawAmount": 10350,
+     "openOrderInitialMargin": 150,
+     "positionInitialMargin": 11400,
+     "unrealizedProfit": 1900,
+     "wallet": 20000
+    },
+    "state": {
+     "buffer": 21502,
+     "equity": 21900,
+     "free": 10350,
+     "im": 11400,
+     "liquidated": false,
+     "marginRatio": 0.0182,
+     "mm": 398,
+     "usedPct": 1.82
+    },
+    "stats": {
+     "BTC": {
+      "bars": 200,
+      "beta": 1,
+      "dailySigmaPct": 2.764,
+      "pairedBars": 199
+     },
+     "ETH": {
+      "bars": 200,
+      "beta": -0.014,
+      "dailySigmaPct": 2.695,
+      "pairedBars": 199
+     }
+    }
+   },
+   {
+    "adl": [
+     {
+      "asset": "ENA",
+      "key": "ENAUSDC:LONG",
+      "quantile": 1,
+      "side": "Long"
+     }
+    ],
+    "baseline": [
+     {
+      "asset": "ENA",
+      "crossesTierDown": false,
+      "crossesTierUp": false,
+      "drainDown": -19.92,
+      "drainUp": 19.92,
+      "freeDrainDown": -13.33,
+      "freeDrainUp": 13.33,
+      "freeZeroDown": 0.18,
+      "freeZeroDownPct": -28,
+      "freeZeroUp": null,
+      "freeZeroUpPct": null,
+      "killDown": 0.120482,
+      "killDownFrozen": null,
+      "killDownPct": -51.81,
+      "killUp": null,
+      "killUpFrozen": null,
+      "killUpPct": null,
+      "mark": 0.25,
+      "netDelta": 2000,
+      "safeDownBuffer": null,
+      "safeUpBuffer": 1032,
+      "scannedDownPct": 99.9,
+      "scannedUpPct": 300,
+      "sigmaDown": 19.71,
+      "sigmaUp": null
+     }
+    ],
+    "books": {
+     "ENA": {
+      "asks": [
+       [
+        "0.250125",
+        "5"
+       ],
+       [
+        "0.25025",
+        "5"
+       ],
+       [
+        "0.250375",
+        "5"
+       ],
+       [
+        "0.2505",
+        "5"
+       ],
+       [
+        "0.250625",
+        "5"
+       ],
+       [
+        "0.25075",
+        "5"
+       ],
+       [
+        "0.250875",
+        "5"
+       ],
+       [
+        "0.251",
+        "5"
+       ],
+       [
+        "0.251125",
+        "5"
+       ],
+       [
+        "0.25125",
+        "5"
+       ],
+       [
+        "0.251375",
+        "5"
+       ],
+       [
+        "0.2515",
+        "5"
+       ],
+       [
+        "0.251625",
+        "5"
+       ],
+       [
+        "0.25175",
+        "5"
+       ],
+       [
+        "0.251875",
+        "5"
+       ],
+       [
+        "0.252",
+        "5"
+       ],
+       [
+        "0.252125",
+        "5"
+       ],
+       [
+        "0.25225",
+        "5"
+       ],
+       [
+        "0.252375",
+        "5"
+       ],
+       [
+        "0.2525",
+        "5"
+       ]
+      ],
+      "bids": [
+       [
+        "0.249875",
+        "5"
+       ],
+       [
+        "0.24975",
+        "5"
+       ],
+       [
+        "0.249625",
+        "5"
+       ],
+       [
+        "0.2495",
+        "5"
+       ],
+       [
+        "0.249375",
+        "5"
+       ],
+       [
+        "0.24925",
+        "5"
+       ],
+       [
+        "0.249125",
+        "5"
+       ],
+       [
+        "0.249",
+        "5"
+       ],
+       [
+        "0.248875",
+        "5"
+       ],
+       [
+        "0.24875",
+        "5"
+       ],
+       [
+        "0.248625",
+        "5"
+       ],
+       [
+        "0.2485",
+        "5"
+       ],
+       [
+        "0.248375",
+        "5"
+       ],
+       [
+        "0.24825",
+        "5"
+       ],
+       [
+        "0.248125",
+        "5"
+       ],
+       [
+        "0.248",
+        "5"
+       ],
+       [
+        "0.247875",
+        "5"
+       ],
+       [
+        "0.24775",
+        "5"
+       ],
+       [
+        "0.247625",
+        "5"
+       ],
+       [
+        "0.2475",
+        "5"
+       ]
+      ]
+     }
+    },
+    "calibration": {
+     "equityErrPct": 0,
+     "estimatedBrackets": false,
+     "freeAnchored": true,
+     "freeErrPct": 0,
+     "freeReserved": 0,
+     "imErrPct": 0,
+     "mmErrPct": 0,
+     "modelEquity": 1040,
+     "modelFree": 373.33,
+     "modelIm": 666.6667,
+     "modelMm": 8,
+     "openOrderHold": 0,
+     "perPosition": [
+      {
+       "errPct": 0,
+       "key": "ENAUSDC:LONG",
+       "modelMm": 8,
+       "reportedMm": 8
+      }
+     ],
+     "reportedEquity": 1039.9999999999998,
+     "reportedFree": 373.33333333333314,
+     "reportedIm": 666.6667,
+     "reportedMm": 8,
+     "tierMode": "combined",
+     "transferable": 373.33333333333314,
+     "trustworthy": true
+    },
+    "fees": {
+     "ENA": {
+      "maker": 0.0002,
+      "taker": 0.0005
+     }
+    },
+    "filters": {
+     "ENA": {
+      "contractType": "PERPETUAL",
+      "minNotional": "5",
+      "minQty": "1",
+      "quoteAsset": "USDC",
+      "status": "TRADING",
+      "stepSize": "1",
+      "tickSize": "0.0001"
+     }
+    },
+    "hedgedSymbols": [],
+    "liqCheck": [
+     {
+      "analyticErrPct": 0,
+      "analyticKill": 0.120482,
+      "crossesTier": false,
+      "errPct": 0,
+      "exchangeSaysUnreachable": false,
+      "frozenErrPct": 0,
+      "frozenKill": 0.120482,
+      "illConditioned": false,
+      "key": "ENAUSDC:LONG",
+      "modelKill": 0.120482,
+      "modelSaysUnreachable": false,
+      "modelSide": "down",
+      "movePerOnePctEquity": 0,
+      "reportedLiqPrice": 0.12048192771084337
+     }
+    ],
+    "marginAsset": "USDC",
+    "marks": {
+     "ENA": 0.25
+    },
+    "opts": {
+     "perSideTiers": false
+    },
+    "pool": {
+     "collateral": 1200,
+     "freeReserved": 0,
+     "orders": [],
+     "positions": [
+      {
+       "asset": "ENA",
+       "brackets": [
+        {
+         "cum": 0,
+         "maintMarginRatio": 0.004,
+         "notionalCap": 50000,
+         "notionalFloor": 0
+        },
+        {
+         "cum": 50,
+         "maintMarginRatio": 0.005,
+         "notionalCap": 250000,
+         "notionalFloor": 50000
+        },
+        {
+         "cum": 1300,
+         "maintMarginRatio": 0.01,
+         "notionalCap": 10000000,
+         "notionalFloor": 250000
+        }
+       ],
+       "entry": 0.27,
+       "estimated": false,
+       "key": "ENAUSDC:LONG",
+       "leverage": 3,
+       "mark": 0.25,
+       "notionalCoef": 1,
+       "positionSide": "LONG",
+       "q": 8000,
+       "symbol": "ENAUSDC"
+      }
+     ]
+    },
+    "reported": {
+     "availableBalance": 373.33333333333314,
+     "initialMargin": 666.6666666666666,
+     "maintMargin": 8,
+     "marginBalance": 1039.9999999999998,
+     "maxWithdrawAmount": 373.33333333333314,
+     "openOrderInitialMargin": 0,
+     "positionInitialMargin": 666.6666666666666,
+     "unrealizedProfit": -160.00000000000023,
+     "wallet": 1200
+    },
+    "state": {
+     "buffer": 1032,
+     "equity": 1040,
+     "free": 373.33,
+     "im": 666.67,
+     "liquidated": false,
+     "marginRatio": 0.0077,
+     "mm": 8,
+     "usedPct": 0.77
+    },
+    "stats": {
+     "ENA": {
+      "bars": 200,
+      "beta": -0.05,
+      "dailySigmaPct": 2.629,
+      "pairedBars": 199
+     }
+    }
+   }
+  ]
+ },
+ "deleverage": {
+  "multiAssetsMode": false,
+  "ok": true,
+  "params": {
+   "allowBreakingHedges": false,
+   "feeRate": 0.00045,
+   "maxLoss": null,
+   "objective": "free",
+   "target": 5000
+  },
+  "plans": [
+   {
+    "after": {
+     "buffer": 21502,
+     "equity": 21900,
+     "free": 10350,
+     "gross": 22000,
+     "im": 11400,
+     "mm": 398,
+     "positions": 3
+    },
+    "allowBreakingHedges": false,
+    "before": {
+     "buffer": 21502,
+     "equity": 21900,
+     "free": 10350,
+     "gross": 22000,
+     "im": 11400,
+     "mm": 398
+    },
+    "blocked": null,
+    "ceiling": {
+     "closeAllFees": 45.9,
+     "currentFree": 10350,
+     "equity": 21900,
+     "maxFree": 21704.1,
+     "releasableIm": 11400,
+     "reserved": 150
+    },
+    "fees": 0,
+    "marginAsset": "USDT",
+    "marks": {
+     "BTC": 100000,
+     "ETH": 4000
+    },
+    "objective": "free",
+    "realized": 0,
+    "remaining": [
+     {
+      "asset": "BTC",
+      "notional": 50000,
+      "positionSide": "LONG",
+      "upnl": 1000
+     },
+     {
+      "asset": "BTC",
+      "notional": 40000,
+      "positionSide": "SHORT",
+      "upnl": 1200
+     },
+     {
+      "asset": "ETH",
+      "notional": 12000,
+      "positionSide": "LONG",
+      "upnl": -300
+     }
+    ],
+    "shortfall": 0,
+    "steps": [],
+    "target": 5000,
+    "targetAboveCeiling": false,
+    "targetMet": true,
+    "thresholdsAfter": [
+     {
+      "asset": "BTC",
+      "downPct": null,
+      "upPct": null
+     },
+     {
+      "asset": "ETH",
+      "downPct": null,
+      "upPct": null
+     }
+    ]
+   },
+   {
+    "after": {
+     "buffer": 1039.1,
+     "equity": 1039.1,
+     "free": 1039.1,
+     "gross": 0,
+     "im": 0,
+     "mm": 0,
+     "positions": 0
+    },
+    "allowBreakingHedges": false,
+    "before": {
+     "buffer": 1032,
+     "equity": 1040,
+     "free": 373.33,
+     "gross": 2000,
+     "im": 666.67,
+     "mm": 8
+    },
+    "blocked": null,
+    "ceiling": {
+     "closeAllFees": 0.9,
+     "currentFree": 373.33,
+     "equity": 1040,
+     "maxFree": 1039.1,
+     "releasableIm": 666.67,
+     "reserved": 0
+    },
+    "fees": 0.9,
+    "marginAsset": "USDC",
+    "marks": {
+     "ENA": 0.25
+    },
+    "objective": "free",
+    "realized": -160,
+    "remaining": [],
+    "shortfall": 3960.9,
+    "steps": [
+     {
+      "bufferGain": 7.1,
+      "closes": [
+       {
+        "key": "ENAUSDC:LONG",
+        "qty": 8000
+       }
+      ],
+      "cumulativeBuffer": 1039.1,
+      "cumulativeFree": 1039.1,
+      "cumulativeRealized": -160,
+      "deltaShift": -2000,
+      "fees": 0.9,
+      "freeGain": 665.77,
+      "imReleased": 666.67,
+      "label": "close ENA LONG",
+      "legs": [
+       {
+        "asset": "ENA",
+        "key": "ENAUSDC:LONG",
+        "ofQty": 8000,
+        "positionSide": "LONG",
+        "qty": 8000
+       }
+      ],
+      "mmReleased": 8,
+      "notionalClosed": 2000,
+      "realized": -160,
+      "type": "leg"
+     }
+    ],
+    "target": 5000,
+    "targetAboveCeiling": true,
+    "targetMet": false,
+    "thresholdsAfter": [
+     {
+      "asset": "ENA",
+      "downPct": null,
+      "upPct": null
+     }
+    ]
+   }
+  ]
+ },
+ "performance": {
+  "behaviour": {
+   "addedWhileUnderwater": {
+    "avgLoss": -105.2,
+    "avgWin": 102.8,
+    "expectancy": 33.47,
+    "fees": 7.2,
+    "grossLoss": 210.4,
+    "grossWin": 411.2,
+    "label": "added while underwater",
+    "losses": 2,
+    "medianHoldHours": 6,
+    "net": 200.8,
+    "payoff": 0.977,
+    "profitFactor": 1.954,
+    "trips": 6,
+    "winRate": 66.67,
+    "wins": 4
+   },
+   "clean": {
+    "avgLoss": -52.8,
+    "avgWin": 51.2,
+    "expectancy": 16.53,
+    "fees": 14.4,
+    "grossLoss": 316.8,
+    "grossWin": 614.4,
+    "label": "never added while underwater",
+    "losses": 6,
+    "medianHoldHours": 6,
+    "net": 297.6,
+    "payoff": 0.97,
+    "profitFactor": 1.939,
+    "trips": 18,
+    "winRate": 66.67,
+    "wins": 12
+   }
+  },
+  "bestTrips": [
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1785045600000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": 198.8,
+    "openTime": 1785024000000,
+    "peakNotional": 19600,
+    "positionSide": "LONG",
+    "realized": 200,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1786082400000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": 198.8,
+    "openTime": 1786060800000,
+    "peakNotional": 19600,
+    "positionSide": "LONG",
+    "realized": 200,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785304800000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1785283200000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785823200000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1785801600000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786600800000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1786579200000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786860000000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1786838400000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1787378400000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1787356800000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1787637600000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1787616000000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1785045600000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": 6.8,
+    "openTime": 1785024000000,
+    "peakNotional": 784,
+    "positionSide": "LONG",
+    "realized": 8,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1786082400000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": 6.8,
+    "openTime": 1786060800000,
+    "peakNotional": 784,
+    "positionSide": "LONG",
+    "realized": 8,
+    "symbol": "ETHUSDT",
+    "win": true
+   }
+  ],
+  "bySymbol": [
+   {
+    "avgLoss": -5.9,
+    "avgWin": 4.1,
+    "expectancy": 0.77,
+    "fees": 10.8,
+    "grossLoss": 23.6,
+    "grossWin": 32.8,
+    "losses": 4,
+    "medianHoldHours": 6,
+    "net": 9.2,
+    "payoff": 0.695,
+    "profitFactor": 1.39,
+    "symbol": "ETHUSDT",
+    "trips": 12,
+    "winRate": 66.67,
+    "wins": 8
+   },
+   {
+    "avgLoss": -125.9,
+    "avgWin": 124.1,
+    "expectancy": 40.77,
+    "fees": 10.8,
+    "grossLoss": 503.6,
+    "grossWin": 992.8,
+    "losses": 4,
+    "medianHoldHours": 6,
+    "net": 489.2,
+    "payoff": 0.986,
+    "profitFactor": 1.971,
+    "symbol": "BTCUSDT",
+    "trips": 12,
+    "winRate": 66.67,
+    "wins": 8
+   }
+  ],
+  "calendar": {
+   "days": [
+    {
+     "date": "2026-08-02",
+     "pnl": -22.3
+    },
+    {
+     "date": "2026-08-03",
+     "pnl": 25.7
+    },
+    {
+     "date": "2026-08-04",
+     "pnl": 13.7
+    },
+    {
+     "date": "2026-08-05",
+     "pnl": 1.7
+    },
+    {
+     "date": "2026-08-06",
+     "pnl": -10.3
+    },
+    {
+     "date": "2026-08-07",
+     "pnl": -22.3
+    },
+    {
+     "date": "2026-08-08",
+     "pnl": 25.7
+    },
+    {
+     "date": "2026-08-09",
+     "pnl": 13.7
+    },
+    {
+     "date": "2026-08-10",
+     "pnl": 1.7
+    },
+    {
+     "date": "2026-08-11",
+     "pnl": -10.3
+    },
+    {
+     "date": "2026-08-12",
+     "pnl": -22.3
+    },
+    {
+     "date": "2026-08-13",
+     "pnl": 25.7
+    },
+    {
+     "date": "2026-08-14",
+     "pnl": 13.7
+    },
+    {
+     "date": "2026-08-15",
+     "pnl": 1.7
+    },
+    {
+     "date": "2026-08-16",
+     "pnl": -10.3
+    },
+    {
+     "date": "2026-08-17",
+     "pnl": -22.3
+    },
+    {
+     "date": "2026-08-18",
+     "pnl": 25.7
+    },
+    {
+     "date": "2026-08-19",
+     "pnl": 13.7
+    },
+    {
+     "date": "2026-08-20",
+     "pnl": 1.7
+    },
+    {
+     "date": "2026-08-21",
+     "pnl": -10.3
+    },
+    {
+     "date": "2026-08-22",
+     "pnl": -22.3
+    },
+    {
+     "date": "2026-08-23",
+     "pnl": 25.7
+    },
+    {
+     "date": "2026-08-24",
+     "pnl": 13.7
+    },
+    {
+     "date": "2026-08-25",
+     "pnl": 1.7
+    },
+    {
+     "date": "2026-08-26",
+     "pnl": -10.3
+    },
+    {
+     "date": "2026-08-27",
+     "pnl": -22.3
+    },
+    {
+     "date": "2026-08-28",
+     "pnl": 25.7
+    },
+    {
+     "date": "2026-08-29",
+     "pnl": 13.7
+    },
+    {
+     "date": "2026-08-30",
+     "pnl": 1.7
+    },
+    {
+     "date": "2026-08-31",
+     "pnl": -10.3
+    }
+   ],
+   "maxAbs": 25.7,
+   "weeks": [
+    [
+     {
+      "date": "2026-07-27",
+      "pnl": null
+     },
+     {
+      "date": "2026-07-28",
+      "pnl": null
+     },
+     {
+      "date": "2026-07-29",
+      "pnl": null
+     },
+     {
+      "date": "2026-07-30",
+      "pnl": null
+     },
+     {
+      "date": "2026-07-31",
+      "pnl": null
+     },
+     {
+      "date": "2026-08-01",
+      "pnl": null
+     },
+     {
+      "date": "2026-08-02",
+      "pnl": -22.3
+     }
+    ],
+    [
+     {
+      "date": "2026-08-03",
+      "pnl": 25.7
+     },
+     {
+      "date": "2026-08-04",
+      "pnl": 13.7
+     },
+     {
+      "date": "2026-08-05",
+      "pnl": 1.7
+     },
+     {
+      "date": "2026-08-06",
+      "pnl": -10.3
+     },
+     {
+      "date": "2026-08-07",
+      "pnl": -22.3
+     },
+     {
+      "date": "2026-08-08",
+      "pnl": 25.7
+     },
+     {
+      "date": "2026-08-09",
+      "pnl": 13.7
+     }
+    ],
+    [
+     {
+      "date": "2026-08-10",
+      "pnl": 1.7
+     },
+     {
+      "date": "2026-08-11",
+      "pnl": -10.3
+     },
+     {
+      "date": "2026-08-12",
+      "pnl": -22.3
+     },
+     {
+      "date": "2026-08-13",
+      "pnl": 25.7
+     },
+     {
+      "date": "2026-08-14",
+      "pnl": 13.7
+     },
+     {
+      "date": "2026-08-15",
+      "pnl": 1.7
+     },
+     {
+      "date": "2026-08-16",
+      "pnl": -10.3
+     }
+    ],
+    [
+     {
+      "date": "2026-08-17",
+      "pnl": -22.3
+     },
+     {
+      "date": "2026-08-18",
+      "pnl": 25.7
+     },
+     {
+      "date": "2026-08-19",
+      "pnl": 13.7
+     },
+     {
+      "date": "2026-08-20",
+      "pnl": 1.7
+     },
+     {
+      "date": "2026-08-21",
+      "pnl": -10.3
+     },
+     {
+      "date": "2026-08-22",
+      "pnl": -22.3
+     },
+     {
+      "date": "2026-08-23",
+      "pnl": 25.7
+     }
+    ],
+    [
+     {
+      "date": "2026-08-24",
+      "pnl": 13.7
+     },
+     {
+      "date": "2026-08-25",
+      "pnl": 1.7
+     },
+     {
+      "date": "2026-08-26",
+      "pnl": -10.3
+     },
+     {
+      "date": "2026-08-27",
+      "pnl": -22.3
+     },
+     {
+      "date": "2026-08-28",
+      "pnl": 25.7
+     },
+     {
+      "date": "2026-08-29",
+      "pnl": 13.7
+     },
+     {
+      "date": "2026-08-30",
+      "pnl": 1.7
+     }
+    ],
+    [
+     {
+      "date": "2026-08-31",
+      "pnl": -10.3
+     },
+     {
+      "date": "2026-09-01",
+      "pnl": null
+     },
+     {
+      "date": "2026-09-02",
+      "pnl": null
+     },
+     {
+      "date": "2026-09-03",
+      "pnl": null
+     },
+     {
+      "date": "2026-09-04",
+      "pnl": null
+     },
+     {
+      "date": "2026-09-05",
+      "pnl": null
+     },
+     {
+      "date": "2026-09-06",
+      "pnl": null
+     }
+    ]
+   ]
+  },
+  "dayOfWeek": [
+   {
+    "avgLoss": null,
+    "avgWin": 77,
+    "day": 0,
+    "expectancy": 77,
+    "fees": 4,
+    "grossLoss": 0,
+    "grossWin": 308,
+    "label": "Sunday",
+    "losses": 0,
+    "medianHoldHours": 6,
+    "net": 308,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 4,
+    "winRate": 100,
+    "wins": 4
+   },
+   {
+    "avgLoss": -52.8,
+    "avgWin": null,
+    "day": 1,
+    "expectancy": -52.8,
+    "fees": 1.6,
+    "grossLoss": 105.6,
+    "grossWin": 0,
+    "label": "Monday",
+    "losses": 2,
+    "medianHoldHours": 6,
+    "net": -105.6,
+    "payoff": null,
+    "profitFactor": 0,
+    "thin": true,
+    "trips": 2,
+    "winRate": 0,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": 51.2,
+    "day": 2,
+    "expectancy": 51.2,
+    "fees": 3.2,
+    "grossLoss": 0,
+    "grossWin": 204.8,
+    "label": "Tuesday",
+    "losses": 0,
+    "medianHoldHours": 6,
+    "net": 204.8,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 4,
+    "winRate": 100,
+    "wins": 4
+   },
+   {
+    "avgLoss": -105.2,
+    "avgWin": 51.2,
+    "day": 3,
+    "expectancy": -27,
+    "fees": 4,
+    "grossLoss": 210.4,
+    "grossWin": 102.4,
+    "label": "Wednesday",
+    "losses": 2,
+    "medianHoldHours": 6,
+    "net": -108,
+    "payoff": 0.487,
+    "profitFactor": 0.487,
+    "thin": true,
+    "trips": 4,
+    "winRate": 50,
+    "wins": 2
+   },
+   {
+    "avgLoss": -52.8,
+    "avgWin": 51.2,
+    "day": 4,
+    "expectancy": -0.8,
+    "fees": 3.2,
+    "grossLoss": 105.6,
+    "grossWin": 102.4,
+    "label": "Thursday",
+    "losses": 2,
+    "medianHoldHours": 6,
+    "net": -3.2,
+    "payoff": 0.97,
+    "profitFactor": 0.97,
+    "thin": true,
+    "trips": 4,
+    "winRate": 50,
+    "wins": 2
+   },
+   {
+    "avgLoss": null,
+    "avgWin": 102.8,
+    "day": 5,
+    "expectancy": 102.8,
+    "fees": 2.4,
+    "grossLoss": 0,
+    "grossWin": 205.6,
+    "label": "Friday",
+    "losses": 0,
+    "medianHoldHours": 6,
+    "net": 205.6,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 2,
+    "winRate": 100,
+    "wins": 2
+   },
+   {
+    "avgLoss": -52.8,
+    "avgWin": 51.2,
+    "day": 6,
+    "expectancy": -0.8,
+    "fees": 3.2,
+    "grossLoss": 105.6,
+    "grossWin": 102.4,
+    "label": "Saturday",
+    "losses": 2,
+    "medianHoldHours": 6,
+    "net": -3.2,
+    "payoff": 0.97,
+    "profitFactor": 0.97,
+    "thin": true,
+    "trips": 4,
+    "winRate": 50,
+    "wins": 2
+   }
+  ],
+  "equity": {
+   "bestDay": {
+    "cumulative": 3.4,
+    "date": "2026-08-03",
+    "drawdown": 0,
+    "pnl": 25.7
+   },
+   "days": 30,
+   "greenDays": 18,
+   "maxDrawdown": -32.6,
+   "net": 51,
+   "points": [
+    {
+     "cumulative": -22.3,
+     "date": "2026-08-02",
+     "drawdown": -22.3,
+     "pnl": -22.3
+    },
+    {
+     "cumulative": 3.4,
+     "date": "2026-08-03",
+     "drawdown": 0,
+     "pnl": 25.7
+    },
+    {
+     "cumulative": 17.1,
+     "date": "2026-08-04",
+     "drawdown": 0,
+     "pnl": 13.7
+    },
+    {
+     "cumulative": 18.8,
+     "date": "2026-08-05",
+     "drawdown": 0,
+     "pnl": 1.7
+    },
+    {
+     "cumulative": 8.5,
+     "date": "2026-08-06",
+     "drawdown": -10.3,
+     "pnl": -10.3
+    },
+    {
+     "cumulative": -13.8,
+     "date": "2026-08-07",
+     "drawdown": -32.6,
+     "pnl": -22.3
+    },
+    {
+     "cumulative": 11.9,
+     "date": "2026-08-08",
+     "drawdown": -6.9,
+     "pnl": 25.7
+    },
+    {
+     "cumulative": 25.6,
+     "date": "2026-08-09",
+     "drawdown": 0,
+     "pnl": 13.7
+    },
+    {
+     "cumulative": 27.3,
+     "date": "2026-08-10",
+     "drawdown": 0,
+     "pnl": 1.7
+    },
+    {
+     "cumulative": 17,
+     "date": "2026-08-11",
+     "drawdown": -10.3,
+     "pnl": -10.3
+    },
+    {
+     "cumulative": -5.3,
+     "date": "2026-08-12",
+     "drawdown": -32.6,
+     "pnl": -22.3
+    },
+    {
+     "cumulative": 20.4,
+     "date": "2026-08-13",
+     "drawdown": -6.9,
+     "pnl": 25.7
+    },
+    {
+     "cumulative": 34.1,
+     "date": "2026-08-14",
+     "drawdown": 0,
+     "pnl": 13.7
+    },
+    {
+     "cumulative": 35.8,
+     "date": "2026-08-15",
+     "drawdown": 0,
+     "pnl": 1.7
+    },
+    {
+     "cumulative": 25.5,
+     "date": "2026-08-16",
+     "drawdown": -10.3,
+     "pnl": -10.3
+    },
+    {
+     "cumulative": 3.2,
+     "date": "2026-08-17",
+     "drawdown": -32.6,
+     "pnl": -22.3
+    },
+    {
+     "cumulative": 28.9,
+     "date": "2026-08-18",
+     "drawdown": -6.9,
+     "pnl": 25.7
+    },
+    {
+     "cumulative": 42.6,
+     "date": "2026-08-19",
+     "drawdown": 0,
+     "pnl": 13.7
+    },
+    {
+     "cumulative": 44.3,
+     "date": "2026-08-20",
+     "drawdown": 0,
+     "pnl": 1.7
+    },
+    {
+     "cumulative": 34,
+     "date": "2026-08-21",
+     "drawdown": -10.3,
+     "pnl": -10.3
+    },
+    {
+     "cumulative": 11.7,
+     "date": "2026-08-22",
+     "drawdown": -32.6,
+     "pnl": -22.3
+    },
+    {
+     "cumulative": 37.4,
+     "date": "2026-08-23",
+     "drawdown": -6.9,
+     "pnl": 25.7
+    },
+    {
+     "cumulative": 51.1,
+     "date": "2026-08-24",
+     "drawdown": 0,
+     "pnl": 13.7
+    },
+    {
+     "cumulative": 52.8,
+     "date": "2026-08-25",
+     "drawdown": 0,
+     "pnl": 1.7
+    },
+    {
+     "cumulative": 42.5,
+     "date": "2026-08-26",
+     "drawdown": -10.3,
+     "pnl": -10.3
+    },
+    {
+     "cumulative": 20.2,
+     "date": "2026-08-27",
+     "drawdown": -32.6,
+     "pnl": -22.3
+    },
+    {
+     "cumulative": 45.9,
+     "date": "2026-08-28",
+     "drawdown": -6.9,
+     "pnl": 25.7
+    },
+    {
+     "cumulative": 59.6,
+     "date": "2026-08-29",
+     "drawdown": 0,
+     "pnl": 13.7
+    },
+    {
+     "cumulative": 61.3,
+     "date": "2026-08-30",
+     "drawdown": 0,
+     "pnl": 1.7
+    },
+    {
+     "cumulative": 51,
+     "date": "2026-08-31",
+     "drawdown": -10.3,
+     "pnl": -10.3
+    }
+   ],
+   "redDays": 12,
+   "worstDay": {
+    "cumulative": -22.3,
+    "date": "2026-08-02",
+    "drawdown": -22.3,
+    "pnl": -22.3
+   }
+  },
+  "execution": {
+   "fills": 54,
+   "firstFill": 1784764800000,
+   "lastFill": 1787637600000,
+   "maker": 18,
+   "makerFee": 7.2,
+   "makerPct": 33.3,
+   "taker": 36,
+   "takerFee": 14.4,
+   "totalFee": 21.6
+  },
+  "feeDragPct": 37.5,
+  "feesBySymbol": [
+   {
+    "fees": 45,
+    "symbol": "BTCUSDT"
+   }
+  ],
+  "fundingBySymbol": [
+   {
+    "funding": -24,
+    "symbol": "ETHUSDT"
+   }
+  ],
+  "holdTime": [
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "fromHours": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "label": "under 15m",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "toHours": 0.25,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "fromHours": 0.25,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "label": "15m – 1h",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "toHours": 1,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "fromHours": 1,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "label": "1 – 4h",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "toHours": 4,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": -65.9,
+    "avgWin": 64.1,
+    "expectancy": 20.77,
+    "fees": 21.6,
+    "fromHours": 4,
+    "grossLoss": 527.2,
+    "grossWin": 1025.6,
+    "label": "4 – 24h",
+    "losses": 8,
+    "medianHoldHours": 6,
+    "net": 498.4,
+    "payoff": 0.973,
+    "profitFactor": 1.945,
+    "thin": false,
+    "toHours": 24,
+    "trips": 24,
+    "winRate": 66.67,
+    "wins": 16
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "fromHours": 24,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "label": "1 – 7d",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "toHours": 168,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "fromHours": 168,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "label": "over 7d",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "toHours": null,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   }
+  ],
+  "hourOfDay": [
+   {
+    "avgLoss": -65.9,
+    "avgWin": 64.1,
+    "expectancy": 20.77,
+    "fees": 21.6,
+    "grossLoss": 527.2,
+    "grossWin": 1025.6,
+    "hour": 0,
+    "label": "00:00",
+    "losses": 8,
+    "medianHoldHours": 6,
+    "net": 498.4,
+    "payoff": 0.973,
+    "profitFactor": 1.945,
+    "thin": false,
+    "trips": 24,
+    "winRate": 66.67,
+    "wins": 16
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 1,
+    "label": "01:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 2,
+    "label": "02:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 3,
+    "label": "03:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 4,
+    "label": "04:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 5,
+    "label": "05:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 6,
+    "label": "06:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 7,
+    "label": "07:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 8,
+    "label": "08:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 9,
+    "label": "09:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 10,
+    "label": "10:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 11,
+    "label": "11:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 12,
+    "label": "12:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 13,
+    "label": "13:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 14,
+    "label": "14:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 15,
+    "label": "15:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 16,
+    "label": "16:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 17,
+    "label": "17:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 18,
+    "label": "18:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 19,
+    "label": "19:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 20,
+    "label": "20:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 21,
+    "label": "21:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 22,
+    "label": "22:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   },
+   {
+    "avgLoss": null,
+    "avgWin": null,
+    "expectancy": null,
+    "fees": 0,
+    "grossLoss": 0,
+    "grossWin": 0,
+    "hour": 23,
+    "label": "23:00",
+    "losses": 0,
+    "medianHoldHours": null,
+    "net": 0,
+    "payoff": null,
+    "profitFactor": null,
+    "thin": true,
+    "trips": 0,
+    "winRate": null,
+    "wins": 0
+   }
+  ],
+  "month": [
+   {
+    "avgLoss": -52.8,
+    "avgWin": 77,
+    "expectancy": 33.73,
+    "fees": 5.6,
+    "grossLoss": 105.6,
+    "grossWin": 308,
+    "label": "2026-07",
+    "losses": 2,
+    "medianHoldHours": 6,
+    "month": "2026-07",
+    "net": 202.4,
+    "payoff": 1.458,
+    "profitFactor": 2.917,
+    "thin": true,
+    "trips": 6,
+    "winRate": 66.67,
+    "wins": 4
+   },
+   {
+    "avgLoss": -70.27,
+    "avgWin": 59.8,
+    "expectancy": 16.44,
+    "fees": 16,
+    "grossLoss": 421.6,
+    "grossWin": 717.6,
+    "label": "2026-08",
+    "losses": 6,
+    "medianHoldHours": 6,
+    "month": "2026-08",
+    "net": 296,
+    "payoff": 0.851,
+    "profitFactor": 1.702,
+    "thin": false,
+    "trips": 18,
+    "winRate": 66.67,
+    "wins": 12
+   }
+  ],
+  "nonQuoteFees": 0,
+  "ok": true,
+  "orphans": {
+   "commission": 0,
+   "fills": 0,
+   "realized": 0
+  },
+  "overall": {
+   "avgLoss": -65.9,
+   "avgWin": 64.1,
+   "expectancy": 20.77,
+   "fees": 21.6,
+   "grossLoss": 527.2,
+   "grossWin": 1025.6,
+   "losses": 8,
+   "medianHoldHours": 6,
+   "net": 498.4,
+   "payoff": 0.973,
+   "profitFactor": 1.945,
+   "trips": 24,
+   "winRate": 66.67,
+   "wins": 16
+  },
+  "recentTrips": [
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1787637600000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1787616000000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1787637600000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": 3.2,
+    "openTime": 1787616000000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": 4,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1787378400000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1787356800000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1787378400000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 3.2,
+    "openTime": 1787356800000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": 4,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1787119200000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": -201.2,
+    "openTime": 1787097600000,
+    "peakNotional": 19600,
+    "positionSide": "LONG",
+    "realized": -200,
+    "symbol": "BTCUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1787119200000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": -9.2,
+    "openTime": 1787097600000,
+    "peakNotional": 784,
+    "positionSide": "LONG",
+    "realized": -8,
+    "symbol": "ETHUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786860000000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1786838400000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786860000000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 3.2,
+    "openTime": 1786838400000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": 4,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786600800000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1786579200000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786600800000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": 3.2,
+    "openTime": 1786579200000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": 4,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786341600000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": -100.8,
+    "openTime": 1786320000000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": -100,
+    "symbol": "BTCUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786341600000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": -4.8,
+    "openTime": 1786320000000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": -4,
+    "symbol": "ETHUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1786082400000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": 198.8,
+    "openTime": 1786060800000,
+    "peakNotional": 19600,
+    "positionSide": "LONG",
+    "realized": 200,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1786082400000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": 6.8,
+    "openTime": 1786060800000,
+    "peakNotional": 784,
+    "positionSide": "LONG",
+    "realized": 8,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785823200000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1785801600000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785823200000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 3.2,
+    "openTime": 1785801600000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": 4,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785564000000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": -100.8,
+    "openTime": 1785542400000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": -100,
+    "symbol": "BTCUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785564000000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": -4.8,
+    "openTime": 1785542400000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": -4,
+    "symbol": "ETHUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785304800000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 99.2,
+    "openTime": 1785283200000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": 100,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785304800000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 3.2,
+    "openTime": 1785283200000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": 4,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1785045600000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": 198.8,
+    "openTime": 1785024000000,
+    "peakNotional": 19600,
+    "positionSide": "LONG",
+    "realized": 200,
+    "symbol": "BTCUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1785045600000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": 6.8,
+    "openTime": 1785024000000,
+    "peakNotional": 784,
+    "positionSide": "LONG",
+    "realized": 8,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1784786400000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": -100.8,
+    "openTime": 1784764800000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": -100,
+    "symbol": "BTCUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1784786400000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": -4.8,
+    "openTime": 1784764800000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": -4,
+    "symbol": "ETHUSDT",
+    "win": false
+   }
+  ],
+  "records": {
+   "bestDay": {
+    "cumulative": 3.4,
+    "date": "2026-08-03",
+    "drawdown": 0,
+    "pnl": 25.7
+   },
+   "bestTrip": {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1785045600000,
+    "fills": 3,
+    "holdHours": 6,
+    "net": 198.8,
+    "positionSide": "LONG",
+    "symbol": "BTCUSDT"
+   },
+   "longestHeld": {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1784786400000,
+    "fills": 2,
+    "holdHours": 6,
+    "net": -100.8,
+    "positionSide": "LONG",
+    "symbol": "BTCUSDT"
+   },
+   "mostFills": {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1785045600000,
+    "fills": 3,
+    "holdHours": 6,
+    "net": 198.8,
+    "positionSide": "LONG",
+    "symbol": "BTCUSDT"
+   },
+   "worstDay": {
+    "cumulative": -22.3,
+    "date": "2026-08-02",
+    "drawdown": -22.3,
+    "pnl": -22.3
+   },
+   "worstTrip": {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1787119200000,
+    "fills": 3,
+    "holdHours": 6,
+    "net": -201.2,
+    "positionSide": "LONG",
+    "symbol": "BTCUSDT"
+   }
+  },
+  "sequence": {
+   "afterLoss": {
+    "avgLoss": -5.9,
+    "avgSize": 6448,
+    "avgWin": 124.1,
+    "expectancy": 59.1,
+    "fees": 7.2,
+    "grossLoss": 23.6,
+    "grossWin": 496.4,
+    "label": "after a loss",
+    "losses": 4,
+    "medianHoldHours": 6,
+    "net": 472.8,
+    "payoff": 21.034,
+    "profitFactor": 21.034,
+    "thin": true,
+    "trips": 8,
+    "winRate": 50,
+    "wins": 4
+   },
+   "afterWin": {
+    "avgLoss": -134.27,
+    "avgSize": 6211.2,
+    "avgWin": 44.1,
+    "expectancy": 8.43,
+    "fees": 13.6,
+    "grossLoss": 402.8,
+    "grossWin": 529.2,
+    "label": "after a win",
+    "losses": 3,
+    "medianHoldHours": 6,
+    "net": 126.4,
+    "payoff": 0.328,
+    "profitFactor": 1.314,
+    "thin": false,
+    "trips": 15,
+    "winRate": 80,
+    "wins": 12
+   }
+  },
+  "side": [
+   {
+    "avgLoss": -65.9,
+    "avgWin": 64.1,
+    "expectancy": 20.77,
+    "fees": 21.6,
+    "grossLoss": 527.2,
+    "grossWin": 1025.6,
+    "label": "LONG",
+    "losses": 8,
+    "medianHoldHours": 6,
+    "net": 498.4,
+    "payoff": 0.973,
+    "profitFactor": 1.945,
+    "side": "LONG",
+    "thin": false,
+    "trips": 24,
+    "winRate": 66.67,
+    "wins": 16
+   }
+  ],
+  "size": {
+   "count": 24,
+   "max": 19600,
+   "median": 10000,
+   "p10": 400,
+   "p90": 19600
+  },
+  "stillOpen": 0,
+  "streaks": {
+   "current": 4,
+   "currentIsWin": true,
+   "longestLoss": 2,
+   "longestLossPnl": -105.6,
+   "longestWin": 4,
+   "longestWinPnl": 308
+  },
+  "totals": {
+   "COMMISSION": -45,
+   "FUNDING_FEE": -24,
+   "REALIZED_PNL": 120
+  },
+  "window": {
+   "days": null,
+   "from": "2026-08-02T00:00:00.000Z",
+   "tripsFrom": "2026-07-23T00:00:00.000Z"
+  },
+  "worstTrips": [
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1787119200000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": -201.2,
+    "openTime": 1787097600000,
+    "peakNotional": 19600,
+    "positionSide": "LONG",
+    "realized": -200,
+    "symbol": "BTCUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1784786400000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": -100.8,
+    "openTime": 1784764800000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": -100,
+    "symbol": "BTCUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785564000000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": -100.8,
+    "openTime": 1785542400000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": -100,
+    "symbol": "BTCUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786341600000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": -100.8,
+    "openTime": 1786320000000,
+    "peakNotional": 10000,
+    "positionSide": "LONG",
+    "realized": -100,
+    "symbol": "BTCUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 1,
+    "closeTime": 1787119200000,
+    "commission": 1.2,
+    "fills": 3,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.2,
+    "net": -9.2,
+    "openTime": 1787097600000,
+    "peakNotional": 784,
+    "positionSide": "LONG",
+    "realized": -8,
+    "symbol": "ETHUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1784786400000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": -4.8,
+    "openTime": 1784764800000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": -4,
+    "symbol": "ETHUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785564000000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 0,
+    "maxSize": 0.1,
+    "net": -4.8,
+    "openTime": 1785542400000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": -4,
+    "symbol": "ETHUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1786341600000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": -4.8,
+    "openTime": 1786320000000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": -4,
+    "symbol": "ETHUSDT",
+    "win": false
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785304800000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 3.2,
+    "openTime": 1785283200000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": 4,
+    "symbol": "ETHUSDT",
+    "win": true
+   },
+   {
+    "addsWhileUnderwater": 0,
+    "closeTime": 1785823200000,
+    "commission": 0.8,
+    "fills": 2,
+    "holdHours": 6,
+    "makerFills": 1,
+    "maxSize": 0.1,
+    "net": 3.2,
+    "openTime": 1785801600000,
+    "peakNotional": 400,
+    "positionSide": "LONG",
+    "realized": 4,
+    "symbol": "ETHUSDT",
+    "win": true
+   }
+  ]
+ },
+ "hedgeledger": {
+  "multiAssetsMode": false,
+  "ok": true,
+  "pools": [
+   {
+    "carry": [
+     {
+      "asset": "BTC",
+      "declaredHours": 8,
+      "intervalHours": 8,
+      "key": "BTCUSDT:LONG",
+      "notional": 50000,
+      "observedHours": null,
+      "perDay": -15,
+      "ratePct": 0.01,
+      "settlementsSeen": 0,
+      "side": "Long"
+     },
+     {
+      "asset": "BTC",
+      "declaredHours": 8,
+      "intervalHours": 8,
+      "key": "BTCUSDT:SHORT",
+      "notional": 40000,
+      "observedHours": null,
+      "perDay": 12,
+      "ratePct": 0.01,
+      "settlementsSeen": 0,
+      "side": "Short"
+     },
+     {
+      "asset": "ETH",
+      "declaredHours": 4,
+      "intervalHours": 8,
+      "key": "ETHUSDT:LONG",
+      "notional": 12000,
+      "observedHours": 8,
+      "perDay": -7.2,
+      "ratePct": 0.02,
+      "settlementsSeen": 30,
+      "side": "Long"
+     }
+    ],
+    "carryPerDay": -10.2,
+    "equity": 21900,
+    "grossNotional": 102000,
+    "inflation": {
+     "base": {
+      "equity": 21900,
+      "free": 10350,
+      "im": 11400,
+      "mm": 398
+     },
+     "freeGoneAtPct": null,
+     "liquidatedAtPct": null,
+     "scannedToPct": 300,
+     "steps": [
+      {
+       "buffer": 21502,
+       "equity": 21900,
+       "equityChange": 0,
+       "free": 10350,
+       "im": 11400,
+       "imGrowth": 1,
+       "legs": [
+        {
+         "asset": "BTC",
+         "im": 5000,
+         "key": "BTCUSDT:LONG",
+         "mm": 200,
+         "notional": 50000,
+         "positionSide": "LONG",
+         "upnl": 1000
+        },
+        {
+         "asset": "BTC",
+         "im": 4000,
+         "key": "BTCUSDT:SHORT",
+         "mm": 150,
+         "notional": 40000,
+         "positionSide": "SHORT",
+         "upnl": 1200
+        },
+        {
+         "asset": "ETH",
+         "im": 2400,
+         "key": "ETHUSDT:LONG",
+         "mm": 48,
+         "notional": 12000,
+         "positionSide": "LONG",
+         "upnl": -300
+        }
+       ],
+       "mm": 398,
+       "movePct": 0,
+       "notional": 102000
+      },
+      {
+       "buffer": 26877.5,
+       "equity": 27400,
+       "equityChange": 5500,
+       "free": 13000,
+       "im": 14250,
+       "imGrowth": 1.25,
+       "legs": [
+        {
+         "asset": "BTC",
+         "im": 6250,
+         "key": "BTCUSDT:LONG",
+         "mm": 262.5,
+         "notional": 62500,
+         "positionSide": "LONG",
+         "upnl": 13500
+        },
+        {
+         "asset": "BTC",
+         "im": 5000,
+         "key": "BTCUSDT:SHORT",
+         "mm": 200,
+         "notional": 50000,
+         "positionSide": "SHORT",
+         "upnl": -8800
+        },
+        {
+         "asset": "ETH",
+         "im": 3000,
+         "key": "ETHUSDT:LONG",
+         "mm": 60,
+         "notional": 15000,
+         "positionSide": "LONG",
+         "upnl": 2700
+        }
+       ],
+       "mm": 522.5,
+       "movePct": 25,
+       "notional": 127500
+      },
+      {
+       "buffer": 32253,
+       "equity": 32900,
+       "equityChange": 11000,
+       "free": 15650,
+       "im": 17100,
+       "imGrowth": 1.5,
+       "legs": [
+        {
+         "asset": "BTC",
+         "im": 7500,
+         "key": "BTCUSDT:LONG",
+         "mm": 325,
+         "notional": 75000,
+         "positionSide": "LONG",
+         "upnl": 26000
+        },
+        {
+         "asset": "BTC",
+         "im": 6000,
+         "key": "BTCUSDT:SHORT",
+         "mm": 250,
+         "notional": 60000,
+         "positionSide": "SHORT",
+         "upnl": -18800
+        },
+        {
+         "asset": "ETH",
+         "im": 3600,
+         "key": "ETHUSDT:LONG",
+         "mm": 72,
+         "notional": 18000,
+         "positionSide": "LONG",
+         "upnl": 5700
+        }
+       ],
+       "mm": 647,
+       "movePct": 50,
+       "notional": 153000
+      },
+      {
+       "buffer": 43004,
+       "equity": 43900,
+       "equityChange": 22000,
+       "free": 20950,
+       "im": 22800,
+       "imGrowth": 2,
+       "legs": [
+        {
+         "asset": "BTC",
+         "im": 10000,
+         "key": "BTCUSDT:LONG",
+         "mm": 450,
+         "notional": 100000,
+         "positionSide": "LONG",
+         "upnl": 51000
+        },
+        {
+         "asset": "BTC",
+         "im": 8000,
+         "key": "BTCUSDT:SHORT",
+         "mm": 350,
+         "notional": 80000,
+         "positionSide": "SHORT",
+         "upnl": -38800
+        },
+        {
+         "asset": "ETH",
+         "im": 4800,
+         "key": "ETHUSDT:LONG",
+         "mm": 96,
+         "notional": 24000,
+         "positionSide": "LONG",
+         "upnl": 11700
+        }
+       ],
+       "mm": 896,
+       "movePct": 100,
+       "notional": 204000
+      },
+      {
+       "buffer": 65556,
+       "equity": 65900,
+       "equityChange": 44000,
+       "free": 31550,
+       "im": 34200,
+       "imGrowth": 3,
+       "legs": [
+        {
+         "asset": "BTC",
+         "im": 15000,
+         "key": "BTCUSDT:LONG",
+         "mm": 200,
+         "notional": 150000,
+         "positionSide": "LONG",
+         "upnl": 101000
+        },
+        {
+         "asset": "BTC",
+         "im": 12000,
+         "key": "BTCUSDT:SHORT",
+         "mm": 0,
+         "notional": 120000,
+         "positionSide": "SHORT",
+         "upnl": -78800
+        },
+        {
+         "asset": "ETH",
+         "im": 7200,
+         "key": "ETHUSDT:LONG",
+         "mm": 144,
+         "notional": 36000,
+         "positionSide": "LONG",
+         "upnl": 23700
+        }
+       ],
+       "mm": 344,
+       "movePct": 200,
+       "notional": 306000
+      }
+     ]
+    },
+    "marginAsset": "USDT",
+    "marginLocked": 11400,
+    "rows": [
+     {
+      "asset": "BTC",
+      "invariant": true,
+      "livePairPnl": 2000,
+      "locked": 2000,
+      "longEntry": 98000,
+      "mark": 100000,
+      "matched": 0.4,
+      "matchedNotional": 80000,
+      "residualNotional": 10000,
+      "residualQty": 0.1,
+      "residualSide": "long",
+      "shortEntry": 103000,
+      "symbol": "BTCUSDT"
+     }
+    ],
+    "totalLocked": 2000,
+    "totalMatchedNotional": 80000,
+    "totalResidualNotional": 10000
+   },
+   {
+    "carry": [
+     {
+      "asset": "ENA",
+      "declaredHours": 4,
+      "intervalHours": 4,
+      "key": "ENAUSDC:LONG",
+      "notional": 2000,
+      "observedHours": null,
+      "perDay": -1.8,
+      "ratePct": 0.015,
+      "settlementsSeen": 0,
+      "side": "Long"
+     }
+    ],
+    "carryPerDay": -1.8,
+    "equity": 1040,
+    "grossNotional": 2000,
+    "inflation": {
+     "base": {
+      "equity": 1040,
+      "free": 373.33,
+      "im": 666.67,
+      "mm": 8
+     },
+     "freeGoneAtPct": null,
+     "liquidatedAtPct": null,
+     "scannedToPct": 300,
+     "steps": [
+      {
+       "buffer": 1032,
+       "equity": 1040,
+       "equityChange": 0,
+       "free": 373.33,
+       "im": 666.67,
+       "imGrowth": 1,
+       "legs": [
+        {
+         "asset": "ENA",
+         "im": 666.67,
+         "key": "ENAUSDC:LONG",
+         "mm": 8,
+         "notional": 2000,
+         "positionSide": "LONG",
+         "upnl": -160
+        }
+       ],
+       "mm": 8,
+       "movePct": 0,
+       "notional": 2000
+      },
+      {
+       "buffer": 1530,
+       "equity": 1540,
+       "equityChange": 500,
+       "free": 706.67,
+       "im": 833.33,
+       "imGrowth": 1.25,
+       "legs": [
+        {
+         "asset": "ENA",
+         "im": 833.33,
+         "key": "ENAUSDC:LONG",
+         "mm": 10,
+         "notional": 2500,
+         "positionSide": "LONG",
+         "upnl": 340
+        }
+       ],
+       "mm": 10,
+       "movePct": 25,
+       "notional": 2500
+      },
+      {
+       "buffer": 2028,
+       "equity": 2040,
+       "equityChange": 1000,
+       "free": 1040,
+       "im": 1000,
+       "imGrowth": 1.5,
+       "legs": [
+        {
+         "asset": "ENA",
+         "im": 1000,
+         "key": "ENAUSDC:LONG",
+         "mm": 12,
+         "notional": 3000,
+         "positionSide": "LONG",
+         "upnl": 840
+        }
+       ],
+       "mm": 12,
+       "movePct": 50,
+       "notional": 3000
+      },
+      {
+       "buffer": 3024,
+       "equity": 3040,
+       "equityChange": 2000,
+       "free": 1706.67,
+       "im": 1333.33,
+       "imGrowth": 2,
+       "legs": [
+        {
+         "asset": "ENA",
+         "im": 1333.33,
+         "key": "ENAUSDC:LONG",
+         "mm": 16,
+         "notional": 4000,
+         "positionSide": "LONG",
+         "upnl": 1840
+        }
+       ],
+       "mm": 16,
+       "movePct": 100,
+       "notional": 4000
+      },
+      {
+       "buffer": 5016,
+       "equity": 5040,
+       "equityChange": 4000,
+       "free": 3040,
+       "im": 2000,
+       "imGrowth": 3,
+       "legs": [
+        {
+         "asset": "ENA",
+         "im": 2000,
+         "key": "ENAUSDC:LONG",
+         "mm": 24,
+         "notional": 6000,
+         "positionSide": "LONG",
+         "upnl": 3840
+        }
+       ],
+       "mm": 24,
+       "movePct": 200,
+       "notional": 6000
+      }
+     ]
+    },
+    "marginAsset": "USDC",
+    "marginLocked": 666.67,
+    "rows": [],
+    "totalLocked": 0,
+    "totalMatchedNotional": 0,
+    "totalResidualNotional": 0
+   }
+  ]
+ },
+ "confluence": {
+  "dataGaps": [],
+  "fundingIntervalHours": 8,
+  "lastFundingRate": 0.0000708460466276841,
+  "ok": true,
+  "overall": {
+   "aligned": false,
+   "score": 0.0038102606763150138,
+   "state": "neutral"
+  },
+  "quote": "USDT",
+  "sources": [
+   {
+    "id": "trend",
+    "name": "Trend",
+    "weight": 0.2
+   },
+   {
+    "id": "momentum",
+    "name": "Momentum",
+    "weight": 0.12
+   },
+   {
+    "id": "meanrev",
+    "name": "Mean reversion",
+    "weight": 0.1
+   },
+   {
+    "id": "flow",
+    "name": "Flow",
+    "weight": 0.18
+   },
+   {
+    "id": "structure",
+    "name": "Structure",
+    "weight": 0.15
+   },
+   {
+    "id": "leverage",
+    "name": "Leverage",
+    "weight": 0.18
+   },
+   {
+    "id": "positioning",
+    "name": "Positioning",
+    "weight": 0.07
+   }
+  ],
+  "symbol": "BTCUSDT",
+  "tfWeights": {
+   "15m": 0.15,
+   "1d": 0.25,
+   "1h": 0.25,
+   "4h": 0.35
+  },
+  "timeframes": {
+   "15m": {
+    "bars": 1000,
+    "btc": null,
+    "calibration": {
+     "bars": 994,
+     "baseUp": 0.5231388329979879,
+     "composite": {
+      "ci": [
+       0.29157314216484553,
+       0.5047648465566553
+      ],
+      "edge": -0.10866060292641377,
+      "expected": 0.5017491558421805,
+      "hitRate": 0.3930885529157667,
+      "n": 463,
+      "nEff": 77,
+      "significant": false,
+      "thin": false
+     },
+     "horizon": 6
+    },
+    "counts": {
+     "bear": 1,
+     "bull": 1,
+     "na": 0,
+     "neutral": 5
+    },
+    "crowded": null,
+    "firstBarAt": 1787320800000,
+    "informational": [],
+    "lastClose": 100000,
+    "lastClosedAt": 1788220799999,
+    "live": null,
+    "regime": {
+     "adx": 21.749063356511208,
+     "bbwPctile": 0.16666666666666666,
+     "label": "transition",
+     "squeeze": false
+    },
+    "score": 0.013333333333333332,
+    "signals": [
+     {
+      "hit": {
+       "ci": [
+        0.3788777510782957,
+        0.5465626008699112
+       ],
+       "edge": -0.047300153119977706,
+       "expected": 0.5089353732457639,
+       "hitRate": 0.46163522012578617,
+       "n": 795,
+       "nEff": 132,
+       "significant": false,
+       "thin": false
+      },
+      "id": "emaStack",
+      "name": "EMA 20/50/200 stack",
+      "note": "mixed stack",
+      "score": 0.3333333333333333,
+      "source": "trend",
+      "state": "bull",
+      "unit": "pct",
+      "value": 0.8597856711784368
+     },
+     {
+      "hit": {
+       "ci": [
+        0.40085815254435775,
+        0.5524299403628486
+       ],
+       "edge": -0.02604845758170593,
+       "expected": 0.5021420486295187,
+       "hitRate": 0.4760935910478128,
+       "n": 983,
+       "nEff": 163,
+       "significant": false,
+       "thin": false
+      },
+      "id": "supertrend",
+      "name": "Supertrend 10 × 3",
+      "note": "up",
+      "score": 1,
+      "source": "trend",
+      "state": "bull",
+      "unit": "pct",
+      "value": 1.7215167358194616
+     },
+     {
+      "hit": {
+       "ci": [
+        0.2600934921318504,
+        0.4918731369072352
+       ],
+       "edge": -0.1324314306893996,
+       "expected": 0.5008524833209785,
+       "hitRate": 0.3684210526315789,
+       "n": 380,
+       "nEff": 63,
+       "significant": true,
+       "thin": false
+      },
+      "id": "rsi",
+      "name": "RSI 14",
+      "note": "trend: 55/45",
+      "score": 0,
+      "source": "momentum",
+      "state": "neutral",
+      "unit": "num",
+      "value": 52.965421739350376
+     },
+     {
+      "hit": {
+       "ci": [
+        0.37277448520269185,
+        0.5781587270827997
+       ],
+       "edge": -0.025484978180277118,
+       "expected": 0.499868279888057,
+       "hitRate": 0.47438330170777987,
+       "n": 527,
+       "nEff": 87,
+       "significant": false,
+       "thin": false
+      },
+      "id": "macd",
+      "name": "MACD 12/26/9",
+      "note": "sign and slope disagree",
+      "score": 0,
+      "source": "momentum",
+      "state": "neutral",
+      "unit": "pct",
+      "value": 0.02391384964935014
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3664443720839702,
+        0.7179354797575107
+       ],
+       "edge": 0.05209570677074499,
+       "expected": 0.4960970643135924,
+       "hitRate": 0.5481927710843374,
+       "n": 166,
+       "nEff": 27,
+       "significant": false,
+       "thin": true
+      },
+      "id": "bbPctB",
+      "name": "Bollinger %B 20 × 2σ",
+      "note": "inside bands",
+      "score": 0,
+      "source": "meanrev",
+      "state": "neutral",
+      "unit": "num",
+      "value": 0.6286473173140383
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3910413334492233,
+        0.6255375355463626
+       ],
+       "edge": 0.01091763614267055,
+       "expected": 0.4978542936818909,
+       "hitRate": 0.5087719298245614,
+       "n": 399,
+       "nEff": 66,
+       "significant": false,
+       "thin": false
+      },
+      "id": "cvd",
+      "name": "CVD 20-bar imbalance (z)",
+      "note": "diverging from price (distribution into strength)",
+      "score": -1,
+      "source": "flow",
+      "state": "bear",
+      "unit": "pct",
+      "value": -5.094509384682273
+     },
+     {
+      "hit": {
+       "ci": [
+        0.385513124463746,
+        0.6270422609865872
+       ],
+       "edge": 0.007345405767941016,
+       "expected": 0.4993212608987257,
+       "hitRate": 0.5066666666666667,
+       "n": 375,
+       "nEff": 62,
+       "significant": false,
+       "thin": false
+      },
+      "id": "taker",
+      "name": "Taker buy/sell, 3 bars (z)",
+      "note": "buy ÷ sell volume, usual",
+      "score": 0,
+      "source": "flow",
+      "state": "neutral",
+      "unit": "ratio",
+      "value": 1.0626159562253423
+     },
+     {
+      "hit": {
+       "ci": [
+        0.372642691310703,
+        0.5304153781119129
+       ],
+       "edge": -0.05212504074727686,
+       "expected": 0.5024043703562154,
+       "hitRate": 0.45027932960893857,
+       "n": 895,
+       "nEff": 149,
+       "significant": false,
+       "thin": false
+      },
+      "id": "avwap",
+      "name": "Anchored VWAP",
+      "note": "anchored at the UTC day open",
+      "score": -1,
+      "source": "structure",
+      "state": "bear",
+      "unit": "pct",
+      "value": -0.669426476797097
+     },
+     {
+      "hit": {
+       "ci": [
+        0.34448752190366816,
+        0.5211151083070114
+       ],
+       "edge": -0.07019168837386919,
+       "expected": 0.5007865892237275,
+       "hitRate": 0.43059490084985835,
+       "n": 706,
+       "nEff": 117,
+       "significant": false,
+       "thin": false
+      },
+      "id": "structure",
+      "name": "Donchian 20 + swing structure",
+      "note": "higher highs, higher lows",
+      "score": 0.6,
+      "source": "structure",
+      "state": "bull",
+      "unit": "num",
+      "value": 0.6602734756398324
+     },
+     {
+      "hit": {
+       "ci": [
+        0.31638793812015154,
+        0.5596789538110045
+       ],
+       "edge": -0.06695115749441694,
+       "expected": 0.501017091560351,
+       "hitRate": 0.4340659340659341,
+       "n": 364,
+       "nEff": 60,
+       "significant": false,
+       "thin": false
+      },
+      "id": "oiQuadrant",
+      "name": "Open interest × price",
+      "note": "open interest flat",
+      "score": 0,
+      "source": "leverage",
+      "state": "neutral",
+      "unit": "pct",
+      "value": -0.20093955902347194
+     },
+     {
+      "hit": {
+       "ci": [
+        0.35181750266207684,
+        0.6445104911084809
+       ],
+       "edge": 0.006448328525369029,
+       "expected": 0.4915436393461169,
+       "hitRate": 0.4979919678714859,
+       "n": 249,
+       "nEff": 41,
+       "significant": false,
+       "thin": false
+      },
+      "id": "crowding",
+      "name": "Funding + basis crowding",
+      "note": "normal",
+      "score": 0,
+      "source": "leverage",
+      "state": "neutral",
+      "unit": "z",
+      "value": 0.21323812578466306
+     },
+     {
+      "hit": {
+       "ci": [
+        0.36316395730395484,
+        0.6436106437111875
+       ],
+       "edge": 0.007589655580542032,
+       "expected": 0.49608681500769325,
+       "hitRate": 0.5036764705882353,
+       "n": 272,
+       "nEff": 45,
+       "significant": false,
+       "thin": false
+      },
+      "id": "lsGap",
+      "name": "Top traders vs all accounts L/S",
+      "note": "top traders shorter than the crowd",
+      "score": 0,
+      "source": "positioning",
+      "state": "neutral",
+      "unit": "z",
+      "value": -0.5656258573732655
+     }
+    ],
+    "sources": [
+     {
+      "id": "trend",
+      "informational": false,
+      "name": "Trend",
+      "score": 0.6666666666666666,
+      "state": "bull",
+      "weight": 0.2
+     },
+     {
+      "id": "momentum",
+      "informational": false,
+      "name": "Momentum",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.12
+     },
+     {
+      "id": "meanrev",
+      "informational": false,
+      "name": "Mean reversion",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.1
+     },
+     {
+      "id": "flow",
+      "informational": false,
+      "name": "Flow",
+      "score": -0.5,
+      "state": "bear",
+      "weight": 0.18
+     },
+     {
+      "id": "structure",
+      "informational": false,
+      "name": "Structure",
+      "score": -0.2,
+      "state": "neutral",
+      "weight": 0.15
+     },
+     {
+      "id": "leverage",
+      "informational": false,
+      "name": "Leverage",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.18
+     },
+     {
+      "id": "positioning",
+      "informational": false,
+      "name": "Positioning",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.07
+     }
+    ],
+    "state": "neutral"
+   },
+   "1d": {
+    "bars": 1000,
+    "btc": null,
+    "calibration": {
+     "bars": 994,
+     "baseUp": 0.4859154929577465,
+     "composite": {
+      "ci": [
+       0.43147845506939114,
+       0.6217130134068047
+      ],
+      "edge": 0.0259511615145418,
+      "expected": 0.5016462410828608,
+      "hitRate": 0.5275974025974026,
+      "n": 616,
+      "nEff": 102,
+      "significant": false,
+      "thin": false
+     },
+     "horizon": 6
+    },
+    "counts": {
+     "bear": 0,
+     "bull": 2,
+     "na": 0,
+     "neutral": 2
+    },
+    "crowded": null,
+    "firstBarAt": 1701820800000,
+    "informational": [
+     "leverage",
+     "positioning"
+    ],
+    "lastClose": 100000,
+    "lastClosedAt": 1788220799999,
+    "live": null,
+    "regime": {
+     "adx": 36.63648725387336,
+     "bbwPctile": 0.7416666666666667,
+     "label": "trend",
+     "squeeze": false
+    },
+    "score": 0.38666666666666666,
+    "signals": [
+     {
+      "hit": {
+       "ci": [
+        0.40432830188217905,
+        0.5724482011836559
+       ],
+       "edge": -0.012038267339888331,
+       "expected": 0.5000885818052971,
+       "hitRate": 0.4880503144654088,
+       "n": 795,
+       "nEff": 132,
+       "significant": false,
+       "thin": false
+      },
+      "id": "emaStack",
+      "name": "EMA 20/50/200 stack",
+      "note": "mixed stack",
+      "score": 0.3333333333333333,
+      "source": "trend",
+      "state": "bull",
+      "unit": "pct",
+      "value": 0.6162026889137806
+     },
+     {
+      "hit": {
+       "ci": [
+        0.43458188808507486,
+        0.5862893895521308
+       ],
+       "edge": 0.009549668304844383,
+       "expected": 0.5011319186737925,
+       "hitRate": 0.5106815869786369,
+       "n": 983,
+       "nEff": 163,
+       "significant": false,
+       "thin": false
+      },
+      "id": "supertrend",
+      "name": "Supertrend 10 × 3",
+      "note": "up",
+      "score": 1,
+      "source": "trend",
+      "state": "bull",
+      "unit": "pct",
+      "value": 2.5790864365741184
+     },
+     {
+      "hit": {
+       "ci": [
+        0.37644167189983707,
+        0.599969008206753
+       ],
+       "edge": -0.01301942580993859,
+       "expected": 0.5006040759228054,
+       "hitRate": 0.48758465011286684,
+       "n": 443,
+       "nEff": 73,
+       "significant": false,
+       "thin": false
+      },
+      "id": "rsi",
+      "name": "RSI 14",
+      "note": "trend: 55/45",
+      "score": 1,
+      "source": "momentum",
+      "state": "bull",
+      "unit": "num",
+      "value": 64.0990231582438
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3905195465887582,
+        0.5950174879708264
+       ],
+       "edge": -0.0073877225617858255,
+       "expected": 0.4998405527504651,
+       "hitRate": 0.49245283018867925,
+       "n": 530,
+       "nEff": 88,
+       "significant": false,
+       "thin": false
+      },
+      "id": "macd",
+      "name": "MACD 12/26/9",
+      "note": "histogram rising above zero",
+      "score": 1,
+      "source": "momentum",
+      "state": "bull",
+      "unit": "pct",
+      "value": 0.04890541650295484
+     },
+     {
+      "hit": {
+       "ci": [
+        0.2702988579463124,
+        0.6545828649118608
+       ],
+       "edge": -0.04349627174813592,
+       "expected": 0.4993786246893124,
+       "hitRate": 0.45588235294117646,
+       "n": 136,
+       "nEff": 22,
+       "significant": false,
+       "thin": true
+      },
+      "id": "bbPctB",
+      "name": "Bollinger %B 20 × 2σ",
+      "note": "inside bands",
+      "raw": 0,
+      "reason": "off in a trend",
+      "score": null,
+      "source": "meanrev",
+      "state": "gated",
+      "unit": "num",
+      "value": 0.803731943136818
+     },
+     {
+      "hit": {
+       "ci": [
+        0.45253322937446633,
+        0.6756394858455053
+       ],
+       "edge": 0.06650659103361589,
+       "expected": 0.5009991297901827,
+       "hitRate": 0.5675057208237986,
+       "n": 437,
+       "nEff": 72,
+       "significant": false,
+       "thin": false
+      },
+      "id": "cvd",
+      "name": "CVD 20-bar imbalance (z)",
+      "note": "confirms price",
+      "score": 0,
+      "source": "flow",
+      "state": "neutral",
+      "unit": "pct",
+      "value": -0.02013961977770007
+     },
+     {
+      "hit": {
+       "ci": [
+        0.4090222298578806,
+        0.6432137041131359
+       ],
+       "edge": 0.02770896737207157,
+       "expected": 0.49992922358270225,
+       "hitRate": 0.5276381909547738,
+       "n": 398,
+       "nEff": 66,
+       "significant": false,
+       "thin": false
+      },
+      "id": "taker",
+      "name": "Taker buy/sell, 3 bars (z)",
+      "note": "buy ÷ sell volume, usual",
+      "score": 0,
+      "source": "flow",
+      "state": "neutral",
+      "unit": "ratio",
+      "value": 0.9791877666005149
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3823914656748889,
+        0.54044526877653
+       ],
+       "edge": -0.04222996843939891,
+       "expected": 0.5026536027760767,
+       "hitRate": 0.4604236343366778,
+       "n": 897,
+       "nEff": 149,
+       "significant": false,
+       "thin": false
+      },
+      "id": "avwap",
+      "name": "Anchored VWAP",
+      "note": "anchored at the UTC year open",
+      "score": -1,
+      "source": "structure",
+      "state": "bear",
+      "unit": "pct",
+      "value": -1.9044771290489648
+     },
+     {
+      "hit": {
+       "ci": [
+        0.46816755631598,
+        0.64746921505707
+       ],
+       "edge": 0.0578368168192831,
+       "expected": 0.5019299470291134,
+       "hitRate": 0.5597667638483965,
+       "n": 686,
+       "nEff": 114,
+       "significant": false,
+       "thin": false
+      },
+      "id": "structure",
+      "name": "Donchian 20 + swing structure",
+      "note": "higher highs, higher lows",
+      "score": 0.6,
+      "source": "structure",
+      "state": "bull",
+      "unit": "num",
+      "value": 0.932602770809578
+     },
+     {
+      "hit": {
+       "ci": [
+        0.35446260607370667,
+        0.5938583782534969
+       ],
+       "edge": -0.0272312727540176,
+       "expected": 0.4998161291508844,
+       "hitRate": 0.4725848563968668,
+       "n": 383,
+       "nEff": 63,
+       "significant": false,
+       "thin": false
+      },
+      "id": "oiQuadrant",
+      "name": "Open interest × price",
+      "note": "open interest flat",
+      "score": 0,
+      "source": "leverage",
+      "state": "neutral",
+      "unit": "pct",
+      "value": -0.5534900520937747
+     },
+     {
+      "hit": {
+       "ci": [
+        0.4381783428246965,
+        0.7235037255560396
+       ],
+       "edge": 0.09049986191659759,
+       "expected": 0.4977354322010495,
+       "hitRate": 0.5882352941176471,
+       "n": 255,
+       "nEff": 42,
+       "significant": false,
+       "thin": false
+      },
+      "id": "crowding",
+      "name": "Funding + basis crowding",
+      "note": "normal",
+      "score": 0,
+      "source": "leverage",
+      "state": "neutral",
+      "unit": "z",
+      "value": 0.1866319359759392
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3115680674539111,
+        0.5905600409573659
+       ],
+       "edge": -0.055435175153485006,
+       "expected": 0.5023216220399319,
+       "hitRate": 0.4468864468864469,
+       "n": 273,
+       "nEff": 45,
+       "significant": false,
+       "thin": false
+      },
+      "id": "lsGap",
+      "name": "Top traders vs all accounts L/S",
+      "note": "top traders shorter than the crowd",
+      "score": 0,
+      "source": "positioning",
+      "state": "neutral",
+      "unit": "z",
+      "value": -0.5672879082432772
+     }
+    ],
+    "sources": [
+     {
+      "id": "trend",
+      "informational": false,
+      "name": "Trend",
+      "score": 0.6666666666666666,
+      "state": "bull",
+      "weight": 0.30000000000000004
+     },
+     {
+      "id": "momentum",
+      "informational": false,
+      "name": "Momentum",
+      "score": 1,
+      "state": "bull",
+      "weight": 0.12
+     },
+     {
+      "id": "meanrev",
+      "informational": false,
+      "name": "Mean reversion",
+      "score": null,
+      "state": "n/a",
+      "weight": 0
+     },
+     {
+      "id": "flow",
+      "informational": false,
+      "name": "Flow",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.18
+     },
+     {
+      "id": "structure",
+      "informational": false,
+      "name": "Structure",
+      "score": -0.2,
+      "state": "neutral",
+      "weight": 0.15
+     },
+     {
+      "id": "leverage",
+      "informational": true,
+      "name": "Leverage",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0
+     },
+     {
+      "id": "positioning",
+      "informational": true,
+      "name": "Positioning",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0
+     }
+    ],
+    "state": "bull"
+   },
+   "1h": {
+    "bars": 1000,
+    "btc": null,
+    "calibration": {
+     "bars": 994,
+     "baseUp": 0.4909456740442656,
+     "composite": {
+      "ci": [
+       0.37661239866709617,
+       0.5931636939473052
+      ],
+      "edge": -0.014726838834274114,
+      "expected": 0.49887060204780476,
+      "hitRate": 0.48414376321353064,
+      "n": 473,
+      "nEff": 78,
+      "significant": false,
+      "thin": false
+     },
+     "horizon": 6
+    },
+    "counts": {
+     "bear": 1,
+     "bull": 1,
+     "na": 0,
+     "neutral": 4
+    },
+    "crowded": null,
+    "firstBarAt": 1784620800000,
+    "informational": [],
+    "lastClose": 100000,
+    "lastClosedAt": 1788220799999,
+    "live": null,
+    "regime": {
+     "adx": 15.692449372617109,
+     "bbwPctile": 0.05,
+     "label": "range",
+     "squeeze": true
+    },
+    "score": 0,
+    "signals": [
+     {
+      "hit": {
+       "ci": [
+        0.4092019431843962,
+        0.5773528743800346
+       ],
+       "edge": -0.007521860724092999,
+       "expected": 0.5006036217303823,
+       "hitRate": 0.4930817610062893,
+       "n": 795,
+       "nEff": 132,
+       "significant": false,
+       "thin": false
+      },
+      "id": "emaStack",
+      "name": "EMA 20/50/200 stack",
+      "note": "bear stack",
+      "score": -1,
+      "source": "trend",
+      "state": "bear",
+      "unit": "pct",
+      "value": -2.2373688785325307
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3802065210879557,
+        0.5313390165448395
+       ],
+       "edge": -0.04421032809266584,
+       "expected": 0.498940745183205,
+       "hitRate": 0.4547304170905392,
+       "n": 983,
+       "nEff": 163,
+       "significant": false,
+       "thin": false
+      },
+      "id": "supertrend",
+      "name": "Supertrend 10 × 3",
+      "note": "up",
+      "score": 1,
+      "source": "trend",
+      "state": "bull",
+      "unit": "pct",
+      "value": 0.6370716708518742
+     },
+     {
+      "hit": {
+       "ci": [
+        0.33545344703314917,
+        0.5638714808468901
+       ],
+       "edge": -0.052702689567355854,
+       "expected": 0.49956259294899835,
+       "hitRate": 0.4468599033816425,
+       "n": 414,
+       "nEff": 69,
+       "significant": false,
+       "thin": false
+      },
+      "id": "rsi",
+      "name": "RSI 14",
+      "note": "range: fade 30/70",
+      "score": 0,
+      "source": "momentum",
+      "state": "neutral",
+      "unit": "num",
+      "value": 42.86641894943686
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3597400246603497,
+        0.5592615763355724
+       ],
+       "edge": -0.042336604907722786,
+       "expected": 0.5001462997012596,
+       "hitRate": 0.4578096947935368,
+       "n": 557,
+       "nEff": 92,
+       "significant": false,
+       "thin": false
+      },
+      "id": "macd",
+      "name": "MACD 12/26/9",
+      "note": "histogram falling below zero",
+      "score": -1,
+      "source": "momentum",
+      "state": "bear",
+      "unit": "pct",
+      "value": -0.05903157307744473
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3899022239862078,
+        0.7566997189000209
+       ],
+       "edge": 0.08447966711835642,
+       "expected": 0.5005543464870857,
+       "hitRate": 0.5850340136054422,
+       "n": 147,
+       "nEff": 24,
+       "significant": false,
+       "thin": true
+      },
+      "id": "bbPctB",
+      "name": "Bollinger %B 20 × 2σ",
+      "note": "inside bands",
+      "raw": 0,
+      "reason": "off in a squeeze",
+      "score": null,
+      "source": "meanrev",
+      "state": "gated",
+      "unit": "num",
+      "value": 0.11005424071601316
+     },
+     {
+      "hit": {
+       "ci": [
+        0.4332150720034157,
+        0.6665080746685249
+       ],
+       "edge": 0.05285481734628872,
+       "expected": 0.4999090017491886,
+       "hitRate": 0.5527638190954773,
+       "n": 398,
+       "nEff": 66,
+       "significant": false,
+       "thin": false
+      },
+      "id": "cvd",
+      "name": "CVD 20-bar imbalance (z)",
+      "note": "confirms price",
+      "score": 0,
+      "source": "flow",
+      "state": "neutral",
+      "unit": "pct",
+      "value": 0.1455876942108791
+     },
+     {
+      "hit": {
+       "ci": [
+        0.38188621199166595,
+        0.618113788008334
+       ],
+       "edge": 0.0003695643247238478,
+       "expected": 0.49963043567527615,
+       "hitRate": 0.5,
+       "n": 392,
+       "nEff": 65,
+       "significant": false,
+       "thin": false
+      },
+      "id": "taker",
+      "name": "Taker buy/sell, 3 bars (z)",
+      "note": "buy ÷ sell volume, unusually buy-heavy",
+      "score": 1,
+      "source": "flow",
+      "state": "bull",
+      "unit": "ratio",
+      "value": 1.3802569056442886
+     },
+     {
+      "hit": {
+       "ci": [
+        0.4307640513224513,
+        0.5872420403938261
+       ],
+       "edge": 0.009573182853909568,
+       "expected": 0.4996559159517365,
+       "hitRate": 0.509229098805646,
+       "n": 921,
+       "nEff": 153,
+       "significant": false,
+       "thin": false
+      },
+      "id": "avwap",
+      "name": "Anchored VWAP",
+      "note": "anchored at the UTC week open",
+      "score": -1,
+      "source": "structure",
+      "state": "bear",
+      "unit": "pct",
+      "value": -0.629756734905107
+     },
+     {
+      "hit": {
+       "ci": [
+        0.4069160760671324,
+        0.5930839239328676
+       ],
+       "edge": -0.0005923390812162532,
+       "expected": 0.5005923390812163,
+       "hitRate": 0.5,
+       "n": 642,
+       "nEff": 107,
+       "significant": false,
+       "thin": false
+      },
+      "id": "structure",
+      "name": "Donchian 20 + swing structure",
+      "note": "higher highs, higher lows",
+      "score": 0.6,
+      "source": "structure",
+      "state": "bull",
+      "unit": "num",
+      "value": 0.26799220343775804
+     },
+     {
+      "hit": {
+       "ci": [
+        0.42928607319054757,
+        0.6644128193306796
+       ],
+       "edge": 0.049364891639915864,
+       "expected": 0.5002534289707712,
+       "hitRate": 0.549618320610687,
+       "n": 393,
+       "nEff": 65,
+       "significant": false,
+       "thin": false
+      },
+      "id": "oiQuadrant",
+      "name": "Open interest × price",
+      "note": "open interest flat",
+      "score": 0,
+      "source": "leverage",
+      "state": "neutral",
+      "unit": "pct",
+      "value": -1.1696743682023003
+     },
+     {
+      "hit": {
+       "ci": [
+        0.2791143190549046,
+        0.5993549402966608
+       ],
+       "edge": -0.06269779480905535,
+       "expected": 0.49485859882915584,
+       "hitRate": 0.4321608040201005,
+       "n": 199,
+       "nEff": 33,
+       "significant": false,
+       "thin": false
+      },
+      "id": "crowding",
+      "name": "Funding + basis crowding",
+      "note": "normal",
+      "score": 0,
+      "source": "leverage",
+      "state": "neutral",
+      "unit": "z",
+      "value": 0.21203866212568612
+     },
+     {
+      "hit": {
+       "ci": [
+        0.33942647491960154,
+        0.6196248256110938
+       ],
+       "edge": -0.02383188016990828,
+       "expected": 0.5016096579476861,
+       "hitRate": 0.4777777777777778,
+       "n": 270,
+       "nEff": 45,
+       "significant": false,
+       "thin": false
+      },
+      "id": "lsGap",
+      "name": "Top traders vs all accounts L/S",
+      "note": "top traders shorter than the crowd",
+      "score": 0,
+      "source": "positioning",
+      "state": "neutral",
+      "unit": "z",
+      "value": -0.5663834268637625
+     }
+    ],
+    "sources": [
+     {
+      "id": "trend",
+      "informational": false,
+      "name": "Trend",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.1
+     },
+     {
+      "id": "momentum",
+      "informational": false,
+      "name": "Momentum",
+      "score": -0.5,
+      "state": "bear",
+      "weight": 0.12
+     },
+     {
+      "id": "meanrev",
+      "informational": false,
+      "name": "Mean reversion",
+      "score": null,
+      "state": "n/a",
+      "weight": 0
+     },
+     {
+      "id": "flow",
+      "informational": false,
+      "name": "Flow",
+      "score": 0.5,
+      "state": "bull",
+      "weight": 0.18
+     },
+     {
+      "id": "structure",
+      "informational": false,
+      "name": "Structure",
+      "score": -0.2,
+      "state": "neutral",
+      "weight": 0.15
+     },
+     {
+      "id": "leverage",
+      "informational": false,
+      "name": "Leverage",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.18
+     },
+     {
+      "id": "positioning",
+      "informational": false,
+      "name": "Positioning",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.07
+     }
+    ],
+    "state": "neutral"
+   },
+   "4h": {
+    "bars": 1000,
+    "btc": null,
+    "calibration": {
+     "bars": 994,
+     "baseUp": 0.49899396378269617,
+     "composite": {
+      "ci": [
+       0.39458130328628627,
+       0.6073710900181676
+      ],
+      "edge": 0.0010780428995239566,
+      "expected": 0.49994445198800164,
+      "hitRate": 0.5010224948875256,
+      "n": 489,
+      "nEff": 81,
+      "significant": false,
+      "thin": false
+     },
+     "horizon": 6
+    },
+    "counts": {
+     "bear": 4,
+     "bull": 1,
+     "na": 0,
+     "neutral": 2
+    },
+    "crowded": null,
+    "firstBarAt": 1773820800000,
+    "informational": [],
+    "lastClose": 100000,
+    "lastClosedAt": 1788220799999,
+    "live": null,
+    "regime": {
+     "adx": 19.923785908062946,
+     "bbwPctile": 0.10833333333333334,
+     "label": "range",
+     "squeeze": false
+    },
+    "score": -0.2710183028295762,
+    "signals": [
+     {
+      "hit": {
+       "ci": [
+        0.4092019431843962,
+        0.5773528743800346
+       ],
+       "edge": -0.00674993356364606,
+       "expected": 0.49983169456993537,
+       "hitRate": 0.4930817610062893,
+       "n": 795,
+       "nEff": 132,
+       "significant": false,
+       "thin": false
+      },
+      "id": "emaStack",
+      "name": "EMA 20/50/200 stack",
+      "note": "bear stack",
+      "score": -1,
+      "source": "trend",
+      "state": "bear",
+      "unit": "pct",
+      "value": -6.020142141423202
+     },
+     {
+      "hit": {
+       "ci": [
+        0.4305959725060381,
+        0.582324342221756
+       ],
+       "edge": 0.006633903113492767,
+       "expected": 0.49997850787328246,
+       "hitRate": 0.5066124109867752,
+       "n": 983,
+       "nEff": 163,
+       "significant": false,
+       "thin": false
+      },
+      "id": "supertrend",
+      "name": "Supertrend 10 × 3",
+      "note": "down",
+      "score": -1,
+      "source": "trend",
+      "state": "bear",
+      "unit": "pct",
+      "value": -2.722698784542865
+     },
+     {
+      "hit": {
+       "ci": [
+        0.40166467195870337,
+        0.6296363934937919
+       ],
+       "edge": 0.016537906685395343,
+       "expected": 0.4999715272768688,
+       "hitRate": 0.5165094339622641,
+       "n": 424,
+       "nEff": 70,
+       "significant": false,
+       "thin": false
+      },
+      "id": "rsi",
+      "name": "RSI 14",
+      "note": "range: fade 30/70",
+      "score": 0,
+      "source": "momentum",
+      "state": "neutral",
+      "unit": "num",
+      "value": 38.767145990455255
+     },
+     {
+      "hit": {
+       "ci": [
+        0.4076480579870475,
+        0.612126587537723
+       ],
+       "edge": 0.01027176190350354,
+       "expected": 0.500047187439836,
+       "hitRate": 0.5103189493433395,
+       "n": 533,
+       "nEff": 88,
+       "significant": false,
+       "thin": false
+      },
+      "id": "macd",
+      "name": "MACD 12/26/9",
+      "note": "histogram falling below zero",
+      "score": -1,
+      "source": "momentum",
+      "state": "bear",
+      "unit": "pct",
+      "value": -0.002166249528838307
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3129126919104471,
+        0.7141476266219743
+       ],
+       "edge": 0.016161485039267842,
+       "expected": 0.49996754721879666,
+       "hitRate": 0.5161290322580645,
+       "n": 124,
+       "nEff": 20,
+       "significant": false,
+       "thin": true
+      },
+      "id": "bbPctB",
+      "name": "Bollinger %B 20 × 2σ",
+      "note": "at lower band",
+      "score": 0.5,
+      "source": "meanrev",
+      "state": "bull",
+      "unit": "num",
+      "value": 0.011582628354597497
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3732120497625041,
+        0.6076971313940942
+       ],
+       "edge": -0.010014633254069927,
+       "expected": 0.4999136231530598,
+       "hitRate": 0.4898989898989899,
+       "n": 396,
+       "nEff": 66,
+       "significant": false,
+       "thin": false
+      },
+      "id": "cvd",
+      "name": "CVD 20-bar imbalance (z)",
+      "note": "confirms price",
+      "score": 0,
+      "source": "flow",
+      "state": "neutral",
+      "unit": "pct",
+      "value": 0.7793507273129898
+     },
+     {
+      "hit": {
+       "ci": [
+        0.37447716025825095,
+        0.6178744325563988
+       ],
+       "edge": -0.003996881015087883,
+       "expected": 0.49993184036468136,
+       "hitRate": 0.4959349593495935,
+       "n": 369,
+       "nEff": 61,
+       "significant": false,
+       "thin": false
+      },
+      "id": "taker",
+      "name": "Taker buy/sell, 3 bars (z)",
+      "note": "buy ÷ sell volume, unusually sell-heavy",
+      "score": -0.5496376409788603,
+      "source": "flow",
+      "state": "bear",
+      "unit": "ratio",
+      "value": 0.8626675361747439
+     },
+     {
+      "hit": {
+       "ci": [
+        0.4019302692131185,
+        0.5593204541067128
+       ],
+       "edge": -0.01982313305883876,
+       "expected": 0.4999555833899646,
+       "hitRate": 0.48013245033112584,
+       "n": 906,
+       "nEff": 151,
+       "significant": false,
+       "thin": false
+      },
+      "id": "avwap",
+      "name": "Anchored VWAP",
+      "note": "anchored at the UTC month open",
+      "score": -1,
+      "source": "structure",
+      "state": "bear",
+      "unit": "pct",
+      "value": -7.350727039248683
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3741721355745554,
+        0.5590777661791887
+       ],
+       "edge": -0.03453903142356446,
+       "expected": 0.4999768194419976,
+       "hitRate": 0.46543778801843316,
+       "n": 651,
+       "nEff": 108,
+       "significant": false,
+       "thin": false
+      },
+      "id": "structure",
+      "name": "Donchian 20 + swing structure",
+      "note": "closed below the 20-bar low",
+      "score": -1,
+      "source": "structure",
+      "state": "bear",
+      "unit": "num",
+      "value": -0.07346353279001386
+     },
+     {
+      "hit": {
+       "ci": [
+        0.3678341455452507,
+        0.6074923777623025
+       ],
+       "edge": -0.01308900523560208,
+       "expected": 0.5,
+       "hitRate": 0.4869109947643979,
+       "n": 382,
+       "nEff": 63,
+       "significant": false,
+       "thin": false
+      },
+      "id": "oiQuadrant",
+      "name": "Open interest × price",
+      "note": "long flush",
+      "score": 0.3,
+      "source": "leverage",
+      "state": "bull",
+      "unit": "pct",
+      "value": -2.075640132163603
+     },
+     {
+      "hit": {
+       "ci": [
+        0.37447164474417705,
+        0.6964769944609231
+       ],
+       "edge": 0.03981313624320176,
+       "expected": 0.4997908241528379,
+       "hitRate": 0.5396039603960396,
+       "n": 202,
+       "nEff": 33,
+       "significant": false,
+       "thin": false
+      },
+      "id": "crowding",
+      "name": "Funding + basis crowding",
+      "note": "normal",
+      "score": 0,
+      "source": "leverage",
+      "state": "neutral",
+      "unit": "z",
+      "value": 0.34696922858369394
+     },
+     {
+      "hit": {
+       "ci": [
+        0.43954098342975134,
+        0.7162748399185227
+       ],
+       "edge": 0.08438868505148533,
+       "expected": 0.5001701384779265,
+       "hitRate": 0.5845588235294118,
+       "n": 272,
+       "nEff": 45,
+       "significant": false,
+       "thin": false
+      },
+      "id": "lsGap",
+      "name": "Top traders vs all accounts L/S",
+      "note": "top traders shorter than the crowd",
+      "score": 0,
+      "source": "positioning",
+      "state": "neutral",
+      "unit": "z",
+      "value": -0.5697788111065096
+     }
+    ],
+    "sources": [
+     {
+      "id": "trend",
+      "informational": false,
+      "name": "Trend",
+      "score": -1,
+      "state": "bear",
+      "weight": 0.1
+     },
+     {
+      "id": "momentum",
+      "informational": false,
+      "name": "Momentum",
+      "score": -0.5,
+      "state": "bear",
+      "weight": 0.12
+     },
+     {
+      "id": "meanrev",
+      "informational": false,
+      "name": "Mean reversion",
+      "score": 0.5,
+      "state": "bull",
+      "weight": 0.15000000000000002
+     },
+     {
+      "id": "flow",
+      "informational": false,
+      "name": "Flow",
+      "score": -0.2748188204894301,
+      "state": "bear",
+      "weight": 0.18
+     },
+     {
+      "id": "structure",
+      "informational": false,
+      "name": "Structure",
+      "score": -1,
+      "state": "bear",
+      "weight": 0.15
+     },
+     {
+      "id": "leverage",
+      "informational": false,
+      "name": "Leverage",
+      "score": 0.15,
+      "state": "neutral",
+      "weight": 0.18
+     },
+     {
+      "id": "positioning",
+      "informational": false,
+      "name": "Positioning",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.07
+     }
+    ],
+    "state": "bear"
+   }
+  }
+ }
+}

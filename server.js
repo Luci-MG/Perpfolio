@@ -1485,7 +1485,7 @@ app.get('/api/riskbook', async (req, res) => {
 // means an overlapping refetch is harmless and the cursors are an optimisation rather than
 // a correctness requirement.
 
-const DATA_DIR    = path.join(__dirname, 'data');
+const DATA_DIR    = process.env.DASHBOARD_DATA_DIR || path.join(__dirname, 'data');
 const INCOME_FILE = path.join(DATA_DIR, 'income.ndjson');
 const META_FILE   = path.join(DATA_DIR, 'meta.json');
 const INCOME_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
@@ -2028,38 +2028,48 @@ app.get('/risk-engine.js', (req, res) => {
 });
 
 
-// A stream that stays open but stops delivering is the failure the reconcile loop covers
-// for correctness; this restores the low-latency path too.
-setInterval(() => {
-  if (!BINANCE_API_KEY || !lastWsMessage) return;
-  const quiet = Date.now() - lastWsMessage;
-  if (quiet > 20 * 60 * 1000) {
-    console.warn(`[bnWS] no messages for ${Math.round(quiet / 60000)}m — reconnecting`);
-    lastWsMessage = Date.now();
-    try { bnWs?.terminate(); } catch (_) {}
-  }
-}, 5 * 60 * 1000);
+export { app, reconcileOrders };
 
-// Warm the slow, long-lived caches at boot: exchangeInfo is a large payload and the funding
-// table is a second round-trip, and paying for both on a user's first panel open cost 13s.
-(async () => {
-  try {
-    const [, , brackets] = await Promise.all([
-      refreshSymbolFilters(), refreshFundingMeta(), getBinanceLeverageBrackets()
-    ]);
-    console.log(`[cache] ${Object.keys(symbolFilters).length} symbol filters, `
-      + `${Object.keys(fundingMeta).length} funding intervals, `
-      + `${Object.keys(brackets || {}).length} margin bracket tables`);
-  } catch (err) {
-    console.warn('[cache] warm-up failed, will load on demand:', err.message);
-  }
-})();
+// Timers, the websocket and the listener start only when this file is run, so the route
+// tests can import the app against a fake exchange without opening real connections.
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
-// Start Binance User Data Stream only when credentials are present
-if (BINANCE_API_KEY) {
-  startBinanceUserDataStream();
-} else {
-  console.warn('[bnWS] No BINANCE_API_KEY — skipping User Data Stream');
+function startServices() {
+  // A stream that stays open but stops delivering is the failure the reconcile loop covers
+  // for correctness; this restores the low-latency path too.
+  setInterval(() => {
+    if (!BINANCE_API_KEY || !lastWsMessage) return;
+    const quiet = Date.now() - lastWsMessage;
+    if (quiet > 20 * 60 * 1000) {
+      console.warn(`[bnWS] no messages for ${Math.round(quiet / 60000)}m — reconnecting`);
+      lastWsMessage = Date.now();
+      try { bnWs?.terminate(); } catch (_) {}
+    }
+  }, 5 * 60 * 1000);
+
+  // Warm the slow, long-lived caches at boot: exchangeInfo is a large payload and the funding
+  // table is a second round-trip, and paying for both on a user's first panel open cost 13s.
+  (async () => {
+    try {
+      const [, , brackets] = await Promise.all([
+        refreshSymbolFilters(), refreshFundingMeta(), getBinanceLeverageBrackets()
+      ]);
+      console.log(`[cache] ${Object.keys(symbolFilters).length} symbol filters, `
+        + `${Object.keys(fundingMeta).length} funding intervals, `
+        + `${Object.keys(brackets || {}).length} margin bracket tables`);
+    } catch (err) {
+      console.warn('[cache] warm-up failed, will load on demand:', err.message);
+    }
+  })();
+
+  // Start Binance User Data Stream only when credentials are present
+  if (BINANCE_API_KEY) {
+    startBinanceUserDataStream();
+  } else {
+    console.warn('[bnWS] No BINANCE_API_KEY — skipping User Data Stream');
+  }
+
+  app.listen(PORT, () => console.log(`Dashboard running → http://localhost:${PORT}`));
 }
 
-app.listen(PORT, () => console.log(`Dashboard running → http://localhost:${PORT}`));
+if (isMain) startServices();

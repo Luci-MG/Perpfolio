@@ -2594,7 +2594,7 @@ function renderStress() {
     return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Resolving the cross pool…</p>`;
   }
   if (!riskBook) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No pool data yet.</p>`;
-  if (riskBook.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${riskBook.error}</p>`;
+  if (riskBook.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(riskBook.error)}</p>`;
   if (!riskBook.pools?.length) {
     return `${renderStressBanner()}<p style="font-size:12px;color:var(--text3);padding:14px 0">No open Binance cross positions.</p>`;
   }
@@ -2720,7 +2720,7 @@ function renderMarginInflation(inf) {
 function renderHlBody() {
   const body = document.getElementById('hlDrawerBody');
   if (!body) return;
-  if (hlData?.error) { body.innerHTML = `<p style="font-size:12px;color:var(--danger)">Error: ${hlData.error}</p>`; return; }
+  if (hlData?.error) { body.innerHTML = `<p style="font-size:12px;color:var(--danger)">Error: ${esc(hlData.error)}</p>`; return; }
   const pool = hlData?.pools?.[0];
   if (!pool) { body.innerHTML = `<p style="font-size:12px;color:var(--text3)">No Binance cross positions.</p>`; return; }
 
@@ -3246,7 +3246,7 @@ function jrLockedFromPositions(positions) {
 function renderJournal() {
   if (perfLoading && !perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Loading history…</p>`;
   if (!perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No history loaded.</p>`;
-  if (perfData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${perfData.error}</p>`;
+  if (perfData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(perfData.error)}</p>`;
 
   const syncBar = `<div class="jr-sync">
     <span id="jr-sync-state">${perfData.empty ? 'no cached history' : `${perfData.overall.trips} round trips · ${perfData.equity.days} days`}</span>
@@ -4071,7 +4071,7 @@ function renderUnwind() {
     return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Planning…</p>`;
   }
   if (!unwindData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No plan yet.</p>`;
-  if (unwindData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${unwindData.error}</p>`;
+  if (unwindData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(unwindData.error)}</p>`;
   if (!unwindData.plans?.length) {
     return `${renderUnwindControls()}<p style="font-size:12px;color:var(--text3);padding:14px 0">No open Binance cross positions.</p>`;
   }
