@@ -1,0 +1,160 @@
+public/js/journal-symbols.js
+  s_ce0783ce808ef4::t_b7b23b920c0e18 1-68
+lib/binance-meta.js
+  s_ce0783ce808ef4::t_4b8d5fc5c0530f 83-97
+lib/analytics.js
+  s_ce0783ce808ef4::t_9c4ee2ec139e69 16,28,30
+public/js/journal-performance.js
+  s_ce0783ce808ef4::t_704fb8f635ddba 67-68,73
+local-time.test.js
+  s_ce0783ce808ef4::t_be78a7c8aa408e 1-37
+trade-analytics.js
+  s_ce0783ce808ef4::t_9c4ee2ec139e69 87-88
+  s_ce0783ce808ef4::t_47ad66381433a0 269,272,279,283,321-325,333-336,338-340
+  s_ce0783ce808ef4::t_8825b834d2188d 41-42,78-80,116,149,165,167,186
+  s_ce0783ce808ef4::t_d37970454b249b 14
+goals.js
+  s_ce0783ce808ef4::t_d88adcaf24ae92 7,148,195,197,199,223,228,245-246,261,295
+goals.test.js
+  s_ce0783ce808ef4::t_be78a7c8aa408e 9,56
+public/css/app.css
+  s_ce0783ce808ef4::t_5c05adf1fda425 22-24,37-39,390-398,405,420-422
+  s_bc801fe6b1f892::t_458c03e7268919 399-404,406-413,415-419
+  s_bc801fe6b1f892::t_60c42b72d4710e 414
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_10ce1232fd4c90 786
+  s_ce0783ce808ef4::t_b0036b4eddb1d0 350-354,368-381,383-390,393-403
+  s_ce0783ce808ef4::t_f4317f83c2ba95 391
+  s_bc801fe6b1f892::t_1f5611e656924a 392
+  s_bc801fe6b1f892::t_57bc0389075853 382
+  s_bc801fe6b1f892::t_49e8be845fe96a 404-405
+docs/journal.md
+  s_bc801fe6b1f892::t_2d87c927dc5619 19-22,117,134-136,213-258
+  s_bc801fe6b1f892::t_c58b454ef1e3c0 259
+docs/roadmap.md
+  s_bc801fe6b1f892::t_08f36ff6172a0f 31,337-346,367-368
+public/index.html
+  s_ce0783ce808ef4::t_704fb8f635ddba 437-439
+local-time.js
+  s_ce0783ce808ef4::t_0ace5d2eeca614 74-79
+  s_ce0783ce808ef4::t_f8a5a26bb486cb 1-73
+test/fake-exchange.js
+  s_ce0783ce808ef4::t_fd52967cecd06b 29-30,70,189,209,211-212,240,263
+docs/api.md
+  s_bc801fe6b1f892::t_2d87c927dc5619 30
+milestones.js
+  s_ce0783ce808ef4::t_d88adcaf24ae92 80,114,147,176,190
+  s_ce0783ce808ef4::t_b0f8349eb31427 6,19,22
+stats.js
+  s_ce0783ce808ef4::t_3eeb2112df6042 118-141,143-149
+  s_ce0783ce808ef4::t_9626ae556a5f52 142
+habits.js
+  s_ce0783ce808ef4::t_d88adcaf24ae92 7,138,142,212-213
+routes/performance.js
+  s_ce0783ce808ef4::t_9ab1edd5942668 7,17
+  s_ce0783ce808ef4::t_cd8d100087b626 78-79,82,108,146
+  s_ce0783ce808ef4::t_b3724148b9bce3 4-6,8,12,16,32-50,52-74,102-103,151-156
+routes/goals.js
+  s_ce0783ce808ef4::t_cd8d100087b626 21,28,63,75
+  s_ce0783ce808ef4::t_9ab1edd5942668 9
+docs/research/timing-symbols-costs.md
+  s_ce0783ce808ef4::t_a906cdcf72e364 56,58,344
+  s_ce0783ce808ef4::t_6188c6944838c8 1-55,57,59-343,345-361
+public/js/journal-timing.js
+  s_ce0783ce808ef4::t_e4b5163efac94c 1-30,39,45,51-53,58-61,66-71,73-74,77-91
+  s_ce0783ce808ef4::t_06b663acc5228a 62
+  s_bc801fe6b1f892::t_458c03e7268919 31-38,40-44,46-50,54-57,63-65,72,75-76
+docs/frontend.md
+  s_bc801fe6b1f892::t_2d87c927dc5619 6,24,27-29
+lib/util.js
+  s_ce0783ce808ef4::t_cd8d100087b626 1-4,42-45
+  s_ce0783ce808ef4::t_7083db999e7657 46
+test/golden/routes.json
+  s_bc801fe6b1f892::t_f3d3211e123811 1887-1892,1894-1910,1912-1923,1925-1937,1939-1942,1944-1945,1948,1950,1953,1955,1958-1961,1964-1967,1969-1970,1973-1977,1979-2036,2115-2116,2119,2152-2155,2157,2159-2181,2188,2204,2215,2217-2218,2220-2223,2226-2227,2231-2244,2252,2268,2298-2300,2305,2313,2321-2323,2327,2451-2453,2458,2518-3309,3313-3314,3316-3317,3323,3344,3348,3352,3356,3360,3364,3368,3372,3376,3380,3384,3388,3392,3396,3400,3404,3408,3412,3416,3420,3424,3491,3507,3526,3535,3551,3570,3579,3595,3614,3623,3639,3658,3667,3683,3702,3711,3727,3746,3755,3771,3790,3799,3815,3834,3843,3859,3878,3887,3903,3922,3931,3947,3966,3975,3991,4010,4019,4035,4054,4063,4079,4098,4107,4123,4142,4151,4167,4186,4195,4211,4230,4239,4255,4274,4283,4286,4299,4302-4303,4318,4327,4343,4362,4371,4387,4406,4415,4431,4450,4459,4475,4494,4503,4519,4538,4547,4563,4582,4591,4607,4626,8118,8120
+  s_bc801fe6b1f892::t_6c434659914672 1949,1954
+public/js/goals-view.js
+  s_ce0783ce808ef4::t_1945d2fbfef05a 20,343
+public/js/journal-costs.js
+  s_ce0783ce808ef4::t_9799cea8abc0bb 1-114
+breakdowns.js
+  s_ce0783ce808ef4::t_06b663acc5228a 25,123
+  s_ce0783ce808ef4::t_40c98701011bbb 1-6,8-24,26-122,124-126
+  s_ce0783ce808ef4::t_0ace5d2eeca614 7
+costs.js
+  s_bc801fe6b1f892::t_d5aa5fa7ab80c9 135
+  s_ce0783ce808ef4::t_3a5c8b18a8b625 1-133,136,138-142,144-149
+  s_ce0783ce808ef4::t_ec71b674236752 134,137,143
+CLAUDE.md
+  s_bc801fe6b1f892::t_2d87c927dc5619 38,59-62,77
+public/js/factors-view.js
+  s_ce0783ce808ef4::t_7f4238c76f8b66 13
+stats.test.js
+  s_ce0783ce808ef4::t_9626ae556a5f52 1-30
+docs/architecture.md
+  s_bc801fe6b1f892::t_2d87c927dc5619 10
+outcome-factors.js
+  s_ce0783ce808ef4::t_d88adcaf24ae92 9,100,205,208
+docs/known-gaps.md
+  s_bc801fe6b1f892::t_2d87c927dc5619 37-41
+public/js/journal-trades.js
+  s_ce0783ce808ef4::t_22916863c13ddc 6,15-18,148,154-155,244-249,289,295
+public/js/core.js
+  s_ce0783ce808ef4::t_7f4238c76f8b66 31-35
+lib/history-sync.js
+  s_bc801fe6b1f892::t_5f848e591d92ef 91
+  s_bc801fe6b1f892::t_ffd961631a4b81 81,85,88,90,92
+  s_ce0783ce808ef4::t_ca0a72a3626044 105-106,109
+  s_bc801fe6b1f892::t_ce36c78a85416d 83-84
+  s_bc801fe6b1f892::t_9cf8e210ed5e10 55-59,66,70,75
+routes/factors.js
+  s_ce0783ce808ef4::t_9ab1edd5942668 4
+  s_ce0783ce808ef4::t_cd8d100087b626 28,30-31
+breakdowns.test.js
+  s_ce0783ce808ef4::t_cd877a326a18bc 49-50
+  s_ce0783ce808ef4::t_abab75cd7c7c6a 1-48,51-55
+docs/changelog.md
+  s_bc801fe6b1f892::t_08f36ff6172a0f 3-23
+performance.js
+  s_ce0783ce808ef4::t_d37970454b249b 9,30-32,43-45,54,60,66-67,70,244,247,254
+trip-context.js
+  s_ce0783ce808ef4::t_230fe94e234de1 139-147
+test/routes.test.js
+  s_ce0783ce808ef4::t_43ddba60f8ff39 123,148-170
+  s_ce0783ce808ef4::t_10ce1232fd4c90 188,545
+  s_bc801fe6b1f892::t_9cf8e210ed5e10 171,224,227,231-232
+  s_bc801fe6b1f892::t_ce36c78a85416d 225-226,228-229
+  s_bc801fe6b1f892::t_5f848e591d92ef 230
+  s_bc801fe6b1f892::t_5ebbbae8cd0c13 172
+trade-analytics.test.js
+  s_ce0783ce808ef4::t_64e1b782fd57ae 144-147,158,165
+costs.test.js
+  s_ce0783ce808ef4::t_646f84c6edea68 1-57,59-61,64-65
+  s_bc801fe6b1f892::t_d5aa5fa7ab80c9 58,62-63
+public/js/journal.js
+  s_ce0783ce808ef4::t_704fb8f635ddba 183-185,196-197
+  s_ce0783ce808ef4::t_7f4238c76f8b66 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3d290a7c3c8e1a71ea1a0043f0c63fe5c545c975",
+  "prompts": {},
+  "sessions": {
+    "s_bc801fe6b1f892": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a437d9a6-a038-4659-865a-c44dff360498",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    },
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
