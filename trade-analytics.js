@@ -493,7 +493,30 @@ export function periodStarts(now, tzOffsetMin = 0) {
   };
 }
 
+/**
+ * The same periods one step back — yesterday, last week, last month — each cut at the same
+ * elapsed time as the current one, so a Tuesday is compared with last week's Monday and Tuesday.
+ * A previous month shorter than the elapsed time ends at its own end.
+ */
+export function previousPeriodStarts(now, tzOffsetMin = 0) {
+  const shift = tzOffsetMin * 60_000;
+  const current = periodStarts(now, tzOffsetMin);
+  const local = new Date(current.month + shift);
+  const lastMonth = Date.UTC(local.getUTCFullYear(), local.getUTCMonth() - 1, 1) - shift;
+  const back = (from, start) => ({ from, to: Math.min(from + (now - start), start) });
+  return { today: back(current.today - DAY_MS, current.today), week: back(current.week - 7 * DAY_MS, current.week),
+           month: back(lastMonth, current.month) };
+}
+
 const sumIncome = (rows, type) => rows.filter(r => r.incomeType === type).reduce((s, r) => s + parseFloat(r.income), 0);
+
+/** Net, trips closed and wins between `from` and `to`. */
+export function periodNetBetween(income, trips, from, to) {
+  const rows = (income || []).filter(r => r.time >= from && r.time < to);
+  const closed = (trips || []).filter(t => t.closeTime >= from && t.closeTime < to);
+  const net = NET_TYPES.reduce((s, type) => s + sumIncome(rows, type), 0);
+  return { from, to, net: +net.toFixed(2), trips: closed.length, wins: closed.filter(t => t.win).length };
+}
 
 /** Realised, fees, funding, net, transfers and closed trips since each start in `starts`. */
 export function periodNet(income, trips, starts) {

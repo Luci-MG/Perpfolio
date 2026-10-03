@@ -27,11 +27,12 @@ expected to say so rather than assert correctness.
 | Volatility-adjusted stops, your real stops | [`docs/stops.md`](docs/stops.md) | `vol-estimator.js`, `stop-check.js`, `lib/stop-suggestion.js`, `routes/volstops.js` |
 | Stress / liquidation maths, calibration | [`docs/stress-engine.md`](docs/stress-engine.md) | `risk-engine.js`, `lib/pools.js` |
 | Unwind planner and drawers | [`docs/unwind.md`](docs/unwind.md) | `risk-engine.js`, `routes/deleverage.js` |
-| Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `trip-context.js`, `habits.js`, `outcome-factors.js`, `lib/history-sync.js`, `lib/trip-enrichment.js`, `lib/entry-context.js`, `lib/equity-snapshots.js` |
+| Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `trip-context.js`, `habits.js`, `outcome-factors.js`, `lib/history-sync.js`, `lib/trip-enrichment.js`, `lib/annotations-store.js`, `lib/entry-context.js`, `lib/equity-snapshots.js` |
 | Trading sessions, the clock and the session filter | [`docs/sessions.md`](docs/sessions.md) | `sessions.js`, `public/js/sessions-view.js` |
 | Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
 | Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |
 | Goals: rules you set, scored from the day you set them | [`docs/goals.md`](docs/goals.md) | `goals.js`, `milestones.js`, `lib/goals-store.js`, `routes/goals.js`, `public/js/goals-view.js` |
+| Funding: cost of holding the book, rates, caps, settlements | [`docs/frontend.md`](docs/frontend.md) *Funding*, [`docs/research/funding.md`](docs/research/funding.md) | `funding.js`, `routes/funding.js`, `public/js/funding-view.js` |
 | Statistical method behind Factors, with sources | [`docs/research/outcome-factors.md`](docs/research/outcome-factors.md) | `outcome-factors.js` |
 | What changed | [`docs/changelog.md`](docs/changelog.md) | — |
 | What is next | [`docs/roadmap.md`](docs/roadmap.md) | — |
@@ -54,6 +55,7 @@ crypto-dashboard/
 ├── habits.js              # trading habits and their estimated cost
 ├── goals.js               # goal types and their scoring
 ├── outcome-factors.js     # what at entry goes with better or worse trips
+├── funding.js             # what holding the book costs in funding, hedges netted
 ├── milestones.js          # account-value targets and the monthly drawdown limit
 ├── history-store.js       # append-only NDJSON cache
 ├── *.test.js              # engine unit tests
@@ -65,7 +67,7 @@ crypto-dashboard/
 └── public/
     ├── index.html         # markup only
     ├── css/app.css
-    └── js/                # 19 classic scripts, loaded in a fixed order (docs/frontend.md)
+    └── js/                # 21 classic scripts, loaded in a fixed order (docs/frontend.md)
 ```
 
 ## Running and verifying
@@ -146,5 +148,10 @@ Never log or expose these. Never commit `.env`.
   empty symbol filters and 6h of every symbol assumed to settle every 8h
 - **Share reads across tabs.** Anything the 15s poll triggers must go through a shared
   snapshot, or the exchange quota scales with open tabs
+- **A dedupe key must be unique per row, not per event.** Binance books both legs of a hedged
+  funding settlement under one `tranId`; keying income on it dropped every receipt, funding
+  read many times worse than it was, and code was then written to "split the net row" that never existed
+- **Make the fake exchange return what the real one returns.** The fake gave every row its own
+  id, so no test could see the collision; check a new response shape against the live API once
 - **Refactor against a snapshot.** Moves that should change nothing are checked by the golden
   route snapshot and the page smoke test, not by eye

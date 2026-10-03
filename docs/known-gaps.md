@@ -32,7 +32,7 @@
   three-month income span, and the history sync's "recent" window is a fixed 7 days — a sync
   after a two-week gap misses symbols traded 8–14 days ago that are now flat (Full rebuild
   catches them)
-- **Alerts** — thresholds are visible in the Stress tab but there is no push or sound
+- **Alerts** — thresholds are visible in the Stress tab but there is no push or sound (roadmap P6)
 - **No streaming for market data** — positions and marks are a 15s REST poll. Only the
   Binance user-data stream is a websocket, and *that* is an accelerator over a 60s REST
   reconcile rather than a source of truth (see *Order cache*)
@@ -54,7 +54,12 @@
 - **Journal: positions opened before the earliest reachable fill** are excluded from round
   trips; their closing fills are reported as an orphan bucket rather than dropped
 - **Depth is a snapshot** — it shows what the book can absorb now, not during a move
-- **Journal has no manual annotation** — no per-trade notes, tags, screenshots or emotional
-  state. Everything shown is derived from exchange records, which is why it can be
-  reconciled; anything hand-entered would need storage the store does not yet have
-- **Timing breakdowns are UTC** with no session or local-time grouping
+- **Notes only on closed trips** — an open position has no trip key yet; tagging at entry would
+  need the entry order id from entry capture
+- **Kill prices are scanned, not solved** — a piecewise-analytic solve would be exact by
+  construction and ~100× cheaper per slider frame, but the scan already matches Binance exactly
+  and the slider does not lag, so it was dropped (2026-10-03)
+- **Hedged funding before 2026-07-05 is incomplete** — the income cache dropped the receiving leg
+  of every hedged settlement until 2026-10-03, and Binance serves only three months of income, so
+  hedged settlements cached before the repair window keep one row. Their trips show funding as
+  unknown; ledger totals that reach back that far overstate funding paid

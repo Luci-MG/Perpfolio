@@ -21,10 +21,12 @@ behaviour as seventeen **classic** scripts loaded in this order — no build ste
 | 8b | `journal-trades.js` | Journal's Trades table: `TRADE_COLUMNS`, sort, filters, CSV |
 | 8c | `goals-view.js` | Journal's Goals tab, the goal drawer and the Overview goals line |
 | 8d | `factors-view.js` | Journal's Factors tab: the verdict and the factor board |
+| 8e | `journal-overview.js` | Journal's Overview and the Costs tab's wallet reconciliation |
 | 9 | `unwind.js` | liquidation-after-close and unwind-simulator drawers, Unwind tab |
 | 10 | `render.js` | sidebar widgets, `render()`, `fetchData()` and the poll guard |
 | 11 | `calculators.js` | context menu and the calculator modal — page code only; the arithmetic is `/calc-engine.js` |
-| 12 | `drawers.js` | exposure, uPnL and funding drawers |
+| 12 | `drawers.js` | exposure and uPnL drawers |
+| 12b | `funding-view.js` | the Daily funding widget and its drawer |
 | 13 | `boot.js` | global listeners, first poll, refresh timer — must stay last |
 
 Why classic scripts and why the order matters: [`architecture.md`](architecture.md).
@@ -150,6 +152,28 @@ sidebar it starts on Manual.
 The flat formula it replaced (entry ± 1/leverage with a fixed 0.5% rate) was 54–98% away
 from Binance's reported price on every leg of the live book that has one, and showed a
 price on eight legs where Binance reports none.
+
+### Error states
+A failed load never replaces a panel's controls or its last good data. Each fetch clears or
+records its failure with `clearLoadError(key)` / `noteLoadError(key, err)` (`core.js`) and keeps
+the previous payload; the panel renders `loadErrorHtml(key, retryCall, hasData)` —
+*Couldn't load* under its controls when nothing has loaded, *Couldn't refresh · showing the
+last good data* above its content otherwise — with a **Retry** that re-runs its own fetch. A
+fetch whose parameters changed (window, session, symbol, objective) drops the old payload
+instead, so a failure never shows results for settings no longer selected. The message is
+always escaped; `scripts/check.mjs` fails on an error or message interpolated or concatenated
+into markup without `esc()`.
+
+### Funding
+The sidebar's **Daily funding** widget reads the dashboard poll: net a day at the estimated
+rates, the next settlement with a countdown (`data-until`, ticked every 30 s by
+`tickCountdowns`) and its amount, and a row per venue — zero with no positions, *off* when switched off.
+Its drawer reads `GET /api/funding` (`funding.js`): a summary — estimated net a day, realised
+24h / 7d / 30d from the ledger, share of equity, rate on gross notional — and one table, worst
+first, with a same-symbol long and short as one hedge row. Each row shows the estimated rate per
+its own interval, the annualised rate, a 7-day sparkline against its average, the rate charged
+at the last settlement, and ⚠ at half its cap or more, since a capped symbol can switch to 1h
+settlements. Mechanics and sources: [`research/funding.md`](research/funding.md).
 
 ### Drawers
 All at body level, outside `#sidebar`, so the poll's sidebar rebuild cannot wipe them:

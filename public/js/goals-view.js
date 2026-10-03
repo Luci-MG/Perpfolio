@@ -21,8 +21,9 @@ async function fetchGoals() {
     const data = await (await fetch(`/api/goals?tz=${goalTz()}`)).json();
     if (!data.ok) throw new Error(data.error || 'goals failed');
     goalsData = data;
+    clearLoadError('goals');
   } catch (err) {
-    goalsData = { error: err.message };
+    noteLoadError('goals', err);
   } finally {
     goalsLoading = false;
     if (posView === 'journal') rerenderStress();
@@ -95,7 +96,7 @@ function goalBreachesHtml(g) {
   if (!g.breaches.length) return '';
   const rows = g.breaches.map(b => `<tr><td>${goalWhen(b.openTime)}</td>
     <td>${esc(jrSym(b.symbol))} <span class="gl-n">${b.side.toLowerCase()}</span></td>
-    <td>${esc(b.what)}</td><td>${signedCell(b.net)}</td>
+    <td>${esc(b.what)}${b.tags?.length ? ` ${tagChips(b.tags)}` : ''}${b.note ? ` <span class="jt-pen" title="${esc(b.note)}">✎</span>` : ''}</td><td>${signedCell(b.net)}</td>
     <td><button class="gl-link" onclick="openGoalBreach('${esc(b.symbol)}', ${b.openTime})">open ›</button></td></tr>`).join('');
   const more = g.breachCount > g.breaches.length ? `<p class="gl-n">latest ${g.breaches.length} of ${g.breachCount}</p>` : '';
   return `<table class="jr-tbl gl-breaches">${rows}</table>${more}`;
@@ -138,14 +139,6 @@ function goalsTodayText(today, goals) {
   return `${goals.length} milestone${goals.length > 1 ? 's' : ''}`;
 }
 
-function goalsOverviewLine() {
-  if (!goalsData?.goals?.length) return '';
-  const t = goalsData.today;
-  const broken = t.broken.length ? ` · <span class="dn">✗ ${esc(t.broken.join(', '))}</span>` : '';
-  const offTrack = t.offTrack.map(m => ` · <span class="${m.status === 'missed' ? 'dn' : 'gl-late'}">${MILESTONE_MARK[m.status]} ${esc(m.label)} ${m.status}</span>`).join('');
-  return `<button class="gl-overview" onclick="setJrTab('goals')"><span class="k">Goals</span>${goalsTodayText(t, goalsData.goals)}${broken}${offTrack}<span class="gl-caret">›</span></button>`;
-}
-
 function goalEmptyHtml(suggestions) {
   const items = suggestions.map((s, i) => `<button class="gl-suggest" onclick="openGoalDrawer(null, ${i})">
     <span class="gl-name">${esc(s.preview.label)}</span>
@@ -155,8 +148,7 @@ function goalEmptyHtml(suggestions) {
 }
 
 function renderGoalsTab() {
-  if (!goalsData) return `<p class="jt-count">Loading goals…</p>`;
-  if (goalsData.error) return `<p style="font-size:12px;color:var(--danger)">Error: ${esc(goalsData.error)}</p>`;
+  if (!goalsData) return loadErrors.goals ? loadErrorHtml('goals', 'fetchGoals()', false) : `<p class="jt-count">Loading goals…</p>`;
   const { goals, today, suggestions } = goalsData;
   const head = `<div class="gl-top"><span class="section-label">Goals</span>
     <span class="gl-n">${goals.length ? goalsTodayText(today, goals) : ''}</span>
@@ -166,7 +158,7 @@ function renderGoalsTab() {
   const ruleBlock = rules.length ? `<div class="gl-list">${rules.map(goalRow).join('')}</div>` : goalEmptyHtml(suggestions);
   const milestoneBlock = milestones.length
     ? `<p class="section-label gl-block">Milestones</p><div class="gl-list">${milestones.map(milestoneRow).join('')}</div>` : '';
-  return `${head}${error}${ruleBlock}${milestoneBlock}`;
+  return `${head}${loadErrorHtml('goals', 'fetchGoals()', true)}${error}${ruleBlock}${milestoneBlock}`;
 }
 
 const MILESTONE_MARK = { onpace: '◎', open: '◎', early: '◎', late: '◔', reached: '★', missed: '✗', paused: '‖',

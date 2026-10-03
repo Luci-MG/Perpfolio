@@ -91,9 +91,27 @@ the account's **real** commission rate — taker 0.05% / maker 0.02% at fee tier
 ### Journal tab (7th) — seven sections
 Sub-tabs (`jrTab`): **Overview · Goals · Performance · Behaviour · Factors · Timing · Symbols · Costs · Trades**.
 
-**Overview is the account, not the closed trades.** Round-trip statistics alone mislead while
-a large position is still open: the closed-trip net (plus the orphan fills) can be a fraction
-of the unrealised loss the account carries on top of it. The front page reconciles the whole thing —
+**Overview answers "am I on track, and does anything need me?"** — the layout and its sources
+are in [`research/overview.md`](research/overview.md). Top to bottom (`journal-overview.js`):
+
+1. **Attention** — at most three items, ranked: a goal broken today, a milestone missed or a
+   drawdown limit broken, a milestone late, funding paid far off the estimate, a factor that
+   stands out. Each links to its tab; with none, one muted line says *nothing needs attention*.
+   The ranking is the `ATTENTION_SOURCES` list, one entry per source.
+2. **Today / This week / This month** — net with n and wins, each against the previous period
+   *by now* (yesterday to this hour, last week to this weekday and hour), and the account
+   change when snapshots cover it.
+3. **Account** — value, wallet, open and hedges locked in one line, the two-curve chart, and a
+   link to *How the wallet got here*.
+4. **Next milestone** — the lowest account target not reached, missed or paused — beside the
+   **last five closed trades** with their tags, each opening Trades on that symbol and day.
+5. A footer with trips, trading days, the span and the last sync.
+
+Open positions and account stats stay on the main view and sidebar; they are not repeated.
+
+**How the wallet got here** sits at the top of **Costs**. Round-trip statistics alone mislead
+while a large position is still open: the closed-trip net (plus the orphan fills) can be a
+fraction of the unrealised loss the account carries. The reconciliation shows the whole thing —
 
 ```
 wallet at the start of the window   (derived from the ledger)
@@ -106,8 +124,8 @@ wallet at the start of the window   (derived from the ledger)
 = account value
 ```
 
-— then lists what is open, the locked hedge portion, and activity totals. The starting wallet
-is derived as `wallet − Σledger`, so it is exact only for the window income covers.
+The starting wallet is derived as `wallet − Σledger`, so it is exact only for the window
+income covers.
 `jrLockedFromPositions()` computes the hedge lock from the dashboard poll, with no extra
 request.
 
@@ -119,14 +137,14 @@ strips path characters so a malformed symbol cannot escape `data/`, `ensureDir`,
 
 | section | contents |
 |---|---|
-| Overview | the goals line, account value, the reconciliation above, open positions, activity |
+| Overview | attention, the periods against the last ones by now, the account and its chart, the next milestone, recent trades |
 | Goals | rules you set, scored from the day you set them — see [`goals.md`](goals.md) |
 | Performance | hero stats, cumulative curve + underwater panel + daily bars, month by month, records |
 | Behaviour | added-while-underwater split, hold-time buckets, long vs short, streaks, size after a win vs a loss, size distribution |
 | Factors | which conditions at entry go with better or worse trips — see *Factors* below |
 | Timing | calendar heatmap, day of week, hour of day |
 | Symbols | full per-symbol table with concentration |
-| Costs | maker/taker split, fees by symbol, funding by symbol |
+| Costs | how the wallet got here, maker/taker split, fees by symbol, funding by symbol |
 | Trades | one sortable, filterable table of every round trip, with CSV export — see *Trades* below |
 
 **Two stacked panels, never two y-axes.** Daily results are bars whose *direction* encodes
@@ -142,9 +160,11 @@ centre line, and **every bucket shows its trip count**, with fewer than 10 dimme
 ### Overview: periods and the two curves
 - **Today / This week / This month** use the reader's clock (`?tz=` minutes ahead of UTC, from
   the browser; weeks start Monday). *Realised* is net of fees and funding from the Binance
-  ledger — exact; Hyperliquid has no history. *Account* is the change in account value across
-  both venues, net of transfers, from equity snapshots; when snapshots began after the
-  period started it says *since …*.
+  ledger — exact; Hyperliquid has no history. Each carries `previous`, the same span one period
+  back cut at the same elapsed time (`previousPeriodStarts`, `periodNetBetween`); a previous
+  month shorter than the elapsed time ends at its own end. *Account* is the change in account
+  value across both venues, net of transfers, from equity snapshots, marked *partial* when
+  snapshots began after the period started.
 - **Wallet** is rebuilt backwards from today's `walletBalance` through every dollar
   income row — exact as far back as the ledger reaches (three months). **Account value** is
   the snapshots (`lib/equity-snapshots.js`, every 15 minutes while the server runs, one row
@@ -195,6 +215,17 @@ bucket with the rest of the book. The method and every threshold come from
 
 `GET /api/factors` caches per window, session and trip count, so the poll never recomputes.
 
+### Notes and tags
+
+Your own note (up to 500 characters) and up to five tags on any closed trip, edited inline in
+Trades (✎ or the empty Notes cell). Kept in `data/annotations.json` by the trip key, with the
+opening order id as a fallback so a note survives a rebuild that moves a trip's start; notes
+that match no trip are counted under the table. `enrichedTrips()` attaches them, so Trades
+(column, tag filter, CSV), Goals (breach rows) and Factors read them with no extra request.
+Tags are free, lowercased slugs with autocomplete from the ones already used. In Factors they
+sit in their own section and never reach the verdict: a tag is written after the result is
+known, so its link to outcome is partly hindsight.
+
 ### Trades: every round trip with its context
 One row per closed trip, built in three layers so each can be tested alone:
 
@@ -216,13 +247,24 @@ One row per closed trip, built in three layers so each can be tested alone:
 - **ATR %** is ATR(14) of the 20 1h bars before entry; **BTC trend** is BTC's 1h EMA50 against
   EMA200 on bars closed before entry, `flat` within 0.5%.
 
-**Funding: a hedged pair settles as one net row.** Binance books a settlement against the
-symbol, not the leg: only a handful of thousands of funding rows came as two rows. With one leg open the row
-is that trip's exactly. With both open it is split by each leg's size at that moment × the
-historical funding rate × that settlement's mark, and the residual is shared equally, so
-the parts always sum to the row (verified on the live ledger: attributed − ledger =
-2.7e-12). Split trips show `≈`. A trip that opened before the income ledger starts — Binance
-keeps three months — has unknown funding, and its Net is shown before funding with `*`.
+**Funding: one row per leg, both under one tranId.** Binance books a hedged settlement as two
+`FUNDING_FEE` rows — the paying leg's and the receiving leg's — with the same `tranId`, time
+and symbol. Each row is matched to the leg whose size × rate × mark it is closest to, so every
+trip gets its own leg's funding exactly. With one leg open the rows are that trip's. When the
+trip rebuild thinks two legs were open but the ledger has one row, the ledger wins: the other
+leg paid nothing.
+
+**Fixed (2026-10-03): every hedged receipt had been dropped.** The income cache deduped on
+`tranId:type:symbol:time`, which both legs share, so the second row — usually the receipt —
+never reached the cache. Realised funding then counted only the paying side of each hedge
+(a week read many times worse than Binance's own ledger), and the code above was written to split that
+lone row across both legs, believing Binance netted them. The key now includes the amount, and
+a cache written under the old key refetches Binance's three-month window once, on the next
+sync, recording `incomeCompleteFrom` in `meta.json`. Hedged settlements cached before that
+date cannot be recovered: their trips show funding as unknown (`*`, *missing a leg's row*), never
+a guess. With no funding rate on record to tell the legs apart, a settlement is shared evenly
+and the trips show `≈`. A trip that opened before the income ledger starts has unknown funding
+too, and its Net is shown before funding with `*`.
 
 **Fetched during a sync, never on a request.** After fills, the sync's `context` phase fetches
 candles for each trip without a cached row and funding-rate history for symbols with hedged

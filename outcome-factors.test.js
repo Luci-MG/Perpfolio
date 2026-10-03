@@ -110,3 +110,12 @@ test('factors read from entry context join once entries are captured', () => {
   assert.ok(row(r, 'stop', 'No stop'));
   assert.ok(r.factors.find(f => f.id === 'leverage').buckets.length >= 2);
 });
+
+test('your tags are compared apart, hidden under the minimum, and never reach the verdict', () => {
+  const r = outcomeFactors(book(70, 3, (d, i) => ({ ...weekendLoses(d, i), tags: i === 0 ? ['revenge'] : d === 1 ? ['rare'] : [] })));
+  const revenge = r.tags.buckets.find(b => b.bucket === 'revenge');
+  assert.equal(revenge.n, 70);
+  assert.equal(revenge.standsOut, false);
+  assert.equal(r.tags.hiddenBuckets, 1, 'the rare tag is under the minimum');
+  assert.ok(![...r.worse, ...r.better].some(v => v.bucket === 'revenge'));
+});

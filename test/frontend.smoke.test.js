@@ -92,10 +92,7 @@ test('every view and drawer renders against live payloads without errors or NaN'
     run(`posView = '${v}'; riskForceRender = true; render(lastData)`);
     for (const hit of strayValues(markup.get('content') + markup.get('sidebar'))) bad.push(`${v}: …${hit}…`);
   }
-  for (const data of ['volStopData', 'riskBook', 'unwindData', 'perfData', 'cfData']) {
-    assert.equal(run(`${data}?.error ?? null`), null, `${data} failed to load`);
-  }
-  for (const fn of ['buildFundingDrawerContent(lastData)']) run(fn);
+  assert.equal(run('JSON.stringify(loadErrors)'), '{}', 'every tab loaded');
   assert.deepEqual(bad, []);
 });
 
@@ -229,14 +226,16 @@ test('every Journal sub-tab renders, with and without equity snapshots', async (
 
   const overview = renderAll()[0][1];
   assert.match(overview, /Today[\s\S]*This week[\s\S]*This month/);
-  assert.match(overview, /account —/, 'no snapshots yet');
+  assert.doesNotMatch(overview, /account [+−$]/, 'no snapshots yet');
+  assert.match(overview, /vs yesterday by now[\s\S]*vs last week by now[\s\S]*vs last month by now/);
+  assert.match(overview, /class="ov-pair"[\s\S]*Next milestone[\s\S]*Recent trades/);
   assert.match(renderAll()[2][1], /What your habits cost[\s\S]*Added while underwater/);
 
   run(`perfData.accountCurve = [0, 1, 2].map(i => ({ t: Date.now() - (3 - i) * 9e5, accountValue: 1000 + i * 10 }));
        perfData.periods.today.account = { change: 20, since: Date.now() - 27e5, partial: true }`);
   const withSnaps = renderAll()[0][1];
   assert.match(withSnaps, /class="ov-account"/);
-  assert.match(withSnaps, /account \$20\.00 since/);
+  assert.match(withSnaps, /account \+\$20\.00 \(partial\)/);
   assert.deepEqual(strayValues(withSnaps), []);
 });
 
@@ -438,7 +437,7 @@ test('Goals: empty state suggests, rows order and render every state, the drawer
   assert.match(board, /broke today[\s\S]*2\/2 today[\s\S]*starts with the next captured entry[\s\S]*paused/);
   assert.match(board, /est\. cost <b class="dn">−\$6\.20<\/b>/);
   assert.deepEqual(strayValues(board), []);
-  assert.match(show('overview'), /gl-overview[\s\S]*today 1 of 2 kept · <span class="dn">✗ Max 2 trades a day · Europe/);
+  assert.match(show('overview'), /class="ov-attention"[\s\S]*class="ov-attn dn" onclick="setJrTab\('goals'\)">✗ Max 2 trades a day · Europe broke today ›[\s\S]*Goals today: 1 of 2 kept/);
 
   run(`openGoalBreach('ETHUSDT', Date.now() - 36e5)`);
   await settle('tripsData && !tripsLoading', 'the trips');
@@ -482,7 +481,9 @@ test('Milestones: a block under the rules, every state renders, the chart projec
   assert.deepEqual(strayValues(board), []);
   run(`goalOpen = 'dd'`);
   assert.match(show('goals'), /Before you set it: 50% of 2 months kept · worst −14\.1% ≈ wallet/);
-  assert.match(show('overview'), /gl-late">◔ Account ≥ \$250k late/);
+  const overview = show('overview');
+  assert.match(overview, /class="ov-attn dn"[^>]*>✗ Account ≥ \$600k missed ›[\s\S]*class="ov-attn gl-late"[^>]*>◔ Account ≥ \$300k late ›/, 'missed ranks above late');
+  assert.match(overview, /Next milestone[\s\S]*Account ≥ \$100k[\s\S]*more after it/, 'the lowest open target leads');
 
   run(`openGoalDrawer(); setGoalType('accountTarget')`);
   assert.match(markup.get('goalDrawerBody'), /type="date"[\s\S]*optional/);
@@ -532,4 +533,186 @@ test('Factors: verdict first, the board on demand, waiting factors named, a goal
 
   run(`openFactorGoal(0)`);
   assert.deepEqual(JSON.parse(run('JSON.stringify(goalDraft)')), { id: null, type: 'noSessions', params: { sessions: ['Weekend'] }, session: null });
+});
+
+test('a failed load keeps each tab\'s controls with Retry, escapes the message, and a failed refresh keeps the last good data', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('stress')`);
+  await settle('riskBook && !riskLoading', 'the risk book');
+  const view = v => { run(`posView = '${v}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+  const failing = () => run(`realFetch = realFetch || fetch; fetch = () => Promise.reject(new Error('<b>down</b>'))`);
+  const working = () => run('fetch = realFetch');
+  run('var realFetch = null');
+  const failed = (html, controls, retry, what) => {
+    assert.match(html, controls, `${what}: controls kept`);
+    assert.match(html, new RegExp(`Couldn’t load</span> · &lt;b&gt;down&lt;/b&gt;[\\s\\S]*onclick="${retry}">Retry`), `${what}: escaped error with Retry`);
+    assert.doesNotMatch(html, /<b>down/, `${what}: never raw`);
+  };
+
+  failing();
+  await run(`riskBook = null; fetchRiskBook(true)`);
+  failed(view('stress'), /Refresh marks/, 'fetchRiskBook\\(true\\)', 'stress');
+  run('renderLiqBody()');
+  failed(markup.get('liqDrawerBody'), /./, 'fetchRiskBook\\(true\\)\\.then\\(renderLiqBody\\)', 'liquidation drawer');
+  await run(`unwindData = null; fetchUnwind()`);
+  failed(view('unwind'), /Liquidation buffer/, 'fetchUnwind\\(\\)', 'unwind');
+  await run(`volStopData = null; fetchVolStops()`);
+  failed(view('stops'), /vol-|Risk/, 'fetchVolStops\\(\\)', 'stops');
+  await run(`cfData = null; fetchConfluence()`);
+  failed(view('confluence'), /cf-sym/, 'fetchConfluence\\(\\)', 'confluence');
+  await run(`perfData = null; fetchPerformance()`);
+  failed(view('journal'), /Sync recent[\s\S]*Full rebuild/, 'fetchPerformance\\(\\)', 'journal');
+  await run(`hlData = null; openHlDrawer()`);
+  failed(markup.get('hlDrawerBody'), /./, 'openHlDrawer\\(\\)', 'hedge ledger');
+
+  working();
+  await run('fetchRiskBook(true)');
+  await run('fetchPerformance()');
+  await settle('perfData && !perfLoading', 'the journal');
+  assert.equal(run('loadErrors.risk ?? null'), null, 'a good load clears the error');
+  for (const [tab, reset, fetcher, retry] of [['trades', 'tripsData', 'fetchTrips()', 'fetchTrips\\(\\)'],
+    ['goals', 'goalsData', 'fetchGoals()', 'fetchGoals\\(\\)'], ['factors', 'factorsData', 'fetchFactors()', 'fetchFactors\\(\\)']]) {
+    failing();
+    await run(`${reset} = null; ${fetcher}`);
+    run(`jrTab = '${tab}'`);
+    failed(view('journal'), /jr-subtab/, retry, tab);
+    working();
+  }
+
+  failing();
+  await run('fetchRiskBook(true)');
+  const stale = view('stress');
+  assert.match(stale, /Couldn’t refresh<\/span> · &lt;b&gt;down&lt;\/b&gt;[\s\S]*showing the last good data/);
+  assert.match(stale, /Refresh marks/);
+  assert.ok(run('riskBook.pools.length') > 0, 'the last good book is kept');
+  assert.deepEqual(strayValues(stale), []);
+  working();
+});
+
+test('notes and tags: the inline editor saves and cancels, chips and the tag filter work, and a note renders escaped', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading', 'the journal');
+  run(`setJrTab('trades')`);
+  await settle('tripsData && !tripsLoading', 'the trips');
+  const show = () => { run(`jrTab = 'trades'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+  const table = () => markup.get('jt-table');
+  show();
+  const key = run('sortedTrips(filteredTrips())[0].key');
+
+  run(`editTripNote('${key}')`);
+  assert.match(table(), /class="jt-edit"[\s\S]*id="jt-note-text"[\s\S]*Save/);
+  run(`cancelTripNote()`);
+  assert.doesNotMatch(table(), /jt-edit/);
+
+  run(`editTripNote('${key}')`);
+  run(`document.getElementById('jt-note-text').value = '<b>chased</b> it'; document.getElementById('jt-note-tags').value = 'Revenge, late-entry'`);
+  await run(`saveTripNote('${key}')`);
+  assert.equal(run('noteEditing'), null);
+  assert.match(table(), /title="&lt;b&gt;chased&lt;\/b&gt; it"[\s\S]*jt-tag">revenge[\s\S]*jt-tag">late-entry/);
+  assert.doesNotMatch(table(), /<b>chased/);
+
+  run(`filterTrades('tag', 'revenge')`);
+  assert.equal(run('filteredTrips().length'), 1);
+  assert.match(show(), /<option value="revenge" selected>revenge<\/option>/);
+  assert.match(run('tradesCsv()').split('\n')[0], /,note,tags/);
+
+  run(`editTripNote('${key}')`);
+  run(`document.getElementById('jt-note-tags').value = 'a, b, c, d, e, f'`);
+  await run(`saveTripNote('${key}')`);
+  assert.match(table(), /class="dn">at most 5 tags/);
+  run(`document.getElementById('jt-note-text').value = ''; document.getElementById('jt-note-tags').value = ''`);
+  await run(`saveTripNote('${key}')`);
+  run(`filterTrades('tag', 'all')`);
+  assert.deepEqual(strayValues(show()), []);
+});
+
+test('funding: the widget counts down to the next settlement, the drawer nets hedges and flags a leg near its cap', async () => {
+  const { markup, run } = await bootPage();
+  run(`lastData.binance.positions.forEach(p => { p.nextFundingTime = Date.now() + 36e5; }); riskForceRender = true; render(lastData)`);
+  assert.match(markup.get('sidebar'), /Daily funding[\s\S]*\/day est\.[\s\S]*next in <span data-until="\d+">1h 00m/);
+  assert.match(markup.get('sidebar'), /fw-row"><span>HL[\s\S]*fw-row"><span>BN/, 'both venue rows');
+  run(`const hlLegs = lastData.hyperliquid.positions; lastData.hyperliquid.positions = []; riskForceRender = true; render(lastData); lastData.hyperliquid.positions = hlLegs`);
+  assert.match(markup.get('sidebar'), /fw-row"><span>HL<\/span><span class="sb-num ">\$0\.00/, 'a venue with no positions still shows, at zero');
+
+  await run('openFundDrawer()');
+  const body = () => markup.get('fundDrawerBody');
+  assert.match(body(), /Est\. net \/ day[\s\S]*Realised 7d[\s\S]*Of equity[\s\S]*On gross/);
+  assert.match(body(), /BTC hedge[\s\S]*long [−+]\$[\d,.]+ · short [−+]\$[\d,.]+ a day/);
+  assert.match(body(), /ETH <span class="gl-n">long<\/span>[\s\S]*\/4h/);
+  run(`fundData.rows[0].usual = { avgPct: 0.004, points: [0.002, 0.004, 0.006], lastCharged: { at: Date.now() - 36e5, ratePct: 0.006 } }; renderFundBody()`);
+  assert.match(body(), /class="fd-spark"[\s\S]*its 7d avg[\s\S]*title="charged at the last settlement">\+0\.0060%/);
+  assert.match(body(), /Funding by symbol over time ›/);
+  assert.deepEqual(strayValues(body()), []);
+
+  run(`fundData.rows[0].nearCap = { share: 0.62, receiving: false }; renderFundBody()`);
+  assert.match(body(), /class="fd-flag dn">⚠ 62% of its cap — may switch to 1h settlements</);
+
+  run(`realFetch = fetch; fetch = () => Promise.reject(new Error('down'))`);
+  await run('fetchFunding()');
+  assert.match(body(), /Couldn’t refresh<\/span> · down[\s\S]*showing the last good data[\s\S]*BTC hedge/);
+  run(`fetch = realFetch; fundData = null`);
+  run(`fetch = () => Promise.reject(new Error('down'))`);
+  await run('fetchFunding()');
+  assert.match(body(), /Couldn’t load<\/span> · down[\s\S]*onclick="fetchFunding\(\)">Retry/);
+  run('fetch = realFetch');
+
+  run(`closeFundDrawerForce(); openFundingHistory()`);
+  assert.equal(run('jrTab'), 'costs');
+  const source = fs.readFileSync(path.join(ROOT, 'public', 'js', 'funding-view.js'), 'utf8');
+  assert.doesNotMatch(source, /rgba\(|#[0-9a-f]{6}/i, 'funding uses theme tokens only');
+});
+
+test('Overview: attention is ranked and capped, calm says so, recent trades open Trades, the reconciliation sits under Costs', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading && goalsData && !goalsLoading', 'the journal');
+  const show = tab => { run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+
+  run(`goalsData = { ...goalsData, goals: [], today: { scored: 0, kept: 0, broken: [], offTrack: [] } }; fundData = null; factorsData = null`);
+  assert.match(show('overview'), /class="ov-calm">nothing needs attention/);
+
+  run(`goalsData.goals = [{ id: 'r', unit: 'trip', status: 'kept', label: 'No adds underwater' }];
+       goalsData.today = { scored: 2, kept: 2, broken: [], offTrack: [] }`);
+  assert.match(show('overview'), /class="ov-calm">Goals today: 2 of 2 kept · nothing needs attention/);
+
+  run(`goalsData.goals = [
+         { id: 'a', unit: 'trip', status: 'broken', label: 'No adds underwater' },
+         { id: 'b', unit: 'milestone', type: 'accountTarget', status: 'late', label: 'Account ≥ $50k', params: { target: 5e4 } },
+         { id: 'c', unit: 'milestone', type: 'accountTarget', status: 'missed', label: 'Account ≥ $40k', params: { target: 4e4 } }];
+       goalsData.today = { scored: 1, kept: 0, broken: ['No adds underwater'], offTrack: [] };
+       fundData = { realised: { differsFromEstimate: true, perDay7d: -9 }, totals: { perDay: -3 } };
+       factorsData = { worse: [{ bucket: 'Weekend', diff: -16.5 }] }`);
+  const busy = show('overview');
+  assert.deepEqual([...busy.matchAll(/class="ov-attn [^"]+" onclick="[^"]+">([^›]+) ›/g)].map(m => m[1].trim()),
+    ['✗ No adds underwater broke today', '✗ Account ≥ $40k missed', '◔ Account ≥ $50k late']);
+  assert.match(busy, /\+2 more/);
+  assert.match(busy, /Next milestone[\s\S]*Account ≥ \$50k/, 'the missed target is not next; the open one is');
+
+  const recent = run('perfData.recentTrips.length');
+  assert.ok(recent > 0 && recent <= 5);
+  assert.equal([...busy.matchAll(/class="ov-trip"/g)].length, recent);
+  assert.match(busy, /How the wallet got here ›/);
+  assert.doesNotMatch(busy, /Open right now|Where the account stands|Activity</);
+  assert.deepEqual(strayValues(busy), []);
+
+  const first = JSON.parse(run('JSON.stringify(perfData.recentTrips[0])'));
+  run(`openGoalBreach('${first.symbol}', ${first.openTime})`);
+  await settle('tripsData && !tripsLoading', 'the trips');
+  assert.equal(run('jrTab'), 'trades');
+  assert.ok(run(`filteredTrips().some(t => t.key === '${first.key}')`));
+
+  assert.match(show('costs'), /How the wallet got here[\s\S]*wallet at the start of the window[\s\S]*account value[\s\S]*Execution/);
 });

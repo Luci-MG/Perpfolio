@@ -1,5 +1,60 @@
 # Changelog
 
+## Fixed: hedged funding receipts were dropped (2026-10-03)
+
+- Binance books both legs of a hedged funding settlement under one `tranId`; the income cache
+  keyed on it and kept only the first row, usually the paying leg. Realised funding counted only
+  what hedges paid, never what they received, so the Overview flagged funding paid far above
+  the estimate when Binance's own ledger agreed with the estimate.
+- The key now includes the amount. On the next sync a cache written under the old key refetches
+  Binance's three-month window once to restore the missing rows; funding totals,
+  periods, the wallet curve, Costs, the funding drawer and each trip's funding all correct.
+- Trip funding no longer splits a "net" row: each leg's row is matched to it. Settlements cached
+  before the window cannot be recovered and show as unknown, not guessed.
+
+## Journal Overview remodel (2026-10-03)
+
+- Overview now reads top to bottom: what needs attention (at most three ranked items, or
+  *nothing needs attention*), today / this week / this month against the previous period by
+  now, the account in one line over its chart, the next milestone beside the last five trades
+  with their tags, and a one-line footer.
+- Open positions, the account stat grid and the activity block are gone from Overview — the
+  main view, the sidebar and Performance already show them. The wallet reconciliation moved to
+  the top of Costs.
+- `/api/performance` adds each period's previous span and the last five closed trips. Layout
+  research with sources is in `docs/research/overview.md`.
+
+## Funding section (2026-10-03)
+
+- The funding drawer answers what holding the book costs: estimated net a day, realised 24h /
+  7d / 30d from the ledger with a note when the two disagree, share of equity, and one table
+  worst first with each hedged pair netted into one row.
+- Rates are labelled as estimates and shown per each symbol's own interval with an annualised
+  column, a 7-day sparkline against the symbol's average and the rate charged at the last
+  settlement; a leg at half its cap or more is flagged, since it can switch to 1h settlements.
+- The old "Avg rate/8h" averaged 4h and 8h rates unweighted; the book-wide figure is now the
+  rate on gross notional. The bubble grid, heatmap, exchange cards and burn-down chart are gone.
+- The sidebar widget adds the next settlement with a countdown and its amount, above a row
+  per venue — zero with no positions, *off* when switched off.
+
+## Notes and tags on trips (2026-10-03)
+
+- A note and up to five tags on any closed trip, edited inline in Trades, with a Notes column,
+  a tag filter and both in the CSV. Saved in `data/annotations.json`; a note follows its trip
+  through a rebuild by its opening order.
+- Goal breaches show the trip's tags and note; Factors compares each tag with enough trips in
+  a separate *Your tags* section, marked as set after the trade.
+
+## Error states keep their controls (2026-10-03)
+
+- A failed load no longer replaces a tab's controls: Stress, Unwind, Stops, Confluence, the
+  Journal and its Trades, Goals and Factors, and the hedge-ledger, liquidation and simulator
+  drawers show the error under their controls with a **Retry**. The Journal keeps **Sync**
+  usable when history fails to load.
+- A failed refresh keeps the last good data and says so, instead of blanking the panel.
+- Two Unwind drawer errors reached the page unescaped; `scripts/check.mjs` now fails on any
+  error interpolated or concatenated into markup without `esc()`.
+
 ## What goes with better or worse trips (2026-10-03)
 
 - A Journal **Factors** tab: each condition known at entry — session, hour, side, hedged, size

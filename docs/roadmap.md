@@ -23,7 +23,12 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P4 | [Goals: design spike](#p4--goals-design-spike) | done (2026-10-03) |
 | P4 | [Goals: rules](#p4--goals-rules) | done (2026-10-03) |
 | P4 | [Goals: milestones](#p4--goals-milestones) | done (2026-10-03) |
-| — | [Carried over](#carried-over) | planned |
+| P5 | [Error states keep their controls](#p5--error-states-keep-their-controls) | done (2026-10-03) |
+| P5 | [Per-trip notes and tags](#p5--per-trip-notes-and-tags) | done (2026-10-03) |
+| P5 | [Funding section](#p5--funding-section) | done (2026-10-03) |
+| P5 | [Journal Overview remodel](#p5--journal-overview-remodel) | done (2026-10-03) |
+| P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
+| — | [Parked](#parked) | parked |
 
 ---
 
@@ -274,21 +279,73 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 
 ---
 
-## Carried over
+## P5 — Error states keep their controls
 
-From the 2026-09-29 review, still open:
+- **Status:** done (2026-10-03).
+- **Problem:** on a failed request Stress, Journal and Unwind replace their whole toolbar with
+  the error, so there is no way to retry or change the window without reloading. Two Unwind
+  error messages (`public/js/unwind.js`, the "no positions" fallbacks) reach the page without
+  `esc()`, and the static check's guard misses string concatenation.
+- **Scope:** the error renders inside the panel, under its controls, with a *Retry*; escape the
+  two messages; widen the `scripts/check.mjs` guard to `'…' + x.error`.
+- **Done when:** every tab's error keeps its controls and retries in place, and the check fails
+  on an unescaped concatenated error.
 
-- **Per-trip notes and tags** — `data/annotations.ndjson` keyed `symbol:positionSide:openTime`,
-  one POST route, one input. Makes Behaviour actionable.
-- **Server-side alerts** — kill distance, free margin → 0, ADL quantile ≥ 3, order-feed drift,
-  evaluated on the shared snapshot and pushed by webhook.
-- **`!markPrice@arr@1s` market stream** — replaces the premiumIndex poll; live marks in Stress.
-- **Piecewise-analytic kill prices** — exact by construction, ~100× fewer evaluations per
-  slider frame; keep the scan as the cross-check.
-- **Keep controls visible on every tab's error state** — Stress, Journal and Unwind replace
-  their controls with the error.
-- **Keyboard access** — `role="button"`/`tabindex` on tiles and calc tiles, focus trap and
-  focus return in drawers.
+## P5 — Per-trip notes and tags
+
+- **Status:** done (2026-10-03). Tags reach Factors in their own section, not the ranked
+  factors, because they are set after the result is known.
+- **Problem:** everything in the Journal is derived from exchange records; nothing records why
+  a trade was taken or what went wrong, so Factors and Goals cannot see setups or mistakes.
+- **Scope:** a note and free tags per round trip in Trades, stored in
+  `data/annotations.ndjson` keyed by the trip key, one JSON-only POST route; tags become a
+  factor in Factors (a tag with enough trips is compared like any other bucket) and a goal
+  breach can carry its trip's note.
+- **Done when:** a tag set on enough trips shows in Factors with its interval, and notes
+  survive a full history rebuild.
+
+## P5 — Funding section
+
+- **Status:** done (2026-10-03).
+- **Problem:** the funding metric and its drawer are the oldest part of the dashboard and read
+  as a list of rates rather than an answer to "what is holding this book costing me".
+- **Scope:** to be planned — likely cost per day and per position, what the hedges pay
+  against what they earn, next settlement, and funding history from the ledger.
+- **Done when:** set in the plan.
+
+## P5 — Journal Overview remodel
+
+- **Status:** done (2026-10-03) — layout research in [`research/overview.md`](research/overview.md).
+- **Problem:** Overview grew a section per card — goals line, period strip, two-line chart,
+  account stats, the reconciliation, open positions, activity — and reads as patchwork.
+- **Scope:** to be planned — one layout with a clear first read, the rest in order of use,
+  nothing repeated from other tabs.
+- **Done when:** set in the plan.
+
+## P6 — Server-side alerts
+
+- **Problem:** danger is only visible while a tab is open.
+- **Scope:** rules evaluated on the shared snapshot — kill distance, free margin running out,
+  ADL quantile ≥ 3, order-feed drift, a goal broken or a milestone late — pushed to one
+  channel set in `.env`, with a cooldown per rule. Runs only while the server runs.
+- **Done when:** each rule fires once per breach on a fake snapshot and the cooldown holds.
+- **Depends on:** nothing, but heaviest of the batch — built last.
+
+---
+
+## Parked
+
+Not planned; revisit when the reason changes.
+
+- **`!markPrice@arr@1s` market stream** — would replace the premiumIndex poll with live marks
+  in Stress. The 15 s poll is enough for a dashboard; revisit if alerts need faster marks.
+- **Keyboard access** — `role`/`tabindex` on tiles and calculator tiles, focus trap and focus
+  return in the drawers. Esc already closes every drawer; revisit if the dashboard is driven
+  from the keyboard.
+
+Dropped: **piecewise-analytic kill prices** — the scan already matches Binance's figures
+exactly and the slider does not lag, so a faster exact method buys nothing (`known-gaps.md`).
 
 Absorbed into cards above: funding-adjusted PnL per trip and MAE/MFE (richer Trades),
-regime-conditional and walk-forward calibration (Confluence).
+regime-conditional and walk-forward calibration (Confluence), the 2026-09-29 review's
+remaining items (P5, P6 and Parked).

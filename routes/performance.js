@@ -7,6 +7,8 @@ import { readEquitySnapshots } from '../lib/equity-snapshots.js';
 import { enrichedTrips } from '../lib/trip-enrichment.js';
 import { syncState } from '../lib/history-sync.js';
 
+const RECENT_TRIPS = 5;
+
 export function register(app) {
   app.get('/api/performance', async (req, res) => {
     try {
@@ -26,12 +28,16 @@ export function register(app) {
       const equity = ta.equityCurve(incomeWindow);
       const totals = ta.incomeTotals(incomeWindow);
       const now = Date.now();
-      const starts = ta.periodStarts(now, parseInt(req.query.tz, 10) || 0);
+      const tz = parseInt(req.query.tz, 10) || 0;
+      const starts = ta.periodStarts(now, tz);
+      const previous = ta.previousPeriodStarts(now, tz);
       const snapshots = readEquitySnapshots();
       const bn = await getBinanceData();
       const periodsNet = ta.periodNet(income, trips, starts);
       const periodsAccount = ta.accountChange(snapshots, income, starts);
-      const periods = Object.fromEntries(Object.keys(starts).map(k => [k, { ...periodsNet[k], account: periodsAccount[k] }]));
+      const periods = Object.fromEntries(Object.keys(starts).map(k => [k, { ...periodsNet[k], account: periodsAccount[k],
+        previous: ta.periodNetBetween(income, trips, previous[k].from, previous[k].to) }]));
+      const enriched = enrichedTrips().trips;
 
       res.json({
         ok: true,
@@ -74,7 +80,10 @@ export function register(app) {
         periods,
         walletCurve: bn.disabled ? [] : ta.walletCurve(incomeWindow, bn.walletBalance, now),
         accountCurve: snapshots.filter(s => s.t >= cutoff).map(s => ({ t: s.t, accountValue: s.accountValue })),
-        habits: habitCosts(enrichedTrips().trips.filter(t => t.closeTime >= cutoff && inSession(t))),
+        habits: habitCosts(enriched.filter(t => t.closeTime >= cutoff && inSession(t))),
+        recentTrips: [...enriched].sort((a, b) => b.closeTime - a.closeTime).slice(0, RECENT_TRIPS)
+          .map(({ key, symbol, side, openTime, closeTime, holdHours, net, netAfterFunding, tags, note }) =>
+            ({ key, symbol, side, openTime, closeTime, holdHours, net: netAfterFunding ?? net, tags, note })),
         session,
         syncedAt: syncState.finishedAt
       });

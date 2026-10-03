@@ -86,52 +86,91 @@ function sizeAt(steps, t) {
 
 /**
  * Funding per trip from the income ledger; null for trips opened before `incomeFrom`. Binance
- * books a hedged pair's settlement as one net row, so a row with two legs open is split by
- * size × rate × mark, residual shared equally; the parts sum to the row (`fundingSplit`).
+ * books one row per leg, so a hedged settlement's rows are matched to its legs by the rate,
+ * size and mark at that time. The ledger is complete from `completeFrom`: after it, a leg with
+ * no row of its own paid nothing; before it, a hedged settlement missing a row leaves its trips
+ * `fundingIncomplete`, funding null. With no rate to match by, rows are shared evenly and the
+ * trips marked `fundingSplit`.
  */
-export function attributeFunding({ trips, stillOpen = [], sizeSteps, income, rates = [], incomeFrom }) {
+export function attributeFunding({ trips, stillOpen = [], sizeSteps, income, rates = [], incomeFrom, completeFrom = Infinity }) {
   const legsBySymbol = new Map();
   for (const leg of [...trips, ...stillOpen]) {
     if (!legsBySymbol.has(leg.symbol)) legsBySymbol.set(leg.symbol, []);
     legsBySymbol.get(leg.symbol).push(leg);
   }
   const rateAt = new Map(rates.map(r => [`${r.symbol}:${r.fundingTime}`, r]));
-  const out = new Map(trips.map(t => [tripKey(t), { funding: 0, fundingSplit: false }]));
+  const out = new Map(trips.map(t => [tripKey(t), { funding: 0, fundingSplit: false, fundingIncomplete: false }]));
+  const credit = (leg, amount, flags = {}) => {
+    const entry = out.get(tripKey(leg));
+    if (!entry) return;
+    entry.funding += amount;
+    entry.fundingSplit ||= !!flags.split;
+    entry.fundingIncomplete ||= !!flags.incomplete;
+  };
 
-  for (const row of income) {
-    if (row.incomeType !== 'FUNDING_FEE' || !row.symbol) continue;
-    const legs = (legsBySymbol.get(row.symbol) || []).filter(l => openDuring(l, row.time));
+  for (const rows of settlementsOf(income)) {
+    const { symbol, time } = rows[0];
+    const legs = (legsBySymbol.get(symbol) || []).filter(l => openDuring(l, time));
     if (!legs.length) continue;
-    const amount = parseFloat(row.income) || 0;
-    const shares = legs.length === 1 ? [amount] : splitSettlement(legs, amount, rateAt, row, sizeSteps);
-    legs.forEach((leg, i) => {
-      const entry = out.get(tripKey(leg));
-      if (!entry) return;
-      entry.funding += shares[i];
-      entry.fundingSplit ||= legs.length > 1;
-    });
+    const amounts = rows.map(r => parseFloat(r.income) || 0);
+    if (legs.length === 1) { credit(legs[0], amounts.reduce((a, b) => a + b, 0)); continue; }
+    if (amounts.length < legs.length && time < completeFrom) { legs.forEach(l => credit(l, 0, { incomplete: true })); continue; }
+    const modelled = modelledShares(legs, rateAt, symbol, time, sizeSteps);
+    if (modelled && amounts.length < legs.length) {
+      nearestLegs(legs, modelled, amounts).forEach(([leg, amount]) => credit(leg, amount));
+      continue;
+    }
+    if (!modelled || amounts.length > legs.length) {
+      const total = amounts.reduce((a, b) => a + b, 0);
+      legs.forEach(l => credit(l, total / legs.length, { split: true }));
+      continue;
+    }
+    pairInSortedOrder(legs, modelled, amounts).forEach(([leg, amount]) => credit(leg, amount));
   }
 
   for (const t of trips) {
     const entry = out.get(tripKey(t));
-    entry.funding = incomeFrom == null || t.openTime < incomeFrom ? null : +entry.funding.toFixed(8);
+    const unknown = incomeFrom == null || t.openTime < incomeFrom || entry.fundingIncomplete;
+    entry.funding = unknown ? null : +entry.funding.toFixed(8);
   }
   return out;
 }
 
-function splitSettlement(legs, amount, rateAt, row, sizeSteps) {
-  const nearest = rateAt.get(`${row.symbol}:${row.time}`)
-    || [...rateAt.values()].find(r => r.symbol === row.symbol && Math.abs(r.fundingTime - row.time) < 60_000);
-  if (!nearest) return legs.map(() => amount / legs.length);
+function settlementsOf(income) {
+  const groups = new Map();
+  for (const row of income) {
+    if (row.incomeType !== 'FUNDING_FEE' || !row.symbol) continue;
+    const key = `${row.symbol}:${row.time}`;
+    groups.set(key, [...(groups.get(key) || []), row]);
+  }
+  return groups.values();
+}
+
+function modelledShares(legs, rateAt, symbol, time, sizeSteps) {
+  const nearest = rateAt.get(`${symbol}:${time}`)
+    || [...rateAt.values()].find(r => r.symbol === symbol && Math.abs(r.fundingTime - time) < 60_000);
+  if (!nearest) return null;
   const rate = parseFloat(nearest.fundingRate) || 0;
   const mark = parseFloat(nearest.markPrice) || 0;
-  const modelled = legs.map(l => {
-    const size = sizeAt(sizeSteps?.get(tripKey(l)), row.time) || Math.abs(l.size || 0);
-    const price = mark || l.avgEntry || 0;
-    return (l.side === 'Long' ? -1 : 1) * rate * size * price;
+  return legs.map(l => {
+    const size = sizeAt(sizeSteps?.get(tripKey(l)), time) || Math.abs(l.size || 0);
+    return (l.side === 'Long' ? -1 : 1) * rate * size * (mark || l.avgEntry || 0);
   });
-  const residual = (amount - modelled.reduce((a, b) => a + b, 0)) / legs.length;
-  return modelled.map(m => m + residual);
+}
+
+function nearestLegs(legs, modelled, amounts) {
+  const free = legs.map((leg, i) => ({ leg, m: modelled[i] }));
+  return amounts.map(amount => {
+    const best = free.reduce((a, b) => (Math.abs(b.m - amount) < Math.abs(a.m - amount) ? b : a));
+    free.splice(free.indexOf(best), 1);
+    return [best.leg, amount];
+  });
+}
+
+function pairInSortedOrder(legs, modelled, amounts) {
+  const legOrder = legs.map((leg, i) => ({ leg, m: modelled[i] })).sort((a, b) => a.m - b.m);
+  const rowOrder = [...amounts].sort((a, b) => a - b);
+  return legOrder.map(({ leg }, i) => [leg, rowOrder[i]]);
 }
 
 /** True for a user-data `ORDER_TRADE_UPDATE` order that filled and grows its leg; one-way mode counts every non-reduce-only fill. */

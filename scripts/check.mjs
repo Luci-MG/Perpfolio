@@ -52,11 +52,15 @@ const documented = new Set([...fs.readFileSync(docPath, 'utf8').matchAll(/^\|\s*
 for (const r of registered) if (!documented.has(r)) fail(`route ${r} is not in the route table of ${rel(docPath)}`);
 for (const r of documented) if (!registered.has(r)) fail(`${rel(docPath)} documents ${r}, which the server does not register`);
 
+const interpolatedError = /\$\{(?!esc\()[^}]*\.(?:error|message)\b[^}]*\}/;
+const concatenatedError = /\+\s*[\w$?.]+\.(?:error|message)\b|[\w$?.]+\.(?:error|message)\s*\+\s*['"`]/;
+const rendersRawError = line => !/\.textContent\s*=/.test(line) && (interpolatedError.test(line) || concatenatedError.test(line));
+
 const pageSources = [htmlPath, ...walk(path.join(ROOT, 'public', 'js'), n => n.endsWith('.js'))];
 for (const file of pageSources) {
   fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
     if (/fundingRate[^;\n]*\*\s*3\b/.test(line)) fail(`${rel(file)}:${i + 1} multiplies funding by 3 — use fundingPerDay(p)`);
-    if (/(?:Error|Failed): \$\{(?!esc\()[^}]*\.error\}/.test(line)) fail(`${rel(file)}:${i + 1} renders an error message without esc()`);
+    if (rendersRawError(line)) fail(`${rel(file)}:${i + 1} renders an error message without esc()`);
   });
 }
 

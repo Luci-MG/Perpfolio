@@ -135,32 +135,6 @@ function renderMarginHealth(data) {
 }
 
 
-function renderDailyFundingWidget(data) {
-  const calcCost = positions => positions.reduce((sum, p) => sum + fundingPerDay(p), 0);
-  const hlCost = calcCost(data.hyperliquid.positions);
-  const bnCost = calcCost(data.binance.positions);
-  const totalCost = hlCost + bnCost;
-  const color = n => n >= 0 ? 'var(--success)' : 'var(--danger)';
-  const sign = n => n >= 0 ? '+' : '−';
-  // Returns inner content only — wrapper is built by renderSidebarBottomRow
-  return `
-    <div class="label" style="margin-bottom:6px">Daily funding</div>
-    <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:5px">
-      <span class="sb-num ${totalCost >= 0 ? 'up' : 'dn'}" style="font-size:15px;font-weight:600">${sign(totalCost)}${fmtUsd(Math.abs(totalCost))}</span>
-      <span style="font-size:10px;color:var(--text3)">/day</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:2px">
-      <div style="display:flex;justify-content:space-between;font-size:10px">
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--hl);display:inline-block"></span><span style="color:var(--text3)">HL</span></span>
-        <span class="sb-num" style="color:${color(hlCost)};font-weight:500">${sign(hlCost)}${fmtUsd(Math.abs(hlCost))}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:10px">
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--bn);display:inline-block"></span><span style="color:var(--text3)">BN</span></span>
-        <span class="sb-num" style="color:${color(bnCost)};font-weight:500">${sign(bnCost)}${fmtUsd(Math.abs(bnCost))}</span>
-      </div>
-    </div>`;
-}
-
 function renderCalcTiles() {
   const tiles = [
     {

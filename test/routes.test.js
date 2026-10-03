@@ -12,7 +12,7 @@ const { get, fake, stop } = await startTestServer();
 
 // Wall-clock fields differ between runs; everything else must reproduce exactly.
 const VOLATILE = new Set(['lastUpdated', 'lastReconcileAt', 'lastWsMessageAgeSec', 'at', 'ts',
-  'startedAt', 'finishedAt', 'ageSec', 'syncedAt']);
+  'startedAt', 'finishedAt', 'ageSec', 'syncedAt', 'incomeCompleteFrom']);
 function stable(v) {
   if (Array.isArray(v)) return v.map(stable);
   if (v && typeof v === 'object') {
@@ -120,7 +120,7 @@ test('history sync fills the store and the journal reconciles every fill', async
   assert.equal(status, 200);
   assert.ok(body.overall.trips > 0);
   const clockFree = { ...body, walletCurve: body.walletCurve.slice(0, -1),
-    periods: Object.fromEntries(Object.entries(body.periods).map(([k, { from, ...rest }]) => [k, rest])) };
+    periods: Object.fromEntries(Object.entries(body.periods).map(([k, { from, previous, ...rest }]) => [k, rest])) };
   record('performance', clockFree);
 });
 
@@ -134,7 +134,9 @@ test('a session narrows trip statistics and habits, never the account overview',
   assert.equal(one.session, session);
   assert.equal(one.overall.trips, inIt);
   assert.ok(inIt < all.overall.trips || trips.every(t => t.session === session));
-  assert.deepEqual(one.periods, all.periods, 'the overview is the whole account');
+  const clockFree = periods => Object.fromEntries(Object.entries(periods).map(([k, { previous: { to, ...prev }, ...rest }]) => [k, { ...rest, prev }]));
+  assert.deepEqual(clockFree(one.periods), clockFree(all.periods), 'the overview is the whole account');
+  assert.deepEqual(one.recentTrips, all.recentTrips, 'recent trades are the whole account too');
   assert.deepEqual(one.equity, all.equity);
   assert.ok(one.habits.every((h, i) => h.trips <= all.habits[i].trips));
   assert.equal((await get('/api/performance?session=Mars')).body.session, null);
@@ -296,6 +298,26 @@ test('factors compare buckets with intervals, cache the result, and drop the ses
   record('factors', body);
 });
 
+test('funding nets hedged pairs, ranks worst first, reads realised from the ledger, and caches rate history for an hour', async () => {
+  const before = fake.calls.filter(c => c === '/fapi/v1/fundingRate').length;
+  const { status, body } = await get('/api/funding');
+  assert.equal(status, 200);
+  const fetched = fake.calls.filter(c => c === '/fapi/v1/fundingRate').length - before;
+  assert.ok(fetched > 0, 'history read per held symbol');
+  const pair = body.rows.find(r => r.pair);
+  assert.ok(pair && pair.symbol === 'BTCUSDT', 'the BTC long and short are one row');
+  assert.ok(Math.abs(pair.perDay - (pair.long.perDay + pair.short.perDay)) < 1e-6);
+  assert.deepEqual(body.rows.map(r => r.perDay), [...body.rows.map(r => r.perDay)].sort((a, b) => a - b));
+  const eth = body.rows.find(r => r.symbol === 'ETHUSDT');
+  assert.equal(eth.intervalHours, 4);
+  assert.ok(Math.abs(eth.aprPct - 0.02 * 6 * 365) < 0.01);
+  assert.ok(Math.abs(body.totals.perDay - body.rows.reduce((s, r) => s + r.perDay, 0)) < 1e-3);
+  assert.equal(typeof body.realised.d7, 'number');
+  await get('/api/funding');
+  assert.equal(fake.calls.filter(c => c === '/fapi/v1/fundingRate').length - before, fetched, 'second read is cached');
+  record('funding', { totals: body.totals, rows: body.rows.map(({ symbol, pair, perDay, aprPct, nearCap }) => ({ symbol, pair, perDay, aprPct, nearCap })) });
+});
+
 test('route output matches the golden snapshot', () => {
   if (!fs.existsSync(GOLDEN) || process.env.UPDATE_GOLDEN) {
     fs.mkdirSync(path.dirname(GOLDEN), { recursive: true });
@@ -430,4 +452,52 @@ test('the venue switch accepts only a well-formed JSON body', async () => {
   const state = await get('/api/venues');
   assert.equal(state.body.venues.binance.enabled, true);
   assert.equal(state.body.venues.hyperliquid.enabled, true);
+});
+
+const postNote = (body, type = 'application/json') =>
+  get('/api/annotations', { method: 'POST', headers: { 'Content-Type': type }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+
+test('a note and tags on a trip save, come back on /api/trips, and reach Factors and Goals', async () => {
+  const [first] = (await get('/api/trips')).body.trips;
+  assert.deepEqual([first.note, first.tags], [null, []]);
+  assert.equal((await postNote({ key: first.key, note: 'chased the move', tags: ['Revenge'] })).status, 200);
+  const saved = (await get('/api/trips')).body.trips.find(t => t.key === first.key);
+  assert.deepEqual([saved.note, saved.tags], ['chased the move', ['revenge']]);
+  assert.ok((await get('/api/factors?tz=0')).body.tags, 'factors carry the tags section');
+
+  assert.equal((await postNote('key=x', 'application/x-www-form-urlencoded')).status, 415);
+  assert.equal((await postNote('{"key":')).status, 400);
+  assert.equal((await postNote({ key: 'NOPE:LONG:1', note: 'x' })).status, 404);
+  assert.equal((await postNote({ key: first.key, tags: ['<b>'] })).status, 400);
+  assert.equal((await postNote({ key: first.key, note: '', tags: [] })).status, 200);
+  assert.equal((await get('/api/trips')).body.trips.find(t => t.key === first.key).note, null);
+});
+
+const syncHistory = async () => {
+  await get('/api/history/sync?start=true');
+  for (let i = 0; i < 200 && (await get('/api/history/sync')).body.state.running; i++) await new Promise(r => setTimeout(r, 20));
+};
+
+test('both legs of a hedged funding settlement are kept, though Binance books them under one tranId', async () => {
+  const dir = process.env.DASHBOARD_DATA_DIR;
+  const solFunding = () => fs.readFileSync(path.join(dir, 'income.ndjson'), 'utf8').trim().split('\n').map(JSON.parse)
+    .filter(r => r.symbol === 'SOLUSDT' && r.incomeType === 'FUNDING_FEE');
+  assert.equal(solFunding().length, 60, 'a paying and a receiving row for each of 30 settlements');
+  const perf = (await get('/api/performance')).body;
+  assert.ok(Math.abs(perf.totals.FUNDING_FEE - (30 * -0.8 + 30 * -0.1)) < 1e-6, `funding ${perf.totals.FUNDING_FEE}`);
+
+  const metaFile = path.join(dir, 'meta.json');
+  const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+  assert.equal(meta.incomeKeyVersion, 2);
+  const incomeFile = path.join(dir, 'income.ndjson');
+  const damaged = fs.readFileSync(incomeFile, 'utf8').trim().split('\n').filter(l => !(l.includes('SOLUSDT') && l.includes('"2.4"')));
+  fs.writeFileSync(incomeFile, damaged.join('\n') + '\n');
+  delete meta.incomeKeyVersion;
+  fs.writeFileSync(metaFile, JSON.stringify(meta));
+  await syncHistory();
+  assert.equal(solFunding().length, 60, 'a cache written under the old key is repaired on the next sync');
+  const repaired = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+  assert.equal(repaired.incomeKeyVersion, 2);
+  assert.ok(repaired.incomeCompleteFrom > 0);
+  assert.equal((await get('/api/trips')).body.coverage.incomeCompleteFrom, repaired.incomeCompleteFrom);
 });

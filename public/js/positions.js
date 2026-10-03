@@ -14,20 +14,24 @@ function setView(v) {
   if (v === 'confluence' && (!cfData || cfData.symbol !== cfSymbol)) fetchConfluence();
 }
 
-let volSeq = 0;
+let volSeq = 0, volQuery = null;
 async function fetchVolStops() {
   const seq = ++volSeq;
+  const query = `risk=${volRiskPct / 100}&k=${volK}`;
   volLoading = true;
   if (posView === 'stops') rerenderStress();
   try {
-    const res = await fetch(`/api/volstops?risk=${(volRiskPct / 100)}&k=${volK}`);
+    const res = await fetch(`/api/volstops?${query}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'volstops failed');
     if (seq !== volSeq) return;
     volStopData = data;
+    volQuery = query;
+    clearLoadError('vol');
   } catch (err) {
     if (seq !== volSeq) return;
-    volStopData = { error: err.message };
+    noteLoadError('vol', err);
+    if (query !== volQuery) volStopData = null;
   } finally {
     if (seq === volSeq) {
       volLoading = false;

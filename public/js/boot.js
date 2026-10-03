@@ -13,10 +13,11 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeVenuePopover(); hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); closeUpnlDrawerForce(); closeExpDrawerForce(); closeFundDrawerForce(); closeLiqDrawerForce(); closeSimDrawerForce(); closeHlDrawerForce(); closeGoalDrawerForce(); }
+  if (e.key === 'Escape') { closeVenuePopover(); hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); closeUpnlDrawerForce(); closeExpDrawerForce(); closeFundDrawerForce(); closeLiqDrawerForce(); closeSimDrawerForce(); closeHlDrawerForce(); closeGoalDrawerForce(); cancelTripNote(); }
 });
 
 startSessionClock();
+setInterval(tickCountdowns, 30_000);
 
 const VIEWS = ['tiles', 'list', 'orders', 'stops', 'stress', 'unwind', 'journal', 'confluence'];
 const savedView = loadPref('posView', 'tiles');

@@ -32,6 +32,7 @@ async function fetchRiskBook(fresh = false) {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'riskbook failed');
     riskBook = data;
+    clearLoadError('risk');
     // Shifts are held as percentages, so a refreshed book keeps the scenario intact
     // even though every mark has moved underneath it.
     const live = new Set(data.pools.flatMap(P => Object.keys(P.marks)));
@@ -50,7 +51,7 @@ async function fetchRiskBook(fresh = false) {
     }
     if (!riskRangeExplicit) riskRange = rangeForNearestKill(data);
   } catch (err) {
-    riskBook = { error: err.message };
+    noteLoadError('risk', err);
   } finally {
     riskLoading = false;
     if (posView === 'stress') rerenderStress();
@@ -534,13 +535,16 @@ function renderStress() {
   if (riskLoading && !riskBook) {
     return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Resolving the cross pool…</p>`;
   }
-  if (!riskBook) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No pool data yet.</p>`;
-  if (riskBook.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(riskBook.error)}</p>`;
+  if (!riskBook) {
+    return loadErrors.risk ? `${renderStressControls()}${loadErrorHtml('risk', 'fetchRiskBook(true)', false)}`
+      : `<p style="font-size:12px;color:var(--text3);padding:14px 0">No pool data yet.</p>`;
+  }
+  const stale = loadErrorHtml('risk', 'fetchRiskBook(true)', true);
   if (!riskBook.pools?.length) {
-    return `${renderStressBanner()}<p style="font-size:12px;color:var(--text3);padding:14px 0">No open Binance cross positions.</p>`;
+    return `${stale}${renderStressBanner()}<p style="font-size:12px;color:var(--text3);padding:14px 0">No open Binance cross positions.</p>`;
   }
 
   const body = riskBook.pools.map((P, i) => renderStressPool(P, i)).join('');
   requestAnimationFrame(updateStress);
-  return `${renderStressBanner()}${renderStressControls()}${body}`;
+  return `${stale}${renderStressBanner()}${renderStressControls()}${body}`;
 }

@@ -3,7 +3,7 @@
 // ── Journal ───────────────────────────────────────────────────────────────────
 // What already happened, rebuilt from the cached fill and income history.
 let perfData = null, perfLoading = false, perfDays = 0, syncPoll = null;
-let jrTab = 'overview';
+let jrTab = 'overview', perfQuery = null;
 function setJrTab(t) {
   jrTab = t;
   if (t === 'trades' && !tripsData && !tripsLoading) fetchTrips();
@@ -15,17 +15,20 @@ function setJrTab(t) {
 async function fetchPerformance() {
   perfLoading = true;
   if (posView === 'journal') rerenderStress();
+  const query = [`tz=${-new Date().getTimezoneOffset()}`, perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
   try {
-    const tz = -new Date().getTimezoneOffset();
-    const query = [`tz=${tz}`, perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
     const res = await fetch(`/api/performance?${query}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'performance failed');
     perfData = data;
+    perfQuery = query;
+    clearLoadError('perf');
     fetchGoals();
     reloadFactors();
+    if (!fundLoading) fetchFunding();
   } catch (err) {
-    perfData = { error: err.message };
+    noteLoadError('perf', err);
+    if (query !== perfQuery) perfData = null;
   } finally {
     perfLoading = false;
     if (posView === 'journal') rerenderStress();
@@ -184,23 +187,6 @@ function jrDivergingBars(buckets, { valueKey = 'net', countKey = 'trips', showCo
   }).join('')}</div>`;
 }
 
-const JR_PERIODS = [['today', 'Today'], ['week', 'This week'], ['month', 'This month']];
-
-function jrPeriodStrip(periods) {
-  if (!periods) return '';
-  const cell = ([key, label]) => {
-    const p = periods[key];
-    const account = p.account
-      ? `<div class="s">account ${fmtSignedUsd(p.account.change)}${p.account.partial
-          ? ` since ${new Date(p.account.since).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}</div>`
-      : '<div class="s" title="no equity snapshots in this period yet">account —</div>';
-    return `<div class="jr-stat"><div class="k">${label}</div>
-      <div class="v ${p.net > 0 ? 'up' : p.net < 0 ? 'dn' : ''}">${fmtSignedUsd(p.net)}</div>
-      <div class="s">${p.trips} trips closed${p.trips ? `, ${p.wins} won` : ''}</div>${account}</div>`;
-  };
-  return `<div class="jr-hero">${JR_PERIODS.map(cell).join('')}</div>`;
-}
-
 const CHART_MAX_POINTS = 400;
 
 function thinPoints(points) {
@@ -277,30 +263,15 @@ function jrCalendar(cal) {
     </div>`;
 }
 
-// Locked PnL of the open same-symbol hedges, from the dashboard poll — no extra request.
-// A matched pair pins its PnL at (shortEntry − longEntry) × matchedQty.
-function jrLockedFromPositions(positions) {
-  const bySymbol = {};
-  for (const p of positions || []) (bySymbol[p.symbol] = bySymbol[p.symbol] || []).push(p);
-  let locked = 0, matchedNotional = 0, pairs = 0;
-  for (const legs of Object.values(bySymbol)) {
-    const L = legs.find(p => p.sizeRaw > 0), S = legs.find(p => p.sizeRaw < 0);
-    if (!L || !S) continue;
-    const q = Math.min(Math.abs(L.sizeRaw), Math.abs(S.sizeRaw));
-    locked += q * (S.entry - L.entry);
-    matchedNotional += 2 * q * L.mark;
-    pairs++;
-  }
-  return { locked, matchedNotional, pairs };
+function journalSyncState() {
+  if (!perfData) return 'history not loaded';
+  if (perfData.empty) return 'no cached history';
+  return `${perfData.session ? `${perfData.session} · ` : ''}${perfData.overall.trips} round trips · ${perfData.equity.days} days`;
 }
 
-function renderJournal() {
-  if (perfLoading && !perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Loading history…</p>`;
-  if (!perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No history loaded.</p>`;
-  if (perfData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(perfData.error)}</p>`;
-
-  const syncBar = `<div class="jr-sync" id="jr-mounted">
-    <span id="jr-sync-state">${perfData.empty ? 'no cached history' : `${perfData.session ? `${perfData.session} · ` : ''}${perfData.overall.trips} round trips · ${perfData.equity.days} days`}</span>
+function journalSyncBar() {
+  return `<div class="jr-sync" id="jr-mounted">
+    <span id="jr-sync-state">${journalSyncState()}</span>
     <button class="st-btn" onclick="startSync(false)">Sync recent</button>
     <button class="st-btn" onclick="startSync(true)">Full rebuild</button>
     <span class="st-sep"></span>
@@ -308,6 +279,15 @@ function renderJournal() {
     <span class="st-sep"></span>
     ${sessionSelectHtml()}
   </div>`;
+}
+
+function renderJournal() {
+  if (perfLoading && !perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Loading history…</p>`;
+  if (!perfData) {
+    return loadErrors.perf ? `${journalSyncBar()}${loadErrorHtml('perf', 'fetchPerformance()', false)}`
+      : `<p style="font-size:12px;color:var(--text3);padding:14px 0">No history loaded.</p>`;
+  }
+  const syncBar = journalSyncBar() + loadErrorHtml('perf', 'fetchPerformance()', true);
 
   if (perfData.empty) return `${syncBar}<p style="font-size:12px;color:var(--text3)">${perfData.hint}</p>`;
 
@@ -352,85 +332,7 @@ function renderJournal() {
 
   let body = '';
 
-  // ── Overview: the account, not just the closed trades ──
-  // Closed-trade statistics alone are misleading while a large position is still open:
-  // the round-trip net can read a fraction of the loss while the account carries far more unrealised on top
-  // of it. The front page reconciles the whole thing.
-  if (jrTab === 'overview') {
-    const bn = lastData?.binance;
-    const positions = bn?.positions || [];
-    const t = perfData.totals || {};
-    const realised = t.REALIZED_PNL || 0, fees = t.COMMISSION || 0;
-    const funding = t.FUNDING_FEE || 0, transfers = t.TRANSFER || 0;
-    const ledger = realised + fees + funding + transfers;
-
-    const wallet = parseFloat(bn?.walletBalance ?? 0);
-    const upnl = positions.reduce((s, p) => s + p.upnl, 0);
-    const accountValue = parseFloat(bn?.equity ?? 0);
-    const startWallet = wallet - ledger;
-    const hedge = jrLockedFromPositions(positions);
-    const gross = positions.reduce((s, p) => s + p.sizeUsd, 0);
-
-    const row = (k, v, cls = '', extra = '') =>
-      `<div class="jr-flow-row ${extra}"><span class="k">${k}</span><span class="${cls}">${v}</span></div>`;
-
-    const posRows = positions.length ? positions
-      .sort((a, b) => a.upnl - b.upnl)
-      .map(p => `<tr>
-        <td>${jrSym(p.symbol)} <span style="font-weight:400;color:var(--text3)">${p.side.toLowerCase()}</span></td>
-        <td>${p.size}</td>
-        <td>${fmtPrice(p.entry)}</td>
-        <td>${fmtPrice(p.mark)}</td>
-        <td class="${p.upnl >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(p.upnl)}</td>
-        <td style="color:var(--text3)">${fmtUsd(p.sizeUsd)}</td>
-      </tr>`).join('') : '';
-
-    const sessionNote = perfData.session
-      ? `<p class="jr-session-note">Overview is the whole account, so the ${esc(perfData.session)} filter does not apply here — it narrows the trip-based tabs.</p>` : '';
-    body = `${goalsOverviewLine()}${sessionNote}
-      ${jrSection('How it is going', jrPeriodStrip(perfData.periods),
-        'Realised is net of fees and funding, from the Binance ledger — exact. Account value includes open positions on both venues, net of deposits and withdrawals, from snapshots the server records every 15 minutes while it runs.')}
-      ${jrSection('Wallet and account value', renderOverviewChart(perfData.walletCurve, perfData.accountCurve),
-        'The gap between the lines is what the open positions are worth. Wallet is rebuilt from the ledger as far back as it reaches; account value starts when snapshots began.')}
-      ${jrSection('Where the account stands', `<div class="jr-hero">
-        ${stat('Account value', fmtUsd(accountValue), 'wallet + open positions', accountValue >= 0 ? '' : 'dn')}
-        ${stat('Wallet', fmtUsd(wallet), 'realised money')}
-        ${stat('Open positions', fmtSignedUsd(upnl), 'unrealised', upnl >= 0 ? 'up' : 'dn')}
-        ${stat('Free margin', fmtUsd(bn?.freeMargin ?? 0), `${bn?.marginPct ?? 0}% margin used`)}
-        ${stat('Open', positions.length, `${fmtUsd(gross)} gross`)}
-        ${hedge.pairs ? stat('Locked in hedges', fmtSignedUsd(hedge.locked), `${hedge.pairs} matched pair${hedge.pairs > 1 ? 's' : ''}`, 'dn') : ''}
-      </div>`)}
-
-      ${jrSection('How it got here', `<div class="jr-flow">
-        ${row('wallet at the start of the window', fmtUsd(startWallet), '', 'muted')}
-        ${row('deposits and withdrawals', fmtSignedUsd(transfers), transfers >= 0 ? 'up' : 'dn')}
-        ${row('realised profit and loss', fmtSignedUsd(realised), realised >= 0 ? 'up' : 'dn')}
-        ${row('trading fees', fmtSignedUsd(fees), 'dn')}
-        ${row('funding', fmtSignedUsd(funding), funding >= 0 ? 'up' : 'dn')}
-        ${row('wallet now', fmtUsd(wallet), '', 'rule')}
-        ${row('open positions, unrealised', fmtSignedUsd(upnl), upnl >= 0 ? 'up' : 'dn')}
-        ${row('account value', fmtUsd(accountValue), '', 'total')}
-      </div>`,
-      `Realised ${fmtSignedUsd(realised)} over this window, against ${fmtSignedUsd(upnl)} still open —
-       ${realised + upnl >= 0
-         ? `net <b>${fmtSignedUsd(realised + upnl)}</b> once both are counted.`
-         : `the open book more than gives the realised gains back, <b>${fmtSignedUsd(realised + upnl)}</b> net.`}
-       The starting wallet is derived from the ledger, so it is exact only for the window the income
-       history covers.`)}
-
-      ${positions.length ? jrSection(`Open right now`,
-        `<table class="jr-tbl"><tr><th>position</th><th>size</th><th>entry</th><th>mark</th><th>unrealised</th><th>notional</th></tr>${posRows}</table>`,
-        hedge.pairs ? `${fmtUsd(hedge.matchedNotional)} of that notional is matched long against short —
-          its ${fmtSignedUsd(hedge.locked)} cannot change with price. See the hedge ledger in the sidebar.` : '')
-        : jrSection('Open right now', `<p style="font-size:11px;color:var(--text3)">Nothing open — the account is flat.</p>`)}
-
-      ${jrSection('Activity', `<div class="jr-hero">
-        ${stat('Fills', (perfData.execution?.fills ?? 0).toLocaleString('en-US'), `${perfData.bySymbol.length} symbols`)}
-        ${stat('Closed trips', o.trips, `${perfData.stillOpen} still open`)}
-        ${stat('Trading days', e.days, `${e.greenDays} green / ${e.redDays} red`)}
-        ${stat('Since', (perfData.window.tripsFrom || perfData.window.from || '').slice(0, 10), 'earliest reachable fill')}
-      </div>`, 'Closed-trade performance lives under <b>Performance</b>; this page is the account as a whole.')}`;
-  }
+  if (jrTab === 'overview') body = renderOverview();
 
   if (jrTab === 'performance') {
     body = `${hero}
@@ -500,7 +402,8 @@ function renderJournal() {
       .map(f => ({ label: jrSym(f.symbol), net: -f.fees, trips: 1, thin: false }));
     const fund = perfData.fundingBySymbol.filter(f => Math.abs(f.funding) > 0.5).slice(0, 10)
       .map(f => ({ label: jrSym(f.symbol), net: f.funding, trips: 1, thin: false }));
-    body = `${jrSection('Execution', `<div class="jr-hero">
+    body = `${walletBridgeSection()}
+      ${jrSection('Execution', `<div class="jr-hero">
         ${stat('Maker share', `${fmt(x.makerPct, 1)}%`, `${x.maker} of ${x.fills} fills`)}
         ${stat('Taker fees', fmtUsd(x.takerFee), `${x.taker} fills`)}
         ${stat('Maker fees', fmtUsd(x.makerFee), `${x.maker} fills`)}

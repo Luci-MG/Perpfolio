@@ -1957,126 +1957,126 @@
    "days": [
     {
      "date": "2026-08-02",
-     "pnl": -22.3
+     "pnl": -22.4
     },
     {
      "date": "2026-08-03",
-     "pnl": 25.7
+     "pnl": 25.6
     },
     {
      "date": "2026-08-04",
-     "pnl": 13.7
+     "pnl": 13.6
     },
     {
      "date": "2026-08-05",
-     "pnl": 1.7
+     "pnl": 1.6
     },
     {
      "date": "2026-08-06",
-     "pnl": -10.3
+     "pnl": -10.4
     },
     {
      "date": "2026-08-07",
-     "pnl": -22.3
+     "pnl": -22.4
     },
     {
      "date": "2026-08-08",
-     "pnl": 25.7
+     "pnl": 25.6
     },
     {
      "date": "2026-08-09",
-     "pnl": 13.7
+     "pnl": 13.6
     },
     {
      "date": "2026-08-10",
-     "pnl": 1.7
+     "pnl": 1.6
     },
     {
      "date": "2026-08-11",
-     "pnl": -10.3
+     "pnl": -10.4
     },
     {
      "date": "2026-08-12",
-     "pnl": -22.3
+     "pnl": -22.4
     },
     {
      "date": "2026-08-13",
-     "pnl": 25.7
+     "pnl": 25.6
     },
     {
      "date": "2026-08-14",
-     "pnl": 13.7
+     "pnl": 13.6
     },
     {
      "date": "2026-08-15",
-     "pnl": 1.7
+     "pnl": 1.6
     },
     {
      "date": "2026-08-16",
-     "pnl": -10.3
+     "pnl": -10.4
     },
     {
      "date": "2026-08-17",
-     "pnl": -22.3
+     "pnl": -22.4
     },
     {
      "date": "2026-08-18",
-     "pnl": 25.7
+     "pnl": 25.6
     },
     {
      "date": "2026-08-19",
-     "pnl": 13.7
+     "pnl": 13.6
     },
     {
      "date": "2026-08-20",
-     "pnl": 1.7
+     "pnl": 1.6
     },
     {
      "date": "2026-08-21",
-     "pnl": -10.3
+     "pnl": -10.4
     },
     {
      "date": "2026-08-22",
-     "pnl": -22.3
+     "pnl": -22.4
     },
     {
      "date": "2026-08-23",
-     "pnl": 25.7
+     "pnl": 25.6
     },
     {
      "date": "2026-08-24",
-     "pnl": 13.7
+     "pnl": 13.6
     },
     {
      "date": "2026-08-25",
-     "pnl": 1.7
+     "pnl": 1.6
     },
     {
      "date": "2026-08-26",
-     "pnl": -10.3
+     "pnl": -10.4
     },
     {
      "date": "2026-08-27",
-     "pnl": -22.3
+     "pnl": -22.4
     },
     {
      "date": "2026-08-28",
-     "pnl": 25.7
+     "pnl": 25.6
     },
     {
      "date": "2026-08-29",
-     "pnl": 13.7
+     "pnl": 13.6
     },
     {
      "date": "2026-08-30",
-     "pnl": 1.7
+     "pnl": 1.6
     },
     {
      "date": "2026-08-31",
-     "pnl": -10.3
+     "pnl": -10.4
     }
    ],
-   "maxAbs": 25.7,
+   "maxAbs": 25.6,
    "weeks": [
     [
      {
@@ -2105,133 +2105,133 @@
      },
      {
       "date": "2026-08-02",
-      "pnl": -22.3
+      "pnl": -22.4
      }
     ],
     [
      {
       "date": "2026-08-03",
-      "pnl": 25.7
+      "pnl": 25.6
      },
      {
       "date": "2026-08-04",
-      "pnl": 13.7
+      "pnl": 13.6
      },
      {
       "date": "2026-08-05",
-      "pnl": 1.7
+      "pnl": 1.6
      },
      {
       "date": "2026-08-06",
-      "pnl": -10.3
+      "pnl": -10.4
      },
      {
       "date": "2026-08-07",
-      "pnl": -22.3
+      "pnl": -22.4
      },
      {
       "date": "2026-08-08",
-      "pnl": 25.7
+      "pnl": 25.6
      },
      {
       "date": "2026-08-09",
-      "pnl": 13.7
+      "pnl": 13.6
      }
     ],
     [
      {
       "date": "2026-08-10",
-      "pnl": 1.7
+      "pnl": 1.6
      },
      {
       "date": "2026-08-11",
-      "pnl": -10.3
+      "pnl": -10.4
      },
      {
       "date": "2026-08-12",
-      "pnl": -22.3
+      "pnl": -22.4
      },
      {
       "date": "2026-08-13",
-      "pnl": 25.7
+      "pnl": 25.6
      },
      {
       "date": "2026-08-14",
-      "pnl": 13.7
+      "pnl": 13.6
      },
      {
       "date": "2026-08-15",
-      "pnl": 1.7
+      "pnl": 1.6
      },
      {
       "date": "2026-08-16",
-      "pnl": -10.3
+      "pnl": -10.4
      }
     ],
     [
      {
       "date": "2026-08-17",
-      "pnl": -22.3
+      "pnl": -22.4
      },
      {
       "date": "2026-08-18",
-      "pnl": 25.7
+      "pnl": 25.6
      },
      {
       "date": "2026-08-19",
-      "pnl": 13.7
+      "pnl": 13.6
      },
      {
       "date": "2026-08-20",
-      "pnl": 1.7
+      "pnl": 1.6
      },
      {
       "date": "2026-08-21",
-      "pnl": -10.3
+      "pnl": -10.4
      },
      {
       "date": "2026-08-22",
-      "pnl": -22.3
+      "pnl": -22.4
      },
      {
       "date": "2026-08-23",
-      "pnl": 25.7
+      "pnl": 25.6
      }
     ],
     [
      {
       "date": "2026-08-24",
-      "pnl": 13.7
+      "pnl": 13.6
      },
      {
       "date": "2026-08-25",
-      "pnl": 1.7
+      "pnl": 1.6
      },
      {
       "date": "2026-08-26",
-      "pnl": -10.3
+      "pnl": -10.4
      },
      {
       "date": "2026-08-27",
-      "pnl": -22.3
+      "pnl": -22.4
      },
      {
       "date": "2026-08-28",
-      "pnl": 25.7
+      "pnl": 25.6
      },
      {
       "date": "2026-08-29",
-      "pnl": 13.7
+      "pnl": 13.6
      },
      {
       "date": "2026-08-30",
-      "pnl": 1.7
+      "pnl": 1.6
      }
     ],
     [
      {
       "date": "2026-08-31",
-      "pnl": -10.3
+      "pnl": -10.4
      },
      {
       "date": "2026-09-01",
@@ -2397,203 +2397,203 @@
   ],
   "equity": {
    "bestDay": {
-    "cumulative": 3.4,
+    "cumulative": 3.2,
     "date": "2026-08-03",
     "drawdown": 0,
-    "pnl": 25.7
+    "pnl": 25.6
    },
    "days": 30,
    "greenDays": 18,
-   "maxDrawdown": -32.6,
-   "net": 51,
+   "maxDrawdown": -32.8,
+   "net": 48,
    "points": [
     {
-     "cumulative": -22.3,
+     "cumulative": -22.4,
      "date": "2026-08-02",
-     "drawdown": -22.3,
-     "pnl": -22.3
-    },
-    {
-     "cumulative": 3.4,
-     "date": "2026-08-03",
-     "drawdown": 0,
-     "pnl": 25.7
-    },
-    {
-     "cumulative": 17.1,
-     "date": "2026-08-04",
-     "drawdown": 0,
-     "pnl": 13.7
-    },
-    {
-     "cumulative": 18.8,
-     "date": "2026-08-05",
-     "drawdown": 0,
-     "pnl": 1.7
-    },
-    {
-     "cumulative": 8.5,
-     "date": "2026-08-06",
-     "drawdown": -10.3,
-     "pnl": -10.3
-    },
-    {
-     "cumulative": -13.8,
-     "date": "2026-08-07",
-     "drawdown": -32.6,
-     "pnl": -22.3
-    },
-    {
-     "cumulative": 11.9,
-     "date": "2026-08-08",
-     "drawdown": -6.9,
-     "pnl": 25.7
-    },
-    {
-     "cumulative": 25.6,
-     "date": "2026-08-09",
-     "drawdown": 0,
-     "pnl": 13.7
-    },
-    {
-     "cumulative": 27.3,
-     "date": "2026-08-10",
-     "drawdown": 0,
-     "pnl": 1.7
-    },
-    {
-     "cumulative": 17,
-     "date": "2026-08-11",
-     "drawdown": -10.3,
-     "pnl": -10.3
-    },
-    {
-     "cumulative": -5.3,
-     "date": "2026-08-12",
-     "drawdown": -32.6,
-     "pnl": -22.3
-    },
-    {
-     "cumulative": 20.4,
-     "date": "2026-08-13",
-     "drawdown": -6.9,
-     "pnl": 25.7
-    },
-    {
-     "cumulative": 34.1,
-     "date": "2026-08-14",
-     "drawdown": 0,
-     "pnl": 13.7
-    },
-    {
-     "cumulative": 35.8,
-     "date": "2026-08-15",
-     "drawdown": 0,
-     "pnl": 1.7
-    },
-    {
-     "cumulative": 25.5,
-     "date": "2026-08-16",
-     "drawdown": -10.3,
-     "pnl": -10.3
+     "drawdown": -22.4,
+     "pnl": -22.4
     },
     {
      "cumulative": 3.2,
+     "date": "2026-08-03",
+     "drawdown": 0,
+     "pnl": 25.6
+    },
+    {
+     "cumulative": 16.8,
+     "date": "2026-08-04",
+     "drawdown": 0,
+     "pnl": 13.6
+    },
+    {
+     "cumulative": 18.4,
+     "date": "2026-08-05",
+     "drawdown": 0,
+     "pnl": 1.6
+    },
+    {
+     "cumulative": 8,
+     "date": "2026-08-06",
+     "drawdown": -10.4,
+     "pnl": -10.4
+    },
+    {
+     "cumulative": -14.4,
+     "date": "2026-08-07",
+     "drawdown": -32.8,
+     "pnl": -22.4
+    },
+    {
+     "cumulative": 11.2,
+     "date": "2026-08-08",
+     "drawdown": -7.2,
+     "pnl": 25.6
+    },
+    {
+     "cumulative": 24.8,
+     "date": "2026-08-09",
+     "drawdown": 0,
+     "pnl": 13.6
+    },
+    {
+     "cumulative": 26.4,
+     "date": "2026-08-10",
+     "drawdown": 0,
+     "pnl": 1.6
+    },
+    {
+     "cumulative": 16,
+     "date": "2026-08-11",
+     "drawdown": -10.4,
+     "pnl": -10.4
+    },
+    {
+     "cumulative": -6.4,
+     "date": "2026-08-12",
+     "drawdown": -32.8,
+     "pnl": -22.4
+    },
+    {
+     "cumulative": 19.2,
+     "date": "2026-08-13",
+     "drawdown": -7.2,
+     "pnl": 25.6
+    },
+    {
+     "cumulative": 32.8,
+     "date": "2026-08-14",
+     "drawdown": 0,
+     "pnl": 13.6
+    },
+    {
+     "cumulative": 34.4,
+     "date": "2026-08-15",
+     "drawdown": 0,
+     "pnl": 1.6
+    },
+    {
+     "cumulative": 24,
+     "date": "2026-08-16",
+     "drawdown": -10.4,
+     "pnl": -10.4
+    },
+    {
+     "cumulative": 1.6,
      "date": "2026-08-17",
-     "drawdown": -32.6,
-     "pnl": -22.3
+     "drawdown": -32.8,
+     "pnl": -22.4
     },
     {
-     "cumulative": 28.9,
+     "cumulative": 27.2,
      "date": "2026-08-18",
-     "drawdown": -6.9,
-     "pnl": 25.7
+     "drawdown": -7.2,
+     "pnl": 25.6
     },
     {
-     "cumulative": 42.6,
+     "cumulative": 40.8,
      "date": "2026-08-19",
      "drawdown": 0,
-     "pnl": 13.7
+     "pnl": 13.6
     },
     {
-     "cumulative": 44.3,
+     "cumulative": 42.4,
      "date": "2026-08-20",
      "drawdown": 0,
-     "pnl": 1.7
+     "pnl": 1.6
     },
     {
-     "cumulative": 34,
+     "cumulative": 32,
      "date": "2026-08-21",
-     "drawdown": -10.3,
-     "pnl": -10.3
+     "drawdown": -10.4,
+     "pnl": -10.4
     },
     {
-     "cumulative": 11.7,
+     "cumulative": 9.6,
      "date": "2026-08-22",
-     "drawdown": -32.6,
-     "pnl": -22.3
+     "drawdown": -32.8,
+     "pnl": -22.4
     },
     {
-     "cumulative": 37.4,
+     "cumulative": 35.2,
      "date": "2026-08-23",
-     "drawdown": -6.9,
-     "pnl": 25.7
+     "drawdown": -7.2,
+     "pnl": 25.6
     },
     {
-     "cumulative": 51.1,
+     "cumulative": 48.8,
      "date": "2026-08-24",
      "drawdown": 0,
-     "pnl": 13.7
+     "pnl": 13.6
     },
     {
-     "cumulative": 52.8,
+     "cumulative": 50.4,
      "date": "2026-08-25",
      "drawdown": 0,
-     "pnl": 1.7
+     "pnl": 1.6
     },
     {
-     "cumulative": 42.5,
+     "cumulative": 40,
      "date": "2026-08-26",
-     "drawdown": -10.3,
-     "pnl": -10.3
+     "drawdown": -10.4,
+     "pnl": -10.4
     },
     {
-     "cumulative": 20.2,
+     "cumulative": 17.6,
      "date": "2026-08-27",
-     "drawdown": -32.6,
-     "pnl": -22.3
+     "drawdown": -32.8,
+     "pnl": -22.4
     },
     {
-     "cumulative": 45.9,
+     "cumulative": 43.2,
      "date": "2026-08-28",
-     "drawdown": -6.9,
-     "pnl": 25.7
+     "drawdown": -7.2,
+     "pnl": 25.6
     },
     {
-     "cumulative": 59.6,
+     "cumulative": 56.8,
      "date": "2026-08-29",
      "drawdown": 0,
-     "pnl": 13.7
+     "pnl": 13.6
     },
     {
-     "cumulative": 61.3,
+     "cumulative": 58.4,
      "date": "2026-08-30",
      "drawdown": 0,
-     "pnl": 1.7
+     "pnl": 1.6
     },
     {
-     "cumulative": 51,
+     "cumulative": 48,
      "date": "2026-08-31",
-     "drawdown": -10.3,
-     "pnl": -10.3
+     "drawdown": -10.4,
+     "pnl": -10.4
     }
    ],
    "redDays": 12,
    "worstDay": {
-    "cumulative": -22.3,
+    "cumulative": -22.4,
     "date": "2026-08-02",
-    "drawdown": -22.3,
-    "pnl": -22.3
+    "drawdown": -22.4,
+    "pnl": -22.4
    }
   },
   "execution": {
@@ -2618,6 +2618,10 @@
    {
     "funding": -24,
     "symbol": "ETHUSDT"
+   },
+   {
+    "funding": -3,
+    "symbol": "SOLUSDT"
    }
   ],
   "habits": [
@@ -3341,12 +3345,69 @@
     "wins": 0
    }
   },
+  "recentTrips": [
+   {
+    "closeTime": 1787637600000,
+    "holdHours": 6,
+    "key": "BTCUSDT:LONG:1787616000000",
+    "net": 99.2,
+    "note": null,
+    "openTime": 1787616000000,
+    "side": "Long",
+    "symbol": "BTCUSDT",
+    "tags": []
+   },
+   {
+    "closeTime": 1787637600000,
+    "holdHours": 6,
+    "key": "ETHUSDT:LONG:1787616000000",
+    "net": 2.4,
+    "note": null,
+    "openTime": 1787616000000,
+    "side": "Long",
+    "symbol": "ETHUSDT",
+    "tags": []
+   },
+   {
+    "closeTime": 1787378400000,
+    "holdHours": 6,
+    "key": "BTCUSDT:LONG:1787356800000",
+    "net": 99.2,
+    "note": null,
+    "openTime": 1787356800000,
+    "side": "Long",
+    "symbol": "BTCUSDT",
+    "tags": []
+   },
+   {
+    "closeTime": 1787378400000,
+    "holdHours": 6,
+    "key": "ETHUSDT:LONG:1787356800000",
+    "net": 2.4,
+    "note": null,
+    "openTime": 1787356800000,
+    "side": "Long",
+    "symbol": "ETHUSDT",
+    "tags": []
+   },
+   {
+    "closeTime": 1787119200000,
+    "holdHours": 6,
+    "key": "BTCUSDT:LONG:1787097600000",
+    "net": -201.2,
+    "note": null,
+    "openTime": 1787097600000,
+    "side": "Long",
+    "symbol": "BTCUSDT",
+    "tags": []
+   }
+  ],
   "records": {
    "bestDay": {
-    "cumulative": 3.4,
+    "cumulative": 3.2,
     "date": "2026-08-03",
     "drawdown": 0,
-    "pnl": 25.7
+    "pnl": 25.6
    },
    "bestTrip": {
     "addsWhileUnderwater": 1,
@@ -3376,10 +3437,10 @@
     "symbol": "BTCUSDT"
    },
    "worstDay": {
-    "cumulative": -22.3,
+    "cumulative": -22.4,
     "date": "2026-08-02",
-    "drawdown": -22.3,
-    "pnl": -22.3
+    "drawdown": -22.4,
+    "pnl": -22.4
    },
    "worstTrip": {
     "addsWhileUnderwater": 1,
@@ -3471,129 +3532,129 @@
   },
   "totals": {
    "COMMISSION": -45,
-   "FUNDING_FEE": -24,
+   "FUNDING_FEE": -27,
    "REALIZED_PNL": 120
   },
   "walletCurve": [
    {
     "t": 1785628799999,
-    "wallet": 21149
+    "wallet": 21152
    },
    {
     "t": 1785715199999,
-    "wallet": 21126.7
+    "wallet": 21129.6
    },
    {
     "t": 1785801599999,
-    "wallet": 21152.4
+    "wallet": 21155.2
    },
    {
     "t": 1785887999999,
-    "wallet": 21166.1
+    "wallet": 21168.8
    },
    {
     "t": 1785974399999,
-    "wallet": 21167.8
+    "wallet": 21170.4
    },
    {
     "t": 1786060799999,
-    "wallet": 21157.5
+    "wallet": 21160
    },
    {
     "t": 1786147199999,
-    "wallet": 21135.2
+    "wallet": 21137.6
    },
    {
     "t": 1786233599999,
-    "wallet": 21160.9
+    "wallet": 21163.2
    },
    {
     "t": 1786319999999,
-    "wallet": 21174.6
+    "wallet": 21176.8
    },
    {
     "t": 1786406399999,
-    "wallet": 21176.3
+    "wallet": 21178.4
    },
    {
     "t": 1786492799999,
-    "wallet": 21166
+    "wallet": 21168
    },
    {
     "t": 1786579199999,
-    "wallet": 21143.7
+    "wallet": 21145.6
    },
    {
     "t": 1786665599999,
-    "wallet": 21169.4
+    "wallet": 21171.2
    },
    {
     "t": 1786751999999,
-    "wallet": 21183.1
-   },
-   {
-    "t": 1786838399999,
     "wallet": 21184.8
    },
    {
-    "t": 1786924799999,
-    "wallet": 21174.5
-   },
-   {
-    "t": 1787011199999,
-    "wallet": 21152.2
-   },
-   {
-    "t": 1787097599999,
-    "wallet": 21177.9
-   },
-   {
-    "t": 1787183999999,
-    "wallet": 21191.6
-   },
-   {
-    "t": 1787270399999,
-    "wallet": 21193.3
-   },
-   {
-    "t": 1787356799999,
-    "wallet": 21183
-   },
-   {
-    "t": 1787443199999,
-    "wallet": 21160.7
-   },
-   {
-    "t": 1787529599999,
+    "t": 1786838399999,
     "wallet": 21186.4
    },
    {
+    "t": 1786924799999,
+    "wallet": 21176
+   },
+   {
+    "t": 1787011199999,
+    "wallet": 21153.6
+   },
+   {
+    "t": 1787097599999,
+    "wallet": 21179.2
+   },
+   {
+    "t": 1787183999999,
+    "wallet": 21192.8
+   },
+   {
+    "t": 1787270399999,
+    "wallet": 21194.4
+   },
+   {
+    "t": 1787356799999,
+    "wallet": 21184
+   },
+   {
+    "t": 1787443199999,
+    "wallet": 21161.6
+   },
+   {
+    "t": 1787529599999,
+    "wallet": 21187.2
+   },
+   {
     "t": 1787615999999,
-    "wallet": 21200.1
+    "wallet": 21200.8
    },
    {
     "t": 1787702399999,
-    "wallet": 21201.8
+    "wallet": 21202.4
    },
    {
     "t": 1787788799999,
-    "wallet": 21191.5
+    "wallet": 21192
    },
    {
     "t": 1787875199999,
-    "wallet": 21169.2
+    "wallet": 21169.6
    },
    {
     "t": 1787961599999,
-    "wallet": 21194.9
+    "wallet": 21195.2
    },
    {
     "t": 1788047999999,
-    "wallet": 21208.6
+    "wallet": 21208.8
    },
    {
     "t": 1788134399999,
-    "wallet": 21210.3
+    "wallet": 21210.4
    },
    {
     "t": 1788220799999,
@@ -3610,6 +3671,7 @@
   "coverage": {
    "entryCapturedSince": null,
    "incomeFrom": 1785628800000,
+   "orphanNotes": 0,
    "pending": 0,
    "ready": 24,
    "unavailable": 0
@@ -3629,6 +3691,7 @@
     "entry": null,
     "fills": 2,
     "funding": null,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3639,6 +3702,7 @@
     "mfe": 0,
     "net": -100.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1000,
     "openTime": 1784764800000,
@@ -3650,6 +3714,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -3665,6 +3730,7 @@
     "entry": null,
     "fills": 3,
     "funding": null,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3675,6 +3741,7 @@
     "mfe": 4.31,
     "net": 198.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1002,
     "openTime": 1785024000000,
@@ -3686,6 +3753,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3701,6 +3769,7 @@
     "entry": null,
     "fills": 2,
     "funding": null,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3711,6 +3780,7 @@
     "mfe": 2.51,
     "net": 99.2,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1005,
     "openTime": 1785283200000,
@@ -3722,6 +3792,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3737,6 +3808,7 @@
     "entry": null,
     "fills": 2,
     "funding": null,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3747,6 +3819,7 @@
     "mfe": 0,
     "net": -100.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1007,
     "openTime": 1785542400000,
@@ -3758,6 +3831,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -3773,6 +3847,7 @@
     "entry": null,
     "fills": 2,
     "funding": 0,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3783,6 +3858,7 @@
     "mfe": 2.36,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1009,
     "openTime": 1785801600000,
@@ -3794,6 +3870,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3809,6 +3886,7 @@
     "entry": null,
     "fills": 3,
     "funding": 0,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3819,6 +3897,7 @@
     "mfe": 4.47,
     "net": 198.8,
     "netAfterFunding": 198.8,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1011,
     "openTime": 1786060800000,
@@ -3830,6 +3909,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3845,6 +3925,7 @@
     "entry": null,
     "fills": 2,
     "funding": 0,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3855,6 +3936,7 @@
     "mfe": 0,
     "net": -100.8,
     "netAfterFunding": -100.8,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1014,
     "openTime": 1786320000000,
@@ -3866,6 +3948,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -3881,6 +3964,7 @@
     "entry": null,
     "fills": 2,
     "funding": 0,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3891,6 +3975,7 @@
     "mfe": 0.9,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1016,
     "openTime": 1786579200000,
@@ -3902,6 +3987,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3917,6 +4003,7 @@
     "entry": null,
     "fills": 2,
     "funding": 0,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3927,6 +4014,7 @@
     "mfe": 3.76,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1018,
     "openTime": 1786838400000,
@@ -3938,6 +4026,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3953,6 +4042,7 @@
     "entry": null,
     "fills": 3,
     "funding": 0,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3963,6 +4053,7 @@
     "mfe": 0,
     "net": -201.2,
     "netAfterFunding": -201.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1020,
     "openTime": 1787097600000,
@@ -3974,6 +4065,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -3989,6 +4081,7 @@
     "entry": null,
     "fills": 2,
     "funding": 0,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -3999,6 +4092,7 @@
     "mfe": 0,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1023,
     "openTime": 1787356800000,
@@ -4010,6 +4104,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4025,6 +4120,7 @@
     "entry": null,
     "fills": 2,
     "funding": 0,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4035,6 +4131,7 @@
     "mfe": 3.96,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1025,
     "openTime": 1787616000000,
@@ -4046,6 +4143,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4061,6 +4159,7 @@
     "entry": null,
     "fills": 2,
     "funding": null,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4071,6 +4170,7 @@
     "mfe": 0,
     "net": -4.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2000,
     "openTime": 1784764800000,
@@ -4082,6 +4182,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -4097,6 +4198,7 @@
     "entry": null,
     "fills": 3,
     "funding": null,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4107,6 +4209,7 @@
     "mfe": 4.31,
     "net": 6.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2002,
     "openTime": 1785024000000,
@@ -4118,6 +4221,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4133,6 +4237,7 @@
     "entry": null,
     "fills": 2,
     "funding": null,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4143,6 +4248,7 @@
     "mfe": 2.51,
     "net": 3.2,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2005,
     "openTime": 1785283200000,
@@ -4154,6 +4260,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4169,6 +4276,7 @@
     "entry": null,
     "fills": 2,
     "funding": null,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4179,6 +4287,7 @@
     "mfe": 0,
     "net": -4.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2007,
     "openTime": 1785542400000,
@@ -4190,6 +4299,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -4205,6 +4315,7 @@
     "entry": null,
     "fills": 2,
     "funding": -0.8,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4215,6 +4326,7 @@
     "mfe": 2.36,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2009,
     "openTime": 1785801600000,
@@ -4226,6 +4338,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4241,6 +4354,7 @@
     "entry": null,
     "fills": 3,
     "funding": -0.8,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4251,6 +4365,7 @@
     "mfe": 4.47,
     "net": 6.8,
     "netAfterFunding": 6,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2011,
     "openTime": 1786060800000,
@@ -4262,6 +4377,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4277,6 +4393,7 @@
     "entry": null,
     "fills": 2,
     "funding": -0.8,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4287,6 +4404,7 @@
     "mfe": 0,
     "net": -4.8,
     "netAfterFunding": -5.6,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2014,
     "openTime": 1786320000000,
@@ -4298,6 +4416,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -4313,6 +4432,7 @@
     "entry": null,
     "fills": 2,
     "funding": -0.8,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4323,6 +4443,7 @@
     "mfe": 0.9,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2016,
     "openTime": 1786579200000,
@@ -4334,6 +4455,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4349,6 +4471,7 @@
     "entry": null,
     "fills": 2,
     "funding": -0.8,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4359,6 +4482,7 @@
     "mfe": 3.76,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2018,
     "openTime": 1786838400000,
@@ -4370,6 +4494,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4385,6 +4510,7 @@
     "entry": null,
     "fills": 3,
     "funding": -0.8,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4395,6 +4521,7 @@
     "mfe": 0,
     "net": -9.2,
     "netAfterFunding": -10,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2020,
     "openTime": 1787097600000,
@@ -4406,6 +4533,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -4421,6 +4549,7 @@
     "entry": null,
     "fills": 2,
     "funding": -0.8,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4431,6 +4560,7 @@
     "mfe": 0,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2023,
     "openTime": 1787356800000,
@@ -4442,6 +4572,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4457,6 +4588,7 @@
     "entry": null,
     "fills": 2,
     "funding": -0.8,
+    "fundingIncomplete": false,
     "fundingSplit": false,
     "hedged": false,
     "holdHours": 6,
@@ -4467,6 +4599,7 @@
     "mfe": 3.96,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2025,
     "openTime": 1787616000000,
@@ -4478,6 +4611,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    }
   ]
@@ -8266,6 +8400,12 @@
   ],
   "ok": true,
   "session": null,
+  "tags": {
+   "buckets": [],
+   "hiddenBuckets": 0,
+   "id": "tags",
+   "label": "Your tags"
+  },
   "trips": 24,
   "waiting": [
    "Confluence at entry",
@@ -8274,5 +8414,48 @@
    "Stop within 5 minutes"
   ],
   "worse": []
+ },
+ "funding": {
+  "rows": [
+   {
+    "aprPct": 43.8,
+    "nearCap": null,
+    "pair": false,
+    "perDay": -14.4,
+    "symbol": "ETHUSDT"
+   },
+   {
+    "aprPct": 10.95,
+    "nearCap": null,
+    "pair": true,
+    "perDay": -3,
+    "symbol": "BTCUSDT"
+   },
+   {
+    "aprPct": 32.85,
+    "nearCap": null,
+    "pair": false,
+    "perDay": -1.8,
+    "symbol": "ENAUSDC"
+   },
+   {
+    "aprPct": 8.76,
+    "nearCap": null,
+    "pair": false,
+    "perDay": 0.96,
+    "symbol": "SOL"
+   }
+  ],
+  "totals": {
+   "aprOnGrossPct": -6.164,
+   "byExchange": {
+    "binance": -19.2,
+    "hyperliquid": 0.96
+   },
+   "legs": 5,
+   "pairs": 1,
+   "pctOfEquityPerDay": -0.0703,
+   "perDay": -18.24
+  }
  }
 }
