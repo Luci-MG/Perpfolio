@@ -385,3 +385,22 @@ test('account change removes transfers and says when snapshots began after the p
   assert.equal(ta.accountChange(snaps, income, { b: 600 }).b, null);
   assert.equal(ta.accountChange(snaps, income, { c: -1e7 }).c.partial, true);
 });
+
+test('previous periods are cut at the same elapsed time, and a short month ends at its own end', () => {
+  const tue = Date.UTC(2026, 9, 6, 14);
+  const p = ta.previousPeriodStarts(tue, 0);
+  assert.deepEqual(p.today, { from: Date.UTC(2026, 9, 5), to: Date.UTC(2026, 9, 5, 14) });
+  assert.deepEqual(p.week, { from: Date.UTC(2026, 8, 28), to: Date.UTC(2026, 8, 29, 14) });
+  assert.deepEqual(p.month, { from: Date.UTC(2026, 8, 1), to: Date.UTC(2026, 8, 6, 14) });
+  const oct31 = Date.UTC(2026, 9, 31, 12);
+  assert.equal(ta.previousPeriodStarts(oct31, 0).month.to, Date.UTC(2026, 9, 1), 'September has no 31st');
+  const jan = ta.previousPeriodStarts(Date.UTC(2027, 0, 10), 120);
+  assert.equal(jan.month.from, Date.UTC(2026, 11, 1) - 120 * 60_000, 'December of the year before, local midnight');
+});
+
+test('a bounded period counts net income and trips closed inside it only', () => {
+  const income = [{ incomeType: 'REALIZED_PNL', income: '10', time: 5 }, { incomeType: 'COMMISSION', income: '-1', time: 6 },
+                  { incomeType: 'TRANSFER', income: '500', time: 6 }, { incomeType: 'REALIZED_PNL', income: '99', time: 20 }];
+  const trips = [{ closeTime: 5, win: true }, { closeTime: 9, win: false }, { closeTime: 10, win: true }];
+  assert.deepEqual(ta.periodNetBetween(income, trips, 0, 10), { from: 0, to: 10, net: 9, trips: 2, wins: 1 });
+});

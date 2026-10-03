@@ -139,14 +139,6 @@ function goalsTodayText(today, goals) {
   return `${goals.length} milestone${goals.length > 1 ? 's' : ''}`;
 }
 
-function goalsOverviewLine() {
-  if (!goalsData?.goals?.length) return '';
-  const t = goalsData.today;
-  const broken = t.broken.length ? ` · <span class="dn">✗ ${esc(t.broken.join(', '))}</span>` : '';
-  const offTrack = t.offTrack.map(m => ` · <span class="${m.status === 'missed' ? 'dn' : 'gl-late'}">${MILESTONE_MARK[m.status]} ${esc(m.label)} ${m.status}</span>`).join('');
-  return `<button class="gl-overview" onclick="setJrTab('goals')"><span class="k">Goals</span>${goalsTodayText(t, goalsData.goals)}${broken}${offTrack}<span class="gl-caret">›</span></button>`;
-}
-
 function goalEmptyHtml(suggestions) {
   const items = suggestions.map((s, i) => `<button class="gl-suggest" onclick="openGoalDrawer(null, ${i})">
     <span class="gl-name">${esc(s.preview.label)}</span>

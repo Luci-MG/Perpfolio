@@ -226,14 +226,16 @@ test('every Journal sub-tab renders, with and without equity snapshots', async (
 
   const overview = renderAll()[0][1];
   assert.match(overview, /Today[\s\S]*This week[\s\S]*This month/);
-  assert.match(overview, /account —/, 'no snapshots yet');
+  assert.doesNotMatch(overview, /account [+−$]/, 'no snapshots yet');
+  assert.match(overview, /vs yesterday by now[\s\S]*vs last week by now[\s\S]*vs last month by now/);
+  assert.match(overview, /class="ov-pair"[\s\S]*Next milestone[\s\S]*Recent trades/);
   assert.match(renderAll()[2][1], /What your habits cost[\s\S]*Added while underwater/);
 
   run(`perfData.accountCurve = [0, 1, 2].map(i => ({ t: Date.now() - (3 - i) * 9e5, accountValue: 1000 + i * 10 }));
        perfData.periods.today.account = { change: 20, since: Date.now() - 27e5, partial: true }`);
   const withSnaps = renderAll()[0][1];
   assert.match(withSnaps, /class="ov-account"/);
-  assert.match(withSnaps, /account \$20\.00 since/);
+  assert.match(withSnaps, /account \+\$20\.00 \(partial\)/);
   assert.deepEqual(strayValues(withSnaps), []);
 });
 
@@ -435,7 +437,7 @@ test('Goals: empty state suggests, rows order and render every state, the drawer
   assert.match(board, /broke today[\s\S]*2\/2 today[\s\S]*starts with the next captured entry[\s\S]*paused/);
   assert.match(board, /est\. cost <b class="dn">−\$6\.20<\/b>/);
   assert.deepEqual(strayValues(board), []);
-  assert.match(show('overview'), /gl-overview[\s\S]*today 1 of 2 kept · <span class="dn">✗ Max 2 trades a day · Europe/);
+  assert.match(show('overview'), /class="ov-attention"[\s\S]*class="ov-attn dn" onclick="setJrTab\('goals'\)">✗ Max 2 trades a day · Europe broke today ›[\s\S]*Goals today: 1 of 2 kept/);
 
   run(`openGoalBreach('ETHUSDT', Date.now() - 36e5)`);
   await settle('tripsData && !tripsLoading', 'the trips');
@@ -479,7 +481,9 @@ test('Milestones: a block under the rules, every state renders, the chart projec
   assert.deepEqual(strayValues(board), []);
   run(`goalOpen = 'dd'`);
   assert.match(show('goals'), /Before you set it: 50% of 2 months kept · worst −14\.1% ≈ wallet/);
-  assert.match(show('overview'), /gl-late">◔ Account ≥ \$250k late/);
+  const overview = show('overview');
+  assert.match(overview, /class="ov-attn dn"[^>]*>✗ Account ≥ \$600k missed ›[\s\S]*class="ov-attn gl-late"[^>]*>◔ Account ≥ \$300k late ›/, 'missed ranks above late');
+  assert.match(overview, /Next milestone[\s\S]*Account ≥ \$100k[\s\S]*more after it/, 'the lowest open target leads');
 
   run(`openGoalDrawer(); setGoalType('accountTarget')`);
   assert.match(markup.get('goalDrawerBody'), /type="date"[\s\S]*optional/);
@@ -665,4 +669,50 @@ test('funding: the widget counts down to the next settlement, the drawer nets he
   assert.equal(run('jrTab'), 'costs');
   const source = fs.readFileSync(path.join(ROOT, 'public', 'js', 'funding-view.js'), 'utf8');
   assert.doesNotMatch(source, /rgba\(|#[0-9a-f]{6}/i, 'funding uses theme tokens only');
+});
+
+test('Overview: attention is ranked and capped, calm says so, recent trades open Trades, the reconciliation sits under Costs', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading && goalsData && !goalsLoading', 'the journal');
+  const show = tab => { run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+
+  run(`goalsData = { ...goalsData, goals: [], today: { scored: 0, kept: 0, broken: [], offTrack: [] } }; fundData = null; factorsData = null`);
+  assert.match(show('overview'), /class="ov-calm">nothing needs attention/);
+
+  run(`goalsData.goals = [{ id: 'r', unit: 'trip', status: 'kept', label: 'No adds underwater' }];
+       goalsData.today = { scored: 2, kept: 2, broken: [], offTrack: [] }`);
+  assert.match(show('overview'), /class="ov-calm">Goals today: 2 of 2 kept · nothing needs attention/);
+
+  run(`goalsData.goals = [
+         { id: 'a', unit: 'trip', status: 'broken', label: 'No adds underwater' },
+         { id: 'b', unit: 'milestone', type: 'accountTarget', status: 'late', label: 'Account ≥ $50k', params: { target: 5e4 } },
+         { id: 'c', unit: 'milestone', type: 'accountTarget', status: 'missed', label: 'Account ≥ $40k', params: { target: 4e4 } }];
+       goalsData.today = { scored: 1, kept: 0, broken: ['No adds underwater'], offTrack: [] };
+       fundData = { realised: { differsFromEstimate: true, perDay7d: -9 }, totals: { perDay: -3 } };
+       factorsData = { worse: [{ bucket: 'Weekend', diff: -16.5 }] }`);
+  const busy = show('overview');
+  assert.deepEqual([...busy.matchAll(/class="ov-attn [^"]+" onclick="[^"]+">([^›]+) ›/g)].map(m => m[1].trim()),
+    ['✗ No adds underwater broke today', '✗ Account ≥ $40k missed', '◔ Account ≥ $50k late']);
+  assert.match(busy, /\+2 more/);
+  assert.match(busy, /Next milestone[\s\S]*Account ≥ \$50k/, 'the missed target is not next; the open one is');
+
+  const recent = run('perfData.recentTrips.length');
+  assert.ok(recent > 0 && recent <= 5);
+  assert.equal([...busy.matchAll(/class="ov-trip"/g)].length, recent);
+  assert.match(busy, /How the wallet got here ›/);
+  assert.doesNotMatch(busy, /Open right now|Where the account stands|Activity</);
+  assert.deepEqual(strayValues(busy), []);
+
+  const first = JSON.parse(run('JSON.stringify(perfData.recentTrips[0])'));
+  run(`openGoalBreach('${first.symbol}', ${first.openTime})`);
+  await settle('tripsData && !tripsLoading', 'the trips');
+  assert.equal(run('jrTab'), 'trades');
+  assert.ok(run(`filteredTrips().some(t => t.key === '${first.key}')`));
+
+  assert.match(show('costs'), /How the wallet got here[\s\S]*wallet at the start of the window[\s\S]*account value[\s\S]*Execution/);
 });

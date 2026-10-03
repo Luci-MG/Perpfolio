@@ -19,13 +19,13 @@ async function fetchFactors() {
     noteLoadError('factors', err);
   } finally {
     factorsLoading = false;
-    if (posView === 'journal' && jrTab === 'factors') rerenderStress();
+    if (posView === 'journal' && ['factors', 'overview'].includes(jrTab)) rerenderStress();
   }
 }
 
 function reloadFactors() {
   factorsData = null;
-  if (jrTab === 'factors') fetchFactors();
+  if (['factors', 'overview'].includes(jrTab)) fetchFactors();
 }
 
 function toggleFactorsShowAll() {

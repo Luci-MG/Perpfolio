@@ -67,7 +67,7 @@ crypto-dashboard/
 └── public/
     ├── index.html         # markup only
     ├── css/app.css
-    └── js/                # 20 classic scripts, loaded in a fixed order (docs/frontend.md)
+    └── js/                # 21 classic scripts, loaded in a fixed order (docs/frontend.md)
 ```
 
 ## Running and verifying

@@ -120,7 +120,7 @@ test('history sync fills the store and the journal reconciles every fill', async
   assert.equal(status, 200);
   assert.ok(body.overall.trips > 0);
   const clockFree = { ...body, walletCurve: body.walletCurve.slice(0, -1),
-    periods: Object.fromEntries(Object.entries(body.periods).map(([k, { from, ...rest }]) => [k, rest])) };
+    periods: Object.fromEntries(Object.entries(body.periods).map(([k, { from, previous, ...rest }]) => [k, rest])) };
   record('performance', clockFree);
 });
 
@@ -134,7 +134,9 @@ test('a session narrows trip statistics and habits, never the account overview',
   assert.equal(one.session, session);
   assert.equal(one.overall.trips, inIt);
   assert.ok(inIt < all.overall.trips || trips.every(t => t.session === session));
-  assert.deepEqual(one.periods, all.periods, 'the overview is the whole account');
+  const clockFree = periods => Object.fromEntries(Object.entries(periods).map(([k, { previous: { to, ...prev }, ...rest }]) => [k, { ...rest, prev }]));
+  assert.deepEqual(clockFree(one.periods), clockFree(all.periods), 'the overview is the whole account');
+  assert.deepEqual(one.recentTrips, all.recentTrips, 'recent trades are the whole account too');
   assert.deepEqual(one.equity, all.equity);
   assert.ok(one.habits.every((h, i) => h.trips <= all.habits[i].trips));
   assert.equal((await get('/api/performance?session=Mars')).body.session, null);

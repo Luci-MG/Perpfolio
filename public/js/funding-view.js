@@ -74,6 +74,7 @@ async function fetchFunding() {
   } finally {
     fundLoading = false;
     renderFundBody();
+    if (posView === 'journal' && jrTab === 'overview') rerenderStress();
   }
 }
 

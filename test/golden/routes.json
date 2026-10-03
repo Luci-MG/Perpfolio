@@ -3341,6 +3341,63 @@
     "wins": 0
    }
   },
+  "recentTrips": [
+   {
+    "closeTime": 1787637600000,
+    "holdHours": 6,
+    "key": "BTCUSDT:LONG:1787616000000",
+    "net": 99.2,
+    "note": null,
+    "openTime": 1787616000000,
+    "side": "Long",
+    "symbol": "BTCUSDT",
+    "tags": []
+   },
+   {
+    "closeTime": 1787637600000,
+    "holdHours": 6,
+    "key": "ETHUSDT:LONG:1787616000000",
+    "net": 2.4,
+    "note": null,
+    "openTime": 1787616000000,
+    "side": "Long",
+    "symbol": "ETHUSDT",
+    "tags": []
+   },
+   {
+    "closeTime": 1787378400000,
+    "holdHours": 6,
+    "key": "BTCUSDT:LONG:1787356800000",
+    "net": 99.2,
+    "note": null,
+    "openTime": 1787356800000,
+    "side": "Long",
+    "symbol": "BTCUSDT",
+    "tags": []
+   },
+   {
+    "closeTime": 1787378400000,
+    "holdHours": 6,
+    "key": "ETHUSDT:LONG:1787356800000",
+    "net": 2.4,
+    "note": null,
+    "openTime": 1787356800000,
+    "side": "Long",
+    "symbol": "ETHUSDT",
+    "tags": []
+   },
+   {
+    "closeTime": 1787119200000,
+    "holdHours": 6,
+    "key": "BTCUSDT:LONG:1787097600000",
+    "net": -201.2,
+    "note": null,
+    "openTime": 1787097600000,
+    "side": "Long",
+    "symbol": "BTCUSDT",
+    "tags": []
+   }
+  ],
   "records": {
    "bestDay": {
     "cumulative": 3.4,

@@ -26,7 +26,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Error states keep their controls](#p5--error-states-keep-their-controls) | done (2026-10-03) |
 | P5 | [Per-trip notes and tags](#p5--per-trip-notes-and-tags) | done (2026-10-03) |
 | P5 | [Funding section](#p5--funding-section) | done (2026-10-03) |
-| P5 | [Journal Overview remodel](#p5--journal-overview-remodel) | idea |
+| P5 | [Journal Overview remodel](#p5--journal-overview-remodel) | done (2026-10-03) |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
 | — | [Parked](#parked) | parked |
 
@@ -315,6 +315,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 
 ## P5 — Journal Overview remodel
 
+- **Status:** done (2026-10-03) — layout research in [`research/overview.md`](research/overview.md).
 - **Problem:** Overview grew a section per card — goals line, period strip, two-line chart,
   account stats, the reconciliation, open positions, activity — and reads as patchwork.
 - **Scope:** to be planned — one layout with a clear first read, the rest in order of use,

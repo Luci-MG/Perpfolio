@@ -91,9 +91,27 @@ the account's **real** commission rate — taker 0.05% / maker 0.02% at fee tier
 ### Journal tab (7th) — seven sections
 Sub-tabs (`jrTab`): **Overview · Goals · Performance · Behaviour · Factors · Timing · Symbols · Costs · Trades**.
 
-**Overview is the account, not the closed trades.** Round-trip statistics alone mislead while
-a large position is still open: the closed-trip net (plus the orphan fills) can be a fraction
-of the unrealised loss the account carries on top of it. The front page reconciles the whole thing —
+**Overview answers "am I on track, and does anything need me?"** — the layout and its sources
+are in [`research/overview.md`](research/overview.md). Top to bottom (`journal-overview.js`):
+
+1. **Attention** — at most three items, ranked: a goal broken today, a milestone missed or a
+   drawdown limit broken, a milestone late, funding paid far off the estimate, a factor that
+   stands out. Each links to its tab; with none, one muted line says *nothing needs attention*.
+   The ranking is the `ATTENTION_SOURCES` list, one entry per source.
+2. **Today / This week / This month** — net with n and wins, each against the previous period
+   *by now* (yesterday to this hour, last week to this weekday and hour), and the account
+   change when snapshots cover it.
+3. **Account** — value, wallet, open and hedges locked in one line, the two-curve chart, and a
+   link to *How the wallet got here*.
+4. **Next milestone** — the lowest account target not reached, missed or paused — beside the
+   **last five closed trades** with their tags, each opening Trades on that symbol and day.
+5. A footer with trips, trading days, the span and the last sync.
+
+Open positions and account stats stay on the main view and sidebar; they are not repeated.
+
+**How the wallet got here** sits at the top of **Costs**. Round-trip statistics alone mislead
+while a large position is still open: the closed-trip net (plus the orphan fills) can be a
+fraction of the unrealised loss the account carries. The reconciliation shows the whole thing —
 
 ```
 wallet at the start of the window   (derived from the ledger)
@@ -106,8 +124,8 @@ wallet at the start of the window   (derived from the ledger)
 = account value
 ```
 
-— then lists what is open, the locked hedge portion, and activity totals. The starting wallet
-is derived as `wallet − Σledger`, so it is exact only for the window income covers.
+The starting wallet is derived as `wallet − Σledger`, so it is exact only for the window
+income covers.
 `jrLockedFromPositions()` computes the hedge lock from the dashboard poll, with no extra
 request.
 
@@ -119,14 +137,14 @@ strips path characters so a malformed symbol cannot escape `data/`, `ensureDir`,
 
 | section | contents |
 |---|---|
-| Overview | the goals line, account value, the reconciliation above, open positions, activity |
+| Overview | attention, the periods against the last ones by now, the account and its chart, the next milestone, recent trades |
 | Goals | rules you set, scored from the day you set them — see [`goals.md`](goals.md) |
 | Performance | hero stats, cumulative curve + underwater panel + daily bars, month by month, records |
 | Behaviour | added-while-underwater split, hold-time buckets, long vs short, streaks, size after a win vs a loss, size distribution |
 | Factors | which conditions at entry go with better or worse trips — see *Factors* below |
 | Timing | calendar heatmap, day of week, hour of day |
 | Symbols | full per-symbol table with concentration |
-| Costs | maker/taker split, fees by symbol, funding by symbol |
+| Costs | how the wallet got here, maker/taker split, fees by symbol, funding by symbol |
 | Trades | one sortable, filterable table of every round trip, with CSV export — see *Trades* below |
 
 **Two stacked panels, never two y-axes.** Daily results are bars whose *direction* encodes
@@ -142,9 +160,11 @@ centre line, and **every bucket shows its trip count**, with fewer than 10 dimme
 ### Overview: periods and the two curves
 - **Today / This week / This month** use the reader's clock (`?tz=` minutes ahead of UTC, from
   the browser; weeks start Monday). *Realised* is net of fees and funding from the Binance
-  ledger — exact; Hyperliquid has no history. *Account* is the change in account value across
-  both venues, net of transfers, from equity snapshots; when snapshots began after the
-  period started it says *since …*.
+  ledger — exact; Hyperliquid has no history. Each carries `previous`, the same span one period
+  back cut at the same elapsed time (`previousPeriodStarts`, `periodNetBetween`); a previous
+  month shorter than the elapsed time ends at its own end. *Account* is the change in account
+  value across both venues, net of transfers, from equity snapshots, marked *partial* when
+  snapshots began after the period started.
 - **Wallet** is rebuilt backwards from today's `walletBalance` through every dollar
   income row — exact as far back as the ledger reaches (three months). **Account value** is
   the snapshots (`lib/equity-snapshots.js`, every 15 minutes while the server runs, one row

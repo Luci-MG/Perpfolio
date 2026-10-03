@@ -1,5 +1,17 @@
 # Changelog
 
+## Journal Overview remodel (2026-10-03)
+
+- Overview now reads top to bottom: what needs attention (at most three ranked items, or
+  *nothing needs attention*), today / this week / this month against the previous period by
+  now, the account in one line over its chart, the next milestone beside the last five trades
+  with their tags, and a one-line footer.
+- Open positions, the account stat grid and the activity block are gone from Overview — the
+  main view, the sidebar and Performance already show them. The wallet reconciliation moved to
+  the top of Costs.
+- `/api/performance` adds each period's previous span and the last five closed trips. Layout
+  research with sources is in `docs/research/overview.md`.
+
 ## Funding section (2026-10-03)
 
 - The funding drawer answers what holding the book costs: estimated net a day, realised 24h /
