@@ -64,6 +64,7 @@ export function register(app) {
       const results = [];
       const candlesByAsset = {};
       const volHistories = [];
+      const currentVols = [];
       for (const [idx, p] of positions.entries()) {
         try {
           if (!candleSets[idx]) throw new Error('candles unavailable, read again on the next refresh');
@@ -72,8 +73,9 @@ export function register(app) {
                                                           totalEquity, riskPct, k });
           const assetKey = p.asset || baseAsset(p.pair);
           if (!candlesByAsset[assetKey] && !candlesBackfilled) candlesByAsset[assetKey] = candles;
-          volHistories.push({ key: `${p.exchange}:${p.pair}:${p.side}`, series: volSeries,
-                              weight: Math.abs(p.sizeUsd) || 1 });
+          const weight = Math.abs(p.sizeUsd) || 1;
+          volHistories.push({ key: `${p.exchange}:${p.pair}:${p.side}`, series: volSeries, weight });
+          currentVols.push({ vol: result.compositeVolPct, weight });
           const stopsKnown = (p.exchange === 'binance' ? bnData : hlData).stopsKnown;
           results.push({ ...result, ...(stopsKnown ? checkLegStop({
             position: p, orders, hedged: hasOppositeLeg(p, positions), suggestedPct: result.stopDistPct,
@@ -94,13 +96,9 @@ export function register(app) {
       const regimeCounts = { low: 0, medium: 0, high: 0, extreme: 0 };
       valid.forEach(r => { if (regimeCounts[r.regimeLabel] != null) regimeCounts[r.regimeLabel]++; });
 
-      // Equity-weighted portfolio composite vol → portfolio regime.
-      let wSum = 0, wVol = 0;
-      valid.forEach(r => {
-        const w = r.notionalValue || 1;
-        wSum += w; wVol += (r.compositeVolPct || 0) * w;
-      });
-      const portfolioVol = wSum ? wVol / wSum : 0;
+      const byNotional = currentVols.filter(c => c.vol != null);
+      const wSum = byNotional.reduce((s, c) => s + c.weight, 0);
+      const portfolioVol = wSum ? byNotional.reduce((s, c) => s + c.vol * c.weight, 0) / wSum : 0;
 
       // Classify against the portfolio's own history, not a cross-section of the positions
       // it is made of: a notional-weighted mean of N positions necessarily lands between

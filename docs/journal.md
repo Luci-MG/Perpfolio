@@ -169,7 +169,11 @@ centre line, and **every bucket shows its trip count**, with fewer than 10 dimme
   back cut at the same elapsed time (`previousPeriodStarts`, `periodNetBetween`); a previous
   month shorter than the elapsed time ends at its own end. *Account* is the change in account
   value across both venues, net of transfers, from equity snapshots, marked *partial* when
-  snapshots began after the period started.
+  snapshots began after the period started. Switching a venue on or off counts as a transfer
+  of its equity (`venueSwitches`), here and in the return, drawdown and milestones, so turning
+  Hyperliquid off is not a loss. Hyperliquid's own deposits and withdrawals are still invisible.
+  A trip's win or loss is `resultOf(netOf)` everywhere, period counts included, so a trip that
+  funding turned into a loss is not counted a win.
 - **Wallet** is rebuilt backwards from today's `walletBalance` through every dollar
   income row — exact as far back as the ledger reaches (three months). **Account value** is
   the snapshots (`lib/equity-snapshots.js`, every 15 minutes while the server runs, one row
@@ -297,14 +301,20 @@ bucket with the rest of the book. The method and every threshold come from
 - **During the trade** — adds while underwater, hold time — is shown apart and never ranked:
   it is part of the outcome, not something known when the trip opened.
 
-`GET /api/factors` caches per window, session and trip count, so the poll never recomputes.
+`GET /api/factors` caches per window, session, trip count and enrichment version, so the poll
+never recomputes and new context, funding or notes are picked up at once. The previous trip and
+the usual size are worked out on every trip and only then filtered; until 2026-10 Factors worked
+them out on the filtered trips, so under a session filter a trip right after a loss in another
+session read as the first of its day. Each bootstrap draw sums per-day totals rather than
+re-filtering every trip, so a full Factors build is several times faster.
 
 ### Notes and tags
 
 Your own note (up to 500 characters) and up to five tags on any closed trip, edited inline in
 Trades (✎ or the empty Notes cell). Kept in `data/annotations.json` by the trip key, with the
-opening order id as a fallback so a note survives a rebuild that moves a trip's start; notes
-that match no trip are counted under the table. `enrichedTrips()` attaches them, so Trades
+opening order id as a fallback so a note survives a rebuild that moves a trip's start; saving
+or clearing a note found that way rewrites that entry under the current key, so nothing is left
+behind. Notes that match no trip are counted under the table. `enrichedTrips()` attaches them, so Trades
 (column, tag filter, CSV), Goals (breach rows) and Factors read them with no extra request.
 Tags are free, lowercased slugs with autocomplete from the ones already used. In Factors they
 sit in their own section and never reach the verdict: a tag is written after the result is
@@ -334,7 +344,10 @@ One row per closed trip, built in three layers so each can be tested alone:
 **Funding: one row per leg, both under one tranId.** Binance books a hedged settlement as two
 `FUNDING_FEE` rows — the paying leg's and the receiving leg's — with the same `tranId`, time
 and symbol. Each row is matched to the leg whose size × rate × mark it is closest to, so every
-trip gets its own leg's funding exactly. With one leg open the rows are that trip's. When the
+trip gets its own leg's funding exactly. With one leg open the rows are that trip's. Rates are
+matched within a minute, since income lands a few milliseconds after the rate's own time;
+matching to the millisecond had left about half of them "missing" and re-requested on every
+sync. Requests page in 1000-row chunks, so a long hourly hedge gets every rate. When the
 trip rebuild thinks two legs were open but the ledger has one row, the ledger wins: the other
 leg paid nothing.
 

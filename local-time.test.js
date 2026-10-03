@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { clockFor, localDate, localDayStart, nextLocalDay, offsetAt, wallTime } from './local-time.js';
+import { clockFor, localDate, localDayStart, localMidnight, nextLocalDay, offsetAt, wallTime } from './local-time.js';
 import { periodStarts } from './trade-analytics.js';
 
 const HOUR = 3_600_000;
@@ -34,4 +34,22 @@ test('a month that spans the change starts at its own local midnight', () => {
   const p = periodStarts(Date.UTC(2026, 3, 2, 12), madrid);
   assert.equal(p.month, Date.UTC(2026, 2, 31, 22), 'April 1st 00:00 in summer time');
   assert.equal(p.week, Date.UTC(2026, 2, 29, 22), 'Monday 30 March 00:00, the day after the change');
+});
+
+test('a half-hour zone reads the right offset either side of its change, whichever instant is asked first', () => {
+  const change = Date.UTC(2026, 9, 3, 16, 30);
+  const asked = clockFor('Australia/Adelaide');
+  assert.equal(asked.offsetAt(change - 15 * 60_000), 570);
+  assert.equal(asked.offsetAt(change + 15 * 60_000), 630);
+  const reversed = clockFor('Australia/Adelaide');
+  assert.equal(reversed.offsetAt(change + 15 * 60_000), 630);
+  assert.equal(reversed.offsetAt(change - 15 * 60_000), 570);
+});
+
+test('where the clock skips midnight, the day starts when it resumes, not on the day before', () => {
+  const santiago = clockFor('America/Santiago');
+  const start = localMidnight(2026, 8, 6, santiago);
+  assert.equal(start, Date.UTC(2026, 8, 6, 4));
+  assert.equal(localDate(start, santiago), '2026-09-06');
+  assert.equal(localDayStart(Date.UTC(2026, 8, 6, 12), santiago), start);
 });

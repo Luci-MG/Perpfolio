@@ -87,6 +87,14 @@ test('no look-ahead: size compares with earlier trips, the previous trip closed 
   assert.ok(row(r, 'previous', 'After a win').n === 40);
 });
 
+test('the previous trip is judged on every trip, so a session filter does not make each trip the first of its day', () => {
+  const asia = Array.from({ length: 40 }, (_, d) => trip(MON + d * DAY + 2 * HOUR, { session: 'Asia', net: d % 2 ? 5 : -5 }));
+  const us = Array.from({ length: 40 }, (_, d) => trip(MON + d * DAY + 15 * HOUR, { session: 'US', net: d % 3 ? 2 : -1 }));
+  const filtered = outcomeFactors(us, { session: 'US', all: [...asia, ...us] });
+  assert.deepEqual([row(filtered, 'previous', 'After a loss')?.n, row(filtered, 'previous', 'After a win')?.n], [20, 20]);
+  assert.equal(row(outcomeFactors(us, { session: 'US' }), 'previous', 'After a loss'), undefined, 'judged on the US trips alone, none follows a loss');
+});
+
 test('a factor that flips sign once hedging is held equal is marked', () => {
   const kinds = [...Array(50).fill(['SOLUSDT', true, -5]), ...Array(10).fill(['BTCUSDT', true, -10]),
                  ...Array(10).fill(['SOLUSDT', false, 12]), ...Array(50).fill(['BTCUSDT', false, 8])];

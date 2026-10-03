@@ -530,8 +530,9 @@ test('Milestones: a block under the rules, every state renders, the chart projec
          eta: ${now + 900 * day}, reachedAt: null,
          chart: [0, 1, 2].map(i => ({ t: ${now} - (2 - i) * ${day}, value: 1000 + i * 250 })),
          projection: [{ t: ${now}, value: 1500 }, { t: ${now + 30 * day}, value: 2250 }] };
-       goalsData.goals = ['open', 'onpace', 'late', 'early', 'reached', 'missed', 'paused'].map((status, i) => ({ ...base, id: 'm' + i, status,
-         label: 'Account ≥ $' + (i + 1) + '00k', deadline: ['onpace', 'late', 'missed'].includes(status) ? ${now + 10 * day} : null,
+       goalsData.goals = ['open', 'onpace', 'late', 'early', 'reached', 'reachedLate', 'missed', 'paused'].map((status, i) => ({ ...base, id: 'm' + i, status,
+         label: 'Account ≥ $' + (i + 1) + '00k', deadline: ['onpace', 'late', 'missed', 'reachedLate'].includes(status) ? ${now + 10 * day} : null,
+         reachedAt: status === 'reachedLate' ? ${now + 13 * day} : base.reachedAt,
          paceFraction: status === 'late' ? 0.6 : null, pausedAt: status === 'paused' ? ${now} : null }));
        goalsData.goals.push({ id: 'dd', type: 'monthlyDrawdown', unit: 'milestone', label: 'Monthly drawdown under 10%', params: { maxPct: 10 },
          setAt: ${now - 40 * day}, status: 'progress', n: 1, adherence: 1, streak: 1, pausedAt: null,
@@ -542,7 +543,8 @@ test('Milestones: a block under the rules, every state renders, the chart projec
   const board = show('goals');
   assert.match(board, /No goals yet[\s\S]*section-label gl-block">Milestones/, 'rule suggestions still offered above the milestones');
   assert.deepEqual([...board.matchAll(/gl-mark (\w+)">/g)].map(m => m[1]),
-    ['open', 'onpace', 'late', 'early', 'reached', 'missed', 'paused', 'progress']);
+    ['open', 'onpace', 'late', 'early', 'reached', 'reachedLate', 'missed', 'paused', 'progress']);
+  assert.match(board, /reached [^·<]+, 3 days after the date/);
   assert.match(board, /class="gl-proj"[^>]*stroke-dasharray/);
   assert.match(board, /target \$2,000,000\.00 is off the chart/);
   assert.match(board, /not enough history · 20\.0 of 7 days|on pace for/);
@@ -551,7 +553,7 @@ test('Milestones: a block under the rules, every state renders, the chart projec
   run(`goalOpen = 'dd'`);
   assert.match(show('goals'), /Before you set it: 50% of 2 months kept · worst −14\.1% ≈ wallet/);
   const overview = show('overview');
-  assert.match(overview, /class="ov-attn dn"[^>]*>✗ Account ≥ \$600k missed ›[\s\S]*class="ov-attn gl-late"[^>]*>◔ Account ≥ \$300k late ›/, 'missed ranks above late');
+  assert.match(overview, /class="ov-attn dn"[^>]*>✗ Account ≥ \$700k missed ›[\s\S]*class="ov-attn gl-late"[^>]*>◔ Account ≥ \$300k late ›/, 'missed ranks above late');
   assert.match(overview, /Next milestone[\s\S]*Account ≥ \$100k[\s\S]*more after it/, 'the lowest open target leads');
 
   run(`openGoalDrawer(); setGoalType('accountTarget')`);
@@ -723,6 +725,10 @@ test('funding: the widget counts down to the next settlement, the drawer nets he
   assert.match(body(), /Funding by symbol over time ›/);
   assert.deepEqual(strayValues(body()), []);
 
+  run(`fundData.realised.differsFromEstimate = null; renderFundBody()`);
+  assert.match(body(), /Sync history to compare realised funding with the estimate/);
+  run(`fundData.realised = { ...fundData.realised, differsFromEstimate: true, coveredDays: 7, perDay7d: -9, estimatePerDay: -3 }; renderFundBody()`);
+  assert.match(body(), /Binance funding realised over the 7 days to the last sync averaged −\$9\.00 a day against −\$3\.00 estimated/);
   run(`fundData.rows[0].nearCap = { share: 0.62, receiving: false }; renderFundBody()`);
   assert.match(body(), /class="fd-flag dn">⚠ 62% of its cap — may switch to 1h settlements</);
 
@@ -760,7 +766,7 @@ test('Overview: attention is ranked and capped, calm says so, recent trades open
          { id: 'b', unit: 'milestone', type: 'accountTarget', status: 'late', label: 'Account ≥ $50k', params: { target: 5e4 } },
          { id: 'c', unit: 'milestone', type: 'accountTarget', status: 'missed', label: 'Account ≥ $40k', params: { target: 4e4 } }];
        goalsData.today = { scored: 1, kept: 0, broken: ['No adds underwater'], offTrack: [] };
-       fundData = { realised: { differsFromEstimate: true, perDay7d: -9 }, totals: { perDay: -3 } };
+       fundData = { realised: { differsFromEstimate: true, perDay7d: -9, estimatePerDay: -3 }, totals: { perDay: -3 } };
        factorsData = { worse: [{ bucket: 'Weekend', diff: -16.5 }] }`);
   const busy = show('overview');
   assert.deepEqual([...busy.matchAll(/class="ov-attn [^"]+" onclick="[^"]+">([^›]+) ›/g)].map(m => m[1].trim()),

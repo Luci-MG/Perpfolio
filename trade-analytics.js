@@ -12,6 +12,7 @@
 
 import { netOf, resultOf } from './habits.js';
 import { localDate, localMidnight, wallTime } from './local-time.js';
+import { venueSwitches } from './performance.js';
 import { median } from './stats.js';
 
 const CLOSED = 1e-12;
@@ -352,6 +353,7 @@ export function previousPeriodStarts(now, tz = 0) {
            month: back(localMidnight(y, m - 1, 1, tz), current.month) };
 }
 
+const won = t => resultOf(netOf(t)) === 'win';
 const sumIncome = (rows, type) => rows.filter(r => r.incomeType === type).reduce((s, r) => s + parseFloat(r.income), 0);
 
 /** Net, trips closed and wins between `from` and `to`. */
@@ -359,7 +361,7 @@ export function periodNetBetween(income, trips, from, to) {
   const rows = (income || []).filter(r => r.time >= from && r.time < to);
   const closed = (trips || []).filter(t => t.closeTime >= from && t.closeTime < to);
   const net = NET_TYPES.reduce((s, type) => s + sumIncome(rows, type), 0);
-  return { from, to, net: +net.toFixed(2), trips: closed.length, wins: closed.filter(t => t.win).length };
+  return { from, to, net: +net.toFixed(2), trips: closed.length, wins: closed.filter(won).length };
 }
 
 /** Realised, fees, funding, net, transfers and closed trips since each start in `starts`. */
@@ -370,7 +372,7 @@ export function periodNet(income, trips, starts) {
     const [realized, fees, funding] = NET_TYPES.map(type => sumIncome(rows, type));
     return [period, { from, realized: +realized.toFixed(2), fees: +fees.toFixed(2), funding: +funding.toFixed(2),
                       net: +(realized + fees + funding).toFixed(2), transfers: +sumIncome(rows, 'TRANSFER').toFixed(2),
-                      trips: closed.length, wins: closed.filter(t => t.win).length }];
+                      trips: closed.length, wins: closed.filter(won).length }];
   }));
 }
 
@@ -407,7 +409,8 @@ export function accountChange(snapshots, income, starts) {
   return Object.fromEntries(Object.entries(starts).map(([period, from]) => {
     const first = sorted.find(s => s.t >= from);
     if (!first || !last || first === last) return [period, null];
-    const transfers = sumIncome((income || []).filter(r => r.time >= first.t), 'TRANSFER');
+    const transfers = sumIncome([...(income || []).filter(r => r.time >= first.t),
+                                 ...venueSwitches(sorted).filter(r => r.time > first.t)], 'TRANSFER');
     return [period, { change: +(last.accountValue - first.accountValue - transfers).toFixed(2),
                       since: first.t, partial: first.t - from > DAY_MS / 24 }];
   }));

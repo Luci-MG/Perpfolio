@@ -62,6 +62,24 @@ test('realised funding comes from the ledger by window and per symbol, and a lar
   assert.equal(book.realised.differsFromEstimate, true, '−$5/day realised against −$3/day estimated');
 });
 
+test('realised funding is compared with the Binance estimate alone, over the days to the last sync', () => {
+  const day = 24 * HOUR;
+  const income = Array.from({ length: 10 }, (_, i) => ({ incomeType: 'FUNDING_FEE', symbol: 'BTCUSDT', income: '-1', time: NOW - (i + 3) * day }));
+  const hl = leg({ exchange: 'hyperliquid', symbol: 'SOL', side: 'Short', fundingRate: 0.01, sizeUsd: 100000, fundingIntervalHours: 1 });
+  const binance = leg({ fundingRate: 0.0111, sizeUsd: 3000 });
+  const book = fundingBook({ legs: [binance, hl], income, now: NOW, syncedAt: NOW - 3 * day + HOUR });
+  assert.deepEqual([book.realised.d7, book.realised.coveredDays, book.realised.perDay7d], [-7, 7, -1]);
+  assert.equal(book.realised.differsFromEstimate, false, 'a Hyperliquid leg the ledger never sees is left out');
+  const fresh = fundingBook({ legs: [binance], income: income.slice(-1), now: NOW, syncedAt: NOW - 12 * day + HOUR });
+  assert.equal(fresh.realised.differsFromEstimate, null, 'under a day of ledger is too little to compare');
+});
+
+test('a Hyperliquid leg is near its cap against 4% an hour, not Binance\'s default', () => {
+  const hl = leg({ exchange: 'hyperliquid', symbol: 'SOL', fundingRate: 1.5, fundingIntervalHours: 1 });
+  assert.equal(fundingBook({ legs: [hl], now: NOW }).rows[0].capPct, 4);
+  assert.equal(fundingBook({ legs: [hl], now: NOW }).rows[0].nearCap, null);
+});
+
 test('the next settlement sums the legs that settle first', () => {
   const book = fundingBook({ legs: [leg(), leg({ symbol: 'ETHUSDT', nextFundingTime: NOW + HOUR }),
                                     leg({ symbol: 'SOLUSDT', nextFundingTime: NOW + HOUR, side: 'Short' })], now: NOW });

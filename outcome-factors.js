@@ -4,7 +4,7 @@
 // one draw. Exploratory: association, not cause. Method and thresholds:
 // docs/research/outcome-factors.md. Pure, over trips enriched with context.
 
-import { medianSizesBefore, netOf, previousTrips } from './habits.js';
+import { medianSizesBefore, netOf, previousTrips, resultOf } from './habits.js';
 import { BOOTSTRAP_DRAWS, benjaminiHochberg, dayBootstrap, groupByDay, mean, median as medianOf, quantile, welch, wilson } from './stats.js';
 import { wallTime } from './local-time.js';
 import { periodStarts } from './trade-analytics.js';
@@ -18,7 +18,7 @@ const STRATUM_MIN_TRIPS = 5;
 const DAY_MS = 86_400_000;
 const CONFLUENCE_LEAN = 0.25;
 
-const won = t => netOf(t) > 0;
+const won = t => resultOf(netOf(t)) === 'win';
 const confluenceSide = score => (score >= CONFLUENCE_LEAN ? 'Long' : score <= -CONFLUENCE_LEAN ? 'Short' : null);
 
 function confluenceBucket(t) {
@@ -87,7 +87,18 @@ function goalFor(factor, bucket) {
  * the rest, resampling whole days so a day's trips move together. Seeded: same input, same answer.
  */
 export function clusterBootstrap(days, inBucket, draws = BOOTSTRAP_DRAWS) {
-  return dayBootstrap(days, sample => diffOf(sample.filter(inBucket), sample.filter(t => !inBucket(t))), draws);
+  const summaries = days.map(day => {
+    const s = { sumIn: 0, nIn: 0, sumRest: 0, nRest: 0 };
+    for (const t of day) {
+      if (inBucket(t)) { s.sumIn += netOf(t); s.nIn++; } else { s.sumRest += netOf(t); s.nRest++; }
+    }
+    return [s];
+  });
+  return dayBootstrap(summaries, sample => {
+    let sumIn = 0, nIn = 0, sumRest = 0, nRest = 0;
+    for (const s of sample) { sumIn += s.sumIn; nIn += s.nIn; sumRest += s.sumRest; nRest += s.nRest; }
+    return nIn && nRest ? sumIn / nIn - sumRest / nRest : null;
+  }, draws);
 }
 
 function contextOf(trips, tz) {
@@ -200,12 +211,13 @@ function scoreFactor(def, trips, days, ctx) {
  * Every factor's buckets against the rest of the book, the rows that stand out (interval clear
  * of zero and passing Benjamini–Hochberg across every comparison shown), and the during-trade
  * behaviours and your own tags apart, since both are known only after entry. `session` hides
- * the factors a session filter makes meaningless.
+ * the factors a session filter makes meaningless. `all` is every trip before any filter, which
+ * the previous trip and the usual size are judged on; `trips` must be drawn from it.
  */
-export function outcomeFactors(trips, { tz = 0, session = null } = {}) {
+export function outcomeFactors(trips, { tz = 0, session = null, all = trips } = {}) {
   const sorted = [...(trips || [])].sort((a, b) => a.openTime - b.openTime);
   const split = Math.floor(sorted.length * (1 - RECENT_SHARE));
-  const facts = contextOf(sorted, tz);
+  const facts = contextOf([...(all || [])].sort((a, b) => a.openTime - b.openTime), tz);
   const early = sorted.slice(0, split);
   const size = FACTORS.find(f => f.id === 'size'), hedged = FACTORS.find(f => f.id === 'hedged');
   const strata = [{ id: 'size', of: t => size.bucket(t, facts) }, { id: 'hedged', of: t => hedged.bucket(t) }];

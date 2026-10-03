@@ -14,7 +14,7 @@ The design was agreed on 2026-10-03; rules and milestones are both built. Milest
 |---|---|---|---|
 | Max leverage at entry | trip | entry context `account.leverage` | no — from entry capture on |
 | Stop within 5 minutes of entry | trip | entry context `yourStop` | no — from entry capture on |
-| Max loss per trade, % of equity at entry (or $) | trip | trip net against the equity snapshot within 15 min of `openTime`, else the wallet curve (marked ≈ wallet) | yes, as far back as the wallet curve |
+| Max loss per trade, % of equity at entry (or $) | trip | trip net against the equity snapshot within 15 min of `openTime`, else the wallet curve (marked ≈ wallet); a trip before the wallet curve begins is not scored in % | yes, as far back as the wallet curve |
 | No adding while underwater | trip | `addsWhileUnderwater` | yes |
 | Max size, × median opening notional | trip | `openNotional` against the median of earlier trips, once there are 10 | yes |
 | Max trades per day | day | trips opened per local day; only the trips past the cap are breaches | yes |
@@ -41,7 +41,8 @@ Every rule can be scoped to a session (*Applies: Weekend*), reusing `sessions.js
   withdrawals left out so a transfer never reaches a target. The projection is a least-squares
   line through the daily closes since setting it ("on pace for …"), labelled an extrapolation;
   under 7 days of history it says so instead. A target without a date is never late or
-  missed. The drawdown milestone scores each local month from the month it was set; months
+  missed; one reached after its date reads *reached late*, with how many days after. A date
+  must be a real calendar date and still ahead on your own clock when the goal is set. The drawdown milestone scores each local month from the month it was set; months
   before snapshots began read from the wallet curve, marked ≈ wallet.
 - **Order:** rules first, as below; then milestones, the drawdown limit first and account
   targets by target, paused last — so a ladder of targets reads in order.
@@ -82,7 +83,7 @@ Order: broken → in progress → kept → paused, then creation order within ea
 | in progress | ● muted, with "4/6" |
 | not applicable | · muted |
 | paused | ‖ muted, row dimmed |
-| milestone on pace / late / reached | ◎ green / ◔ amber / ★ green |
+| milestone on pace / late / reached / reached late | ◎ green / ◔ amber / ★ green / ★ amber |
 
 **Expanded row:** an 8-week calendar (one cell per day or week), the breaches list (time,
 trade, what broke, cost; *open ›* jumps to that trade in Trades), the broken-against-kept

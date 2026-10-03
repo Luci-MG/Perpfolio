@@ -133,8 +133,10 @@ function fundSummaryHtml(d) {
 
 function fundNotesHtml(d) {
   const next = d.next ? `<p class="gl-line">Next settlement in ${countdownHtml(d.next.at)} · <span class="${d.next.amount >= 0 ? 'up' : 'dn'}">${signedUsd(d.next.amount)}</span></p>` : '';
-  const gap = d.realised.differsFromEstimate
-    ? `<p class="gl-line">Realised over 7 days averaged ${signedUsd(d.realised.perDay7d)} a day against ${signedUsd(d.totals.perDay)} estimated now: rates or positions have moved.</p>` : '';
+  const gap = d.realised.differsFromEstimate == null
+    ? '<p class="gl-n">Sync history to compare realised funding with the estimate.</p>'
+    : d.realised.differsFromEstimate
+      ? `<p class="gl-line">Binance funding realised over the ${fmt(d.realised.coveredDays, 0)} days to the last sync averaged ${signedUsd(d.realised.perDay7d)} a day against ${signedUsd(d.realised.estimatePerDay)} estimated now: rates or positions have moved.</p>` : '';
   const synced = d.realised.syncedAt ? `<p class="gl-n">Realised as of the last history sync, ${goalWhen(new Date(d.realised.syncedAt).getTime())}.</p>` : '';
   return `${next}${gap}${synced}`;
 }

@@ -867,7 +867,7 @@ td .stop-mark { margin-left: 4px; vertical-align: -2px; }
 .gl-row.missed .gl-fill, .gl-row.broken .gl-fill { background: var(--danger); }
 .gl-tick { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--text); }
 .gl-mark.onpace, .gl-mark.reached { color: var(--success); }
-.gl-mark.late, .gl-late { color: var(--warning); }
+.gl-mark.late, .gl-mark.reachedLate, .gl-late { color: var(--warning); }
 .gl-mark.missed { color: var(--danger); }
 .gl-row.late .gl-state { color: var(--warning); }
 .gl-row.missed .gl-state { color: var(--danger); }

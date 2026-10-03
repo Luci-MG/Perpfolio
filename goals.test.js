@@ -110,11 +110,19 @@ test('a loss cap uses equity at entry, from a snapshot or else the wallet curve'
   const equityAt = equityLookup([{ t: T0 + DAY, accountValue: 2000 }], [{ t: T0, wallet: 500 }]);
   assert.deepEqual(equityAt(T0 + DAY + 10 * 60_000), { value: 2000, approx: false });
   assert.deepEqual(equityAt(T0 + 5 * DAY), { value: 500, approx: true });
+  assert.equal(equityAt(T0 - DAY), null, 'before the wallet curve there is no equity to judge against');
+  assert.deepEqual(equityAt(T0 + DAY - 14 * 60_000), { value: 2000, approx: false }, 'the nearest snapshot may come just after');
   const r = score(goal('maxLossPct', { limit: 1 }), [trip(T0 + 5 * DAY, { net: -10 })], { ...ctx, equityAt });
   assert.equal(r.breaches[0].what, 'lost 2.00% of equity (≈ wallet)');
 });
 
 test('validation takes defaults, rejects out-of-range and unknown input', () => {
+  assert.throws(() => validateGoal({ type: 'accountTarget', params: { target: 1, by: '2026-02-31' } }), /must be a date/);
+  assert.ok(validateGoal({ type: 'accountTarget', params: { target: 1, by: '2028-02-29' } }));
+  const lateEvening = Date.UTC(2026, 8, 1, 20);
+  assert.ok(validateGoal({ type: 'accountTarget', params: { target: 1, by: '2026-09-01' } }, lateEvening, 0));
+  assert.throws(() => validateGoal({ type: 'accountTarget', params: { target: 1, by: '2026-09-01' } }, lateEvening, 300), /future/,
+    'at 20:00 UTC it is already the 2nd in a UTC+5 zone');
   assert.deepEqual(validateGoal({ type: 'maxTradesPerDay' }).params, { max: 6 });
   assert.throws(() => validateGoal({ type: 'maxTradesPerDay', params: { max: 2.5 } }), /whole number/);
   assert.throws(() => validateGoal({ type: 'maxLeverage', params: { max: 0 } }), /1–125/);
@@ -165,6 +173,9 @@ test('an account target is on pace, late, reached or missed against its date', (
   assert.equal(score(milestone('accountTarget', { target: 3000, by: '2026-10-30' }), [], rising).status, 'onpace');
   assert.equal(score(milestone('accountTarget', { target: 3000, by: '2026-10-01' }), [], rising).status, 'late');
   assert.equal(score(milestone('accountTarget', { target: 1400 }), [], rising).status, 'reached');
+  assert.equal(score(milestone('accountTarget', { target: 1400, by: '2026-09-12' }), [], rising).status, 'reached');
+  assert.equal(score(milestone('accountTarget', { target: 1400, by: '2026-09-05' }), [], rising).status, 'reachedLate',
+    'reached on the 9th, after a date of the 5th');
   const after = { ...rising, now: Date.UTC(2026, 9, 2) };
   assert.equal(score(milestone('accountTarget', { target: 5000, by: '2026-09-30' }), [], after).status, 'missed');
   const paused = milestone('accountTarget', { target: 5000 }, { pauses: [{ from: T0 + DAY, to: null }] });

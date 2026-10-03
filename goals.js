@@ -94,18 +94,25 @@ function cleanNumber(spec, raw) {
   return v;
 }
 
-function cleanDate(spec, raw, now) {
+function isCalendarDate(raw) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return false;
+  const [y, m, d] = raw.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+}
+
+function cleanDate(spec, raw, now, tz) {
   if (raw == null || raw === '') {
     if (spec.optional) return null;
     throw new Error(`${spec.label} is required`);
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw) || Number.isNaN(Date.parse(raw))) throw new Error(`${spec.label} must be a date`);
-  if (now != null && deadlineOf(raw) <= now) throw new Error(`${spec.label} must be in the future`);
+  if (typeof raw !== 'string' || !isCalendarDate(raw)) throw new Error(`${spec.label} must be a date`);
+  if (now != null && deadlineOf(raw, tz) <= now) throw new Error(`${spec.label} must be in the future`);
   return raw;
 }
 
-function cleanParam(spec, raw, now) {
-  if (spec.date) return cleanDate(spec, raw, now);
+function cleanParam(spec, raw, now, tz) {
+  if (spec.date) return cleanDate(spec, raw, now, tz);
   if (spec.sessions) {
     const list = Array.isArray(raw) ? [...new Set(raw)] : [];
     if (!list.length || !list.every(s => SESSIONS.includes(s))) throw new Error(`${spec.label}: pick from ${SESSIONS.join(', ')}`);
@@ -120,13 +127,13 @@ function cleanParam(spec, raw, now) {
 
 /**
  * The goal's type, params and session scope, checked against GOAL_TYPES; throws a readable
- * Error otherwise. Given `now`, a date param must lie in the future.
+ * Error otherwise. Given `now`, a date param must end after it on the reader's clock `tz`.
  */
-export function validateGoal({ type, params = {}, session = null } = {}, now = null) {
+export function validateGoal({ type, params = {}, session = null } = {}, now = null, tz = 0) {
   const def = typeOf(type);
   if (!def) throw new Error(`unknown goal type ${type}`);
   if (session != null && (def.scoped === false || !SESSIONS.includes(session))) throw new Error('session scope not allowed here');
-  const clean = Object.fromEntries(def.params.map(spec => [spec.key, cleanParam(spec, params?.[spec.key] ?? spec.default, now)]));
+  const clean = Object.fromEntries(def.params.map(spec => [spec.key, cleanParam(spec, params?.[spec.key] ?? spec.default, now, tz)]));
   return { type, params: clean, session: session ?? null };
 }
 
@@ -261,17 +268,28 @@ export function previewGoal(goal, trips, ctx) {
            strip: dayCells(rows, localDay(ctx.now, ctx.tz ?? 0), PREVIEW_DAYS, ctx.tz ?? 0) };
 }
 
+function lastAtOrBefore(sorted, t) {
+  let lo = 0, hi = sorted.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (sorted[mid].t <= t) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo - 1;
+}
+
 /**
  * Equity at a time, for loss caps: the account value snapshot within 15 minutes when one
- * exists, otherwise the wallet curve, marked `approx`.
+ * exists, otherwise the wallet curve, marked `approx`; null before the wallet curve begins.
  */
 export function equityLookup(snapshots, walletPoints) {
   const snaps = [...(snapshots || [])].sort((a, b) => a.t - b.t);
   const wallet = [...(walletPoints || [])].sort((a, b) => a.t - b.t);
   return t => {
-    const near = snaps.reduce((best, s) => (Math.abs(s.t - t) < Math.abs((best?.t ?? Infinity) - t) ? s : best), null);
+    const i = lastAtOrBefore(snaps, t);
+    const near = [snaps[i], snaps[i + 1]].filter(Boolean).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
     if (near && Math.abs(near.t - t) <= SNAPSHOT_MATCH_MS) return { value: near.accountValue, approx: false };
-    const point = wallet.filter(p => p.t <= t).at(-1) ?? wallet[0];
+    const point = wallet[lastAtOrBefore(wallet, t)];
     return point ? { value: point.wallet, approx: true } : null;
   };
 }

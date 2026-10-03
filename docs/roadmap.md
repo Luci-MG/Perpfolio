@@ -31,6 +31,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Journal Timing, Symbols and Costs remodel](#p5--journal-timing-symbols-and-costs-remodel) | done (2026-10-03) |
 | P5 | [Review fixes, batch 1: correctness](#p5--review-fixes-batch-1-correctness) | done (2026-10-03) |
 | P5 | [Review fixes, batch 2: risk maths](#p5--review-fixes-batch-2-risk-maths) | done (2026-10-03) |
+| P5 | [Review fixes, batch 3: funding, journal, goals](#p5--review-fixes-batch-3-funding-journal-goals) | done (2026-10-03) |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
 | — | [Parked](#parked) | parked |
 
@@ -365,6 +366,15 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   bad mark failing the whole risk book; brackets re-sorted on every lookup.
 - **Done when:** each has a test that fails without its fix, calibration still scores 0% on
   the fake exchange, and the live book still matches Binance's liquidation prices.
+
+## P5 — Review fixes, batch 3: funding, journal, goals
+
+- **Status:** done (2026-10-03).
+- **Problem:** a funding warning set off by venues the ledger never sees; stops blind to 1h and
+  4h funding; Factors context taken from filtered trips; venue switches booked as losses;
+  rates re-requested every sync; milestones that called a late target reached; slow Factors.
+- **Done when:** each has a test that fails without its fix, and on the real book the ledger
+  checks still pass and a sync re-requests almost no funding rates.
 
 ## P6 — Server-side alerts
 

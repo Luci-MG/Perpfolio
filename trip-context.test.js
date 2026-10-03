@@ -129,3 +129,9 @@ test('only a fill that grows its leg starts a capture', () => {
   assert.equal(tc.isIncreasingFill(o({ ps: 'BOTH', S: 'SELL', R: true })), false);
   assert.equal(tc.isIncreasingFill(o({ ps: 'LONG', S: 'BUY', x: 'NEW' })), false);
 });
+
+test('a settlement has its rate when one sits within a minute of it, as income lands a few ms after the rate', () => {
+  const rates = [8 * HOUR, 16 * HOUR];
+  assert.deepEqual(tc.ratesMissing([8 * HOUR + 3, 16 * HOUR - 59_000, 24 * HOUR + 3, 16 * HOUR + 61_000], rates), [24 * HOUR + 3, 16 * HOUR + 61_000]);
+  assert.deepEqual(tc.ratesMissing([HOUR], []), [HOUR]);
+});
