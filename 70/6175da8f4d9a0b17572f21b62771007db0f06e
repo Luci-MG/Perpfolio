@@ -1,0 +1,55 @@
+public/js/positions.js
+  s_ce0783ce808ef4::t_908663b7ff90de 7
+public/js/tools-nav.js
+  s_ce0783ce808ef4::t_908663b7ff90de 20,26,28-31
+  s_ce0783ce808ef4::t_f15a997be5d3b1 1-2,5-9,37,39-42,46,50
+  s_ce0783ce808ef4::t_2dd6de58a0444c 3-4,10-19,21-25,27,32-36,38,43-45,47-49,51
+docs/architecture.md
+  s_ce0783ce808ef4::t_2f0e4e67ababa1 43,79-81,84-86
+  s_ce0783ce808ef4::t_4722fef3d2df61 82-83
+docs/changelog.md
+  s_ce0783ce808ef4::t_2f0e4e67ababa1 3-4,8-9,11
+  s_ce0783ce808ef4::t_4ca674ef4e0f98 27-28
+  s_ce0783ce808ef4::t_4722fef3d2df61 5-7,10
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_0ba0ee215ac2db 100-101,105,109-111
+  s_ce0783ce808ef4::t_255bda549f18ed 141
+  s_ce0783ce808ef4::t_908663b7ff90de 104
+  s_ce0783ce808ef4::t_e0763b74f3d1ff 102-103,106-108,112-115
+public/index.html
+  s_ce0783ce808ef4::t_e9c752fc424af2 280
+public/js/render.js
+  s_ce0783ce808ef4::t_e9c752fc424af2 323,327,333,368
+public/js/venues.js
+  s_ce0783ce808ef4::t_e9c752fc424af2 113
+public/css/app.css
+  s_ce0783ce808ef4::t_0ba0ee215ac2db 701,705-706,709-712,714-715,719,724
+  s_ce0783ce808ef4::t_bff771ac91e4ee 702-704,713
+  s_ce0783ce808ef4::t_81a231989269bc 700,716-718,720-723,725-726
+  s_ce0783ce808ef4::t_4ca674ef4e0f98 707-708
+CLAUDE.md
+  s_ce0783ce808ef4::t_2f0e4e67ababa1 57
+docs/frontend.md
+  s_ce0783ce808ef4::t_2f0e4e67ababa1 6,63,65-66,69-72,105
+  s_ce0783ce808ef4::t_4722fef3d2df61 12,67,73-77
+docs/roadmap.md
+  s_ce0783ce808ef4::t_0a898ffe6e769f 45-46
+  s_ce0783ce808ef4::t_2f0e4e67ababa1 13
+  s_ce0783ce808ef4::t_4722fef3d2df61 74,108-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "706175da8f4d9a0b17572f21b62771007db0f06e",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
