@@ -13,7 +13,7 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeVenuePopover(); hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); closeUpnlDrawerForce(); closeExpDrawerForce(); closeFundDrawerForce(); closeLiqDrawerForce(); closeSimDrawerForce(); closeHlDrawerForce(); closeGoalDrawerForce(); cancelTripNote(); }
+  if (e.key === 'Escape') { closeVenuePopover(); hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); closeUpnlDrawerForce(); closeExpDrawerForce(); closeFundDrawerForce(); closeHlDrawerForce(); closeGoalDrawerForce(); cancelTripNote(); }
 });
 
 startSessionClock();

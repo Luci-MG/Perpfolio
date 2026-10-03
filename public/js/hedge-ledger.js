@@ -1,5 +1,27 @@
 // hedge-ledger.js — the hedge-ledger drawer: locked PnL, carry and margin inflation.
 
+let drawerPoolAsset = null;
+
+const nearestKillPct = P => Math.min(Infinity, ...(P.baseline || []).flatMap(b =>
+  [b.killUpPct, b.killDownPct].filter(v => v != null).map(Math.abs)));
+
+function drawerPool() {
+  const pools = riskBook?.pools || [];
+  return pools.find(P => P.marginAsset === drawerPoolAsset)
+    || [...pools].sort((a, b) => nearestKillPct(a) - nearestKillPct(b))[0] || null;
+}
+
+function setDrawerPool(asset, rerender) {
+  drawerPoolAsset = asset;
+  rerender();
+}
+
+function drawerPoolSwitch(pools, current, rerender) {
+  if (pools.length < 2) return '';
+  return `<div class="sim-presets" role="group" aria-label="Margin pool">${pools.map(asset =>
+    `<button class="st-btn${asset === current ? ' on' : ''}" onclick="setDrawerPool(${jsArg(asset)}, ${rerender})">${esc(asset)} pool</button>`).join('')}</div>`;
+}
+
 // ── Hedge ledger (sidebar drawer) ─────────────────────────────────────────────
 // A matched same-symbol hedge pins its PnL at (entryShort − entryLong) × matchedQty: the
 // price terms cancel, so that slice of the loss is already decided and only the unmatched
@@ -121,7 +143,7 @@ function renderHlBody() {
   if (!body) return;
   if (!hlData && loadErrors.hl) { body.innerHTML = loadErrorHtml('hl', 'openHlDrawer()', false); return; }
   const pools = hlData?.pools || [];
-  const pool = pools.find(x => x.marginAsset === (drawerPoolAsset ?? simPool()?.marginAsset)) || pools[0];
+  const pool = pools.find(x => x.marginAsset === (drawerPoolAsset ?? drawerPool()?.marginAsset)) || pools[0];
   if (!pool) { body.innerHTML = `<p style="font-size:12px;color:var(--text3)">No Binance cross positions.</p>`; return; }
   const poolSwitch = drawerPoolSwitch(pools.map(x => x.marginAsset), pool.marginAsset, 'renderHlBody');
 

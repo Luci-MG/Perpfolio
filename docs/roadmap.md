@@ -34,7 +34,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Review fixes, batch 3: funding, journal, goals](#p5--review-fixes-batch-3-funding-journal-goals) | done (2026-10-03) |
 | P5 | [Review fixes, batch 4: frontend](#p5--review-fixes-batch-4-frontend) | done (2026-10-03) |
 | P5 | [Review fixes, batch 5: guardrails and docs](#p5--review-fixes-batch-5-guardrails-and-docs) | done (2026-10-03) |
-| P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
+| P5 | [Unwind: one tool, priced at the book](#p5--unwind-one-tool-priced-at-the-book) | done (2026-10-04) |
+| P6 | [Server-side alerts](#p6--server-side-alerts) | deferred |
 | P7 | [Leaner account read](#p7--leaner-account-read) | parked |
 | — | [Parked](#parked) | parked |
 
@@ -397,6 +398,20 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Done when:** each new check fires on a broken sample, verify stays green, and the live
   server still signs, streams and reconciles.
 
+## P5 — Unwind: one tool, priced at the book
+
+- **Status:** done (2026-10-04) — see `docs/unwind.md`.
+- **Problem:** three places answered "what if I close this" — the planner tab and two sidebar
+  drawers — with different fee rates and two different liquidation prices. The planner closed
+  whole positions only, ranked by margin at the mark, and read closing one side of a cross-coin
+  hedge as de-risking.
+- **Scope:** one Unwind tool with Plan and Build and a shared readout, computed in the page from
+  the risk book; steps ranked by gain per dollar of exit cost at the live book, the last cut to
+  the target, a BTC-beta exposure guard, and a liquidation-distance objective. `/api/deleverage`
+  and both drawers go.
+- **Done when:** the plan loads into Build, every number comes from one pool and one engine
+  path, and verify stays green.
+
 ## P7 — Leaner account read
 
 - **Status:** parked.
@@ -414,6 +429,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   channel set in `.env`, with a cooldown per rule. Runs only while the server runs.
 - **Done when:** each rule fires once per breach on a fake snapshot and the cooldown holds.
 - **Depends on:** nothing, but heaviest of the batch — built last.
+- **Status:** deferred (2026-10-04) — the exchanges' own phone apps cover alerts for now.
 
 ---
 

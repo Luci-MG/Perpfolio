@@ -786,95 +786,171 @@ export function liquidationDetail(pool, asset, prices = {}, opts = {}) {
   };
 }
 
-// Liquidation price per asset, the way the exchange would show it, for whatever the book
-// looks like after `closes` are applied at `prices`.
-export function liquidationAfterCloses(pool, prices = {}, closes = [], opts = {}) {
-  const feeRate = opts.feeRate ?? 0;
-  const applied = closePositions(pool, prices, closes, feeRate);
-  const assetsOf = pl => [...new Set((pl.positions || []).map(p => p.asset))];
+// ─── UNWIND ──────────────────────────────────────────────────────────────────
+//
+// What a close does to equity, margin and exposure, and why the planner ranks and guards the
+// way it does: docs/unwind.md.
 
-  const row = asset => {
+/**
+ * What closing `closes` costs at the live book: signed slippage against the mark plus each
+ * symbol's taker fee. `opts.books` and `opts.fees` are keyed by asset, with `opts.feeRate`
+ * for a symbol without its own rate; a symbol without a book pays its fee at the mark, and
+ * one whose book runs out is listed in `thin` with what it could not fill.
+ */
+export function closeCost(pool, prices = {}, closes = [], opts = {}) {
+  let fee = 0, slip = 0, notional = 0;
+  const thin = [];
+  for (const c of closes || []) {
+    const pos = (pool.positions || []).find(p => p.key === c.key);
+    if (!pos) continue;
+    const qty = Math.min(Math.abs(c.qty ?? pos.q), Math.abs(pos.q));
+    if (!(qty > 0)) continue;
+    const mark = priceFor(pos, prices);
+    const rate = opts.fees?.[pos.asset] ?? opts.feeRate ?? 0;
+    const book = opts.books?.[pos.asset];
+    const walk = book ? exitCost(pos.q > 0 ? book.bids : book.asks, qty, mark, rate, pos.q > 0 ? 'sell' : 'buy') : null;
+    const filled = walk?.vwap != null ? walk.filled : 0;
+    if (filled) { slip += walk.slipUsd; fee += walk.feeUsd; notional += filled * walk.vwap; }
+    const unfilled = qty - filled;
+    fee += unfilled * mark * rate;
+    notional += unfilled * mark;
+    if (book && unfilled > 1e-12) thin.push({ asset: pos.asset, unfilled });
+  }
+  return { fee, slip, total: fee + slip, notional, thin };
+}
+
+/** `closePositions` with the exit priced by `closeCost`: collateral pays the fees and the slippage. */
+export function applyCloses(pool, prices = {}, closes = [], opts = {}, cost = closeCost(pool, prices, closes, opts)) {
+  const r = closePositions(pool, prices, closes, 0);
+  return { ...r, pool: { ...r.pool, collateral: r.pool.collateral - cost.total }, fees: cost.fee, slip: cost.slip, cost };
+}
+
+/** Net exposure in BTC terms: each asset's net delta times its beta to BTC, 1 where unknown. */
+export function betaNet(pool, prices = {}, betas = {}) {
+  return Object.entries(netDeltas(pool, prices)).reduce((s, [a, d]) => s + d * (betas[a] ?? 1), 0);
+}
+
+/** Distance from the mark, in %, to the nearest liquidation price Binance would publish; Infinity when none exists. */
+export function nearestLiqPct(pool, prices = {}, opts = {}) {
+  let nearest = Infinity;
+  for (const asset of new Set((pool.positions || []).map(p => p.asset))) {
+    const price = liquidationPriceAnalytic(pool, asset, prices, opts);
+    const mark = prices[asset] ?? pool.positions.find(p => p.asset === asset).mark;
+    if (price != null && mark > 0) nearest = Math.min(nearest, Math.abs(price - mark) / mark * 100);
+  }
+  return nearest;
+}
+
+function liquidationRows(pool, after, prices, opts) {
+  const live = new Set((after.positions || []).map(p => p.asset));
+  return [...new Set((pool.positions || []).map(p => p.asset))].map(asset => {
     const before = liquidationPriceAnalytic(pool, asset, prices, opts);
-    const after  = applied.pool.positions.some(p => p.asset === asset)
-      ? liquidationPriceAnalytic(applied.pool, asset, prices, opts)
-      : null;
+    const closed = !live.has(asset);
+    const afterPx = closed ? null : liquidationPriceAnalytic(after, asset, prices, opts);
     const mark = prices[asset];
-    const pct  = p => (p == null || !(mark > 0)) ? null : (p - mark) / mark * 100;
+    const pct = p => (p == null || !(mark > 0)) ? null : (p - mark) / mark * 100;
     return {
-      asset, mark,
-      closed: !applied.pool.positions.some(p => p.asset === asset),
-      liqBefore: before, liqAfter: after,
-      pctBefore: pct(before), pctAfter: pct(after),
-      roomGained: (before == null || after == null || !(mark > 0)) ? null
-        : Math.abs(pct(after)) - Math.abs(pct(before))
+      asset, mark, closed,
+      liqBefore: before, liqAfter: afterPx,
+      pctBefore: pct(before), pctAfter: pct(afterPx),
+      roomGained: (before == null || afterPx == null || !(mark > 0)) ? null
+        : Math.abs(pct(afterPx)) - Math.abs(pct(before))
     };
-  };
+  });
+}
 
+/**
+ * Everything one set of closes does, priced at the live book: margin before and after,
+ * exposure per coin and in BTC-beta terms, and each asset's liquidation price the way
+ * Binance publishes it (tier frozen, linear solve). Takes the same opts as `closeCost`,
+ * plus `betas` keyed by asset.
+ */
+export function unwindOutcome(pool, prices = {}, closes = [], opts = {}) {
+  const applied = applyCloses(pool, prices, closes, opts);
+  const betas = opts.betas || {};
   return {
-    rows: assetsOf(pool).map(row),
-    realized: applied.realized,
-    fees: applied.fees,
-    notionalClosed: applied.notionalClosed,
     before: evalPool(pool, prices, opts),
     after: evalPool(applied.pool, prices, opts),
+    realized: applied.realized,
+    cost: applied.cost,
+    notionalClosed: applied.notionalClosed,
+    netBefore: netDeltas(pool, prices),
+    netAfter: netDeltas(applied.pool, prices),
+    grossBefore: grossNetDelta(pool, prices),
+    grossAfter: grossNetDelta(applied.pool, prices),
+    betaBefore: betaNet(pool, prices, betas),
+    betaAfter: betaNet(applied.pool, prices, betas),
+    rows: liquidationRows(pool, applied.pool, prices, opts),
     pool: applied.pool
   };
 }
 
-// ─── DELEVERAGE PLANNER ──────────────────────────────────────────────────────
-//
-// What closing a position actually does, and why it is worth optimising:
-//   • Equity does not move. Realised PnL replaces unrealised one for one.
-//   • Free margin rises by the INITIAL margin released.
-//   • The liquidation buffer rises by the MAINTENANCE margin released.
-//   • Free margin is therefore bounded above by equity − reserved holds, no matter what
-//     is closed. `deleverageCeiling` reports that bound, because a target above it cannot
-//     be reached by closing anything.
-//
-// The cost of a close is directional: shutting a naked leg lowers gross exposure, while
-// shutting one leg of a hedge raises it. `deltaShift` carries that sign, so the planner
-// can spend margin-release on the cheapest exposure first.
-
 export function deleverageCeiling(pool, prices = {}, opts = {}) {
   const state = evalPool(pool, prices, opts);
-  const notional = state.positions.reduce((s, p) => s + p.notional, 0);
-  const fees = notional * (opts.feeRate ?? 0);
+  const all = (pool.positions || []).map(p => ({ key: p.key, qty: Math.abs(p.q) }));
+  const cost = closeCost(pool, prices, all, opts).total;
   return {
     equity:        +state.equity.toFixed(2),
     reserved:      +(pool.freeReserved || 0).toFixed(2),
     currentFree:   +state.freeUsable.toFixed(2),
-    maxFree:       +Math.max(0, state.equity - fees - (pool.freeReserved || 0)).toFixed(2),
+    maxFree:       +Math.max(0, state.equity - cost - (pool.freeReserved || 0)).toFixed(2),
     releasableIm:  +state.im.toFixed(2),
-    closeAllFees:  +fees.toFixed(2)
+    closeAllCost:  +cost.toFixed(2)
   };
 }
 
-function candidateEffect(pool, prices, opts, label, type, closes) {
-  const before = evalPool(pool, prices, opts);
-  const grossBefore = grossNetDelta(pool, prices);
-  const r = closePositions(pool, prices, closes, opts.feeRate ?? 0);
+const mergeCloses = (a, b) => {
+  const out = new Map(a.map(c => [c.key, c.qty]));
+  for (const c of b) out.set(c.key, (out.get(c.key) || 0) + c.qty);
+  return [...out].map(([key, qty]) => ({ key, qty }));
+};
+
+const scaleCloses = (closes, f) => closes.map(c => ({ key: c.key, qty: c.qty * f }));
+
+const unfilledOf = cost => cost.thin.reduce((s, t) => s + t.unfilled, 0);
+
+function unwindMetric(pool, prices, opts, objective) {
+  if (objective === 'liq') return nearestLiqPct(pool, prices, opts);
+  const s = evalPool(pool, prices, opts);
+  return objective === 'buffer' ? s.buffer : s.freeUsable;
+}
+
+function candidateEffect(ctx, work, label, type, closes) {
+  const { origin, prices, opts, objective, taken, takenCost } = ctx;
+  const merged = closeCost(origin, prices, mergeCloses(taken, closes), opts);
+  const cost = { fee: merged.fee - takenCost.fee, slip: merged.slip - takenCost.slip,
+                 total: merged.total - takenCost.total, thin: merged.thin };
+  const r = applyCloses(work, prices, closes, opts, cost);
+  const before = evalPool(work, prices, opts);
   const after = evalPool(r.pool, prices, opts);
+  const betas = opts.betas || {};
+  const liqGain = objective === 'liq'
+    ? unwindMetric(r.pool, prices, opts, 'liq') - unwindMetric(work, prices, opts, 'liq')
+    : null;
 
   return {
     label, type, closes,
     freeGain:       +(after.free - before.free).toFixed(2),
     bufferGain:     +(after.buffer - before.buffer).toFixed(2),
+    liqGain:        liqGain == null || !isFinite(liqGain) ? liqGain : +liqGain.toFixed(2),
     imReleased:     +(before.im - after.im).toFixed(2),
     mmReleased:     +(before.mm - after.mm).toFixed(2),
     realized:       r.realized,
-    fees:           r.fees,
+    fees:           +cost.fee.toFixed(2),
+    slip:           +cost.slip.toFixed(2),
+    cost:           +cost.total.toFixed(2),
+    thin:           unfilledOf(merged) > unfilledOf(takenCost) + 1e-12,
     notionalClosed: r.notionalClosed,
-    deltaShift:     +(grossNetDelta(r.pool, prices) - grossBefore).toFixed(2),
+    deltaShift:     +(grossNetDelta(r.pool, prices) - grossNetDelta(work, prices)).toFixed(2),
+    betaShift:      +(Math.abs(betaNet(r.pool, prices, betas)) - Math.abs(betaNet(work, prices, betas))).toFixed(2),
     resultPool:     r.pool
   };
 }
 
-// Every close worth considering: the matched portion of each same-symbol hedge (margin on
-// both legs, no net delta) and each individual leg in full.
-export function deleverageCandidates(pool, prices = {}, opts = {}) {
+function candidatesFor(ctx, work) {
   const out = [];
   const bySymbol = {};
-  for (const p of pool.positions || []) (bySymbol[p.symbol] = bySymbol[p.symbol] || []).push(p);
+  for (const p of work.positions || []) (bySymbol[p.symbol] = bySymbol[p.symbol] || []).push(p);
 
   for (const [symbol, legs] of Object.entries(bySymbol)) {
     const long  = legs.find(p => p.q > 0);
@@ -882,55 +958,53 @@ export function deleverageCandidates(pool, prices = {}, opts = {}) {
     if (!long || !short) continue;
     const qty = Math.min(Math.abs(long.q), Math.abs(short.q));
     if (qty <= 0) continue;
-    out.push(candidateEffect(pool, prices, opts,
-      `close matched ${symbol} hedge (${qty} both sides)`, 'matched-hedge',
+    out.push(candidateEffect(ctx, work, `close matched ${symbol} hedge`, 'matched-hedge',
       [{ key: long.key, qty }, { key: short.key, qty }]));
   }
 
-  for (const p of pool.positions || []) {
-    out.push(candidateEffect(pool, prices, opts,
-      `close ${p.asset} ${p.positionSide}`, 'leg', [{ key: p.key, qty: Math.abs(p.q) }]));
+  for (const p of work.positions || []) {
+    out.push(candidateEffect(ctx, work, `close ${p.asset} ${p.positionSide}`, 'leg', [{ key: p.key, qty: Math.abs(p.q) }]));
   }
-
   return out;
 }
 
-// Greedy selection, re-deriving candidates against the evolving book at every step so
-// bracket-tier effects and part-closed legs are accounted for. Delta-neutral or
-// delta-reducing closes are always spent first; only then is exposure traded for margin.
+const efficiency = (c, gain) => c.cost > 1e-9 ? gain / c.cost : Infinity;
+
+/**
+ * Closes that move `objective` ('free' or 'buffer' in dollars, 'liq' as the nearest liquidation's
+ * distance in %) to `target`, cheapest per dollar of exit cost first. Unless `allowBreakingHedges`,
+ * no close may raise per-coin or BTC-beta exposure by more than 0.5% of gross notional; `blocked`
+ * says what stopped a plan short of its target.
+ */
 export function deleveragePlan(pool, prices = {}, opts = {}) {
-  const objective = opts.objective === 'buffer' ? 'buffer' : 'free';
-  const gainOf    = c => objective === 'buffer' ? c.bufferGain : c.freeGain;
+  const objective = ['buffer', 'liq'].includes(opts.objective) ? opts.objective : 'free';
+  const gainOf    = c => objective === 'liq' ? c.liqGain : objective === 'buffer' ? c.bufferGain : c.freeGain;
   const target    = opts.target ?? Infinity;
   const maxLoss   = opts.maxRealizedLoss ?? Infinity;
   const maxSteps  = opts.maxSteps ?? 12;
   const minGain   = opts.minGain ?? 0.01;
-
-  // Added exposure is a guardrail, never a tie-breaker. Ranking by gain and falling back
-  // to unsafe closes when no safe one is available is how a planner ends up proposing to
-  // shut the profitable leg of a hedge under a loss cap — freeing margin while leaving the
-  // other leg naked. Breaking a hedge therefore has to be asked for explicitly.
   const allowBreakingHedges = opts.allowBreakingHedges === true;
-  const deltaTol  = opts.deltaTolerance ?? (allowBreakingHedges ? Infinity : 1);
 
   const start   = evalPool(pool, prices, opts);
+  const gross   = start.positions.reduce((s, p) => s + p.notional, 0);
+  const deltaTol = opts.deltaTolerance ?? (allowBreakingHedges ? Infinity : Math.max(1, gross * 0.005));
   const ceiling = deleverageCeiling(pool, prices, opts);
+  const betas   = opts.betas || {};
+  const metric  = pl => unwindMetric(pl, prices, opts, objective);
 
+  const ctx = { origin: pool, prices, opts, objective, taken: [], takenCost: closeCost(pool, prices, [], opts) };
   let work = pool;
-  let realizedTotal = 0, feesTotal = 0;
+  let realizedTotal = 0, costTotal = 0;
   const steps = [];
-
-  const reached = () => (objective === 'buffer'
-    ? evalPool(work, prices, opts).buffer
-    : evalPool(work, prices, opts).freeUsable) >= target;
-
   let blocked = null;
-  for (let i = 0; i < maxSteps && !reached(); i++) {
-    const all = deleverageCandidates(work, prices, opts).filter(c => gainOf(c) >= minGain);
-    const lossAfter = c => -(realizedTotal - feesTotal + c.realized - c.fees);
+
+  for (let i = 0; i < maxSteps && metric(work) < target; i++) {
+    const all = candidatesFor(ctx, work).filter(c => gainOf(c) >= minGain);
+    const lossAfter = c => -(realizedTotal - costTotal + c.realized - c.cost);
+    const isSafe = c => c.deltaShift <= deltaTol && c.betaShift <= deltaTol;
     const affordable = all.filter(c => lossAfter(c) <= maxLoss);
-    const safe       = all.filter(c => c.deltaShift <= deltaTol);
-    const candidates = affordable.filter(c => c.deltaShift <= deltaTol);
+    const safe       = all.filter(isSafe);
+    const candidates = affordable.filter(isSafe);
 
     if (!candidates.length) {
       if (all.length) {
@@ -946,32 +1020,52 @@ export function deleveragePlan(pool, prices = {}, opts = {}) {
       break;
     }
 
-    const pick = candidates.sort((a, b) => gainOf(b) - gainOf(a))[0];
+    const deep = candidates.filter(c => !c.thin);
+    const ranked = (deep.length ? deep : candidates)
+      .sort((a, b) => efficiency(b, gainOf(b)) - efficiency(a, gainOf(a)) || gainOf(b) - gainOf(a));
+    let pick = ranked[0];
+
+    if (isFinite(target) && metric(pick.resultPool) > target) {
+      let lo = 0, hi = 1;
+      for (let k = 0; k < 40; k++) {
+        const mid = (lo + hi) / 2;
+        if (metric(candidateEffect(ctx, work, '', '', scaleCloses(pick.closes, mid)).resultPool) >= target) hi = mid;
+        else lo = mid;
+      }
+      pick = { ...candidateEffect(ctx, work, pick.label, pick.type, scaleCloses(pick.closes, hi)), partial: true };
+    }
+
     work = pick.resultPool;
+    ctx.taken = mergeCloses(ctx.taken, pick.closes);
+    ctx.takenCost = closeCost(pool, prices, ctx.taken, opts);
     realizedTotal += pick.realized;
-    feesTotal     += pick.fees;
+    costTotal     += pick.cost;
     const now = evalPool(work, prices, opts);
     const { resultPool, ...record } = pick;
     steps.push({ ...record, cumulativeFree: +now.freeUsable.toFixed(2),
                  cumulativeBuffer: +now.buffer.toFixed(2),
+                 cumulativeLiqPct: nearestLiqPct(work, prices, opts),
                  cumulativeRealized: +realizedTotal.toFixed(2) });
   }
 
   const end = evalPool(work, prices, opts);
-  const value = objective === 'buffer' ? end.buffer : end.freeUsable;
+  const value = metric(work);
+  const summary = (state, pl) => ({
+    free: +state.freeUsable.toFixed(2), buffer: +state.buffer.toFixed(2),
+    im: +state.im.toFixed(2), mm: +state.mm.toFixed(2), equity: +state.equity.toFixed(2),
+    gross: +grossNetDelta(pl, prices).toFixed(2), betaNet: +betaNet(pl, prices, betas).toFixed(2),
+    nearestLiqPct: nearestLiqPct(pl, prices, opts)
+  });
 
   return {
     objective, target: target === Infinity ? null : target,
     ceiling,
-    before: { free: +start.freeUsable.toFixed(2), buffer: +start.buffer.toFixed(2),
-              im: +start.im.toFixed(2), mm: +start.mm.toFixed(2),
-              equity: +start.equity.toFixed(2), gross: +grossNetDelta(pool, prices).toFixed(2) },
-    after:  { free: +end.freeUsable.toFixed(2), buffer: +end.buffer.toFixed(2),
-              im: +end.im.toFixed(2), mm: +end.mm.toFixed(2),
-              equity: +end.equity.toFixed(2), gross: +grossNetDelta(work, prices).toFixed(2),
-              positions: end.positions.length },
+    deltaTolerance: deltaTol,
+    before: summary(start, pool),
+    after:  { ...summary(end, work), positions: end.positions.length },
     realized: +realizedTotal.toFixed(2),
-    fees: +feesTotal.toFixed(2),
+    cost: +costTotal.toFixed(2),
+    closes: ctx.taken,
     steps,
     blocked,
     allowBreakingHedges,

@@ -27,7 +27,7 @@ behaviour as twenty-six **classic** scripts loaded in this order — no build st
 | 8h | `journal-timing.js` | Journal's Timing tab: the calendar, weekday and hour with shrunk averages, the count grid |
 | 8i | `journal-symbols.js` | Journal's Symbols tab: best and worst with the rest folded, sorting, concentration, drill-down |
 | 8j | `journal-costs.js` | Journal's Costs tab: headline in basis points, fee check, weekly costs, by symbol, the wallet ledger |
-| 9 | `unwind.js` | liquidation-after-close and unwind-simulator drawers, Unwind tab |
+| 9 | `unwind.js` | the Unwind tool: Plan, Build and their shared readout |
 | 10 | `render.js` | sidebar widgets, `render()`, `fetchData()` and the poll guard |
 | 11 | `calculators.js` | context menu and the calculator modal — page code only; the arithmetic is `/calc-engine.js` |
 | 12 | `drawers.js` | exposure and uPnL drawers |
@@ -80,7 +80,7 @@ asset into `$0.00`, so prices — orders, triggers, entries — use `fmtPrice`.
 
 Tiles carry only `data-pos-id`; the calculator, the context menu and the drag-to-hedge
 popup look the full position up in `lastData` with `positionById`. Each fetch a later one
-can overtake (performance, trips, factors, risk book, unwind) takes a `latest(key)` check
+can overtake (performance, trips, factors, risk book) takes a `latest(key)` check
 and drops its response once a newer request has started; a poll asked for while one is in
 flight runs straight after it rather than being skipped.
 
@@ -90,7 +90,7 @@ flight runs straight after it rather than being skipped.
 Stress, Unwind, Journal, Confluence) are the `TOOLS` table in `tools-nav.js`, opened from the
 sidebar's tool widgets; `isToolView()` / `toolFor()` read that table, so no other file lists them.
 `setView(v)` fetches on activation only: `stops` → `/api/volstops`, `stress` → `/api/riskbook`,
-`unwind` → `/api/deleverage`, `journal` → `/api/performance`, `confluence` → `/api/confluence`.
+`unwind` → `/api/riskbook` (computed in the page, `docs/unwind.md`), `journal` → `/api/performance`, `confluence` → `/api/confluence`.
 Tools replace the positions card and its exchange header; only Stops (`exchangeFilter: true`)
 keeps the HL/BN filter.
 
@@ -201,8 +201,8 @@ settlements. Mechanics and sources: [`research/funding.md`](research/funding.md)
 
 ### Drawers
 All at body level, outside `#sidebar`, so the poll's sidebar rebuild cannot wipe them:
-`openUpnlDrawer` · `openExpDrawer` · `openFundDrawer` (pre-existing) and `openLiqDrawer` ·
-`openSimDrawer` · `openHlDrawer` · `openGoalDrawer`. Each follows the same overlay + `.open`
+`openUpnlDrawer` · `openExpDrawer` · `openFundDrawer` (pre-existing) and `openHlDrawer` ·
+`openGoalDrawer`. Each follows the same overlay + `.open`
 class pattern.
 
 ---

@@ -26,7 +26,7 @@ const RANGE_TIERS = [30, 50, 80, 120];
 async function fetchRiskBook(fresh = false) {
   const current = latest('risk');
   riskLoading = true;
-  if (posView === 'stress') rerenderStress();
+  if (posView === 'stress' || posView === 'unwind') rerenderStress();
   try {
     if (!riskEngine) riskEngine = await import('/risk-engine.js');
     const res  = await fetch(`/api/riskbook${fresh ? '?fresh=1' : ''}`);
@@ -52,7 +52,7 @@ async function fetchRiskBook(fresh = false) {
   } finally {
     if (current()) {
       riskLoading = false;
-      if (posView === 'stress') rerenderStress();
+      if (posView === 'stress' || posView === 'unwind') rerenderStress();
       updateStressAge();
     }
   }

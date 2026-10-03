@@ -30,8 +30,8 @@ so the panel and the API cannot disagree.
   flag disagreed with the closed form
 - `exitCost(levels, qty, mark, feeRate, side)` — slippage against the mark plus commission;
   slippage is signed by the closing side, so a fill better than the mark lowers the cost
-- `liquidationAfterCloses(pool, prices, closes, opts)` — per-asset liquidation before and
-  after a set of closes, with the room gained and which assets stopped existing
+- `unwindOutcome(pool, prices, closes, opts)` — a set of closes priced at the live book: margin,
+  exposure per coin and by beta, and per-asset liquidation before and after (`docs/unwind.md`)
 - `liquidationDetail(...)` — the solve plus its conditioning (see *Conditioning*)
 - `alignedReturns(a, b)` — returns paired on equal timestamps
 - `drainPer1Pct(pool, asset, base)` — buffer cost of a ±1% move
@@ -39,7 +39,8 @@ so the panel and the API cannot disagree.
 - `cascade(pool, prices)` — force-close largest-MM-first until solvent
 - `closePositions(pool, prices, closes, feeRate)` → `{ pool, realized, notionalClosed, fees }`
 - `grossNetDelta(pool, prices)` — Σ|net delta| per asset
-- `deleverageCeiling(pool, prices, opts)` / `deleverageCandidates(…)` / `deleveragePlan(…)`
+- `closeCost` / `applyCloses` / `betaNet` / `nearestLiqPct` / `deleverageCeiling` / `deleveragePlan` —
+  the Unwind tool's engine (`docs/unwind.md`)
 - `beta`, `stdev`, `dailySigmaPct` — market stats (reuses
   `computeReturns` from `vol-estimator.js`)
 

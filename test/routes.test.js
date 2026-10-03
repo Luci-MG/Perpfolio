@@ -138,25 +138,6 @@ test('riskbook reproduces the exchange\'s own margin figures exactly', async () 
   assert.equal((await get('/api/riskbook?fresh=1')).status, 200);
 });
 
-test('deleverage plans, and a malformed loss cap means no cap', async () => {
-  const plan = await get('/api/deleverage?objective=free&target=5000');
-  assert.equal(plan.status, 200);
-  assert.equal(plan.body.plans.length, 2);
-  for (const p of plan.body.plans) assert.ok(p.ceiling, `${p.marginAsset} has no ceiling`);
-  record('deleverage', plan.body);
-  const bad = await get('/api/deleverage?objective=free&maxLoss=abc');
-  assert.equal(bad.status, 200);
-  assert.equal(bad.body.ok, true);
-});
-
-test('deleverage plans with the account\'s own taker rate unless a fee is given, and a fee of 0 is 0', async () => {
-  const own = (await get('/api/deleverage?objective=free')).body;
-  assert.deepEqual(own.plans.map(p => p.fee), own.plans.map(() => ({ rate: 0.0005, source: 'account' })));
-  const free = (await get('/api/deleverage?objective=free&fee=0')).body;
-  assert.deepEqual([free.params.feeRate, ...free.plans.map(p => p.fee.source)], [0, 'given', 'given']);
-  assert.ok(free.plans.every(p => p.ceiling.closeAllFees === 0), 'no fee charged on any close');
-});
-
 test('a position with no usable mark gets an empty risk row instead of failing the risk book', async () => {
   fake.reportMark('ETHUSDT', 0);
   const { status, body } = await get('/api/riskbook?fresh=1');
@@ -588,8 +569,7 @@ test('Binance off: no signed request, account tools refuse, the journal still re
   assert.equal(dash.body.binance.positions.length, 0);
   assert.equal(dash.body.binance.orders.length, 0);
   assert.equal((await get('/api/volstops?risk=0.01&k=1.5')).status, 200);
-  const refusals = { riskbook: await get('/api/riskbook'), deleverage: await get('/api/deleverage'),
-                     hedgeledger: await get('/api/hedgeledger'), sync: await startSync() };
+  const refusals = { riskbook: await get('/api/riskbook'), hedgeledger: await get('/api/hedgeledger'), sync: await startSync() };
   for (const [route, { status, body }] of Object.entries(refusals)) assert.deepEqual([status, body.disabled], [409, true], route);
   assert.equal((await get('/api/performance')).status, 200);
   assert.deepEqual(fake.signedCalls.slice(mark), []);
