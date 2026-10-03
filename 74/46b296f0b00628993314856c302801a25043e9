@@ -1,0 +1,47 @@
+public/js/goals-view.js
+  s_ce0783ce808ef4::t_8ce9bdcae039f1 1-290
+CLAUDE.md
+  s_ce0783ce808ef4::t_7b5492299f3af3 34,54,65
+docs/goals.md
+  s_ce0783ce808ef4::t_0865c51d7b530a 1,8-9,111-114
+  s_ce0783ce808ef4::t_8dc7d42beff09b 17,19-20
+docs/roadmap.md
+  s_ce0783ce808ef4::t_7b5492299f3af3 24,252
+docs/frontend.md
+  s_ce0783ce808ef4::t_7b5492299f3af3 22,156
+public/js/journal-trades.js
+  s_ce0783ce808ef4::t_976a2b413f1459 6,130-131,218
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_33da09ab7efc73 394-411,413-448
+  s_ce0783ce808ef4::t_90f3568335b3e5 412
+public/index.html
+  s_ce0783ce808ef4::t_976a2b413f1459 348-360,432
+docs/journal.md
+  s_ce0783ce808ef4::t_7b5492299f3af3 92
+  s_ce0783ce808ef4::t_0865c51d7b530a 122-123
+public/js/journal.js
+  s_ce0783ce808ef4::t_976a2b413f1459 10,24,321,388,514
+public/js/boot.js
+  s_ce0783ce808ef4::t_976a2b413f1459 16
+docs/changelog.md
+  s_ce0783ce808ef4::t_7b5492299f3af3 3-14
+public/css/app.css
+  s_ce0783ce808ef4::t_a12f754eeb5076 796-846
+  s_ce0783ce808ef4::t_e338fd1c93fc8f 847
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7446b296f0b00628993314856c302801a25043e9",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
