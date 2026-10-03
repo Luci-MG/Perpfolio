@@ -32,7 +32,7 @@ browser imports them from `/risk-engine.js`, `/calc-engine.js` and `/sessions.js
 | `lib/orders-stream.js` | user-data websocket, order cache, 60s reconcile, watchdog | state that reassigns itself lives in one module |
 | `lib/binance-account.js` | `getBinanceData()` over the shared snapshot | regular orders rebuilt from the stream cache per read |
 | `lib/market-data.js` | 1h candles, both venues | merged so history grows while running |
-| `lib/pools.js` | cross pools, calibration against reported figures | used by riskbook, deleverage, hedge ledger |
+| `lib/pools.js` | cross pools, calibration against reported figures | used by riskbook, hedge ledger |
 | `lib/history-sync.js` | income + fill sync into `data/` | `DASHBOARD_DATA_DIR` overrides the folder (tests) |
 | `lib/analytics.js` | memoised round trips and statistics | keyed on the sync cursors |
 | `lib/confluence-reading.js` | `readConfluence(symbol, tfs)` — one symbol's full reading | used by the Confluence route and the entry capture |

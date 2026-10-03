@@ -92,7 +92,7 @@ const strayValues = html => [...html.matchAll(/(.{0,60}\b(?:undefined|NaN)\b.{0,
 test('every view and drawer renders against live payloads without errors or NaN', async () => {
   const { markup, run, settle } = await bootPage();
   for (const v of VIEWS) run(`setView('${v}')`);
-  await settle('volStopData && riskBook && unwindData && perfData && cfData && !cfLoading', 'every tab fetch');
+  await settle('volStopData && riskBook && perfData && cfData && !cfLoading', 'every tab fetch');
 
   const bad = [];
   for (const v of VIEWS) {
@@ -620,10 +620,7 @@ test('a failed load keeps each tab\'s controls with Retry, escapes the message, 
   failing();
   await run(`riskBook = null; fetchRiskBook(true)`);
   failed(view('stress'), /Refresh marks/, 'fetchRiskBook\\(true\\)', 'stress');
-  run('renderLiqBody()');
-  failed(markup.get('liqDrawerBody'), /./, 'fetchRiskBook\\(true\\)\\.then\\(renderLiqBody\\)', 'liquidation drawer');
-  await run(`unwindData = null; fetchUnwind()`);
-  failed(view('unwind'), /Liquidation buffer/, 'fetchUnwind\\(\\)', 'unwind');
+  failed(view('unwind'), />Plan</, 'fetchRiskBook\\(true\\)', 'unwind');
   await run(`volStopData = null; fetchVolStops()`);
   failed(view('stops'), /vol-|Risk/, 'fetchVolStops\\(\\)', 'stops');
   await run(`cfData = null; fetchConfluence()`);
@@ -813,28 +810,48 @@ test('Stress: a row fires the other assets\' crossed stops like the header, a we
   assert.ok(run('Object.values(riskShift).every(v => v >= -99)'));
 });
 
-test('the risk drawers switch pools, keep the slider being dragged, and say how old the book is', async () => {
+test('Unwind plans, loads the plan into Build, keeps the slider being dragged, and switches pools', async () => {
   const { markup, run, settle } = await bootPage();
-  run(`openLiqDrawer()`);
-  await settle('riskBook && riskEngine && document.getElementById("liqDrawerBody").innerHTML.includes("pool")', 'the liquidation drawer');
-  const body = () => markup.get('liqDrawerBody');
-  assert.match(body(), /Book from (just now|\d+m ago)/);
-  assert.match(body(), />USDT pool</);
-  assert.match(body(), />USDC pool</);
-  run(`setDrawerPool('USDC', renderLiqBody)`);
-  assert.match(body(), /ENA/);
-  assert.doesNotMatch(body(), /liq-pos-name">BTC/);
+  run(`setView('unwind')`);
+  await settle('riskBook && riskEngine && !riskLoading', 'the risk book');
+  run(`riskForceRender = true; render(lastData)`);
+  const content = () => markup.get('content');
+  assert.match(content(), /Book from (just now|\d+m ago)/);
+  assert.match(content(), />USDT pool</);
+  assert.match(content(), />USDC pool</);
+  assert.match(content(), /After the plan/);
+  assert.match(content(), /in BTC terms, by beta/);
+  assert.deepEqual(strayValues(content()), []);
 
-  run(`setDrawerPool('USDT', renderLiqBody); toggleLiqClose('BTCUSDT:LONG')`);
-  const built = body(), before = markup.get('liqOut');
-  run(`setLiqPct('BTCUSDT:LONG', 50)`);
-  assert.equal(body(), built, 'dragging does not rebuild the drawer, so the slider survives');
-  assert.notEqual(markup.get('liqOut'), before, 'the outcome follows the drag');
-  run(`setLiqPct('BTCUSDT:LONG', 50, true)`);
-  assert.match(body(), /value="50"/);
+  run(`setUw('target', '1000000')`);
+  const planned = JSON.parse(run('JSON.stringify(uwLastPlan.closes)'));
+  assert.ok(planned.length > 0, 'the fake book has hedges to close');
+  run(`uwEditPlan()`);
+  assert.equal(run('uwMode'), 'build');
+  assert.match(content(), /Loaded from the plan/);
+  assert.match(content(), /If you close that/);
+  assert.equal(run('Object.keys(uwSel).length'), new Set(planned.map(c => c.key)).size);
 
-  run(`openSimDrawer(); setDrawerPool('USDC', renderSimBody)`);
-  assert.match(markup.get('simDrawerBody'), /ENA/);
+  run(`setDrawerPool('USDT', uwPoolChanged); uwToggle('BTCUSDT:LONG')`);
+  const built = content(), before = markup.get('uwOut');
+  run(`uwSetPct('BTCUSDT:LONG', 50)`);
+  assert.equal(content(), built, 'dragging rebuilds only the readout, so the slider survives');
+  assert.notEqual(markup.get('uwOut'), before, 'the readout follows the drag');
+  run(`uwSetPct('BTCUSDT:LONG', 50, true)`);
+  assert.match(content(), /value="50"/);
+
+  const moved = markup.get('uwMoveOut');
+  run(`setUwMove(-20)`);
+  assert.notEqual(markup.get('uwMoveOut'), moved);
+  run(`toggleUwMoveBeta()`);
+  assert.match(markup.get('uwOut'), /st-btn on"[^>]*>by beta to BTC/);
+
+  await run(`fetchRiskBook(true)`);
+  assert.equal(run('uwSel["BTCUSDT:LONG"]'), 50, 'a refreshed book keeps the selection');
+
+  run(`setDrawerPool('USDC', uwPoolChanged)`);
+  assert.match(content(), /ENA/);
+  assert.equal(run('Object.keys(uwSel).length'), 0);
 });
 
 const shownText = html => [...html.matchAll(/>([^<]+)</g)].map(m => m[1]).join(' ');
@@ -862,7 +879,7 @@ test('every negative figure on screen carries a minus glyph, never an ASCII hyph
   const { markup, run, settle } = await bootPage();
   run(`lastData.binance.positions.forEach(p => { p.upnl = -Math.abs(p.upnl || 5); })`);
   for (const v of VIEWS) run(`setView('${v}')`);
-  await settle('volStopData && riskBook && unwindData && perfData && cfData && !cfLoading', 'every tab fetch');
+  await settle('volStopData && riskBook && perfData && cfData && !cfLoading', 'every tab fetch');
   const bad = [];
   for (const v of VIEWS) {
     run(`posView = '${v}'; riskForceRender = true; render(lastData)`);

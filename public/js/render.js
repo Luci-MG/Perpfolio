@@ -155,16 +155,6 @@ function renderCalcTiles() {
       sub: 'Estimate liq'
     },
     {
-      action: 'openLiqDrawer()',
-      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`,
-      label: 'Liquidation after close — reprice what you keep'
-    },
-    {
-      action: 'openSimDrawer()',
-      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>`,
-      label: 'Unwind simulator — close legs by hand'
-    },
-    {
       action: 'openHlDrawer()',
       icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="12" y1="9" x2="12" y2="21"/></svg>`,
       label: 'Hedge ledger — what is already decided, and what it costs to hold'
@@ -229,7 +219,7 @@ function render(data) {
   if (posView === 'orders')      sectionLabel = `Open orders ${countPill(filteredOrders.length)}`;
   else if (posView === 'stops')  sectionLabel = `Dynamic stops ${countPill((volStopData?.positions || []).length)}`;
   else if (posView === 'stress') sectionLabel = `Cross-pool stress <span style="font-size:11px;color:var(--text3);font-weight:400">Binance only</span>`;
-  else if (posView === 'unwind') sectionLabel = `Unwind planner <span style="font-size:11px;color:var(--text3);font-weight:400">Binance only</span>`;
+  else if (posView === 'unwind') sectionLabel = `Unwind <span style="font-size:11px;color:var(--text3);font-weight:400">Binance only</span>`;
   else if (posView === 'journal') sectionLabel = `Journal <span style="font-size:11px;color:var(--text3);font-weight:400">cached history</span>`;
   else if (posView === 'confluence') sectionLabel = `Confluence <span style="font-size:11px;color:var(--text3);font-weight:400">Binance perps</span>`;
   else                           sectionLabel = `Open positions ${countPill(filteredPositions.length)}`;

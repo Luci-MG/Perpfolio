@@ -9,7 +9,7 @@ function setView(v) {
   if (lastData) render(lastData);
   if (v === 'stops')  fetchVolStops();
   if (v === 'stress' && venueOn('binance')) fetchRiskBook();
-  if (v === 'unwind' && venueOn('binance')) fetchUnwind();
+  if (v === 'unwind' && venueOn('binance')) fetchRiskBook();
   if (v === 'journal' && !perfData) fetchPerformance();
   if (v === 'confluence' && (!cfData || cfData.symbol !== cfSymbol)) fetchConfluence();
 }

@@ -20,11 +20,11 @@ test('without the bracket table, margin is inferred from what Binance reports an
 
 test('a commission rate that failed to load is assumed for that request only, and read again next time', async () => {
   fake.fail('/fapi/v1/commissionRate');
-  const assumed = (await get('/api/deleverage?objective=free')).body;
+  const feesOf = async () => (await get('/api/riskbook?fresh=1')).body.pools.flatMap(P => Object.values(P.fees));
+  const assumed = await feesOf();
   fake.heal();
-  assert.ok(assumed.plans.every(p => p.fee.source === 'assumed'));
-  const read = (await get('/api/deleverage?objective=free')).body;
-  assert.ok(read.plans.every(p => p.fee.source === 'account'), 'nothing about the failure was cached');
+  assert.ok(assumed.every(f => f.assumed));
+  assert.ok((await feesOf()).every(f => !f.assumed && f.taker === 0.0005), 'nothing about the failure was cached');
 });
 
 test('a Hyperliquid 429 is waited out and retried, not shown as an error', async () => {

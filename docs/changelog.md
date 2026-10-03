@@ -1,5 +1,24 @@
 # Changelog
 
+## Unwind: one tool, priced at the book (2026-10-04)
+
+- **One place to unwind**: Tools → Unwind has **Plan** and **Build** over one readout. The
+  Liquidation-after-close and Unwind-simulator drawers are gone; their selection, presets,
+  live-book cost, exposure, Binance-matched liquidation table and "then the market moves" live
+  in the readout. **Edit this plan** loads the plan's closes into Build.
+- **The planner prices at the book**: steps are ranked by gain per dollar of exit cost, walked on
+  the live depth with each symbol's own taker rate; a close the book cannot fill is a last
+  resort; the last step is cut to the size that lands on the target instead of closing a whole
+  hedge.
+- **Cross-coin hedges are guarded**: a close that raises BTC-beta exposure is refused like one
+  that breaks a same-symbol hedge, and the tolerance is half a percent of gross notional
+  instead of one dollar.
+- **New objective**: every liquidation price at least N% from the mark.
+- **One liquidation figure**: Unwind uses the solve that matches Binance's published price;
+  Stress keeps the live engine's reading. "Then the market moves" can move coins by beta.
+- `/api/deleverage` is removed: the page computes the plan from `/api/riskbook` with the same
+  engine, so inputs recompute at once without a request.
+
 ## Guardrails, exchange hygiene and docs, batch 5 of the 2026-10-03 review (2026-10-03)
 
 - **The rules have checks**: `npm run check` now fails on an `await` inside a loop over the

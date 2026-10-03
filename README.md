@@ -8,7 +8,7 @@ Built for hedged, cross-margined books. It reads your account and never places o
 | **Positions** | live positions, orders and margin, refreshed every 15s |
 | **Stops** | volatility-adjusted stop width and size per position |
 | **Stress** | move any price and watch the margin pool; exact liquidation and free-margin thresholds |
-| **Unwind** | which positions to close, and in what order, to free margin or restore buffer |
+| **Unwind** | which positions to close, and in what order, to free margin, restore buffer or move liquidation away — then adjust the plan by hand |
 | **Journal** | round trips, performance, behaviour, timing and costs, from your own fills |
 | **Confluence** | 12 signals across 15m–1d for any perpetual, each with its measured hit rate |
 

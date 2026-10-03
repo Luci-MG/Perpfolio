@@ -95,7 +95,7 @@ rather than inventing a price for depth that is not there; `exitCost()` splits t
 slippage against the mark and commission. `roundToStep()` floors a quantity onto the symbol's
 lot grid. The riskbook payload carries 50 levels per asset (10s cache), the lot filters, and
 the account's **real** commission rate — taker 0.05% / maker 0.02% at fee tier 0, replacing the
-0.045% guess. The Unwind and Liquidation drawers now price a close at the live book.
+0.045% guess. The Unwind tool prices a close at the live book.
 
 ### Endpoints
 - `POST /api/history/sync` with `{ "full": true }` or `{}` — starts a sync when idle; JSON only,

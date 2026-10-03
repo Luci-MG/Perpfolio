@@ -65,7 +65,7 @@ Hyperliquid.
 | `/api/dashboard` | 60 | **0 within 10s** | account 5 + positionRisk 5 + premiumIndex (all symbols) 10 + openAlgoOrders ≈40, shared snapshot |
 | `/api/volstops` | 108 | 0–60 | snapshot + 1h klines (2 each), 60s cache |
 | `/api/riskbook` | 208 | 16 | snapshot + commissionRate 20/asset (24h), depth 2/asset (10s), brackets (24h); `?fresh=1` (Refresh marks) forces a new read: 60 |
-| `/api/deleverage`, `/api/hedgeledger` | 60 | 0 within 10s | share the snapshot |
+| `/api/hedgeledger` | 60 | 0 within 10s | shares the snapshot |
 | `/api/confluence` (BTC / alt) | 20 / 35 | 0 | 1,000-bar klines = 5 each, TTL 1–10 min; positioning series weigh 0 |
 | `/api/performance`, `/api/symbols` | 0 | 0 | local store / cached exchangeInfo |
 | order reconcile (timer) | 40 / min | — | `openOrders` without a symbol |
@@ -164,7 +164,7 @@ with no `HL_WALLET_ADDRESS`. Switched from the status bulb or `POST /api/venues`
 | Off | Effect |
 |---|---|
 | Hyperliquid | `getHyperliquidData()` returns an empty book; no account read, no candles — before this, an empty wallet still sent four calls per poll with `user: ''` |
-| Binance | empty book; user-data stream closed and its listenKey released; reconcile, keepalive and watchdog idle; boot warm-up skipped; riskbook, deleverage, hedge ledger and sync start answer `409 { disabled: true }` |
+| Binance | empty book; user-data stream closed and its listenKey released; reconcile, keepalive and watchdog idle; boot warm-up skipped; riskbook, hedge ledger and sync start answer `409 { disabled: true }` |
 
 `hlFetch` and the signed `binanceFetch` refuse a venue that is off, so a call path the
 gate misses fails loudly instead of spending quota; the route tests assert zero requests per

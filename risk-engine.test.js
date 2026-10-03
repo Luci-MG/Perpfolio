@@ -674,7 +674,7 @@ test('liquidationAfterCloses reports the survivors and flags what got closed', (
   ], orders: [] };
   const prices = { A: 100, B: 50 };
 
-  const r = re.liquidationAfterCloses(pool, prices, [{ key: 'AS', qty: 20 }], {});
+  const r = re.unwindOutcome(pool, prices, [{ key: 'AS', qty: 20 }], {});
   const rowA = r.rows.find(x => x.asset === 'A');
   const rowB = r.rows.find(x => x.asset === 'B');
 
@@ -685,7 +685,7 @@ test('liquidationAfterCloses reports the survivors and flags what got closed', (
   assert.ok(Math.abs(rowB.pctAfter) > Math.abs(rowB.pctBefore),
     'an unrelated asset gains room from the maintenance margin released');
 
-  const gone = re.liquidationAfterCloses(pool, prices, [{ key: 'BL', qty: 30 }], {});
+  const gone = re.unwindOutcome(pool, prices, [{ key: 'BL', qty: 30 }], {});
   assert.equal(gone.rows.find(x => x.asset === 'B').closed, true);
   assert.equal(gone.rows.find(x => x.asset === 'B').liqAfter, null);
 });
@@ -698,7 +698,7 @@ test('closing a position never reduces an unrelated asset\'s room', () => {
   ], orders: [] };
   const prices = { A: 100, B: 50, C: 180 };
   for (const key of ['A1', 'B1', 'C1']) {
-    const r = re.liquidationAfterCloses(pool, prices, [{ key, qty: 1e9 }], {});
+    const r = re.unwindOutcome(pool, prices, [{ key, qty: 1e9 }], {});
     for (const row of r.rows) {
       if (row.closed || row.roomGained == null) continue;
       assert.ok(row.roomGained > -1e-9,
@@ -911,4 +911,90 @@ test('adding to a position averages its entry and grows it in its own direction'
   assert.equal(short.entry, 110);
   assert.deepEqual(re.addToPosition(pool, 'Y:LONG', 1, 1), pool);
   assert.equal(pool.positions[0].q, 2, 'the input pool is not mutated');
+});
+
+const hedge = (asset, q, over = {}) => [
+  pos({ key: `${asset}L`, asset, symbol: `${asset}USDT`, q, entry: 100, mark: 100, leverage: 10, ...over }),
+  pos({ key: `${asset}S`, asset, symbol: `${asset}USDT`, q: -q, entry: 100, mark: 100, positionSide: 'SHORT', leverage: 10, ...over })
+];
+const flatBook = (bid, ask, size = 1e6) => ({ bids: [[String(bid), String(size)]], asks: [[String(ask), String(size)]] });
+
+test('the last step is cut to the size that lands on the target', () => {
+  const pool = { collateral: 20_000, freeReserved: 0, positions: hedge('A', 100), orders: [] };
+  const plan = re.deleveragePlan(pool, { A: 100 }, { objective: 'free', target: 18_500 });
+  assert.equal(plan.steps.length, 1);
+  assert.equal(plan.steps[0].partial, true);
+  assert.ok(Math.abs(plan.after.free - 18_500) < 0.5, `landed at ${plan.after.free}`);
+  assert.ok(Math.abs(plan.steps[0].closes[0].qty - 25) < 0.01, 'a pair frees 20 per unit, so 25 units');
+  assert.deepEqual(plan.closes.map(c => c.key), ['AL', 'AS']);
+});
+
+test('steps are ranked by gain per dollar of exit cost at the live book', () => {
+  const pool = { collateral: 40_000, freeReserved: 0, positions: [...hedge('A', 100), ...hedge('B', 100)], orders: [] };
+  const books = { A: flatBook(95, 105), B: flatBook(100, 100) };
+  const plan = re.deleveragePlan(pool, { A: 100, B: 100 },
+    { objective: 'free', target: 38_500, books, fees: { A: 0.0005, B: 0.0005 } });
+  assert.deepEqual(plan.steps[0].closes.map(c => c.key), ['BL', 'BS'], 'the deep book is the cheaper exit');
+  assert.ok(plan.steps[0].slip === 0 && plan.steps[0].fees > 0);
+  assert.ok(Math.abs(plan.cost - plan.steps.reduce((a, x) => a + x.cost, 0)) < 1e-9);
+  assert.deepEqual(plan.steps[1].closes.map(c => c.key), ['AL', 'AS'], 'the dearer hedge only for what is still missing');
+  assert.equal(plan.steps[1].partial, true);
+});
+
+test('a close the book cannot fill is taken only when nothing else qualifies', () => {
+  const pool = { collateral: 40_000, freeReserved: 0, positions: [...hedge('A', 100), ...hedge('B', 100)], orders: [] };
+  const books = { A: flatBook(99, 101), B: flatBook(100, 100, 5) };
+  const both = re.deleveragePlan(pool, { A: 100, B: 100 }, { objective: 'free', target: 39_000, books, feeRate: 0.0005 });
+  assert.deepEqual(both.steps[0].closes.map(c => c.key), ['AL', 'AS'], 'the thin book loses despite costing less');
+
+  const only = { ...pool, positions: hedge('B', 100) };
+  const plan = re.deleveragePlan(only, { B: 100 }, { objective: 'free', target: 1e9, books, feeRate: 0.0005 });
+  assert.equal(plan.steps[0].thin, true);
+});
+
+test('closing one side of a cross-coin hedge is refused on its BTC-beta exposure', () => {
+  const pool = { collateral: 20_000, freeReserved: 0, positions: [
+    pos({ key: 'AL', q: 100, entry: 100, mark: 100, leverage: 10 }),
+    pos({ key: 'BS', asset: 'B', symbol: 'BUSDT', q: -100, entry: 100, mark: 100, positionSide: 'SHORT', leverage: 10 })
+  ], orders: [] };
+  const prices = { A: 100, B: 100 }, betas = { A: 1, B: 1 };
+  const plan = re.deleveragePlan(pool, prices, { objective: 'free', target: 1e9, betas });
+  assert.equal(plan.steps.length, 0);
+  assert.match(plan.blocked.reason, /naked exposure/);
+  assert.equal(plan.before.betaNet, 0);
+
+  const allowed = re.deleveragePlan(pool, prices, { objective: 'free', target: 1e9, betas, allowBreakingHedges: true });
+  assert.ok(allowed.steps[0].betaShift > 0 && allowed.steps[0].deltaShift < 0, 'per coin it reads as de-risking');
+});
+
+test('the liquidation objective closes until the nearest liquidation clears the target', () => {
+  const pool = { collateral: 300, freeReserved: 0, positions: [pos({ key: 'L', q: 10, entry: 100, mark: 100, leverage: 10 })], orders: [] };
+  const plan = re.deleveragePlan(pool, { A: 100 }, { objective: 'liq', target: 40 });
+  assert.ok(plan.before.nearestLiqPct < 40);
+  assert.equal(plan.targetMet, true);
+  assert.ok(Math.abs(plan.after.nearestLiqPct - 40) < 0.01, `landed at ${plan.after.nearestLiqPct}`);
+  assert.equal(plan.steps[0].partial, true);
+});
+
+test('the exposure tolerance is half a percent of gross notional', () => {
+  const pool = { collateral: 30_000, freeReserved: 0, positions: [
+    ...hedge('A', 100), pos({ key: 'N', asset: 'B', symbol: 'BUSDT', q: 20, entry: 100, mark: 100, leverage: 10 })
+  ], orders: [] };
+  assert.equal(re.deleveragePlan(pool, { A: 100, B: 100 }, { target: 1e9 }).deltaTolerance, 110);
+});
+
+test('unwindOutcome prices the exit at the book and reports BTC-beta exposure', () => {
+  const pool = { collateral: 20_000, freeReserved: 0, positions: [
+    pos({ key: 'AL', q: 100, entry: 100, mark: 100, leverage: 10 }),
+    pos({ key: 'BS', asset: 'B', symbol: 'BUSDT', q: -50, entry: 100, mark: 100, positionSide: 'SHORT', leverage: 10 })
+  ], orders: [] };
+  const prices = { A: 100, B: 100 };
+  const r = re.unwindOutcome(pool, prices, [{ key: 'AL', qty: 100 }],
+    { books: { A: flatBook(99, 101) }, fees: { A: 0.001 }, betas: { A: 1, B: 2 } });
+  assert.equal(r.cost.slip, 100);
+  assert.ok(Math.abs(r.cost.fee - 9.9) < 1e-9);
+  assert.ok(Math.abs(r.after.equity - (r.before.equity - 109.9)) < 1e-9, 'equity pays the exit cost and nothing else');
+  assert.equal(r.betaBefore, 0);
+  assert.equal(r.betaAfter, -10_000);
+  assert.equal(r.rows.find(x => x.asset === 'A').closed, true);
 });

@@ -27,9 +27,10 @@
 - **Stress slider cost grows with book size** — ~11ms/frame on this book; a probe with 15
   assets / 25 legs / 10-tier brackets measured 43–57ms, about 15ms since brackets are sorted once. A piecewise-analytic kill price (the
   buffer is linear between tier floors, clamp kinks and triggers) would be exact and cheaper
-- **The unwind planner treats a cross-asset hedge as two naked legs** — `grossNetDelta` works
-  per asset, so closing the BTC side of a BTC-long / ETH-short pair scores as de-risking.
-  `/api/volstops` already restates legs in BTC-beta terms; the planner does not
+- **Unwind guards a cross-coin hedge but never closes one as a pair** — closing one side of a
+  BTC-long / ETH-short pair is refused on its BTC-beta exposure, but no candidate closes both
+  sides together sized by beta, and betas from 1h candles are noisy enough that they gate a
+  step rather than size one
 - **Journal: the "all" window mixes spans** — trips reach back as far as fills, the ledger only
   three months, so the calendar, the wallet ledger and the account curve start later than trip statistics
 - **Slippage is not measured** — it needs the price at the moment each order was sent; fills carry
@@ -49,12 +50,7 @@
   contour would show joint extremes the one-coin-at-a-time view hides
 - **Stress simulator: funding drag** — a days-held slider subtracting accrued funding from
   pool collateral before the shock
-- **Unwind planner: the plan's own steps price at the mark** — the drawers walk live depth
-  (*Execution cost*), but `deleveragePlan`'s step ordering still uses a flat fee rate, so a
-  step that looks cheap could fill worse than stated
-- **Unwind planner: partial-size search** — candidates are whole legs or the full matched
-  portion of a hedge. A continuous search over close fractions would find cheaper steps
-- **Unwind planner: no execution** — it produces a plan only; nothing is ever sent to an
+- **Unwind: no execution** — it produces a plan only; nothing is ever sent to an
   exchange. Use a key without trading permission so that safety does not rest on the code alone
 - **Journal: income capped at 3 months** by Binance, so the equity curve stops there while
   round-trip statistics reach further; the panel states both spans

@@ -222,12 +222,8 @@ tr:last-child td { border-bottom: none; }
 .sim-row-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px;
                 font-size: 12px; font-weight: 600; }
 .sim-row-legs { font-size: 10px; color: var(--text3); font-weight: 400; font-variant-numeric: tabular-nums; }
-.sim-opts { display: flex; gap: 4px; }
 .sim-opt { flex: 1; font-family: inherit; font-size: 10px; padding: 3px 0; border-radius: 4px; cursor: pointer;
            border: 0.5px solid var(--border2); background: var(--surface); color: var(--text2); }
-.sim-opt.on { background: var(--surface2); color: var(--text); font-weight: 600; border-color: var(--text3); }
-.sim-opt.on.long  { background: var(--green-bg); color: var(--green); border-color: transparent; }
-.sim-opt.on.short { background: var(--red-bg);   color: var(--red);   border-color: transparent; }
 .sim-pct { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
 .sim-pct input { flex: 1; accent-color: var(--text2); }
 .sim-pct span { font-size: 10px; color: var(--text3); font-variant-numeric: tabular-nums; min-width: 30px;
@@ -591,6 +587,13 @@ button.jr-cal-cell:focus-visible { outline: 2px solid var(--text); outline-offse
 @media (max-width: 720px) {
   .st-row { grid-template-columns: 1fr; gap: 4px; }
   .st-pool { gap: 10px; }
+}
+.uw-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 20px; align-items: start; }
+.uw-main, .uw-out { min-width: 0; }
+.uw-out { position: sticky; top: 12px; border-left: 0.5px solid var(--border); padding-left: 16px; }
+@media (max-width: 1100px) {
+  .uw-grid { grid-template-columns: minmax(0, 1fr); }
+  .uw-out { position: static; border-left: 0; padding-left: 0; border-top: 0.5px solid var(--border); padding-top: 12px; }
 }
 .uw-ceiling { display: flex; gap: 20px; flex-wrap: wrap; align-items: baseline; padding: 10px 12px;
               border-radius: 6px; background: var(--surface2); font-size: 11px;
