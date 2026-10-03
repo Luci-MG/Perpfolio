@@ -783,3 +783,51 @@ test('Overview: attention is ranked and capped, calm says so, recent trades open
 
   assert.match(show('costs'), /How the wallet got here[\s\S]*wallet on [\s\S]*commission rebate[\s\S]*wallet at the last sync[\s\S]*Checks: [\s\S]*Fees/);
 });
+
+test('Stress: a row fires the other assets\' crossed stops like the header, a weak beta moves alone, and no shift passes −99%', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`setView('stress')`);
+  await settle('riskBook && riskEngine && !riskLoading', 'the risk book');
+  const i = run(`riskBook.pools.findIndex(P => P.marginAsset === 'USDT')`);
+  run(`riskHonorStops = true; Object.keys(riskShift).forEach(a => { riskShift[a] = 0; riskLink[a] = false; });
+    riskShift.BTC = -15; riskForceRender = true; render(lastData); updateStress()`);
+  const expected = run(`(() => { const P = riskBook.pools[${i}], prices = stressPrices(P), base = { ...prices, ETH: P.marks.ETH };
+    const fired = riskEngine.applyStops(P.pool, P.marks, base);
+    const worst = pool => \`none · worst \${fmtUsd(riskEngine.killPricesBoth(pool, 'ETH', base, stressOpts(P)).buffer.minBufferDown)}\`;
+    return { fired: fired.fired.length, withStop: worst(fired.pool), without: worst(P.pool) }; })()`);
+  assert.equal(expected.fired, 1, 'the BTC long stop at 90,000 is crossed at −15%');
+  assert.notEqual(expected.withStop, expected.without);
+  assert.equal(run(`document.getElementById('st-killdn-${i}-ETH').textContent`), expected.withStop);
+  assert.match(markup.get('content'), /vs Binance<\/span><span class="v"><span class="up"[^>]*>exact/);
+
+  run(`riskLink.BTC = true; riskLink.ETH = true; riskBeta.ETH = 0.05; riskShift.BTC = 0; setStressShift('ETH', -10)`);
+  assert.equal(run('JSON.stringify([riskShift.BTC, riskShift.ETH])'), '[0,-10]', 'a β of 0.05 cannot drive the group');
+  run(`riskForceRender = true; render(lastData)`);
+  assert.match(markup.get('content'), /β too small to move the others/);
+  run(`riskBeta.ETH = 1; setStressShift('BTC', -150)`);
+  assert.ok(run('Object.values(riskShift).every(v => v >= -99)'));
+});
+
+test('the risk drawers switch pools, keep the slider being dragged, and say how old the book is', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`openLiqDrawer()`);
+  await settle('riskBook && riskEngine && document.getElementById("liqDrawerBody").innerHTML.includes("pool")', 'the liquidation drawer');
+  const body = () => markup.get('liqDrawerBody');
+  assert.match(body(), /Book from (just now|\d+m ago)/);
+  assert.match(body(), />USDT pool</);
+  assert.match(body(), />USDC pool</);
+  run(`setDrawerPool('USDC', renderLiqBody)`);
+  assert.match(body(), /ENA/);
+  assert.doesNotMatch(body(), /liq-pos-name">BTC/);
+
+  run(`setDrawerPool('USDT', renderLiqBody); toggleLiqClose('BTCUSDT:LONG')`);
+  const built = body(), before = markup.get('liqOut');
+  run(`setLiqPct('BTCUSDT:LONG', 50)`);
+  assert.equal(body(), built, 'dragging does not rebuild the drawer, so the slider survives');
+  assert.notEqual(markup.get('liqOut'), before, 'the outcome follows the drag');
+  run(`setLiqPct('BTCUSDT:LONG', 50, true)`);
+  assert.match(body(), /value="50"/);
+
+  run(`openSimDrawer(); setDrawerPool('USDC', renderSimBody)`);
+  assert.match(markup.get('simDrawerBody'), /ENA/);
+});

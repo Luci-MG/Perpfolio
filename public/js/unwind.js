@@ -33,9 +33,10 @@ function toggleLiqClose(key) {
   else liqSel[key] = 100;
   renderLiqBody();
 }
-function setLiqPct(key, v) {
+function setLiqPct(key, v, settled = false) {
   liqSel[key] = Math.max(0, Math.min(100, parseFloat(v) || 0));
-  renderLiqBody();
+  if (settled) renderLiqBody();
+  else updateLiqOutcome(key);
 }
 function liqPreset(name) {
   const P = simPool();
@@ -75,7 +76,7 @@ function renderLiqBody() {
     return;
   }
 
-  const opts = { ...P.opts, feeRate: uwFee / 100 };
+  const opts = { ...P.opts, feeRate: drawerFeeRate(P) };
   const reported = reportedLiqBySymbol(P);
   const state = riskEngine.evalPool(P.pool, P.marks, opts);
 
@@ -109,8 +110,6 @@ function renderLiqBody() {
          <code>${solid.map(c => `${c.asset} ${fmt(c.price, priceDecimals(c.price))} vs ${fmt(c.rep, priceDecimals(c.rep))}`).join(' · ')}
          — worst difference ${worst < 1e-6 ? worst.toExponential(1) : fmt(worst, 6)}%</code></div>`) + looseNote;
 
-  const r = riskEngine.liquidationAfterCloses(P.pool, P.marks, liqCloses(), opts);
-
   const posRow = p => {
     const on = liqSel[p.key] != null;
     const dec = priceDecimals(P.marks[p.asset]);
@@ -127,10 +126,28 @@ function renderLiqBody() {
       </div>
       ${on ? `<div class="sim-pct" style="margin:-2px 0 8px 22px">
         <input type="range" min="5" max="100" step="5" value="${liqSel[p.key]}"
-          oninput="setLiqPct('${p.key}', this.value)" onclick="event.stopPropagation()" />
-        <span>${fmt(liqSel[p.key], 0)}%</span></div>` : ''}`;
+          oninput="setLiqPct('${p.key}', this.value)" onchange="setLiqPct('${p.key}', this.value, true)" onclick="event.stopPropagation()" />
+        <span id="liq-pct-${p.key}">${fmt(liqSel[p.key], 0)}%</span></div>` : ''}`;
   };
 
+  body.innerHTML = `
+    <div>
+      ${bookAgeHtml('renderLiqBody')}
+      ${drawerPoolSwitch((riskBook?.pools || []).map(x => x.marginAsset), P.marginAsset, 'renderLiqBody')}
+      ${sync}
+      <div class="sim-presets">
+        <button class="st-btn" onclick="liqPreset('longs')">Close all longs</button>
+        <button class="st-btn" onclick="liqPreset('shorts')">Close all shorts</button>
+        <button class="st-btn" onclick="liqPreset('none')">Clear</button>
+      </div>
+      <div class="sim-sec">Close which positions</div>
+      ${P.pool.positions.map(posRow).join('')}
+    </div>
+    <div class="sim-out" id="liqOut">${liqOutcomeHtml(P, opts)}</div>`;
+}
+
+function liqOutcomeHtml(P, opts) {
+  const r = riskEngine.liquidationAfterCloses(P.pool, P.marks, liqCloses(), opts);
   const rows = r.rows.map(row => {
     const dec = priceDecimals(row.mark);
     const show = (px, pct) => px == null
@@ -160,18 +177,7 @@ function renderLiqBody() {
   const anyClose = liqCloses().length > 0;
   const danger = r.rows.filter(x => !x.closed && x.roomGained != null && x.roomGained < -1);
 
-  body.innerHTML = `
-    <div>
-      ${sync}
-      <div class="sim-presets">
-        <button class="st-btn" onclick="liqPreset('longs')">Close all longs</button>
-        <button class="st-btn" onclick="liqPreset('shorts')">Close all shorts</button>
-        <button class="st-btn" onclick="liqPreset('none')">Clear</button>
-      </div>
-      <div class="sim-sec">Close which positions</div>
-      ${P.pool.positions.map(posRow).join('')}
-    </div>
-    <div class="sim-out">
+  return `
       <div class="sim-sec">Liquidation price for what is left</div>
       <table class="liq-tbl">
         <tr><th>asset</th><th>now</th><th>after</th><th></th></tr>
@@ -188,13 +194,7 @@ function renderLiqBody() {
       <div class="sim-line"><span class="k">maintenance margin</span>
         <span>${fmtUsd(r.before.mm)} → ${fmtUsd(r.after.mm)}</span></div>
       <div class="sim-line"><span class="k">notional closed</span><span>${fmtUsd(r.notionalClosed)}</span></div>
-      ${(() => {
-        const c = closeCost(P, liqCloses());
-        return c ? `<div class="sim-line"><span class="k">cost to close, at the live book</span>
-          <span class="dn">${fmtUsd(c.total)} <span class="k">(${fmtUsd(c.slip)} slip + ${fmtUsd(c.fee)} fees)</span></span></div>
-          ${c.exhausted.length ? `<div class="sim-line"><span class="k" style="color:var(--warning)">book too thin</span>
-            <span style="color:var(--warning)">${c.exhausted.join(', ')}</span></div>` : ''}` : '';
-      })()}`
+      ${closeCostHtml(closeCost(P, liqCloses()))}`
       : `<p style="font-size:11px;color:var(--text3);padding:6px 0">Tick a position above to see where
          the exchange would move everything else.</p>`}
       <p style="font-size:10px;color:var(--text3);line-height:1.5;margin-top:10px">
@@ -203,7 +203,16 @@ function renderLiqBody() {
         notional moves — the Stress tab shows that reading. Closing a position releases its
         maintenance margin, which pushes every <i>other</i> asset's liquidation further away;
         only the symbol that loses a hedge leg moves closer. Prices assume fills at the current mark.</p>
-    </div>`;
+`;
+}
+
+function updateLiqOutcome(key) {
+  const P = simPool();
+  const out = document.getElementById('liqOut');
+  if (!P || !out || !riskEngine) return;
+  const label = document.getElementById(`liq-pct-${key}`);
+  if (label) label.textContent = `${fmt(liqSel[key], 0)}%`;
+  out.innerHTML = liqOutcomeHtml(P, { ...P.opts, feeRate: drawerFeeRate(P) });
 }
 
 // ── Unwind simulator (sidebar drawer) ─────────────────────────────────────────
@@ -230,7 +239,38 @@ function closeSimDrawerForce() {
   document.getElementById('simDrawer').classList.remove('open');
 }
 
-function simPool() { return riskBook?.pools?.[0] || null; }
+let drawerPoolAsset = null;
+
+const nearestKillPct = P => Math.min(Infinity, ...(P.baseline || []).flatMap(b =>
+  [b.killUpPct, b.killDownPct].filter(v => v != null).map(Math.abs)));
+
+function simPool() {
+  const pools = riskBook?.pools || [];
+  return pools.find(P => P.marginAsset === drawerPoolAsset)
+    || [...pools].sort((a, b) => nearestKillPct(a) - nearestKillPct(b))[0] || null;
+}
+
+function setDrawerPool(asset, rerender) {
+  drawerPoolAsset = asset;
+  liqSel = {};
+  simSel = {};
+  rerender();
+}
+
+function drawerPoolSwitch(pools, current, rerender) {
+  if (pools.length < 2) return '';
+  return `<div class="sim-presets" role="group" aria-label="Margin pool">${pools.map(asset =>
+    `<button class="st-btn${asset === current ? ' on' : ''}" onclick="setDrawerPool('${esc(asset)}', ${rerender})">${esc(asset)} pool</button>`).join('')}</div>`;
+}
+
+function bookAgeHtml(rerender) {
+  const at = riskBook?.lastUpdated ? new Date(riskBook.lastUpdated) : null;
+  if (!at) return '';
+  const minutes = Math.floor((Date.now() - at) / 60_000);
+  const age = minutes < 1 ? 'just now' : `${minutes}m ago`;
+  return `<p class="st-note" style="margin:0 0 8px">Book from ${age} ·
+    <button class="gl-link" onclick="fetchRiskBook(true).then(${rerender})">Refresh</button></p>`;
+}
 
 // Walks the live order book for a set of closes and totals what they would really cost:
 // slippage against the mark plus commission. Depth is a snapshot of what the book holds
@@ -245,14 +285,24 @@ function closeCost(P, closes) {
     if (!book) continue;
     const levels = pos.q > 0 ? book.bids : book.asks;
     const qty = Math.min(Math.abs(c.qty ?? Math.abs(pos.q)), Math.abs(pos.q));
-    const rate = P.fees?.[pos.asset]?.taker ?? uwFee / 100;
-    const r = riskEngine.exitCost(levels, qty, P.marks[pos.asset], rate);
+    const rate = uwFee != null ? uwFee / 100 : P.fees?.[pos.asset]?.taker ?? drawerFeeRate(P);
+    const r = riskEngine.exitCost(levels, qty, P.marks[pos.asset], rate, pos.q > 0 ? 'sell' : 'buy');
     if (r.vwap == null) continue;
     slip += r.slipUsd; fee += r.feeUsd; notional += r.filled * r.vwap;
     if (r.exhausted) exhausted.push(`${pos.asset} ${r.remaining.toFixed(4)} unfilled`);
   }
   return { slip: +slip.toFixed(2), fee: +fee.toFixed(2), total: +(slip + fee).toFixed(2),
            notional: +notional.toFixed(2), exhausted };
+}
+
+function closeCostHtml(c) {
+  if (!c) return '';
+  const signedUsd = v => `${v < 0 ? '−' : ''}${fmtUsd(Math.abs(v))}`;
+  const slip = c.slip < 0 ? `slippage ${signedUsd(c.slip)}, better than mark` : `${fmtUsd(c.slip)} slippage`;
+  const thin = c.exhausted.length ? `<div class="sim-line"><span class="k" style="color:var(--warning)">book too thin</span>
+    <span style="color:var(--warning)">${c.exhausted.join(', ')}</span></div>` : '';
+  return `<div class="sim-line"><span class="k">cost to close, at the live book</span>
+    <span class="${c.total > 0 ? 'dn' : 'up'}">${signedUsd(c.total)} <span class="k">(${slip} + ${fmtUsd(c.fee)} fees)</span></span></div>${thin}`;
 }
 
 function simGroups() {
@@ -273,10 +323,13 @@ function setSimSide(symbol, side) {
   simSel[symbol] = { ...cur, side: cur.side === side ? null : side };
   renderSimBody();
 }
-function setSimPct(symbol, v) {
+function setSimPct(symbol, v, settled = false) {
   const cur = simSel[symbol] || { side: null, pct: 100 };
   simSel[symbol] = { ...cur, pct: Math.max(0, Math.min(100, parseFloat(v) || 0)) };
-  renderSimBody();
+  if (settled) return renderSimBody();
+  const label = document.getElementById(`sim-pct-${symbol}`);
+  if (label) label.textContent = `${fmt(simSel[symbol].pct, 0)}%`;
+  updateSimOutcome();
 }
 function setSimMove(v) {
   simMove = parseFloat(v) || 0;
@@ -317,7 +370,7 @@ function simCloses() {
 
 function simState() {
   const P = simPool();
-  const opts = { ...P.opts, feeRate: uwFee / 100 };
+  const opts = { ...P.opts, feeRate: drawerFeeRate(P) };
   const before = riskEngine.evalPool(P.pool, P.marks, opts);
   const r = riskEngine.closePositions(P.pool, P.marks, simCloses(), opts.feeRate);
   const after = riskEngine.evalPool(r.pool, P.marks, opts);
@@ -357,13 +410,15 @@ function renderSimBody() {
       </div>
       ${sel.side ? `<div class="sim-pct">
         <input type="range" min="0" max="100" step="5" value="${sel.pct}"
-          oninput="setSimPct('${g.symbol}', this.value)" />
-        <span>${fmt(sel.pct, 0)}%</span></div>` : ''}
+          oninput="setSimPct('${g.symbol}', this.value)" onchange="setSimPct('${g.symbol}', this.value, true)" />
+        <span id="sim-pct-${g.symbol}">${fmt(sel.pct, 0)}%</span></div>` : ''}
     </div>`;
   };
 
   body.innerHTML = `
     <div>
+      ${bookAgeHtml('renderSimBody')}
+      ${drawerPoolSwitch((riskBook?.pools || []).map(x => x.marginAsset), P.marginAsset, 'renderSimBody')}
       <div class="sim-presets">
         ${btn('TP the hedge longs', 'tp-longs')}
         ${btn('TP the hedge shorts', 'tp-shorts')}
@@ -423,14 +478,7 @@ function updateSimOutcome() {
     <div class="sim-line"><span class="k">realises</span>
       <span class="${realized >= 0 ? 'up' : 'dn'}"><b>${signed(realized)}</b></span></div>
     <div class="sim-line"><span class="k">notional closed</span><span>${fmtUsd(notionalClosed)}</span></div>
-    ${(() => {
-      const c = closeCost(P, closes);
-      if (!c || !closes.length) return '';
-      return `<div class="sim-line"><span class="k">cost to close, at the live book</span>
-        <span class="dn">${fmtUsd(c.total)} <span class="k">(${fmtUsd(c.slip)} slippage + ${fmtUsd(c.fee)} fees)</span></span></div>
-        ${c.exhausted.length ? `<div class="sim-line"><span class="k" style="color:var(--warning)">book too thin</span>
-          <span style="color:var(--warning)">${c.exhausted.join(', ')}</span></div>` : ''}`;
-    })()}
+    ${closes.length ? closeCostHtml(closeCost(P, closes)) : ''}
     <div class="sim-line"><span class="k">equity</span>
       <span>${fmtUsd(before.equity)} → ${fmtUsd(after.equity)} <span class="k">(fees only)</span></span></div>
 
@@ -466,20 +514,31 @@ let unwindLoading = false;
 let uwObjective   = 'free';
 let uwTarget      = '';
 let uwMaxLoss     = '';
-let uwFee         = 0.05;       // taker fee, %; replaced by the account's real rate on load
-let uwFeeTouched  = false;      // once set by hand, stop overwriting it
+let uwFee         = null;
 let uwBreakHedges = false;
 
 let unwindQuery = null;
+let unwindSeq = 0;
+
+const accountFeePct = () => {
+  const rate = unwindData?.plans?.[0]?.fee?.rate;
+  return rate == null ? null : +(rate * 100).toFixed(4);
+};
+
+function drawerFeeRate(P) {
+  if (uwFee != null) return uwFee / 100;
+  return Math.max(0, ...Object.values(P.fees || {}).map(f => f?.taker ?? 0));
+}
 
 async function fetchUnwind() {
   let query = null;
+  const seq = ++unwindSeq;
   unwindLoading = true;
   if (posView === 'unwind') rerenderStress();
   try {
     const q = [
       `objective=${uwObjective}`,
-      `fee=${uwFee / 100}`,
+      uwFee != null ? `fee=${uwFee / 100}` : '',
       `breakHedges=${uwBreakHedges}`,
       uwTarget  !== '' ? `target=${encodeURIComponent(uwTarget)}`   : '',
       uwMaxLoss !== '' ? `maxLoss=${encodeURIComponent(uwMaxLoss)}` : ''
@@ -487,16 +546,20 @@ async function fetchUnwind() {
     query = q;
     const res  = await fetch(`/api/deleverage?${q}`);
     const data = await res.json();
+    if (seq !== unwindSeq) return;
     if (!data.ok) throw new Error(data.error || 'deleverage failed');
     unwindData = data;
     unwindQuery = q;
     clearLoadError('unwind');
   } catch (err) {
+    if (seq !== unwindSeq) return;
     noteLoadError('unwind', err);
     if (query !== unwindQuery) unwindData = null;
   } finally {
-    unwindLoading = false;
-    if (posView === 'unwind') rerenderStress();
+    if (seq === unwindSeq) {
+      unwindLoading = false;
+      if (posView === 'unwind') rerenderStress();
+    }
   }
 }
 
@@ -504,7 +567,10 @@ function setUw(field, value) {
   if (field === 'objective')   uwObjective   = value;
   if (field === 'target')      uwTarget      = value;
   if (field === 'maxLoss')     uwMaxLoss     = value;
-  if (field === 'fee')       { uwFee = Math.max(0, Math.min(1, parseFloat(value) || 0)); uwFeeTouched = true; }
+  if (field === 'fee') {
+    const pct = parseFloat(value);
+    uwFee = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct)) : null;
+  }
   if (field === 'breakHedges') uwBreakHedges = !uwBreakHedges;
   fetchUnwind();
 }
@@ -524,8 +590,8 @@ function renderUnwindControls() {
     <label>Max loss $
       <input type="number" step="1000" value="${uwMaxLoss}" placeholder="none"
         onchange="setUw('maxLoss', this.value)" style="width:76px" /></label>
-    <label>Fee %
-      <input type="number" step="0.005" value="${uwFee}"
+    <label title="Empty uses your account's taker rate">Fee %
+      <input type="number" step="0.005" value="${uwFee ?? ''}" placeholder="${accountFeePct() ?? 'yours'}"
         onchange="setUw('fee', this.value)" style="width:60px" /></label>
     <span class="st-sep"></span>
     ${btn('Allow breaking hedges', uwBreakHedges, "setUw('breakHedges')",
@@ -555,8 +621,8 @@ function renderUnwindPlan(p) {
 
   const blocked = p.blocked ? `<div class="st-banner ${p.blocked.unsafeGainAvailable > 0 ? 'bad' : 'warn'}">
     <b>Stopped early.</b> <code>${p.blocked.reason}</code>
-    ${p.blocked.lossNeededForNextSafeStep != null
-      ? `The cheapest close that does not leave a leg naked realises ${fmtUsd(p.blocked.lossNeededForNextSafeStep)}.` : ''}
+    ${p.blocked.capNeededForNextSafeStep != null
+      ? `Raise the max loss to ${fmtUsd(p.blocked.capNeededForNextSafeStep)} to take the cheapest close that leaves no leg naked.` : ''}
     ${p.blocked.unsafeGainAvailable > 0
       ? `A step worth ${fmtUsd(p.blocked.unsafeGainAvailable)} was refused because it would have increased naked exposure.` : ''}</div>` : '';
 

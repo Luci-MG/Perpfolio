@@ -112,6 +112,8 @@ function mark(symbol) {
   return SYMBOLS[symbol].base;
 }
 
+const reportedMarks = new Map();
+
 function enginePool(quote) {
   const positions = POSITIONS.filter(p => SYMBOLS[p.symbol].quote === quote).map(p => ({
     key: `${p.symbol}:${p.positionSide}`, asset: p.symbol.replace(quote, ''), symbol: p.symbol,
@@ -168,7 +170,7 @@ function positionRisk() {
     const m = mark(p.symbol);
     return {
       symbol: p.symbol, positionSide: p.positionSide, positionAmt: String(p.amt), entryPrice: String(p.entry),
-      markPrice: String(m), liquidationPrice: String(liq ?? 0), unRealizedProfit: String(p.amt * (m - p.entry)),
+      markPrice: String(reportedMarks.get(p.symbol) ?? m), liquidationPrice: String(liq ?? 0), unRealizedProfit: String(p.amt * (m - p.entry)),
       notional: String(p.amt * m), leverage: String(p.leverage), marginType: 'cross', isolatedWallet: '0',
       adlQuantile: 1
     };
@@ -376,7 +378,8 @@ export function installFakeExchange() {
     signedCalls,
     ban(seconds) { bannedUntil = Date.now() + seconds * 1000; },
     fail(route, status = 500) { failing.set(route, status); },
-    heal() { failing.clear(); },
+    heal() { failing.clear(); reportedMarks.clear(); },
+    reportMark(symbol, price) { reportedMarks.set(symbol, price); },
     restore() { globalThis.fetch = realFetch; }
   };
 }

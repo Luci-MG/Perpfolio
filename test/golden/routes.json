@@ -712,6 +712,7 @@
       "killUpPct": null,
       "mark": 100000,
       "netDelta": 10000,
+      "noMark": false,
       "safeDownBuffer": 11861.64,
       "safeUpBuffer": 21502,
       "scannedDownPct": 99.9,
@@ -739,6 +740,7 @@
       "killUpPct": null,
       "mark": 4000,
       "netDelta": 12000,
+      "noMark": false,
       "safeDownBuffer": 9561.95,
       "safeUpBuffer": 21502,
       "scannedDownPct": 99.9,
@@ -1132,26 +1134,6 @@
       "taker": 0.0005
      }
     },
-    "filters": {
-     "BTC": {
-      "contractType": "PERPETUAL",
-      "minNotional": "5",
-      "minQty": "0.001",
-      "quoteAsset": "USDT",
-      "status": "TRADING",
-      "stepSize": "0.001",
-      "tickSize": "0.1"
-     },
-     "ETH": {
-      "contractType": "PERPETUAL",
-      "minNotional": "5",
-      "minQty": "0.001",
-      "quoteAsset": "USDT",
-      "status": "TRADING",
-      "stepSize": "0.001",
-      "tickSize": "0.01"
-     }
-    },
     "hedgedSymbols": [
      "BTCUSDT"
     ],
@@ -1403,6 +1385,7 @@
       "killUpPct": null,
       "mark": 0.25,
       "netDelta": 2000,
+      "noMark": false,
       "safeDownBuffer": null,
       "safeUpBuffer": 1032,
       "scannedDownPct": 99.9,
@@ -1614,17 +1597,6 @@
       "taker": 0.0005
      }
     },
-    "filters": {
-     "ENA": {
-      "contractType": "PERPETUAL",
-      "minNotional": "5",
-      "minQty": "1",
-      "quoteAsset": "USDC",
-      "status": "TRADING",
-      "stepSize": "1",
-      "tickSize": "0.0001"
-     }
-    },
     "hedgedSymbols": [],
     "liqCheck": [
      {
@@ -1727,7 +1699,7 @@
   "ok": true,
   "params": {
    "allowBreakingHedges": false,
-   "feeRate": 0.00045,
+   "feeRate": null,
    "maxLoss": null,
    "objective": "free",
    "target": 5000
@@ -1754,12 +1726,16 @@
     },
     "blocked": null,
     "ceiling": {
-     "closeAllFees": 45.9,
+     "closeAllFees": 51,
      "currentFree": 10350,
      "equity": 21900,
-     "maxFree": 21704.1,
+     "maxFree": 21699,
      "releasableIm": 11400,
      "reserved": 150
+    },
+    "fee": {
+     "rate": 0.0005,
+     "source": "account"
     },
     "fees": 0,
     "marginAsset": "USDT",
@@ -1809,9 +1785,9 @@
    },
    {
     "after": {
-     "buffer": 1039.1,
-     "equity": 1039.1,
-     "free": 1039.1,
+     "buffer": 1039,
+     "equity": 1039,
+     "free": 1039,
      "gross": 0,
      "im": 0,
      "mm": 0,
@@ -1828,14 +1804,18 @@
     },
     "blocked": null,
     "ceiling": {
-     "closeAllFees": 0.9,
+     "closeAllFees": 1,
      "currentFree": 373.33,
      "equity": 1040,
-     "maxFree": 1039.1,
+     "maxFree": 1039,
      "releasableIm": 666.67,
      "reserved": 0
     },
-    "fees": 0.9,
+    "fee": {
+     "rate": 0.0005,
+     "source": "account"
+    },
+    "fees": 1,
     "marginAsset": "USDC",
     "marks": {
      "ENA": 0.25
@@ -1843,22 +1823,22 @@
     "objective": "free",
     "realized": -160,
     "remaining": [],
-    "shortfall": 3960.9,
+    "shortfall": 3961,
     "steps": [
      {
-      "bufferGain": 7.1,
+      "bufferGain": 7,
       "closes": [
        {
         "key": "ENAUSDC:LONG",
         "qty": 8000
        }
       ],
-      "cumulativeBuffer": 1039.1,
-      "cumulativeFree": 1039.1,
+      "cumulativeBuffer": 1039,
+      "cumulativeFree": 1039,
       "cumulativeRealized": -160,
       "deltaShift": -2000,
-      "fees": 0.9,
-      "freeGain": 665.77,
+      "fees": 1,
+      "freeGain": 665.67,
       "imReleased": 666.67,
       "label": "close ENA LONG",
       "legs": [

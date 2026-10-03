@@ -1,6 +1,12 @@
 import * as risk from '../risk-engine.js';
+import { commissionFor } from '../lib/binance-meta.js';
 import { calibrate, marksOf, resolvePools } from '../lib/pools.js';
 import { isEnabled, venueOffBody } from '../lib/venues.js';
+
+async function accountTakerRate(positions) {
+  const rates = await Promise.all([...new Set(positions.map(p => p.symbol))].map(commissionFor));
+  return { rate: Math.max(0, ...rates.map(r => r.taker)), assumed: rates.some(r => r.assumed) };
+}
 
 export function register(app) {
   // ── Unwind planner ────────────────────────────────────────────────────────────
@@ -12,15 +18,18 @@ export function register(app) {
     if (!isEnabled('binance')) return res.status(409).json(venueOffBody('binance'));
     try {
       const objective = req.query.objective === 'buffer' ? 'buffer' : 'free';
-      const feeRate   = Math.max(0, Math.min(0.01, parseFloat(req.query.fee) || 0.00045));
+      const feeIn     = parseFloat(req.query.fee);
+      const givenFee  = Number.isFinite(feeIn) ? Math.max(0, Math.min(0.01, feeIn)) : null;
       const target    = parseFloat(req.query.target);
       const maxLossIn = Math.abs(parseFloat(req.query.maxLoss));
       const maxLoss   = Number.isFinite(maxLossIn) ? maxLossIn : Infinity;
       const allowBreakingHedges = req.query.breakHedges === 'true';
 
       const { bn, pools: groups } = await resolvePools();
+      const accountFees = givenFee == null ? await Promise.all(groups.map(g => accountTakerRate(g.positions))) : [];
 
-      const plans = groups.map(g => {
+      const plans = groups.map((g, i) => {
+        const feeRate = givenFee ?? accountFees[i].rate;
         const marks = marksOf(g.positions);
         // the same tier-lookup mode the stress panel calibrated to, so both endpoints agree
         // on maintenance margin rather than one quietly assuming a default
@@ -39,6 +48,7 @@ export function register(app) {
         return {
           marginAsset: g.marginAsset,
           marks,
+          fee: { rate: feeRate, source: givenFee == null ? (accountFees[i].assumed ? 'assumed' : 'account') : 'given' },
           ...rest,
           // what is left standing, and where it would liquidate
           remaining: risk.evalPool(resultPool, marks, opts).positions.map(p => ({
@@ -66,7 +76,7 @@ export function register(app) {
       res.json({
         ok: true,
         lastUpdated: new Date().toISOString(),
-        params: { objective, target: isFinite(target) ? target : null, feeRate,
+        params: { objective, target: isFinite(target) ? target : null, feeRate: givenFee,
                   maxLoss: isFinite(maxLoss) ? maxLoss : null, allowBreakingHedges },
         multiAssetsMode: bn.multiAssetsMode,
         plans

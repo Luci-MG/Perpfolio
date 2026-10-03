@@ -141,6 +141,31 @@ test('deleverage plans, and a malformed loss cap means no cap', async () => {
   assert.equal(bad.body.ok, true);
 });
 
+test('deleverage plans with the account\'s own taker rate unless a fee is given, and a fee of 0 is 0', async () => {
+  const own = (await get('/api/deleverage?objective=free')).body;
+  assert.deepEqual(own.plans.map(p => p.fee), own.plans.map(() => ({ rate: 0.0005, source: 'account' })));
+  const free = (await get('/api/deleverage?objective=free&fee=0')).body;
+  assert.deepEqual([free.params.feeRate, ...free.plans.map(p => p.fee.source)], [0, 'given', 'given']);
+  assert.ok(free.plans.every(p => p.ceiling.closeAllFees === 0), 'no fee charged on any close');
+});
+
+test('a position with no usable mark gets an empty risk row instead of failing the risk book', async () => {
+  fake.reportMark('ETHUSDT', 0);
+  const { status, body } = await get('/api/riskbook?fresh=1');
+  fake.heal();
+  await get('/api/riskbook?fresh=1');
+  assert.equal(status, 200, body.error);
+  const eth = body.pools.find(p => p.marginAsset === 'USDT').baseline.find(b => b.asset === 'ETH');
+  assert.deepEqual([eth.noMark, eth.killUp, eth.killDown, eth.scannedUpPct], [true, null, null, null]);
+});
+
+test('a risk of 0 is floored rather than read as the default, and the riskbook no longer ships lot filters', async () => {
+  const zero = (await get('/api/volstops?risk=0&k=1.5')).body;
+  const tenth = (await get('/api/volstops?risk=0.001&k=1.5')).body;
+  assert.deepEqual(zero.positions.map(p => p.dollarRisk), tenth.positions.map(p => p.dollarRisk));
+  assert.ok((await get('/api/riskbook')).body.pools.every(p => !('filters' in p) && p.baseline.every(b => b.noMark === false)));
+});
+
 test('history sync fills the store and the journal reconciles every fill', async () => {
   await startSync();
   let state;

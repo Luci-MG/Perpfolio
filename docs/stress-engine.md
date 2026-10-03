@@ -22,8 +22,14 @@ so the panel and the API cannot disagree.
   `opts.metric` selects `'buffer'` (liquidation, default) or `'free'`
 - `killPricesBoth(pool, asset, base, opts)` → both thresholds, walking each direction once
 - `rayCap(dir, opts)` — how far a ray may run before some price would reach zero
-- `freezeTiers(pool, prices)` / `crossesTier(pool, asset, prices, price)` — the
-  exchange-style frozen-tier reading, and whether a threshold crosses a bracket
+- `freezeTiers(pool, prices, opts)` / `crossesTier(pool, asset, prices, price, opts)` — the
+  exchange-style frozen-tier reading, and whether any leg's threshold crosses a bracket.
+  Both take the calibrated tier mode: with `perSideTiers` each leg is tiered on its own
+  notional, as `evalPool` and `liquidationDetail` do. Until 2026-10 they always used the
+  combined notional, so in per-side mode the frozen kill, its "· exch" note and the tier
+  flag disagreed with the closed form
+- `exitCost(levels, qty, mark, feeRate, side)` — slippage against the mark plus commission;
+  slippage is signed by the closing side, so a fill better than the mark lowers the cost
 - `liquidationAfterCloses(pool, prices, closes, opts)` — per-asset liquidation before and
   after a set of closes, with the room gained and which assets stopped existing
 - `liquidationDetail(...)` — the solve plus its conditioning (see *Conditioning*)
@@ -112,8 +118,11 @@ and raises a banner, since collateral haircuts are not modelled.
 Returns `{ ok, pools[], account, isolated[] }`. Each pool carries `pool` (engine shape),
 `marks`, `opts`, `stats` (beta/σ/bars per asset), `state` (equity/mm/im/free/buffer),
 `baseline` (liquidation and free-margin thresholds, σ, buffer and free drain per 1%, net
-delta — sorted nearest-kill first), `hedgedSymbols`, `calibration`, `liqCheck`. The frontend
-simulates locally from this payload.
+delta — sorted nearest-kill first), `hedgedSymbols`, `calibration`, `liqCheck`, `books` and
+`fees` (taker rate per asset). The frontend simulates locally from this payload. An asset
+whose mark is missing or 0 gets a row with `noMark: true` and empty thresholds rather than
+failing the whole response. The order books and commission rates are fetched in parallel
+with the candle stats, and the cross-check reuses the baseline's kill scans.
 
 - Brackets from `GET /fapi/v1/leverageBracket` (signed), cached 24h. If unavailable, the
   rate is inferred from the reported per-position maintenance margin with `cum = 0` and
@@ -160,7 +169,16 @@ simulates locally from this payload.
   preserves the scenario), `riskLink` (beta chain membership), `riskBeta`, `riskRange`
   (auto-opened to the tier containing the nearest kill), `riskHonorStops`, `riskStressCorr`
 - Beta linking: dragging a linked asset sets a driver in BTC terms and moves every other
-  linked asset by `driver × beta`. Unlinked assets move alone (manual what-if).
+  linked asset by `driver × beta`. Unlinked assets move alone (manual what-if). An asset
+  with |β| under 0.2 cannot drive the group (dividing by it sent β-1 assets past −100%,
+  whose negative prices silently fell back to the mark); it moves alone with a note. No
+  shift goes below −99%.
+- With *Honour reduce-only stops* on, each row's kill price starts from the pool with the
+  other assets' stops already fired at their shifted prices, the same pool the header
+  evaluates, and the ray fires the asset's own stops as it walks. Before 2026-10 the rows
+  skipped the first part, so the header and the rows disagreed.
+- Each row shows `vs Binance`: the worst error of its legs' live kill price against
+  Binance's published liquidation price, from `liqCheck`.
 - Range (30/50/80/120%) **only ever grows**, and only when a shift would not fit — so a
   thumb never misreports the real move. `afterStressChange` must not recompute the
   smallest tier that fits: that discards a range the user picked, snapping ±50% back to

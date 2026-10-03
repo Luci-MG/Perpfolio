@@ -30,6 +30,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Journal Performance and Behaviour remodel](#p5--journal-performance-and-behaviour-remodel) | done (2026-10-03) |
 | P5 | [Journal Timing, Symbols and Costs remodel](#p5--journal-timing-symbols-and-costs-remodel) | done (2026-10-03) |
 | P5 | [Review fixes, batch 1: correctness](#p5--review-fixes-batch-1-correctness) | done (2026-10-03) |
+| P5 | [Review fixes, batch 2: risk maths](#p5--review-fixes-batch-2-risk-maths) | done (2026-10-03) |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
 | — | [Parked](#parked) | parked |
 
@@ -354,6 +355,16 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   open; a goals file anyone on the LAN could wipe; calculators blank from $1,000.
 - **Done when:** each has a regression test that fails without its fix, and rebuilt open legs
   agree with Binance on the real book.
+
+## P5 — Review fixes, batch 2: risk maths
+
+- **Status:** done (2026-10-03).
+- **Problem:** Stress rows that ignored stops the header fired; frozen tiers that ignored the
+  per-side mode; drawers blind to the second pool and rebuilt mid-drag; a 0 fee read as 0.045%;
+  favourable fills counted as cost; a near-zero beta that pushed linked assets past −100%; one
+  bad mark failing the whole risk book; brackets re-sorted on every lookup.
+- **Done when:** each has a test that fails without its fix, calibration still scores 0% on
+  the fake exchange, and the live book still matches Binance's liquidation prices.
 
 ## P6 — Server-side alerts
 

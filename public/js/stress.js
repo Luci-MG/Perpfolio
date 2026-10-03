@@ -44,11 +44,6 @@ async function fetchRiskBook(fresh = false) {
       if (riskLink[a]  == null) riskLink[a]  = true;
       riskBeta[a] = P.stats[a]?.beta ?? 1;
     }));
-    // the account's real taker rate replaces the guessed default, unless it was set by hand
-    if (!uwFeeTouched) {
-      const taker = Object.values(data.pools?.[0]?.fees || {})[0]?.taker;
-      if (taker > 0) uwFee = +(taker * 100).toFixed(4);
-    }
     if (!riskRangeExplicit) riskRange = rangeForNearestKill(data);
   } catch (err) {
     noteLoadError('risk', err);
@@ -121,16 +116,22 @@ function priceStep(mark) {
   return mark >= 10000 ? 10 : mark >= 1000 ? 1 : mark >= 100 ? 0.1 : mark >= 1 ? 0.01 : 0.0001;
 }
 
+const MIN_DRIVING_BETA = 0.2;
+const MIN_SHIFT_PCT = -99;
+
+const drivesGroup = asset => riskLink[asset] && Math.abs(betaOf(asset)) >= MIN_DRIVING_BETA;
+
 function setStressShift(asset, pct) {
   const raw = parseFloat(pct);
   const v = isNaN(raw) ? 0 : raw;
 
-  if (riskLink[asset]) {
-    const driver = v / (betaOf(asset) || 1);
+  if (drivesGroup(asset)) {
+    const driver = v / betaOf(asset);
     Object.keys(riskShift).forEach(a => { if (riskLink[a]) riskShift[a] = driver * betaOf(a); });
   } else {
     riskShift[asset] = v;
   }
+  Object.keys(riskShift).forEach(a => { riskShift[a] = Math.max(MIN_SHIFT_PCT, riskShift[a]); });
   afterStressChange();
 }
 
@@ -266,17 +267,19 @@ function updateStress() {
     }
 
     Object.keys(P.marks).forEach(asset => {
+      if (!(P.marks[asset] > 0)) return;
       const base = { ...prices, [asset]: P.marks[asset] };
-      const both = riskEngine.killPricesBoth(P.pool, asset, base, opts);
+      const rowPool = riskHonorStops ? riskEngine.applyStops(P.pool, P.marks, base).pool : P.pool;
+      const both = riskEngine.killPricesBoth(rowPool, asset, base, opts);
       const kill = both.buffer, freeK = both.free;
 
       // Binance publishes a liquidation price with the margin tier frozen at the current
       // notional; its live engine re-tiers. Where a threshold crosses a bracket the two
       // legitimately differ, so both are shown. Only scanned when it actually happens.
-      const crossUp   = kill.up   != null && riskEngine.crossesTier(P.pool, asset, base, kill.up);
-      const crossDown = kill.down != null && riskEngine.crossesTier(P.pool, asset, base, kill.down);
+      const crossUp   = kill.up   != null && riskEngine.crossesTier(rowPool, asset, base, kill.up, opts);
+      const crossDown = kill.down != null && riskEngine.crossesTier(rowPool, asset, base, kill.down, opts);
       const frozen = (crossUp || crossDown)
-        ? riskEngine.killPrices(riskEngine.freezeTiers(P.pool, base), asset, base, opts)
+        ? riskEngine.killPrices(riskEngine.freezeTiers(rowPool, base, opts), asset, base, opts)
         : null;
       const dr   = riskEngine.drainPer1Pct(P.pool, asset, prices, P.opts);
       const dec  = priceDecimals(P.marks[asset]);
@@ -450,12 +453,25 @@ function renderStressBanner() {
   return out.join('');
 }
 
+function binanceAgreement(P, asset) {
+  const keys = new Set(P.pool.positions.filter(p => p.asset === asset).map(p => p.key));
+  const errs = (P.liqCheck || []).filter(c => keys.has(c.key) && c.errPct != null).map(c => c.errPct);
+  if (!errs.length) return '<span title="Binance publishes no liquidation price for this leg">none published</span>';
+  const worst = Math.max(...errs);
+  return `<span class="${worst < 0.01 ? 'up' : 'dn'}" title="Live re-tiered kill price against Binance's reported liquidation price">${worst < 0.001 ? 'exact' : `±${fmt(worst, 3)}%`}</span>`;
+}
+
 function renderStressRow(P, poolIdx, asset) {
   const mark = P.marks[asset];
-  const dec  = priceDecimals(mark);
   const b    = P.baseline.find(x => x.asset === asset) || {};
+  if (!(mark > 0)) {
+    return `<div class="st-row"><div class="st-rowhead"><span class="st-asset">${esc(asset)}</span>
+      <span class="st-mark">no mark price — kill prices unavailable until one arrives</span></div></div>`;
+  }
+  const dec  = priceDecimals(mark);
   const shift = riskShift[asset] || 0;
   const bars  = P.stats[asset]?.bars || 0;
+  const weakBeta = riskLink[asset] && !drivesGroup(asset) ? '<span class="st-mark">β too small to move the others</span>' : '';
 
   return `<div class="st-row">
     <div class="st-rowhead">
@@ -463,6 +479,7 @@ function renderStressRow(P, poolIdx, asset) {
         <button class="st-link${riskLink[asset] ? ' on' : ''}" onclick="toggleStressLink('${asset}')"
           title="${riskLink[asset] ? 'Moves with the beta chain — click to move it on its own' : 'Moves on its own — click to link it to the beta chain'}">β ${fmt(betaOf(asset), 2)}</button>
       </span>
+      ${weakBeta}
       <span class="st-mark">mark ${fmt(mark, dec)}${bars ? '' : ' · no candles'}</span>
       <span class="st-mark">${netDeltaLabel(b.netDelta)}</span>
     </div>
@@ -488,6 +505,7 @@ function renderStressRow(P, poolIdx, asset) {
       <span class="k">free 0 up</span><span class="v" id="st-freeup-${poolIdx}-${asset}">—</span>
       <span class="k">free 0 down</span><span class="v" id="st-freedn-${poolIdx}-${asset}">—</span>
       <span class="k">per +1%</span><span class="v" id="st-drain-${poolIdx}-${asset}">—</span>
+      <span class="k">vs Binance</span><span class="v">${binanceAgreement(P, asset)}</span>
     </div>
   </div>`;
 }

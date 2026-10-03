@@ -37,7 +37,8 @@ async function candlesForPosition(p) {
 export function register(app) {
   app.get('/api/volstops', async (req, res) => {
     try {
-      const riskPct = Math.max(0, Math.min(0.5, parseFloat(req.query.risk) || 0.01));
+      const riskIn  = parseFloat(req.query.risk);
+      const riskPct = Number.isFinite(riskIn) ? Math.max(0.001, Math.min(0.5, riskIn)) : 0.01;
       const k       = Math.max(0.1, Math.min(10, parseFloat(req.query.k) || 1.5));
 
       const [hlData, bnData] = await Promise.all([getHyperliquidData(), getBinanceData()]);

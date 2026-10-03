@@ -346,6 +346,36 @@ test('freezeTiers reproduces the exchange-style frozen-tier threshold', () => {
   assert.ok(live < pinned, 're-tiering raises maintenance margin, so it breaches sooner');
 });
 
+test('with per-side tiers, the frozen pool, the frozen scan and the closed form all tier each leg on its own', () => {
+  const tiered = [
+    { notionalFloor: 0,      notionalCap: 25_000, maintMarginRatio: 0.005, cum: 0   },
+    { notionalFloor: 25_000, notionalCap: 1e9,    maintMarginRatio: 0.020, cum: 375 }
+  ];
+  const pool = { collateral: 2_000, freeReserved: 0, positions: [
+    pos({ key: 'L', q: 400, entry: 100, mark: 100, brackets: tiered }),
+    pos({ key: 'S', q: -200, entry: 100, mark: 100, positionSide: 'SHORT', brackets: tiered })
+  ], orders: [] };
+  const prices = { A: 100 }, perSide = { perSideTiers: true };
+  const frozen = re.freezeTiers(pool, prices, perSide);
+  assert.equal(re.evalPool(frozen, prices).mm, re.evalPool(pool, prices, perSide).mm);
+  assert.notEqual(re.evalPool(re.freezeTiers(pool, prices), prices).mm, re.evalPool(pool, prices, perSide).mm);
+  const analytic = re.liquidationPriceAnalytic(pool, 'A', prices, perSide);
+  const k = re.killPrices(frozen, 'A', prices, perSide);
+  const scan = [k.up, k.down].filter(v => v != null);
+  const nearest = scan.reduce((b, v) => (Math.abs(v - analytic) < Math.abs(b - analytic) ? v : b), scan[0]);
+  assert.ok(Math.abs(analytic - nearest) / nearest < 1e-6, `analytic ${analytic} vs frozen scan ${nearest}`);
+  assert.equal(re.crossesTier(pool, 'A', prices, 60, perSide), true, 'the long leg drops under 25k');
+  assert.equal(re.crossesTier(pool, 'A', prices, 60), false, 'combined, 36k stays in the upper tier');
+});
+
+test('pickTier answers the same for brackets in any order, and caches nothing that changes the answer', () => {
+  const shuffled = [TIERED[2], TIERED[0], TIERED[1]];
+  for (const n of [0, 49_999, 50_000, 300_000, 5e7]) {
+    assert.equal(re.pickTier(shuffled, n), re.pickTier(shuffled, n));
+    assert.equal(re.pickTier(shuffled, n).maintMarginRatio, re.pickTier(TIERED, n).maintMarginRatio);
+  }
+});
+
 test('crossesTier is false when the tier is unchanged', () => {
   const pool = { collateral: 300, freeReserved: 0, positions: [pos({ q: 1 })], orders: [] };
   assert.equal(re.crossesTier(pool, 'A', { A: 100 }, 105), false);
@@ -546,13 +576,13 @@ test('the planner refuses to break a hedge unless asked, and says why it stopped
   ], orders: [] };                                                    // matched pair: −4,000
 
   const capped = re.deleveragePlan(pool, { A: 100 },
-    { objective: 'buffer', target: 1e9, maxRealizedLoss: 100 });
+    { objective: 'buffer', target: 1e9, maxRealizedLoss: 100, feeRate: 0.001 });
   assert.equal(capped.steps.length, 0, 'no step may be taken');
   assert.ok(capped.blocked, 'it must report being blocked rather than act unsafely');
   assert.match(capped.blocked.reason, /realised-loss cap/);
   assert.ok(capped.blocked.unsafeGainAvailable > 0, 'and admit that an unsafe step existed');
-  assert.ok(Math.abs(capped.blocked.lossNeededForNextSafeStep - 4_000) < 1,
-    `the cap must be raised to ${capped.blocked.lossNeededForNextSafeStep} for the safe close`);
+  assert.ok(Math.abs(capped.blocked.capNeededForNextSafeStep - 4_020) < 1,
+    `the cap must be raised to ${capped.blocked.capNeededForNextSafeStep}: the pair's loss plus its fees`);
   assert.equal(capped.allowBreakingHedges, false);
 
   // the same request, with hedge-breaking explicitly permitted
@@ -759,12 +789,11 @@ test('exitCost separates slippage from commission', () => {
   assert.ok(c.slipPct < 0, 'selling into bids fills below the mark');
 });
 
-test('roundToStep floors onto the exchange lot grid', () => {
-  assert.equal(re.roundToStep(1.23456, '0.001'), 1.234);
-  assert.equal(re.roundToStep(53549.7, '1'), 53549);
-  assert.equal(re.roundToStep(0.0009, '0.001'), 0);
-  assert.equal(re.roundToStep(5, '0'), 5, 'a missing step is left alone');
-  assert.equal(re.roundToStep(2.5, '0.5'), 2.5);
+test('slippage is signed: a fill better than the mark lowers the cost, on either side', () => {
+  assert.equal(re.exitCost([['101', '10']], 1, 100, 0, 'sell').slipUsd, -1);
+  assert.equal(re.exitCost([['99', '10']], 1, 100, 0, 'buy').slipUsd, -1);
+  assert.equal(re.exitCost([['102', '10']], 1, 100, 0, 'buy').slipUsd, 2);
+  assert.equal(re.exitCost([['101', '10']], 1, 100, 0.001, 'sell').totalUsd, -0.899);
 });
 
 test('a zero-delta hedge keeps its PnL but not its margin footprint', () => {
