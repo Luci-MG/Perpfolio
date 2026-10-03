@@ -1,0 +1,48 @@
+docs/changelog.md
+  s_ce0783ce808ef4::t_3c58e5b9372c79 3-12,15
+  s_ce0783ce808ef4::t_065765e1f22a59 13-14
+public/index.html
+  s_ce0783ce808ef4::t_38c515795e4964 405-406,438
+CLAUDE.md
+  s_ce0783ce808ef4::t_3c58e5b9372c79 35,58,70
+public/js/boot.js
+  s_ce0783ce808ef4::t_f3c62c07592ee5 20
+public/js/funding-view.js
+  s_ce0783ce808ef4::t_38c515795e4964 8-10,111
+  s_ce0783ce808ef4::t_826970874779d8 124
+  s_ce0783ce808ef4::t_065765e1f22a59 38-40,45
+  s_ce0783ce808ef4::t_8057bea59369dd 1-7,11-37,41-44,46-110,112-123,125-172
+docs/frontend.md
+  s_ce0783ce808ef4::t_065765e1f22a59 169
+  s_ce0783ce808ef4::t_3c58e5b9372c79 27-28,166-168,170-175
+  s_ce0783ce808ef4::t_3dbbccec65a4d5 176
+docs/roadmap.md
+  s_ce0783ce808ef4::t_3c58e5b9372c79 28,309
+public/css/app.css
+  s_ce0783ce808ef4::t_38c515795e4964 868-878
+  s_ce0783ce808ef4::t_7f937fa0327739 465-467
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_065765e1f22a59 638,640
+  s_ce0783ce808ef4::t_b16c07ad30c7c4 633-635,641-646,649-667
+  s_ce0783ce808ef4::t_eb0c6ae3c5de01 636-637,639
+  s_ce0783ce808ef4::t_826970874779d8 647-648
+  s_ce0783ce808ef4::t_84918bf2d52585 668
+public/js/drawers.js
+  s_ce0783ce808ef4::t_49b87da8a07963 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9c8bd4af31b02f0e2d4a767d80b89436b80cbe71",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
