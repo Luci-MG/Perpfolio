@@ -84,7 +84,7 @@ the account's **real** commission rate — taker 0.05% / maker 0.02% at fee tier
 - `GET /api/performance[?days=N]` — 28 sections: round trips, behaviour split, equity curve,
   calendar, per-symbol, per-hold-time/day/hour/side/month, streaks, sequence effect, size
   distribution, execution, records, fees and funding per symbol
-- `GET /api/trips[?days=N]` — every closed round trip with its context (below), plus coverage
+- `GET /api/trips[?days=N]` — every closed round trip with its context and its `entry` capture (below), plus coverage
 - `GET /api/hedgeledger` — locked PnL per pair, residual exposure, carry per day, margin
   inflation under a pump
 
@@ -175,9 +175,31 @@ minutes; a routine sync fetches only new trips.
 
 **The table** (`public/js/journal-trades.js`) is driven by one `TRADE_COLUMNS` list — label,
 sort value, cell and CSV fields per column. Default columns stay compact; *More columns*
-adds ATR, BTC, entry → exit, realised, fees, funding, fills and maker %. Every `—` says why
+adds ATR, BTC, entry → exit, realised, fees, funding, the context at entry (equity and
+margin, leverage, Confluence, stop vs suggested), fills and maker %. Every `—` says why
 on hover. *Export CSV* writes every column for the rows the filters match. Journal
 registers `#jr-mounted`, so the 15s poll no longer rebuilds it under a filter being typed.
+
+### Context at entry: captured live, never rebuilt
+Some facts about a trade exist only at the moment it is placed. On every **increasing fill**
+the order stream reports (`BUY` on `LONG`, `SELL` on `SHORT`, any non-reduce-only fill in
+one-way mode) `lib/entry-context.js` records, once per order:
+
+| Field | Source |
+|---|---|
+| equity, margin %, free margin, leverage setting | shared account snapshot (≤ 60s old); leverage from `positionRisk`, which lists every symbol |
+| Confluence at entry: overall score, state, aligned, score per timeframe | `readConfluence()` — the same code as the Confluence tab |
+| suggested stop: price, distance, regime (risk 1%, k 1.5, the Stops tab defaults) | `suggestStop()` — the same code as the Stops tab |
+| your stop, read 5 minutes after the fill, and its distance as a multiple of the suggestion | nearest closing `Stop…` order on that leg, regular or algo |
+
+Rows go to `data/entry-context.ndjson` keyed by **orderId**: an `entry` row at once and a
+`stop` row five minutes later, so a restart in between loses only the stop. Trips record
+their opening `orderId`, so the join is exact. Adds are captured too, for later analysis.
+A part that fails is null and named in `errors`.
+
+**Only while the server runs, and only with Binance on.** It rides the live stream; a trade
+placed while the dashboard is stopped has no context, and the Trades table says so on hover.
+Run it as a service (`docs/operations.md`, *Deployment notes*) to capture every trade.
 
 ### Hedge ledger drawer
 Last slot in the sidebar icon block. Leads with the number that reframes the book: a matched

@@ -32,6 +32,9 @@ public/js/*.js                 classic scripts, one global scope, loaded in a fi
 | `lib/pools.js` | cross pools, calibration against reported figures | used by riskbook, deleverage, hedge ledger |
 | `lib/history-sync.js` | income + fill sync into `data/` | `DASHBOARD_DATA_DIR` overrides the folder (tests) |
 | `lib/analytics.js` | memoised round trips and statistics | keyed on the sync cursors |
+| `lib/confluence-reading.js` | `readConfluence(symbol, tfs)` — one symbol's full reading | used by the Confluence route and the entry capture |
+| `lib/stop-suggestion.js` | `suggestStop(position, …)` — vol layers, regime, stop and size | used by the Stops route and the entry capture |
+| `lib/entry-context.js` | context captured on each increasing fill, `entryContextByOrder()` | wired to the stream's `onFill` in `server.js` |
 | `lib/trip-enrichment.js` | per-trip candles and funding rates during a sync, `enrichedTrips()` | caches computed values only, versioned |
 | `lib/confluence-data.js` | klines on any timeframe, positioning series | |
 

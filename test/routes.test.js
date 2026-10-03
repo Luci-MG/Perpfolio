@@ -189,6 +189,34 @@ test('a 418 pauses every Binance call until Retry-After passes', async () => {
   assert.equal((await get('/api/riskbook?fresh=1')).status, 200);
 });
 
+test('an increasing fill on the stream captures its entry context once, joined to its trip', async () => {
+  const { applyUserDataEvent, onFill } = await import('../lib/orders-stream.js');
+  const { captureEntryContext } = await import('../lib/entry-context.js');
+  const captures = [];
+  onFill(o => captures.push(captureEntryContext(o, { stopDelayMs: 0 })));
+
+  const trip = (await get('/api/trips')).body.trips.find(t => t.symbol === 'BTCUSDT');
+  const fill = (x = {}) => ({ e: 'ORDER_TRADE_UPDATE', o: { x: 'TRADE', X: 'PARTIALLY_FILLED', s: 'BTCUSDT', S: 'BUY',
+    ps: 'LONG', i: trip.openOrderId, L: String(trip.avgEntry), l: '0.05', q: '0.1', z: '0.05', T: trip.openTime,
+    R: false, o: 'MARKET', p: '0', sp: '0', ...x } });
+  applyUserDataEvent(fill());
+  applyUserDataEvent(fill({ X: 'FILLED', z: '0.1' }));
+  applyUserDataEvent(fill({ i: 999, S: 'SELL' }));
+  await Promise.all(captures);
+
+  const rows = fs.readFileSync(path.join(process.env.DASHBOARD_DATA_DIR, 'entry-context.ndjson'), 'utf8')
+    .trim().split('\n').map(JSON.parse);
+  assert.deepEqual(rows.map(r => `${r.orderId}:${r.stage}`), [`${trip.openOrderId}:entry`, `${trip.openOrderId}:stop`]);
+
+  const joined = (await get('/api/trips')).body.trips.find(t => t.key === trip.key).entry;
+  assert.deepEqual(joined.errors, []);
+  assert.ok(joined.account.equity > 0 && joined.account.leverage === 10);
+  assert.ok(Number.isFinite(joined.confluence.score) && '1h' in joined.confluence.byTf);
+  assert.ok(joined.suggestedStop.price < trip.avgEntry && joined.suggestedStop.distancePct > 0);
+  assert.deepEqual(joined.yourStop, { price: 90000, distancePct: +((trip.avgEntry - 90000) / trip.avgEntry * 100).toFixed(3) });
+  assert.equal(joined.stopLooked, true);
+});
+
 const setVenue = (venue, enabled) => get('/api/venues', {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ venue, enabled })
 });

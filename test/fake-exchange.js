@@ -193,14 +193,14 @@ function tradeRows(symbol) {
   for (let k = 0; k < 12; k++) {
     const t = NOW - (40 - k * 3) * 24 * HOUR;
     const win = k % 3 !== 0;
-    out.push({ symbol, id: id++, side: 'BUY', positionSide: 'LONG', price: String(px), qty: '0.1',
+    out.push({ symbol, id, orderId: id++, side: 'BUY', positionSide: 'LONG', price: String(px), qty: '0.1',
       realizedPnl: '0', commission: '0.4', commissionAsset: 'USDT', time: t, maker: false });
     if (k % 4 === 1) {
-      out.push({ symbol, id: id++, side: 'BUY', positionSide: 'LONG', price: String(px * 0.98), qty: '0.1',
+      out.push({ symbol, id, orderId: id++, side: 'BUY', positionSide: 'LONG', price: String(px * 0.98), qty: '0.1',
         realizedPnl: '0', commission: '0.4', commissionAsset: 'USDT', time: t + HOUR, maker: true });
     }
     const qty = k % 4 === 1 ? '0.2' : '0.1';
-    out.push({ symbol, id: id++, side: 'SELL', positionSide: 'LONG', price: String(px * (win ? 1.01 : 0.99)), qty,
+    out.push({ symbol, id, orderId: id++, side: 'SELL', positionSide: 'LONG', price: String(px * (win ? 1.01 : 0.99)), qty,
       realizedPnl: String((win ? 1 : -1) * px * 0.001 * (k % 4 === 1 ? 2 : 1)), commission: '0.4',
       commissionAsset: 'USDT', time: t + 6 * HOUR, maker: k % 2 === 0 });
   }

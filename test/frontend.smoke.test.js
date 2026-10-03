@@ -126,6 +126,13 @@ test('the Trades table sorts, filters, pages and exports what it shows', async (
   assert.match(markup.get('content'), /Entry → exit/);
   assert.deepEqual(strayValues(markup.get('content')), []);
 
+  run(`sortedTrips(filteredTrips())[0].entry = { account: { equity: 1000, marginPct: 12.5, freeMargin: 800, leverage: 10 },
+    confluence: { score: 0.42, state: 'bullish', aligned: true, byTf: {} },
+    suggestedStop: { price: 95, distancePct: 2 }, yourStop: { price: 97, distancePct: 1.2 },
+    stopVsSuggested: 0.6, stopLooked: true, errors: [] }; refreshTradesTable()`);
+  assert.match(table(), /0\.60× sugg/);
+  assert.deepEqual(strayValues(table()), []);
+
   const csv = run('tradesCsv()').split('\n');
   assert.equal(csv.length, run('filteredTrips().length') + 1);
   assert.match(csv[0], /^symbol,side,opened_utc,.*mae_pct,mfe_pct/);

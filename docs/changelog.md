@@ -1,5 +1,17 @@
 # Changelog
 
+## Journal: context at entry (2026-10-03)
+
+- Every increasing fill on the order stream records, once per order: equity, margin %, free
+  margin, leverage, the Confluence reading, the suggested stop, and five minutes later your
+  stop and its ratio to the suggestion. Joined to trips by the opening orderId; shown under
+  *More columns* and in the CSV. Captured only while the server runs.
+- The Confluence and Stops calculations moved out of their routes into
+  `lib/confluence-reading.js` and `lib/stop-suggestion.js`, so the capture runs the same
+  code as the tabs; route output is byte-identical (golden snapshot). The stop layers are
+  now named helpers, and the stream's event handling is `applyUserDataEvent` with an
+  `onFill` hook.
+
 ## Journal: richer Trades (2026-10-03)
 
 - The Trades sub-tab is one table of every round trip: opened and peak size, adds, held,

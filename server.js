@@ -7,7 +7,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { fundingMeta, getBinanceLeverageBrackets, refreshFundingMeta, refreshSymbolFilters, symbolFilters } from './lib/binance-meta.js';
 import { BINANCE_API_KEY, PORT } from './lib/config.js';
-import { reconcileOrders, startBinanceUserDataStream, startStreamWatchdog } from './lib/orders-stream.js';
+import { captureEntryContext } from './lib/entry-context.js';
+import { onFill, reconcileOrders, startBinanceUserDataStream, startStreamWatchdog } from './lib/orders-stream.js';
 import { isEnabled } from './lib/venues.js';
 import { register as registerDashboard } from './routes/dashboard.js';
 import { register as registerVolstops } from './routes/volstops.js';
@@ -47,6 +48,7 @@ const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPat
 
 function startServices() {
   startStreamWatchdog();
+  onFill(o => captureEntryContext(o).catch(err => console.warn('[entry] capture failed:', err.message)));
 
   // Warm the slow, long-lived caches at boot: exchangeInfo is a large payload and the funding
   // table is a second round-trip, and paying for both on a user's first panel open cost 13s.

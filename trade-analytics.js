@@ -32,7 +32,7 @@ function signedDelta(side, positionSide, qty) {
 
 function blankTrip(symbol, positionSide, fill) {
   return {
-    symbol, positionSide, side: null,
+    symbol, positionSide, side: null, openOrderId: null,
     openTime: fill.time, closeTime: null,
     size: 0, avgEntry: 0, openNotional: 0, exitQty: 0, exitValue: 0,
     realized: 0, commission: 0, fills: 0, adds: 0, partialCloses: 0,
@@ -54,7 +54,7 @@ export function tripKey(trip) {
 function finishTrip(trip, fill) {
   const net = trip.realized - Math.abs(trip.commission);
   return {
-    symbol: trip.symbol, positionSide: trip.positionSide, side: trip.side,
+    symbol: trip.symbol, positionSide: trip.positionSide, side: trip.side, openOrderId: trip.openOrderId,
     openTime: trip.openTime, closeTime: fill.time,
     holdHours: (fill.time - trip.openTime) / 3_600_000,
     openNotional: +trip.openNotional.toFixed(2),
@@ -131,6 +131,7 @@ export function buildRoundTrips(fills) {
       } else {
         trip.openTime = fill.time;
         trip.side = sideOf(positionSide, delta);
+        trip.openOrderId = fill.orderId ?? null;
         trip.openNotional = qty * price;
       }
       const held = Math.abs(trip.size);
@@ -163,6 +164,7 @@ export function buildRoundTrips(fills) {
       const next = blankTrip(fill.symbol, positionSide, fill);
       next.size = after;
       next.side = sideOf(positionSide, after);
+      next.openOrderId = fill.orderId ?? null;
       next.avgEntry = price;
       next.openNotional = Math.abs(after) * price;
       next.fills = 1;

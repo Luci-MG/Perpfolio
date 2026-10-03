@@ -96,3 +96,29 @@ test('only settlements with both legs open need a funding rate', () => {
   const income = [8, 16].map(h => ({ incomeType: 'FUNDING_FEE', symbol: 'XUSDT', income: '-1', time: h * HOUR }));
   assert.deepEqual([...tc.hedgedSettlements({ trips: [long, short], income })], [['XUSDT', [16 * HOUR]]]);
 });
+
+test('only a fill that grows its leg starts a capture', () => {
+  const o = x => ({ x: 'TRADE', R: false, ...x });
+  assert.equal(tc.isIncreasingFill(o({ ps: 'LONG', S: 'BUY' })), true);
+  assert.equal(tc.isIncreasingFill(o({ ps: 'LONG', S: 'SELL' })), false);
+  assert.equal(tc.isIncreasingFill(o({ ps: 'SHORT', S: 'SELL' })), true);
+  assert.equal(tc.isIncreasingFill(o({ ps: 'BOTH', S: 'SELL' })), true, 'one-way: any non-reduce fill');
+  assert.equal(tc.isIncreasingFill(o({ ps: 'BOTH', S: 'SELL', R: true })), false);
+  assert.equal(tc.isIncreasingFill(o({ ps: 'LONG', S: 'BUY', x: 'NEW' })), false);
+});
+
+test('the stop picked is the leg\'s nearest closing stop, never a take-profit or the other leg', () => {
+  const order = x => ({ symbol: 'XUSDT', positionSide: 'LONG', side: 'Sell', type: 'Stop market', stopPrice: 90, ...x });
+  const orders = [
+    order({ stopPrice: 85 }),
+    order({ stopPrice: 95 }),
+    order({ type: 'Take profit market', stopPrice: 99 }),
+    order({ positionSide: 'SHORT', side: 'Buy', stopPrice: 98 }),
+    order({ symbol: 'YUSDT', stopPrice: 99.5 })
+  ];
+  const leg = { symbol: 'XUSDT', positionSide: 'LONG', side: 'Long', entry: 100 };
+  assert.deepEqual(tc.pickStop(orders, leg), { price: 95, distancePct: 5 });
+  assert.equal(tc.pickStop(orders.slice(2), leg), null);
+  assert.equal(tc.stopVsSuggested({ distancePct: 5 }, { distancePct: 2 }), 2.5);
+  assert.equal(tc.stopVsSuggested(null, { distancePct: 2 }), null);
+});

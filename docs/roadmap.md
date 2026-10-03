@@ -14,7 +14,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P3 | [Stops: real vs suggested](#p3--stops-real-vs-suggested) | planned |
 | P3 | [Journal: Overview and Behaviour](#p3--journal-overview-and-behaviour) | planned |
 | P3 | [Journal: richer Trades](#p3--journal-richer-trades) | done (2026-10-03) |
-| P3 | [Journal: context at entry](#p3--journal-context-at-entry) | planned |
+| P3 | [Journal: context at entry](#p3--journal-context-at-entry) | done (2026-10-03) |
 | P3 | [Confluence: verdict and honest calibration](#p3--confluence-verdict-and-honest-calibration) | planned |
 | P3 | [Calculators: live and account-aware](#p3--calculators-live-and-account-aware) | planned |
 | P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | idea |
@@ -159,6 +159,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   request). Joined onto Trades.
 - **Done when:** a trip opened after release shows its context; one opened before shows `—`.
 - **Depends on:** richer Trades.
+- **Status:** done (2026-10-03) — see `docs/journal.md`, *Context at entry*. Stored in
+  `data/entry-context.ndjson` keyed by orderId; adds are captured too.
 
 ## P3 — Confluence: verdict and honest calibration
 

@@ -130,6 +130,12 @@ rates only for symbols with hedged settlements. Every request passes `throttleWe
 first run on a few hundred trips took a few minutes and stayed far below the limit. Results are
 cached per trip, so later syncs fetch only new trips.
 
+### Entry capture: `onFill`
+`lib/orders-stream.js` exposes `onFill(listener)`; `server.js` registers
+`captureEntryContext`, so the stream never imports the journal. Each increasing order costs
+one Confluence reading (about 20 public calls, mostly cached), two cached kline reads and one
+account read five minutes later — about nine orders a day on this book.
+
 ### Venue switch: an exchange that is off costs nothing
 `lib/venues.js` holds one switch per exchange, saved in `data/settings.json`; without a
 saved choice an exchange is on when its credentials are in `.env`, so Hyperliquid stays off
@@ -166,4 +172,7 @@ was the single largest cost.
 - **Local**: `npm start` → `http://localhost:3000`
 - **Railway / Render**: push to GitHub, add env vars in dashboard, deploy
 - **VPS**: use `pm2 start server.js --name dashboard`
+- **Keep it running to capture context at entry**: it is recorded from the live order stream,
+  so trades placed while the server is stopped have none (`docs/journal.md`). Locally,
+  `pm2 start server.js --name perpfolio` or a `launchd` agent keeps it up between sessions
 - Express serves `public/` (markup, `css/app.css`, `js/*.js`) as static files — no separate frontend deployment needed

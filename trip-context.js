@@ -138,3 +138,28 @@ function splitSettlement(legs, amount, rateAt, row, sizeSteps) {
   const residual = (amount - modelled.reduce((a, b) => a + b, 0)) / legs.length;
   return modelled.map(m => m + residual);
 }
+
+/** True for a user-data `ORDER_TRADE_UPDATE` order that filled and grows its leg; one-way mode counts every non-reduce-only fill. */
+export function isIncreasingFill(o) {
+  if (o?.x !== 'TRADE' || o.R) return false;
+  if (o.ps === 'LONG') return o.S === 'BUY';
+  if (o.ps === 'SHORT') return o.S === 'SELL';
+  return true;
+}
+
+/** The leg's stop order nearest its entry — a `Stop…` order on the closing side — with its distance in percent. */
+export function pickStop(orders, { symbol, positionSide, side, entry }) {
+  const closingSide = side === 'Long' ? 'Sell' : 'Buy';
+  const stops = (orders || []).filter(o => o.symbol === symbol && o.side === closingSide && /^stop/i.test(o.type)
+    && o.stopPrice > 0 && (o.positionSide === positionSide || o.positionSide === 'BOTH'));
+  if (!stops.length) return null;
+  const distance = o => Math.abs(o.stopPrice - entry) / entry * 100;
+  const nearest = stops.reduce((a, b) => (distance(b) < distance(a) ? b : a));
+  return { price: nearest.stopPrice, distancePct: +distance(nearest).toFixed(3) };
+}
+
+/** Your stop's distance as a multiple of the suggested one; null when either is missing. */
+export function stopVsSuggested(yourStop, suggested) {
+  if (!yourStop || !(suggested?.distancePct > 0)) return null;
+  return +(yourStop.distancePct / suggested.distancePct).toFixed(2);
+}

@@ -26,6 +26,22 @@ function fundingGap() {
   return `before the income ledger starts${from ? ` (${new Date(from).toISOString().slice(0, 10)})` : ''}`;
 }
 
+function entryGap() {
+  const since = tripsData?.coverage?.entryCapturedSince;
+  const why = since ? `captured from ${new Date(since).toISOString().slice(0, 10)}, only while the server runs`
+                    : 'captured from the next trade on, only while the server runs';
+  return `<span class="jt-gap" title="${why}">—</span>`;
+}
+
+function entryStopCell(e) {
+  if (!e.stopLooked) return '<span class="jt-gap" title="read 5 minutes after the fill">…</span>';
+  if (!e.yourStop) return '<span class="dn" title="no stop order 5 minutes after the fill">none</span>';
+  const title = `your stop ${fmt(e.yourStop.distancePct, 2)}% away, suggested ${fmt(e.suggestedStop?.distancePct, 2)}%`;
+  return `<span title="${title}">${e.stopVsSuggested == null ? `${fmt(e.yourStop.distancePct, 2)}%` : `${fmt(e.stopVsSuggested, 2)}× sugg`}</span>`;
+}
+
+const withEntry = (t, render) => (t.entry ? render(t.entry) : entryGap());
+
 const TRADE_COLUMNS = [
   { id: 'symbol', label: 'Symbol', value: t => t.symbol, cell: t => esc(jrSym(t.symbol)) },
   { id: 'side', label: 'Side', value: t => t.side, cell: t => `<span class="${t.side === 'Long' ? 'up' : 'dn'}">${t.side}</span>` },
@@ -67,6 +83,22 @@ const TRADE_COLUMNS = [
   { id: 'funding', label: 'Funding', value: t => t.funding, more: true,
     cell: t => (t.funding == null ? `<span class="jt-gap" title="${fundingGap()}">—</span>` : signedCell(t.funding)),
     exports: [['funding', t => t.funding], ['funding_split', t => t.fundingSplit]] },
+  { id: 'eqEntry', label: 'Eq / margin at entry', value: t => t.entry?.account?.equity, more: true,
+    cell: t => withEntry(t, e => (e.account ? `${fmtUsd(e.account.equity)} / ${fmt(e.account.marginPct, 1)}%` : entryGap())),
+    exports: [['equity_at_entry', t => t.entry?.account?.equity], ['margin_pct_at_entry', t => t.entry?.account?.marginPct],
+              ['free_margin_at_entry', t => t.entry?.account?.freeMargin]] },
+  { id: 'lev', label: 'Lev', value: t => t.entry?.account?.leverage, more: true,
+    cell: t => withEntry(t, e => (e.account?.leverage ? `${e.account.leverage}×` : entryGap())),
+    exports: [['leverage_at_entry', t => t.entry?.account?.leverage]] },
+  { id: 'cfEntry', label: 'Confluence at entry', value: t => t.entry?.confluence?.score, more: true,
+    cell: t => withEntry(t, e => (e.confluence?.score == null ? entryGap()
+      : `<span class="${e.confluence.score > 0 ? 'up' : e.confluence.score < 0 ? 'dn' : ''}" title="${esc(e.confluence.state)}">${e.confluence.score > 0 ? '▲' : e.confluence.score < 0 ? '▼' : '–'} ${fmt(Math.abs(e.confluence.score), 2)}</span>`)),
+    exports: [['confluence_at_entry', t => t.entry?.confluence?.score], ['confluence_state_at_entry', t => t.entry?.confluence?.state],
+              ['confluence_aligned_at_entry', t => t.entry?.confluence?.aligned]] },
+  { id: 'stopEntry', label: 'Stop vs suggested', value: t => t.entry?.stopVsSuggested, more: true,
+    cell: t => withEntry(t, entryStopCell),
+    exports: [['your_stop_pct', t => t.entry?.yourStop?.distancePct], ['suggested_stop_pct', t => t.entry?.suggestedStop?.distancePct],
+              ['stop_vs_suggested', t => t.entry?.stopVsSuggested]] },
   { id: 'fills', label: 'Fills', value: t => t.fills, more: true, cell: t => t.fills },
   { id: 'maker', label: 'Maker %', value: t => t.makerFills / t.fills, more: true,
     cell: t => `${fmt(t.makerFills / t.fills * 100, 0)}%`, exports: [['maker_fills', t => t.makerFills]] }
