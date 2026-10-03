@@ -345,6 +345,19 @@
   <div class="upnl-drawer-body" id="hlDrawerBody"></div>
 </div>
 
+<!-- Goal drawer -->
+<div class="upnl-overlay" id="goalOverlay" onclick="closeGoalDrawer(event)"></div>
+<div class="upnl-drawer" id="goalDrawer">
+  <div class="upnl-drawer-head">
+    <div class="upnl-drawer-title">
+      <h2 id="goalDrawerTitle">Add goal</h2>
+      <p>A rule for yourself, scored from the day you set it</p>
+    </div>
+    <button class="upnl-close" onclick="closeGoalDrawerForce()">&#x2715;</button>
+  </div>
+  <div class="upnl-drawer-body" id="goalDrawerBody"></div>
+</div>
+
 <!-- Liquidation-after-close drawer -->
 <div class="upnl-overlay" id="liqOverlay" onclick="closeLiqDrawer(event)"></div>
 <div class="upnl-drawer" id="liqDrawer">
@@ -416,6 +429,7 @@
 <script src="/js/confluence-view.js"></script>
 <script src="/js/journal.js"></script>
 <script src="/js/journal-trades.js"></script>
+<script src="/js/goals-view.js"></script>
 <script src="/js/unwind.js"></script>
 <script src="/js/render.js"></script>
 <script src="/js/calculators.js"></script>

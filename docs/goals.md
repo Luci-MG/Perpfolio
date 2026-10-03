@@ -1,12 +1,12 @@
-# Goals — design (agreed 2026-10-03, not built)
+# Goals
 
 Goals turn what the journal measures into rules you set for yourself, and score you on them
 from the day you set them. Two kinds, chosen deliberately: **process rules** checked against
 your trades, and **milestones** with a deadline. Pure profit targets are left out — they
 reward forcing trades.
 
-This note is the agreed design from the goals spike. The build is split into two roadmap
-cards (*Goals: rules* and *Goals: milestones*).
+The design was agreed on 2026-10-03. **Rules are built**; milestones are the next roadmap card
+(*Goals: milestones*).
 
 ## Goal types
 
@@ -14,10 +14,10 @@ cards (*Goals: rules* and *Goals: milestones*).
 |---|---|---|---|
 | Max leverage at entry | trip | entry context `account.leverage` | no — from entry capture on |
 | Stop within 5 minutes of entry | trip | entry context `yourStop` | no — from entry capture on |
-| Max loss per trade, % of equity at entry (or $) | trip | trip net against the wallet curve at `openTime` | yes, as far back as the wallet curve |
+| Max loss per trade, % of equity at entry (or $) | trip | trip net against the equity snapshot within 15 min of `openTime`, else the wallet curve (marked ≈ wallet) | yes, as far back as the wallet curve |
 | No adding while underwater | trip | `addsWhileUnderwater` | yes |
-| Max size, × median opening notional | trip | `openNotional` | yes |
-| Max trades per day | day | trips opened per local day | yes |
+| Max size, × median opening notional | trip | `openNotional` against the median of earlier trips, once there are 10 | yes |
+| Max trades per day | day | trips opened per local day; only the trips past the cap are breaches | yes |
 | Stop for the day after N losses in a row | trip | losing closes earlier that local day | yes |
 | No trading in chosen sessions | trip | `session` | yes |
 | Milestone: account value ≥ X by a date | milestone | equity snapshots | from the first snapshot |
@@ -108,8 +108,10 @@ before committing to it.
   check(trip|day, params, context), describe(params) }` — like `HABITS`, so a new goal is one
   entry. `scoreGoal(goal, trips, context)` returns status, adherence, n, streak, the period
   strip, breaches and cost; `previewGoal` scores history with no set date.
-- **`data/goals.json`** (gitignored): `[{ id, type, params, session, setAt, pausedAt, history:
-  [{ params, from }] }]`.
+- **`data/goals.json`** (gitignored), written by `lib/goals-store.js` through a temp file and a
+  rename: `[{ id, type, params, session, setAt, pauses: [{ from, to }], history: [{ params,
+  session, until }] }]`. `pauses` keeps every paused stretch so a resumed goal never scores the
+  gap; `history` keeps the versions an edit replaced.
 - **`GET /api/goals`** — goals with their scores; **`POST /api/goals`** — add, edit, pause,
   delete; JSON only, like `/api/venues`, so another site cannot change them. **`GET
   /api/goals/preview?type=&params=`** — the drawer's live preview.

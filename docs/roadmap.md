@@ -21,7 +21,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P3 | [Protected tiles read as safe](#p3--protected-tiles-read-as-safe) | done (2026-10-03) |
 | P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | idea |
 | P4 | [Goals: design spike](#p4--goals-design-spike) | done (2026-10-03) |
-| P4 | [Goals: rules](#p4--goals-rules) | planned |
+| P4 | [Goals: rules](#p4--goals-rules) | done (2026-10-03) |
 | P4 | [Goals: milestones](#p4--goals-milestones) | planned |
 | — | [Carried over](#carried-over) | planned |
 
@@ -249,6 +249,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 
 ## P4 — Goals: rules
 
+- **Status:** done (2026-10-03).
 - **Problem:** the journal measures habits but nothing holds you to a rule you set.
 - **Scope:** `goals.js` with the eight rule types, `data/goals.json`, `GET`/`POST /api/goals`
   and the preview route; the Journal **Goals** tab — scoreboard rows, expanded calendar and

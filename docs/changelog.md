@@ -1,5 +1,17 @@
 # Changelog
 
+## Goals: rules (2026-10-03)
+
+- Eight process rules — max leverage, a stop within 5 minutes, a max loss per trade, no adding
+  underwater, max size, max trades a day, a losing-streak stop, no trading in chosen sessions —
+  each optionally scoped to a session, in `goals.js`'s `GOAL_TYPES`.
+- Scored from the day each is set: adherence with n, streak, a 7-day strip and an 8-week
+  calendar, breaches with their estimated cost; history before the set date is one line apart.
+  Editing re-scores from the same date; pausing stops scoring.
+- The Journal **Goals** tab, an add / edit drawer whose preview re-scores as you type, an empty
+  state that suggests only goals whose breaches lost money, and a goals line on Overview.
+  *open ›* on a breach filters Trades to that symbol and day.
+
 ## Goals: design agreed (2026-10-03)
 
 - `docs/goals.md` records the goals design — process rules and milestones, scored from the

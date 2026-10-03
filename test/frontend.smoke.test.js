@@ -391,3 +391,58 @@ test('switched-off venues render as off, and the popover lists both switches', a
   await setVenue('binance', true);
   await setVenue('hyperliquid', true);
 });
+
+test('Goals: empty state suggests, rows order and render every state, the drawer previews and saves', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading && goalsData && !goalsLoading', 'the journal and goals');
+  const show = tab => { run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+
+  const empty = show('goals');
+  assert.match(empty, /No goals yet\. From your history:[\s\S]*gl-suggest/);
+  assert.doesNotMatch(show('overview'), /gl-overview/, 'no Overview line without goals');
+
+  run(`openGoalDrawer(null, 0)`);
+  await run('loadGoalPreview()');
+  const drawer = () => markup.get('goalDrawerBody');
+  assert.match(markup.get('goalPreview'), /On your last \d+ trades this would have been/);
+  run(`setGoalType('maxTradesPerDay')`);
+  assert.match(drawer(), /value="6"/);
+  run(`setGoalParam('max', '2')`);
+  await run('loadGoalPreview()');
+  assert.match(markup.get('goalPreview'), /trading days this would have been/);
+  run(`setGoalScope('Europe')`);
+  await run('saveGoal()');
+  assert.equal(run('goalDraft'), null, 'drawer closed on save');
+  assert.equal(run('goalsData.goals[0].label'), 'Max 2 trades a day · Europe');
+
+  run(`openGoalDrawer()`);
+  run(`setGoalParam('max', '0')`);
+  await run('saveGoal()');
+  assert.match(drawer(), /class="dn gl-line">Max must be 1–125/);
+  run(`closeGoalDrawerForce()`);
+
+  run(`const g = goalsData.goals[0];
+       goalsData.goals = ['broken', 'progress', 'kept', 'idle', 'paused'].map((status, i) => ({ ...g, id: 'g' + i, status,
+         today: { trips: 2, broken: 1, limit: 2 }, waiting: status === 'idle', pausedAt: status === 'paused' ? Date.now() : null,
+         breaches: [{ symbol: 'ETHUSDT', side: 'Long', openTime: Date.now() - 36e5, closeTime: Date.now(), net: -4.2, what: 'trade 3 of the day' }],
+         breachCount: 1, brokenTrips: 1, keptTrips: 3, avgBroken: -4.2, avgKept: 2, cost: -6.2, thin: true }));
+       goalsData.today = { scored: 2, kept: 1, broken: [g.label] };
+       goalOpen = 'g0'`);
+  const board = show('goals');
+  assert.deepEqual([...board.matchAll(/class="gl-mark (\w+)"/g)].map(m => m[1]), ['broken', 'progress', 'kept', 'idle', 'paused']);
+  assert.match(board, /broke today[\s\S]*2\/2 today[\s\S]*starts with the next captured entry[\s\S]*paused/);
+  assert.match(board, /est\. cost <b class="dn">−\$6\.20<\/b>/);
+  assert.deepEqual(strayValues(board), []);
+  assert.match(show('overview'), /gl-overview[\s\S]*today 1 of 2 kept · <span class="dn">✗ Max 2 trades a day · Europe/);
+
+  run(`openGoalBreach('ETHUSDT', Date.now() - 36e5)`);
+  await settle('tripsData && !tripsLoading', 'the trips');
+  assert.equal(run('jrTab'), 'trades');
+  assert.equal(run('filteredTrips().every(t => t.symbol === "ETHUSDT")'), true);
+  assert.match(show('trades'), /onclick="filterTrades\('day', null\)"/);
+});

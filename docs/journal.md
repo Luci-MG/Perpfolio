@@ -89,7 +89,7 @@ the account's **real** commission rate — taker 0.05% / maker 0.02% at fee tier
   inflation under a pump
 
 ### Journal tab (7th) — seven sections
-Sub-tabs (`jrTab`): **Overview · Performance · Behaviour · Timing · Symbols · Costs · Trades**.
+Sub-tabs (`jrTab`): **Overview · Goals · Performance · Behaviour · Timing · Symbols · Costs · Trades**.
 
 **Overview is the account, not the closed trades.** Round-trip statistics alone mislead while
 a large position is still open: the closed-trip net (plus the orphan fills) can be a fraction
@@ -119,7 +119,8 @@ strips path characters so a malformed symbol cannot escape `data/`, `ensureDir`,
 
 | section | contents |
 |---|---|
-| Overview | account value, the reconciliation above, open positions, activity |
+| Overview | the goals line, account value, the reconciliation above, open positions, activity |
+| Goals | rules you set, scored from the day you set them — see [`goals.md`](goals.md) |
 | Performance | hero stats, cumulative curve + underwater panel + daily bars, month by month, records |
 | Behaviour | added-while-underwater split, hold-time buckets, long vs short, streaks, size after a win vs a loss, size distribution |
 | Timing | calendar heatmap, day of week, hour of day |

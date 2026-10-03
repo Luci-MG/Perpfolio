@@ -19,6 +19,7 @@ behaviour as seventeen **classic** scripts loaded in this order — no build ste
 | 7 | `confluence-view.js` | Confluence tab (the engine is the server's `confluence.js`) |
 | 8 | `journal.js` | Journal tab |
 | 8b | `journal-trades.js` | Journal's Trades table: `TRADE_COLUMNS`, sort, filters, CSV |
+| 8c | `goals-view.js` | Journal's Goals tab, the goal drawer and the Overview goals line |
 | 9 | `unwind.js` | liquidation-after-close and unwind-simulator drawers, Unwind tab |
 | 10 | `render.js` | sidebar widgets, `render()`, `fetchData()` and the poll guard |
 | 11 | `calculators.js` | context menu and the calculator modal — page code only; the arithmetic is `/calc-engine.js` |
@@ -152,7 +153,7 @@ price on eight legs where Binance reports none.
 ### Drawers
 All at body level, outside `#sidebar`, so the poll's sidebar rebuild cannot wipe them:
 `openUpnlDrawer` · `openExpDrawer` · `openFundDrawer` (pre-existing) and `openLiqDrawer` ·
-`openSimDrawer` · `openHlDrawer` (this session). Each follows the same overlay + `.open`
+`openSimDrawer` · `openHlDrawer` · `openGoalDrawer`. Each follows the same overlay + `.open`
 class pattern.
 
 ---
