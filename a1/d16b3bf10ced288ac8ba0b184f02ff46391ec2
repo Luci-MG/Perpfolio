@@ -1,0 +1,56 @@
+test/routes.test.js
+  s_ce0783ce808ef4::t_f59ef923a1eb20 269,274,278
+  s_ce0783ce808ef4::t_8b578b9a10c949 268,270-273,275-277,279-284
+docs/roadmap.md
+  s_ce0783ce808ef4::t_e453041a0ac010 25,264
+docs/changelog.md
+  s_ce0783ce808ef4::t_e453041a0ac010 3-11
+docs/goals.md
+  s_ce0783ce808ef4::t_e453041a0ac010 8-9,23,40-47
+CLAUDE.md
+  s_ce0783ce808ef4::t_e453041a0ac010 34,55
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_3235b3c129a1e9 434
+  s_ce0783ce808ef4::t_f59ef923a1eb20 460-461,472,479,485,490
+  s_ce0783ce808ef4::t_8b578b9a10c949 449-451,456-459,462-471,473-478,480-484,486-489,491,493-496
+  s_ce0783ce808ef4::t_3126ef3c7cc829 452-455,492
+lib/goals-store.js
+  s_ce0783ce808ef4::t_646a5bb60fda1c 36,38
+goals.test.js
+  s_ce0783ce808ef4::t_907f61c5e73b3f 141-157,160-188,191-196
+  s_ce0783ce808ef4::t_86451de770f64a 158-159
+  s_ce0783ce808ef4::t_f59ef923a1eb20 189-190
+milestones.js
+  s_ce0783ce808ef4::t_589b57ee8a4332 1-198
+routes/goals.js
+  s_ce0783ce808ef4::t_70e74b6ad6bc30 28-29
+  s_ce0783ce808ef4::t_1d5d3f37294ff0 30-31,33-35,43
+  s_ce0783ce808ef4::t_d783f674245040 18,23-27,32,40-42,45-46
+test/golden/routes.json
+  s_ce0783ce808ef4::t_3235b3c129a1e9 7988,8128-8170
+public/js/goals-view.js
+  s_ce0783ce808ef4::t_3a72c313ed0c16 113,237,252,257
+  s_ce0783ce808ef4::t_3235b3c129a1e9 175,197,248,250,393
+  s_ce0783ce808ef4::t_b9035d7f52b322 401
+  s_ce0783ce808ef4::t_0b45ac619c3a17 132-133,136-138,145-146,165-174,176-196,198-236,238-247,249,251,253-256,311-315,319,368,388-392,394-400,402
+public/css/app.css
+  s_ce0783ce808ef4::t_0b45ac619c3a17 848-866
+goals.js
+  s_ce0783ce808ef4::t_646a5bb60fda1c 7,26,77-84,96-107,120-124,128,235-239,243,247,258,278
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a1d16b3bf10ced288ac8ba0b184f02ff46391ec2",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": null
+    }
+  }
+}
