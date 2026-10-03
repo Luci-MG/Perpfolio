@@ -113,7 +113,12 @@ export function attributeFunding({ trips, stillOpen = [], sizeSteps, income, rat
     const legs = (legsBySymbol.get(symbol) || []).filter(l => openDuring(l, time));
     if (!legs.length) continue;
     const amounts = rows.map(r => parseFloat(r.income) || 0);
-    if (legs.length === 1) { credit(legs[0], amounts.reduce((a, b) => a + b, 0)); continue; }
+    if (legs.length === 1) {
+      const modelled = amounts.length > 1 ? modelledShares(legs, rateAt, symbol, time, sizeSteps) : amounts;
+      if (modelled) credit(legs[0], nearestAmount(amounts, modelled[0]));
+      else credit(legs[0], 0, { incomplete: true });
+      continue;
+    }
     if (amounts.length < legs.length && time < completeFrom) { legs.forEach(l => credit(l, 0, { incomplete: true })); continue; }
     const modelled = modelledShares(legs, rateAt, symbol, time, sizeSteps);
     if (modelled && amounts.length < legs.length) {
@@ -136,11 +141,16 @@ export function attributeFunding({ trips, stillOpen = [], sizeSteps, income, rat
   return out;
 }
 
-/** Funding rows from `from` on for which no rebuilt position leg was open, and their total. */
-export function unmatchedFunding({ trips, stillOpen = [], income, from = 0 }) {
+/**
+ * Funding rows from `from` on for which no rebuilt position leg was open, and their total. A row
+ * on a symbol before `preHistoryUntil[symbol]`, the last fill that closed a position opened
+ * before history, belongs to that position and is not counted.
+ */
+export function unmatchedFunding({ trips, stillOpen = [], income, from = 0, preHistoryUntil = {} }) {
   const legsBySymbol = new Map();
   for (const leg of [...trips, ...stillOpen]) legsBySymbol.set(leg.symbol, [...(legsBySymbol.get(leg.symbol) || []), leg]);
   const rows = income.filter(r => r.incomeType === 'FUNDING_FEE' && r.symbol && r.time >= from
+    && !(r.time <= (preHistoryUntil[r.symbol] ?? -Infinity))
     && !(legsBySymbol.get(r.symbol) || []).some(l => openDuring(l, r.time)));
   return { rows: rows.length, amount: +rows.reduce((s, r) => s + parseFloat(r.income), 0).toFixed(2) };
 }
@@ -165,6 +175,10 @@ function modelledShares(legs, rateAt, symbol, time, sizeSteps) {
     const size = sizeAt(sizeSteps?.get(tripKey(l)), time) || Math.abs(l.size || 0);
     return (l.side === 'Long' ? -1 : 1) * rate * size * (mark || l.avgEntry || 0);
   });
+}
+
+function nearestAmount(amounts, modelled) {
+  return amounts.reduce((a, b) => (Math.abs(b - modelled) < Math.abs(a - modelled) ? b : a));
 }
 
 function nearestLegs(legs, modelled, amounts) {

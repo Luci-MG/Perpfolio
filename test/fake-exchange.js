@@ -191,7 +191,18 @@ function incomeRows() {
   return rows;
 }
 
+function openingFills(symbol) {
+  return POSITIONS.map((p, i) => ({ p, id: 5000 + i })).filter(({ p }) => p.symbol === symbol).map(({ p, id }) => ({
+    symbol, id, orderId: id, side: p.amt > 0 ? 'BUY' : 'SELL', positionSide: p.positionSide, price: String(p.entry),
+    qty: String(Math.abs(p.amt)), realizedPnl: '0', commission: '0.4', commissionAsset: SYMBOLS[symbol].quote,
+    time: NOW - 2 * 24 * HOUR + id * 60e3, maker: false }));
+}
+
 function tradeRows(symbol) {
+  return [...closedTrades(symbol), ...openingFills(symbol)];
+}
+
+function closedTrades(symbol) {
   if (symbol !== 'BTCUSDT' && symbol !== 'ETHUSDT') return [];
   const out = [];
   let id = symbol === 'BTCUSDT' ? 1000 : 2000;
@@ -338,6 +349,8 @@ export function installFakeExchange() {
   const calls = [];
   const signedCalls = [];
   let bannedUntil = 0;
+  const failing = new Map();
+  const injected = route => failing.has(route) && json({ code: -1000, msg: 'injected failure' }, { status: failing.get(route) });
 
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
@@ -345,11 +358,14 @@ export function installFakeExchange() {
       calls.push(url.pathname);
       if (url.searchParams.has('signature')) signedCalls.push(url.pathname);
       if (Date.now() < bannedUntil) return json({ code: -1003, msg: 'banned' }, { status: 418, headers: { 'Retry-After': '1' } });
+      if (failing.has(url.pathname)) return injected(url.pathname);
       const out = binance(url);
       return out?.status ? json(out.body, { status: out.status }) : json(out);
     }
     if (url.hostname === 'api.hyperliquid.xyz') {
-      calls.push(`hl:${JSON.parse(init.body || '{}').type}`);
+      const route = `hl:${JSON.parse(init.body || '{}').type}`;
+      calls.push(route);
+      if (failing.has(route)) return injected(route);
       return json(hyperliquid(JSON.parse(init.body || '{}')));
     }
     return realFetch(input, init);
@@ -359,6 +375,8 @@ export function installFakeExchange() {
     calls,
     signedCalls,
     ban(seconds) { bannedUntil = Date.now() + seconds * 1000; },
+    fail(route, status = 500) { failing.set(route, status); },
+    heal() { failing.clear(); },
     restore() { globalThis.fetch = realFetch; }
   };
 }

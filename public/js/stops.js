@@ -26,7 +26,8 @@ function stopVerdictPill(verdict) {
 function yourStopHtml(p) {
   const s = p.yourStop;
   if (!s) {
-    const why = p.verdict === 'hedged' ? 'no stop order — the opposite leg is open' : 'no stop order on this leg';
+    const why = p.verdict === 'unknown' ? 'stop orders could not be read; checked again on the next refresh'
+      : p.verdict === 'hedged' ? 'no stop order — the opposite leg is open' : 'no stop order on this leg';
     return `<div class="vt-yours"><div class="vt-yours-head"><span class="vt-k">Your stop</span>${stopVerdictPill(p.verdict)}</div>
       <div class="vt-k">${why}</div></div>`;
   }
@@ -46,7 +47,7 @@ function yourStopHtml(p) {
 
 function stopVerdictSummary(positions) {
   const count = v => positions.filter(p => p.verdict === v).length;
-  const parts = [[count('none'), 'without a stop'], [count('tight'), 'too tight'], [count('wide'), 'too wide']]
+  const parts = [[count('unknown'), 'stop unknown'], [count('none'), 'without a stop'], [count('tight'), 'too tight'], [count('wide'), 'too wide']]
     .filter(([n]) => n).map(([n, l]) => `${n} ${l}`);
   return parts.length ? parts.join(' · ') : 'every leg covered';
 }

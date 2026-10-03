@@ -678,6 +678,7 @@ button.jr-cal-cell:focus-visible { outline: 2px solid var(--text); outline-offse
 .st-worse { color: var(--danger); font-weight: 600; }
 .st-better { color: var(--success); }
 .st-note { font-size: 10px; color: var(--text3); margin-top: 8px; line-height: 1.5; }
+.st-note.jr-warn { color: var(--warning); }
 
 /* Status bulb and the exchange switches behind it */
 .sidebar-header { position: relative; }
@@ -799,6 +800,7 @@ button.jr-cal-cell:focus-visible { outline: 2px solid var(--text); outline-offse
 .stop-mark.caution { color: var(--warning); }
 td .stop-mark { margin-left: 4px; vertical-align: -2px; }
 .stop-mark.risk { color: var(--text3); }
+.stop-mark.unknown { color: var(--text3); opacity: .7; }
 
 /* Sessions: the clock and the filter notes */
 .session-clock { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); cursor: help;

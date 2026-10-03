@@ -69,7 +69,8 @@ async function costsOf({ scope, previousTrips, enriched, inSession, bn, analytic
     ledger: binanceOn ? costs.walletLedger({
       income: analyticsData.income, from: win.from, walletAtSync: meta.walletAtSync ?? null, walletLive: bn.walletBalance,
       fills: analyticsData.fillLedger, snapshots,
-      unmatched: unmatchedFunding({ trips: analyticsData.trips, stillOpen: analyticsData.stillOpen, income: analyticsData.income, from: win.from })
+      unmatched: unmatchedFunding({ trips: analyticsData.trips, stillOpen: analyticsData.stillOpen, income: analyticsData.income, from: win.from,
+                                 preHistoryUntil: analyticsData.preHistoryUntil })
     }) : null
   };
 }
@@ -100,7 +101,7 @@ export function register(app) {
   app.get('/api/performance', async (req, res) => {
     try {
       const analyticsData = analytics();
-      const { income, trips, nonQuoteFees, orphans } = analyticsData;
+      const { income, trips, nonQuoteFees, orphans, openLegCheck } = analyticsData;
       if (!income.length && !trips.length) {
         return res.json({ ok: true, empty: true, hint: 'No cached history yet — run a sync first.' });
       }
@@ -156,6 +157,7 @@ export function register(app) {
                                analyticsData, win, now, tz, snapshots }),
         nonQuoteFees: +nonQuoteFees.toFixed(4),
         orphans: { fills: orphans.fills, realized: +orphans.realized.toFixed(2) },
+        openLegCheck,
         periods,
         walletCurve: bn.disabled ? [] : ta.walletCurve(incomeWindow, bn.walletBalance, now),
         accountCurve: snapshots.filter(s => s.t >= win.from).map(s => ({ t: s.t, accountValue: s.accountValue })),

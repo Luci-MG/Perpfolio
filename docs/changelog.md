@@ -1,5 +1,29 @@
 # Changelog
 
+## Correctness fixes, batch 1 of the 2026-10-03 review (2026-10-03)
+
+- **Trades no longer vanish from the Journal.** A hedge leg opened before the earliest
+  reachable fill, added to and then closed went negative and swallowed every later trade on
+  that leg into one trip that never closed. The whole trip now goes to the opened-before-history
+  bucket and the leg starts afresh. A new check compares the open legs the fills leave with
+  Binance's at each sync and names any that differ.
+- **One venue down no longer blanks the other.** A failed Hyperliquid read used to fail the
+  whole dashboard; now the healthy venue stays on screen, the failed one reads "unavailable"
+  and a banner says the totals leave it out.
+- **Stops are never "missing" when they could not be read.** A failed stop-order read showed
+  every leg as unprotected and was cached; it now shows a grey "?" shield and "stop unknown" on
+  the Stops tab, and is read again next time. A failed mark-price read fails the Binance read
+  instead of pricing collateral at $1 and funding at 0.
+- **Open orders are read even when the order stream never opens**, and health warns when they
+  have not been read for 3 minutes.
+- **Only this machine can reach the server by default:** it listens on loopback and refuses
+  other Host names (`HOST`, `ALLOWED_HOSTS` to open it), and a sync starts only from a JSON POST.
+- **Goals are safe from bad input:** an action named like a built-in (`toString`) is refused
+  instead of wiping every goal, an unreadable goals file is reported and never overwritten, and
+  a suggestion outside its type's range is capped rather than failing the Goals tab.
+- **Calculators fill sizes of $1,000 and more** — the thousands separator blanked the field.
+- The Stops tab no longer retries a failed candle read one position at a time.
+
 ## Journal Timing, Symbols and Costs remodel (2026-10-03)
 
 - **Timing** opens with a calendar you can read without colour vision: blue gains, orange losses,

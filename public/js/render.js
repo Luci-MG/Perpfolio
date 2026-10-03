@@ -257,8 +257,8 @@ function render(data) {
         <span class="exch-dot" style="background:var(--hl)"></span>
         <span class="exch-name">Hyperliquid</span>
         <span class="exch-stats">
-          <span>Eq: <span class="exch-equity">${fmtUsd(data.hyperliquid.equity)}</span></span>
-          <span>Margin: ${data.hyperliquid.marginPct}%</span>
+          <span>Eq: <span class="exch-equity">${venueEq(data.hyperliquid)}</span></span>
+          <span>Margin: ${venueMargin(data.hyperliquid)}</span>
         </span>
       </span>
       <span style="width:0.5px;height:14px;background:var(--border2);flex-shrink:0;margin:0 12px"></span>
@@ -266,9 +266,9 @@ function render(data) {
         <span class="exch-dot" style="background:var(--bn)"></span>
         <span class="exch-name">Binance</span>
         <span class="exch-stats">
-          <span>Eq: <span class="exch-equity">${fmtUsd(data.binance.equity)}</span></span>
-          <span>Margin: ${data.binance.marginPct}%</span>
-          <span>Free: ${fmtUsd(data.binance.freeMargin)}</span>
+          <span>Eq: <span class="exch-equity">${venueEq(data.binance)}</span></span>
+          <span>Margin: ${venueMargin(data.binance)}</span>
+          <span>Free: ${venueFree(data.binance)}</span>
         </span>
       </span>
     </div>`;
@@ -277,8 +277,8 @@ function render(data) {
       <span class="exch-dot" style="background:var(--hl)"></span>
       <span class="exch-name">Hyperliquid</span>
       <span class="exch-stats">
-        <span>Equity: <span class="exch-equity">${fmtUsd(data.hyperliquid.equity)}</span></span>
-        <span>Margin: ${data.hyperliquid.marginPct}%</span>
+        <span>Equity: <span class="exch-equity">${venueEq(data.hyperliquid)}</span></span>
+        <span>Margin: ${venueMargin(data.hyperliquid)}</span>
       </span>
     </div>`;
   } else if (showBN) {
@@ -286,9 +286,9 @@ function render(data) {
       <span class="exch-dot" style="background:var(--bn)"></span>
       <span class="exch-name">Binance</span>
       <span class="exch-stats">
-        <span>Equity: <span class="exch-equity">${fmtUsd(data.binance.equity)}</span></span>
-        <span>Margin: ${data.binance.marginPct}%</span>
-        <span>Free: ${fmtUsd(data.binance.freeMargin)}</span>
+        <span>Equity: <span class="exch-equity">${venueEq(data.binance)}</span></span>
+        <span>Margin: ${venueMargin(data.binance)}</span>
+        <span>Free: ${venueFree(data.binance)}</span>
       </span>
     </div>`;
   }
@@ -317,8 +317,8 @@ function render(data) {
         <div class="label">Total equity</div>
         <div class="val">${fmtUsd(s.totalEquity)}</div>
         <div class="breakdown">
-          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span>${offOr('hyperliquid', `<span class="b-val">${fmtUsd(data.hyperliquid.equity)}</span>`)}</div>
-          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span>${offOr('binance', `<span class="b-val">${fmtUsd(data.binance.equity)}</span>`)}</div>
+          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span>${offOr('hyperliquid', `<span class="b-val">${venueEq(data.hyperliquid)}</span>`)}</div>
+          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span>${offOr('binance', `<span class="b-val">${venueEq(data.binance)}</span>`)}</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -400,6 +400,19 @@ async function updateHealthChip() {
   }
 }
 
+const VENUE_NAMES = { hyperliquid: 'Hyperliquid', binance: 'Binance' };
+
+function showPartialBanner(banner, data) {
+  const down = data.summary.partial || [];
+  if (!down.length) return;
+  banner.style.display = 'block';
+  banner.textContent = down.map(v => `${VENUE_NAMES[v]} unavailable (${data[v].error}) — totals exclude it`).join(' · ');
+}
+
+const venueEq = v => (v.error ? '<span class="dn">unavailable</span>' : fmtUsd(v.equity));
+const venueMargin = v => (v.error ? '—' : `${v.marginPct}%`);
+const venueFree = v => (v.error ? '—' : fmtUsd(v.freeMargin));
+
 async function fetchData() {
   if (pollInFlight) return;
   pollInFlight = true;
@@ -418,6 +431,7 @@ async function fetchData() {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Unknown error');
     render(data);
+    showPartialBanner(err, data);
     lastGoodAt = new Date(data.lastUpdated);
     dot.className = bulbClass();
     txt.textContent = `Last updated ${lastGoodAt.toLocaleTimeString()}`;

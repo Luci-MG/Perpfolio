@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'fs';
+import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { startTestServer } from './harness.js';
@@ -8,7 +9,7 @@ import { startTestServer } from './harness.js';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const GOLDEN = path.join(HERE, 'golden', 'routes.json');
 
-const { get, fake, stop } = await startTestServer();
+const { base, get, fake, stop } = await startTestServer();
 
 // Wall-clock fields differ between runs; everything else must reproduce exactly.
 const VOLATILE = new Set(['lastUpdated', 'lastReconcileAt', 'lastWsMessageAgeSec', 'at', 'ts',
@@ -23,6 +24,7 @@ function stable(v) {
 
 const snapshot = {};
 const record = (name, body) => { snapshot[name] = stable(body); };
+const startSync = (body = {}) => get('/api/history/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
 test.after(stop);
 
@@ -50,6 +52,39 @@ test('dashboard: a USDC pool counts in single-asset mode, where Binance totals a
   assert.ok(Math.abs(parseFloat(bn.equity) - (usdt.usdValue + usdc.usdValue)) < 0.01);
   const usdcUpnl = bn.positions.filter(p => p.symbol.endsWith('USDC')).reduce((a, p) => a + p.upnl, 0);
   assert.ok(Math.abs(usdc.marginBalance - (1200 + usdcUpnl)) < 0.01);
+});
+
+test('dashboard: unreadable stop orders show as unknown, never as no stop, and are read again next time', async () => {
+  fake.fail('/fapi/v1/openAlgoOrders');
+  const down = (await get('/api/dashboard?fresh=1')).body;
+  assert.equal(down.binance.stopsKnown, false);
+  assert.ok(down.binance.positions.every(p => p.stopKnown === false && p.hasStop === null && p.stop === null));
+  assert.equal(down.hyperliquid.stopsKnown, true);
+  fake.heal();
+  const up = (await get('/api/dashboard')).body;
+  assert.deepEqual([up.binance.stopsKnown, up.binance.positions.some(p => p.hasStop)], [true, true]);
+});
+
+test('dashboard: unreadable mark prices fail the Binance read rather than price collateral at 1', async () => {
+  fake.fail('/fapi/v1/premiumIndex');
+  const { status, body } = await get('/api/dashboard?fresh=1');
+  fake.heal();
+  assert.deepEqual([status, body.summary?.partial], [200, ['binance']], JSON.stringify(body.binance?.error));
+});
+
+test('dashboard: one venue down leaves the other on screen and marks the totals partial; both down is an error', async () => {
+  fake.fail('hl:clearinghouseState');
+  const hlDown = await get('/api/dashboard?fresh=1');
+  assert.equal(hlDown.status, 200);
+  assert.deepEqual(hlDown.body.summary.partial, ['hyperliquid']);
+  assert.match(hlDown.body.hyperliquid.error, /500/);
+  assert.ok(hlDown.body.binance.positions.length > 0);
+  fake.fail('/fapi/v2/account');
+  const bothDown = await get('/api/dashboard?fresh=1');
+  fake.heal();
+  assert.equal(bothDown.status, 500);
+  assert.match(bothDown.body.error, /hyperliquid: .*binance: /);
+  assert.deepEqual((await get('/api/dashboard?fresh=1')).body.summary.partial, []);
 });
 
 test('volstops covers every position on both venues', async () => {
@@ -107,7 +142,7 @@ test('deleverage plans, and a malformed loss cap means no cap', async () => {
 });
 
 test('history sync fills the store and the journal reconciles every fill', async () => {
-  await get('/api/history/sync?start=true');
+  await startSync();
   let state;
   for (let i = 0; i < 100; i++) {
     state = (await get('/api/history/sync')).body.state;
@@ -214,7 +249,7 @@ test('trips carry context from the sync, funding from the ledger, and a re-sync 
   record('trips', body);
 
   const mark = fake.calls.length;
-  await get('/api/history/sync?start=true');
+  await startSync();
   for (let i = 0; i < 100 && (await get('/api/history/sync')).body.state.running; i++) {
     await new Promise(r => setTimeout(r, 20));
   }
@@ -267,6 +302,20 @@ test('the engine is served to the browser', async () => {
   const { status, body } = await get('/risk-engine.js');
   assert.equal(status, 200);
   assert.match(body, /export function evalPool/);
+});
+
+test('a sync starts only from a JSON POST, and a request for another host is refused', async () => {
+  const before = (await get('/api/history/sync')).body.state.startedAt;
+  assert.equal((await get('/api/history/sync?start=true&full=true')).body.state.startedAt, before, 'a GET never starts one');
+  assert.equal((await get('/api/history/sync', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: '{}' })).status, 415);
+
+  const port = new URL(base).port;
+  const hostStatus = host => new Promise((resolve, reject) => {
+    http.request({ host: '127.0.0.1', port, path: '/api/health', headers: { Host: host } }, res => { res.resume(); resolve(res.statusCode); })
+      .on('error', reject).end();
+  });
+  assert.deepEqual(await Promise.all(['localhost:3000', '127.0.0.1', '[::1]:3000', 'evil.example', 'evil.example:3000'].map(hostStatus)),
+                   [200, 200, 200, 403, 403]);
 });
 
 test('health reports a verdict without calling any exchange', async () => {
@@ -323,6 +372,24 @@ test('goals accept only well-formed JSON changes, and preview without saving', a
   assert.equal(body.preview.strip.length, 14);
   assert.equal((await get('/api/goals/preview?type=maxTradesPerDay&params={bad')).status, 400);
   assert.deepEqual((await get('/api/goals')).body.goals, []);
+});
+
+test('goals refuse inherited action names and never overwrite a file they cannot read', async () => {
+  const file = path.join(process.env.DASHBOARD_DATA_DIR, 'goals.json');
+  await postGoal({ action: 'add', type: 'maxTradesPerDay', params: { max: 3 } });
+  for (const action of ['toString', 'constructor', '__proto__', 'hasOwnProperty']) {
+    assert.equal((await postGoal({ action })).status, 400, action);
+  }
+  assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).length, 1);
+
+  const kept = fs.readFileSync(file, 'utf8');
+  fs.writeFileSync(file, '[{"id": "x"');
+  const read = await get('/api/goals');
+  assert.deepEqual([read.status, /unreadable, left untouched/.test(read.body.error)], [500, true]);
+  assert.equal((await postGoal({ action: 'add', type: 'maxTradesPerDay', params: { max: 3 } })).status, 500);
+  assert.equal(fs.readFileSync(file, 'utf8'), '[{"id": "x"');
+  fs.writeFileSync(file, kept);
+  await postGoal({ action: 'delete', id: JSON.parse(kept)[0].id });
 });
 
 test('milestones sit after rules, by target, and are scored from snapshots without counting transfers', async () => {
@@ -486,11 +553,9 @@ test('Binance off: no signed request, account tools refuse, the journal still re
   assert.equal(dash.body.binance.positions.length, 0);
   assert.equal(dash.body.binance.orders.length, 0);
   assert.equal((await get('/api/volstops?risk=0.01&k=1.5')).status, 200);
-  for (const route of ['/api/riskbook', '/api/deleverage', '/api/hedgeledger', '/api/history/sync?start=true']) {
-    const { status, body } = await get(route);
-    assert.equal(status, 409, route);
-    assert.equal(body.disabled, true, route);
-  }
+  const refusals = { riskbook: await get('/api/riskbook'), deleverage: await get('/api/deleverage'),
+                     hedgeledger: await get('/api/hedgeledger'), sync: await startSync() };
+  for (const [route, { status, body }] of Object.entries(refusals)) assert.deepEqual([status, body.disabled], [409, true], route);
   assert.equal((await get('/api/performance')).status, 200);
   assert.deepEqual(fake.signedCalls.slice(mark), []);
 
@@ -532,7 +597,7 @@ test('a note and tags on a trip save, come back on /api/trips, and reach Factors
 });
 
 const syncHistory = async () => {
-  await get('/api/history/sync?start=true');
+  await startSync();
   for (let i = 0; i < 200 && (await get('/api/history/sync')).body.state.running; i++) await new Promise(r => setTimeout(r, 20));
 };
 
@@ -558,4 +623,15 @@ test('both legs of a hedged funding settlement are kept, though Binance books th
   assert.equal(repaired.incomeKeyVersion, 2);
   assert.ok(repaired.incomeCompleteFrom > 0);
   assert.equal((await get('/api/trips')).body.coverage.incomeCompleteFrom, repaired.incomeCompleteFrom);
+});
+
+test('open orders are read by REST even when the order stream cannot open (last: it marks the stream as started)', async () => {
+  const stream = await import('../lib/orders-stream.js');
+  fake.fail('/fapi/v1/listenKey');
+  await stream.startBinanceUserDataStream();
+  for (let i = 0; i < 100 && stream.lastReconcile.reason !== 'start'; i++) await new Promise(r => setTimeout(r, 10));
+  fake.heal();
+  stream.stopBinanceUserDataStream();
+  assert.equal(stream.lastReconcile.reason, 'start');
+  await stream.reconcileOrders('test');
 });

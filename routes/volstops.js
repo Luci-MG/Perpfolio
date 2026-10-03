@@ -65,17 +65,19 @@ export function register(app) {
       const volHistories = [];
       for (const [idx, p] of positions.entries()) {
         try {
-          const { candles, backfilled: candlesBackfilled } = candleSets[idx] ?? await candlesForPosition(p);
+          if (!candleSets[idx]) throw new Error('candles unavailable, read again on the next refresh');
+          const { candles, backfilled: candlesBackfilled } = candleSets[idx];
           const { result, volSeries } = suggestStop(p, { candles, candlesBackfilled, btcCandles, btcAtrHistory,
                                                           totalEquity, riskPct, k });
           const assetKey = p.asset || baseAsset(p.pair);
           if (!candlesByAsset[assetKey] && !candlesBackfilled) candlesByAsset[assetKey] = candles;
           volHistories.push({ key: `${p.exchange}:${p.pair}:${p.side}`, series: volSeries,
                               weight: Math.abs(p.sizeUsd) || 1 });
-          results.push({ ...result, ...checkLegStop({
+          const stopsKnown = (p.exchange === 'binance' ? bnData : hlData).stopsKnown;
+          results.push({ ...result, ...(stopsKnown ? checkLegStop({
             position: p, orders, hedged: hasOppositeLeg(p, positions), suggestedPct: result.stopDistPct,
             atrPct: result.layers.atrPct, candles: candlesBackfilled ? null : candles
-          }) });
+          }) : { yourStop: null, verdict: 'unknown' }) });
         } catch (perr) {
           // Never let one position break the panel.
           results.push({

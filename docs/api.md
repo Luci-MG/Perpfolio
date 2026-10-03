@@ -23,11 +23,11 @@
 ### All endpoints
 | Route | Purpose | Detail in |
 |---|---|---|
-| `GET /api/dashboard` | positions, orders, margin — the 15s poll | below |
+| `GET /api/dashboard?fresh=1` | positions, orders, margin — the 15s poll; `fresh=1` skips the 10s shared snapshot | below |
 | `GET /api/volstops?risk=&k=` | volatility-adjusted stops, hedge health, regime | *Dynamic Stop Width* |
 | `GET /api/riskbook` | cross pools, calibration, stress inputs, depth, ADL | *Cross-Pool Stress Simulator* |
 | `GET /api/deleverage?objective=&target=&maxLoss=&fee=&breakHedges=` | unwind plan | *Unwind planner* |
-| `GET /api/performance?days=N&tz=M&session=S` | journal: trip and hedge-unit statistics with intervals, the window before, the daily account series with return, drawdown, Sharpe and beta (a trip curve under a session), streaks against chance, records, habits, sizing, month/hold/side, `timing` (calendar, weekday, hour, grid), `symbols` (rows, rest, concentration), `costs` (summary and the window before, fee check, BNB discount, weekly, maker trend, by symbol, wallet ledger with checks), periods, wallet and account curves. `zone=` (IANA name) sets the reader's clock, `tz=` is the fallback offset | *Performance* and *Behaviour* in `journal.md` |
+| `GET /api/performance?days=N&tz=M&session=S` | journal: trip and hedge-unit statistics with intervals, the window before, the daily account series with return, drawdown, Sharpe and beta (a trip curve under a session), streaks against chance, records, habits, sizing, month/hold/side, `timing` (calendar, weekday, hour, grid), `symbols` (rows, rest, concentration), `costs` (summary and the window before, fee check, BNB discount, weekly, maker trend, by symbol, wallet ledger with checks), `openLegCheck` (rebuilt open legs against Binance's at the last sync), periods, wallet and account curves. `zone=` (IANA name) sets the reader's clock, `tz=` is the fallback offset | *Performance* and *Behaviour* in `journal.md` |
 | `GET /api/trips?days=N` | every closed round trip with size, costs, funding, price path and market at entry, plus context coverage | *Trades* in `journal.md` |
 | `GET /api/goals?tz=M` | goals scored from their set date, ordered broken → in progress → kept → paused; today's line; suggestions | *Goals* in `goals.md` |
 | `GET /api/goals/preview?type=&params=&session=&tz=M` | what a goal would have scored on all history — the add drawer's preview | *Goals* in `goals.md` |
@@ -36,7 +36,8 @@
 | `POST /api/annotations` | `{ key, note, tags }` — your note and tags on a closed trip; an empty note with no tags removes them; JSON only. Read back on `/api/trips` | *Notes and tags* in `journal.md` |
 | `GET /api/funding` | the open book's funding: rows worst first with hedged pairs netted, each leg's estimated rate, interval, cap distance and 7-day usual rate, totals, the next settlement, realised from the ledger. Rate history is cached an hour per symbol | *Funding* in `frontend.md`; mechanics in `research/funding.md` |
 | `GET /api/hedgeledger` | locked hedge PnL, carry, margin inflation | *Hedge ledger* |
-| `GET /api/history/sync?start=true&full=true` | starts a history sync, returns progress | *history-store* |
+| `GET /api/history/sync` | sync progress, store stats and meta; never starts one | *history-store* |
+| `POST /api/history/sync` | `{ full?: true }`; starts a sync when idle, returns progress; JSON only | *history-store* |
 | `GET /api/confluence?symbol=&tfs=` | signals, regime, scores and track records per timeframe | *Confluence* |
 | `GET /api/symbols` | trading USDM perpetuals, for the confluence picker | *Confluence* |
 | `GET /api/health` | ban state, request weight, order-stream age and drift, snapshot ages, sync — one `ok`/`warn`/`bad` verdict with reasons; no exchange calls | *Operations* |
@@ -62,7 +63,8 @@ Returns unified JSON:
   "summary": {
     "totalEquity", "totalUpnl",
     "positionCount", "orderCount",
-    "hlExposure", "bnExposure", "totalExposure"
+    "hlExposure", "bnExposure", "totalExposure",
+    "partial": ["hyperliquid"]          // venues whose read failed: their figures are left out
   },
   "hyperliquid": {
     "equity", "marginPct", "marginUsed", "freeMargin",
@@ -117,7 +119,12 @@ Binance positions additionally carry the fields the stress engine needs:
 string), `isolated`, `isolatedWallet`, `reportedMm`, `reportedLiqPrice`.
 `binance.walletBalance` on `/api/dashboard` is the wallet without unrealised PnL; `equity` is
 the margin balance. On `/api/dashboard` every position also carries `hasStop` — whether a closing `Stop…` order
-protects the leg (the rule in `docs/stops.md`).
+protects the leg (the rule in `docs/stops.md`) — and `stopKnown`. When a venue's stop orders
+could not be read, its block has `stopsKnown: false` and each of its positions `stopKnown: false`,
+`stop: null`, `hasStop: null`: unknown, never "no stop". That read is not cached, so the next
+request tries again. Each venue block carries `error` (null when read): one venue failing
+leaves the other on screen and lists it in `summary.partial`; both failing is a 500. A failed
+Binance mark-price read fails the Binance read, since collateral is priced from it.
 
 ## Order data shape
 Each order object (both exchanges, normalised):

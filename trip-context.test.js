@@ -93,6 +93,20 @@ test('without a rate a hedged settlement is shared evenly and marked split', () 
   assert.equal(out.get(tripKey(long)).funding, -0.1);
   assert.equal(out.get(tripKey(short)).fundingSplit, true);
 });
+test('a lone visible leg of a hedged settlement takes the row nearest its own modelled amount, or stays unknown without a rate', () => {
+  const { long, sizeSteps, rates } = hedge();
+  const income = [row('0.1002'), row('-0.301')];
+  assert.equal(tc.attributeFunding({ trips: [long], sizeSteps, income, rates, incomeFrom: 0 }).get(tripKey(long)).funding, -0.301);
+  assert.equal(tc.attributeFunding({ trips: [long], sizeSteps, income, incomeFrom: 0 }).get(tripKey(long)).funding, null);
+});
+
+test('funding with no rebuilt leg open is unmatched, unless a position opened before history was still open then', () => {
+  const t = trip({ openTime: 10 * HOUR, closeTime: 12 * HOUR });
+  const rows = [2, 11, 20, 30].map(h => ({ incomeType: 'FUNDING_FEE', symbol: 'XUSDT', income: '-1', time: h * HOUR }));
+  assert.deepEqual(tc.unmatchedFunding({ trips: [t], income: rows }), { rows: 3, amount: -3 });
+  assert.deepEqual(tc.unmatchedFunding({ trips: [t], income: rows, preHistoryUntil: { XUSDT: 20 * HOUR } }), { rows: 1, amount: -1 });
+});
+
 test('ATR at entry is a percent of price, and needs fifteen bars', () => {
   const candles = Array.from({ length: 20 }, (_, i) => bar(i * HOUR, 99, 101, 100));
   assert.equal(tc.atrPctAtEntry(candles), 2);

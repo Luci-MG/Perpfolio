@@ -110,6 +110,10 @@ function stopMarkTitle(p, verdict, judged) {
 }
 
 function stopMarkHtml(p, hedged) {
+  if (p.stopKnown === false) {
+    return `<span class="stop-mark unknown" title="Stop orders could not be read; checked again on the next refresh" aria-label="Stop unknown">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SHIELD}<path d="M10 9.5a2 2 0 1 1 2.5 2c-.5.2-.5.6-.5 1.2M12 16v.5"/></svg></span>`;
+  }
   if (!p.stop) {
     return hedged ? '' : `<span class="sl-alert" title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`;
   }

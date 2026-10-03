@@ -134,6 +134,13 @@ test('suggestions keep only goals whose breaches lost money', () => {
   assert.ok(suggestGoals(trips, ctx, ['noUnderwaterAdds']).every(s => s.type !== 'noUnderwaterAdds'));
 });
 
+test('a suggestion past its type\'s range is capped at the range, and never fails the whole list', () => {
+  const trips = [0, 1, 2].flatMap(d => Array.from({ length: 130 }, (_, i) =>
+    trip(T0 + d * DAY + i * 60_000, { net: i >= 100 ? -5 : 1 })));
+  const cap = suggestGoals(trips, ctx).find(s => s.type === 'maxTradesPerDay');
+  assert.equal(cap.params.max, 100);
+});
+
 test('the preview scores all history with no set date', () => {
   const p = previewGoal(validateGoal({ type: 'noUnderwaterAdds' }), [trip(T0, { addsWhileUnderwater: 1 }), trip(NOW - HOUR)], ctx);
   assert.deepEqual([p.n, p.brokenTrips, p.strip.length], [2, 1, 14]);

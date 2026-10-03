@@ -28,6 +28,7 @@ npm start               # http://localhost:3000
 | `BINANCE_API_KEY` / `BINANCE_API_SECRET` | a **read-only** key: enable *Read Info* only |
 | `HL_WALLET_ADDRESS` | optional, a public `0x…` address |
 | `PORT` | optional, default `3000` |
+| `HOST` / `ALLOWED_HOSTS` | optional; the server listens on `127.0.0.1` — see `docs/operations.md` before changing it |
 
 The Journal needs a one-time history sync: **Journal → Sync recent**.
 
