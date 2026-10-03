@@ -31,10 +31,10 @@
 | `GET /api/trips?days=N` | every closed round trip with size, costs, funding, price path and market at entry, plus context coverage | *Trades* in `journal.md` |
 | `GET /api/goals?tz=M` | goals scored from their set date, ordered broken → in progress → kept → paused; today's line; suggestions | *Goals* in `goals.md` |
 | `GET /api/goals/preview?type=&params=&session=&tz=M` | what a goal would have scored on all history — the add drawer's preview | *Goals* in `goals.md` |
-| `POST /api/goals` | `{ action: add\|edit\|pause\|resume\|delete, … }`; JSON only | *Goals* in `goals.md` |
+| `POST /api/goals?zone=&tz=` | `{ action: add\|edit\|pause\|resume\|delete, … }`; JSON only; a date is checked against the reader's clock | *Goals* in `goals.md` |
 | `GET /api/factors?days=N&session=S&tz=M` | factors known at entry, each bucket against the rest: average net and win rate with intervals, the rows that stand out, during-trade behaviour apart | *Factors* in `journal.md` |
 | `POST /api/annotations` | `{ key, note, tags }` — your note and tags on a closed trip; an empty note with no tags removes them; JSON only. Read back on `/api/trips` | *Notes and tags* in `journal.md` |
-| `GET /api/funding` | the open book's funding: rows worst first with hedged pairs netted, each leg's estimated rate, interval, cap distance and 7-day usual rate, totals, the next settlement, realised from the ledger. Rate history is cached an hour per symbol | *Funding* in `frontend.md`; mechanics in `research/funding.md` |
+| `GET /api/funding` | the open book's funding: rows worst first with hedged pairs netted, each leg's estimated rate, interval, cap distance and 7-day usual rate, totals, the next settlement, realised from the ledger up to the last sync with `coveredDays`, and `differsFromEstimate` against the Binance estimate (`estimatePerDay`), null under a day of ledger. Rate history is cached an hour per symbol | *Funding* in `frontend.md`; mechanics in `research/funding.md` |
 | `GET /api/hedgeledger` | locked hedge PnL, carry, margin inflation | *Hedge ledger* |
 | `GET /api/history/sync` | sync progress, store stats and meta; never starts one | *history-store* |
 | `POST /api/history/sync` | `{ full?: true }`; starts a sync when idle, returns progress; JSON only | *history-store* |

@@ -1,4 +1,5 @@
 import { GOAL_TYPES, equityLookup, previewGoal, scoreGoal, suggestGoals, validateGoal } from '../goals.js';
+import { venueSwitches } from '../performance.js';
 import { walletCurve } from '../trade-analytics.js';
 import { analytics } from '../lib/analytics.js';
 import { getBinanceData } from '../lib/binance-account.js';
@@ -22,7 +23,8 @@ async function scoringContext(query) {
   const { income } = analytics();
   const wallet = bn.disabled ? [] : walletCurve(income, bn.walletBalance, now);
   const snapshots = readEquitySnapshots();
-  const transfers = income.filter(r => r.incomeType === 'TRANSFER').map(r => ({ t: r.time, amount: parseFloat(r.income) }));
+  const transfers = [...income.filter(r => r.incomeType === 'TRANSFER'), ...venueSwitches(snapshots)]
+    .map(r => ({ t: r.time, amount: parseFloat(r.income) }));
   return { now, tz: readerClock(query), equityAt: equityLookup(snapshots, wallet), snapshots, transfers, wallet };
 }
 
@@ -77,7 +79,7 @@ export function register(app) {
 
   app.post('/api/goals', parseJson, (req, res) => {
     try {
-      changeGoals(req.body);
+      changeGoals(req.body, Date.now(), readerClock(req.query));
       res.json({ ok: true });
     } catch (err) {
       res.status(err.status ?? 400).json({ ok: false, error: err.message });

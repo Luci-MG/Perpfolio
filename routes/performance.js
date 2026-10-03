@@ -125,10 +125,10 @@ export function register(app) {
 
       const starts = ta.periodStarts(now, tz);
       const previousStarts = ta.previousPeriodStarts(now, tz);
-      const periodsNet = ta.periodNet(income, trips, starts);
+      const periodsNet = ta.periodNet(income, enriched, starts);
       const periodsAccount = ta.accountChange(snapshots, income, starts);
       const periods = Object.fromEntries(Object.keys(starts).map(k => [k, { ...periodsNet[k], account: periodsAccount[k],
-        previous: ta.periodNetBetween(income, trips, previousStarts[k].from, previousStarts[k].to) }]));
+        previous: ta.periodNetBetween(income, enriched, previousStarts[k].from, previousStarts[k].to) }]));
 
       res.json({
         ok: true,

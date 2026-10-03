@@ -33,3 +33,13 @@ test('a note saves, matches by key or by opening order after a rebuild, and an e
   saveAnnotation(trip('BTCUSDT:LONG:1', 11), { note: '', tags: [] });
   assert.deepEqual(Object.keys(readAnnotations()), ['ETHUSDT:LONG:2']);
 });
+
+test('a note found by opening order is edited and cleared in place, leaving no orphan behind', () => {
+  saveAnnotation(trip('SOLUSDT:LONG:3', 33), { note: 'first', tags: [] }, 7);
+  const moved = trip('SOLUSDT:LONG:4', 33);
+  saveAnnotation(moved, { note: 'second', tags: [] }, 8);
+  assert.equal(annotationsFor([moved]).matched.get('SOLUSDT:LONG:4').note, 'second');
+  assert.equal(Object.keys(readAnnotations()).filter(k => k.startsWith('SOLUSDT')).join(), 'SOLUSDT:LONG:4');
+  saveAnnotation(trip('SOLUSDT:LONG:5', 33), { note: '', tags: [] });
+  assert.deepEqual(Object.keys(readAnnotations()).filter(k => k.startsWith('SOLUSDT')), []);
+});

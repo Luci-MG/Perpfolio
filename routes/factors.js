@@ -6,10 +6,7 @@ import { readerClock } from '../lib/util.js';
 const CACHE_SIZE = 8;
 const cache = new Map();
 
-const tagsOf = trips => trips.filter(t => t.tags?.length).map(t => `${t.key}=${t.tags.join(',')}`).join(';');
-
-const fingerprint = trips =>
-  `${trips.length}:${trips.reduce((m, t) => Math.max(m, t.closeTime), 0)}:${trips.filter(t => t.entry).length}:${tagsOf(trips)}`;
+const fingerprint = trips => `${trips.length}:${trips.reduce((m, t) => Math.max(m, t.closeTime), 0)}`;
 
 function remember(key, compute) {
   if (!cache.has(key)) {
@@ -26,9 +23,10 @@ export function register(app) {
       const cutoff = days > 0 ? Date.now() - days * 86_400_000 : 0;
       const session = SESSIONS.includes(req.query.session) ? req.query.session : null;
       const tz = readerClock(req.query);
-      const trips = enrichedTrips().trips.filter(t => t.closeTime >= cutoff && (!session || t.session === session));
-      const key = [days > 0 ? days : 0, session, tz.zone ?? tz.offsetAt(0), fingerprint(trips)].join('|');
-      res.json({ ok: true, session, ...remember(key, () => outcomeFactors(trips, { tz, session })) });
+      const { trips: all, version } = enrichedTrips();
+      const trips = all.filter(t => t.closeTime >= cutoff && (!session || t.session === session));
+      const key = [version, days > 0 ? days : 0, session, tz.zone ?? tz.offsetAt(0), fingerprint(trips)].join('|');
+      res.json({ ok: true, session, ...remember(key, () => outcomeFactors(trips, { tz, session, all })) });
     } catch (err) {
       console.error('[factors]', err);
       res.status(500).json({ ok: false, error: err.message });

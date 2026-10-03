@@ -256,7 +256,7 @@ test('period net sums realised, fees and funding, and counts closed trips', () =
     { incomeType: 'REALIZED_PNL', income: '50', time: 200 }, { incomeType: 'COMMISSION', income: '-2', time: 210 },
     { incomeType: 'FUNDING_FEE', income: '-1', time: 220 }, { incomeType: 'TRANSFER', income: '1000', time: 230 },
     { incomeType: 'REALIZED_PNL', income: '-30', time: 50 }];
-  const trips = [{ closeTime: 205, win: true }, { closeTime: 40, win: false }];
+  const trips = [{ closeTime: 205, net: 5 }, { closeTime: 40, net: -3 }];
   assert.deepEqual(ta.periodNet(income, trips, { today: 100 }).today,
     { from: 100, realized: 50, fees: -2, funding: -1, net: 47, transfers: 1000, trips: 1, wins: 1 });
 });
@@ -279,6 +279,9 @@ test('account change removes transfers and says when snapshots began after the p
   assert.deepEqual(ta.accountChange(snaps, income, { a: 250 }).a, { change: 50, since: 300, partial: false });
   assert.equal(ta.accountChange(snaps, income, { b: 600 }).b, null);
   assert.equal(ta.accountChange(snaps, income, { c: -1e7 }).c.partial, true);
+  const venue = [{ t: 1000, binance: { equity: 900 }, hyperliquid: { equity: 300 }, accountValue: 1200 },
+                 { t: 2000, binance: { equity: 950 }, hyperliquid: null, accountValue: 950 }];
+  assert.equal(ta.accountChange(venue, [], { a: 0 }).a.change, 50, 'Hyperliquid switched off is not a loss');
 });
 
 test('previous periods are cut at the same elapsed time, and a short month ends at its own end', () => {
@@ -296,7 +299,7 @@ test('previous periods are cut at the same elapsed time, and a short month ends 
 test('a bounded period counts net income and trips closed inside it only', () => {
   const income = [{ incomeType: 'REALIZED_PNL', income: '10', time: 5 }, { incomeType: 'COMMISSION', income: '-1', time: 6 },
                   { incomeType: 'TRANSFER', income: '500', time: 6 }, { incomeType: 'REALIZED_PNL', income: '99', time: 20 }];
-  const trips = [{ closeTime: 5, win: true }, { closeTime: 9, win: false }, { closeTime: 10, win: true }];
+  const trips = [{ closeTime: 5, net: 2, netAfterFunding: 1 }, { closeTime: 9, net: 2, netAfterFunding: -1 }, { closeTime: 10, net: 4 }];
   assert.deepEqual(ta.periodNetBetween(income, trips, 0, 10), { from: 0, to: 10, net: 9, trips: 2, wins: 1 });
 });
 

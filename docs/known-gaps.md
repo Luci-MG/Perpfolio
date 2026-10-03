@@ -14,9 +14,6 @@
 - **HL equity uses the *spot* USDC balance** (`lib/hyperliquid.js`, `getHyperliquidData`) — wrong for
   liquidation purposes, since HL perp margin comes from the perp account. Deliberately left:
   with perp value 10,000 and 12 USDC in spot it reports `equity: 12`, `marginPct: "16666.7"`
-- **HL funding is hourly, Binance's is 8h/4h/1h** — the dashboard's daily funding now uses each
-  position's `fundingIntervalHours` (HL positions carry `1`), but the stops engine still feeds
-  HL rates to `getFundingAdjustment` as if 8h, so the L3 layer is inert on HL
 - **`hedgeWarnings` in `/api/volstops`** is fixed, but `checkHedgePairHealth`'s old
   same-asset pairing is the pattern to avoid if that code is ever revisited
 - **No login** — the server listens on loopback and refuses any other `Host` (`lib/http.js`),

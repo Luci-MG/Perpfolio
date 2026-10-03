@@ -61,9 +61,9 @@ function thin(points) {
   return points.filter((_, i) => i % step === 0 || i === points.length - 1);
 }
 
-function targetStatus({ paused, reached, deadline, now, fit, eta }) {
+function targetStatus({ paused, reachedAt, deadline, now, fit, eta }) {
   if (paused) return 'paused';
-  if (reached) return 'reached';
+  if (reachedAt != null) return deadline && reachedAt > deadline ? 'reachedLate' : 'reached';
   if (deadline && now > deadline) return 'missed';
   if (!fit) return 'early';
   if (!deadline) return 'open';
@@ -90,7 +90,7 @@ function scoreAccountTarget(goal, ctx, paused) {
   const fit = days >= MIN_HISTORY_DAYS ? fitLine(dailyCloses(series, tz)) : null;
   const eta = fit?.reach(target) ?? null;
   return {
-    status: targetStatus({ paused, reached: !!reachedPoint, deadline, now: ctx.now, fit, eta }),
+    status: targetStatus({ paused, reachedAt: reachedPoint?.t ?? null, deadline, now: ctx.now, fit, eta }),
     start: round2(start.value), current: round2(last.value), asOf: last.t, target,
     progress: target > start.value ? +((last.value - start.value) / (target - start.value)).toFixed(4) : 1,
     paceFraction: deadline ? +Math.min(1, Math.max(0, (ctx.now - goal.setAt) / (deadline - goal.setAt))).toFixed(4) : null,

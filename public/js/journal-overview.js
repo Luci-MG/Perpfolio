@@ -16,7 +16,7 @@ const ATTENTION_SOURCES = [
   () => ovGoals().filter(g => g.status === 'late')
     .map(g => ({ html: `◔ ${esc(g.label)} late`, cls: 'gl-late', go: "setJrTab('goals')" })),
   () => (fundData?.realised?.differsFromEstimate
-    ? [{ html: `⚠ Funding paid ${ovUsd(fundData.realised.perDay7d)}/day this week against ${ovUsd(fundData.totals.perDay)} estimated`,
+    ? [{ html: `⚠ Binance funding paid ${ovUsd(fundData.realised.perDay7d)}/day this week against ${ovUsd(fundData.realised.estimatePerDay)} estimated`,
          cls: 'gl-late', go: 'openFundDrawer()' }] : []),
   () => (factorsData?.worse || [])
     .map(b => ({ html: `✗ ${esc(b.bucket)} trips run ${ovUsd(b.diff)}/trip against the rest`, cls: 'dn', go: "setJrTab('factors')" })),

@@ -258,7 +258,7 @@ function binance(url) {
   if (path === '/fapi/v1/listenKey') return { listenKey: 'fake' };
   if (path === '/fapi/v1/premiumIndex') {
     return Object.entries(SYMBOLS).map(([s, v]) => ({ symbol: s, markPrice: String(v.base),
-      lastFundingRate: String(v.fundingRate), nextFundingTime: NOW + HOUR }));
+      lastFundingRate: String(v.fundingRate), nextFundingTime: NOW + v.intervalHours * HOUR }));
   }
   if (path === '/fapi/v1/fundingInfo') {
     return Object.entries(SYMBOLS).map(([s, v]) => ({ symbol: s, fundingIntervalHours: v.intervalHours,
@@ -292,7 +292,7 @@ function binance(url) {
     const from = parseInt(q.get('startTime') || '0', 10), to = parseInt(q.get('endTime') || String(NOW), 10);
     return Array.from({ length: 120 }, (_, i) => ({ symbol, fundingTime: NOW - (120 - i) * v.intervalHours * HOUR,
       fundingRate: String(v.fundingRate * (1 + 0.3 * Math.sin(i / 5))), markPrice: String(v.base) }))
-      .filter(r => r.fundingTime >= from && r.fundingTime <= to);
+      .filter(r => r.fundingTime >= from && r.fundingTime <= to).slice(0, parseInt(q.get('limit') || '100', 10));
   }
   if (path === '/futures/data/openInterestHist') {
     return periodRows(symbol, q.get('period'), 500, function oi(i, r) {

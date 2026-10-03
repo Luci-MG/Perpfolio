@@ -30,7 +30,7 @@ async function fetchGoals() {
 }
 
 async function changeGoal(body) {
-  const res = await fetch('/api/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const res = await fetch(`/api/goals?${clockParam()}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'change failed');
   await fetchGoals();
@@ -160,7 +160,7 @@ function renderGoalsTab() {
   return `${head}${loadErrorHtml('goals', 'fetchGoals()', true)}${error}${ruleBlock}${milestoneBlock}`;
 }
 
-const MILESTONE_MARK = { onpace: '◎', open: '◎', early: '◎', late: '◔', reached: '★', missed: '✗', paused: '‖',
+const MILESTONE_MARK = { onpace: '◎', open: '◎', early: '◎', late: '◔', reached: '★', reachedLate: '★', missed: '✗', paused: '‖',
                          progress: '●', broken: '✗', kept: '✓', idle: '·' };
 const clamp01 = v => Math.min(1, Math.max(0, v ?? 0));
 const fallText = pct => `${pct < 0 ? '−' : ''}${fmt(Math.abs(pct), 1)}%`;
@@ -170,7 +170,8 @@ function targetStateText(g) {
   const pace = g.eta ? `on pace for ${goalDay(g.eta)}` : 'not rising';
   return {
     early: `not enough history · ${fmt(g.days, 1)} of 7 days`, open: pace, onpace: pace, late: `${pace} · late`,
-    reached: `reached ${goalDay(g.reachedAt)}`, missed: `missed ${goalDay(g.deadline)}`, paused: 'paused'
+    reached: `reached ${goalDay(g.reachedAt)}`, missed: `missed ${goalDay(g.deadline)}`, paused: 'paused',
+    reachedLate: `reached ${goalDay(g.reachedAt)}, ${Math.ceil((g.reachedAt - g.deadline) / 86_400_000)} days after the date`
   }[g.status];
 }
 

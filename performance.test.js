@@ -34,6 +34,14 @@ test('account value takes over from the first snapshot day; the handoff day and 
   assert.equal(twr.gaps, 3);
 });
 
+test('switching a venue off or on is a flow of its equity, not a loss or a gain', () => {
+  const snap = (t, bn, hl) => ({ t, binance: { wallet: bn, equity: bn }, hyperliquid: hl == null ? null : { equity: hl }, accountValue: bn + (hl ?? 0) });
+  const snapshots = [snap(D0 + HOUR, 1000, 500), snap(D0 + DAY + HOUR, 1010, null), snap(D0 + 2 * DAY + HOUR, 1010, 400)];
+  const series = dailySeries({ income: [], snapshots, now: D0 + 2 * DAY + 2 * HOUR });
+  assert.deepEqual(series.map(r => [r.value, r.flow, r.pnl]), [[1500, 0, null], [1010, -500, 10], [1410, 400, 0]]);
+  assert.ok(series.slice(1).every(r => r.ret >= 0), 'neither switch reads as a return');
+});
+
 test('drawdown is depth from the peak, with how long it lasted, recovery, and a lower bound when the wallet is involved', () => {
   const series = [row(day(0), null), row(day(1), 0.1, 'wallet'), row(day(2), -0.2, 'wallet'), row(day(3), 0.1),
                   row(day(4), 0.2), row(day(5), -0.05)];
@@ -104,4 +112,10 @@ test('records name the best and worst unit and day, and how many each was picked
   const r = records([trip(D0, { net: 9, netAfterFunding: 9 }), trip(D0 + DAY, { symbol: 'BTCUSDT', net: -4, netAfterFunding: -4 })],
                     [{ date: day(0), pnl: 9 }, { date: day(1), pnl: -4 }, { date: day(2), pnl: 0 }]);
   assert.deepEqual([r.units, r.days, r.bestUnit.net, r.worstUnit.symbol, r.worstDay.date], [2, 2, 9, 'BTCUSDT', day(1)]);
+});
+
+test('a ledger far larger than the call stack still builds its series', () => {
+  const rows = Array.from({ length: 200_000 }, (_, i) => income(D0 + i * 1000, 'FUNDING_FEE', 0));
+  const series = dailySeries({ income: rows, walletNow: 1000, now: D0 + 3 * DAY });
+  assert.equal(series[0].date, day(0));
 });

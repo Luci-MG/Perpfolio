@@ -61,10 +61,20 @@ test('corrupt meta falls back instead of throwing', () => {
   assert.deepEqual(store.readJson(file, { cursors: {} }), { cursors: {} });
 });
 
-test('meta round-trips', () => {
+test('meta round-trips, written whole through a temp file', () => {
   const dir = tmp(), file = path.join(dir, 'meta.json');
   store.writeJson(file, { lastIncomeTime: 123, trades: { ETHUSDT: 99 } });
   assert.equal(store.readJson(file).trades.ETHUSDT, 99);
+  assert.deepEqual(fs.readdirSync(dir), ['meta.json'], 'no temp file left behind');
+});
+
+test('appendNdjson remembers what a file holds between appends, and notices when the file changes underneath it', () => {
+  const file = path.join(tmp(), 'k.ndjson');
+  store.appendNdjson(file, [{ id: 1 }], x => x.id);
+  assert.equal(store.appendNdjson(file, [{ id: 1 }, { id: 2 }], x => x.id).added, 1);
+  fs.writeFileSync(file, '{"id":9}\n');
+  assert.deepEqual([store.appendNdjson(file, [{ id: 9 }], x => x.id).added, store.appendNdjson(file, [{ id: 1 }], x => x.id).added], [0, 1]);
+  assert.equal(store.appendNdjson(file, [{ id: 9, v: 'b' }], x => `${x.id}:${x.v}`).added, 1, 'a different key reads afresh');
 });
 
 test('tradesFile cannot escape the data directory', () => {

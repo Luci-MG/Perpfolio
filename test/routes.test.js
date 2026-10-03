@@ -93,6 +93,12 @@ test('volstops covers every position on both venues', async () => {
   assert.equal(body.positions.length, 5);
   for (const p of body.positions) assert.ok(p.stopPrice > 0, `${p.pair} stop ${p.stopPrice}`);
   record('volstops', body);
+
+  const dash = (await get('/api/dashboard')).body;
+  const legs = [...dash.binance.positions, ...dash.hyperliquid.positions];
+  const sizeOf = r => Math.abs(legs.find(p => p.exchange === r.exchange && p.pair === r.pair && p.side === r.side).sizeUsd);
+  const weighted = body.positions.reduce((s, r) => s + r.compositeVolPct * sizeOf(r), 0) / body.positions.reduce((s, r) => s + sizeOf(r), 0);
+  assert.ok(Math.abs(body.combined.portfolioVolPct - weighted) < 1e-3, 'today\'s portfolio vol is weighted by real notional, like its history');
 });
 
 test('each leg\'s real stop is judged against the suggestion, and the tiles agree on who has one', async () => {

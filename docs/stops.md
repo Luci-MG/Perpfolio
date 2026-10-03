@@ -8,7 +8,9 @@ Composite volatility estimate that adapts stop distance + position size per open
 Pure functions, no I/O. Layers (Phases 1–3 implemented; Kronos L5 not built):
 - `computeATR(candles, 14)` — L1 base, ATR as % of close
 - `getBBWAdjustment(candles, bbwHistory)` / `computeBBW` / `buildBbwSeries` — L2 squeeze multiplier
-- `getFundingAdjustment(rate8h)` — L3 crowded-positioning multiplier (rate as fraction, e.g. 0.00012)
+- `getFundingAdjustment(rate8h)` — L3 crowded-positioning multiplier (rate as fraction, e.g. 0.00012).
+  `suggestStop` passes each position's rate restated per 8 hours (`rate × 8 / fundingIntervalHours`),
+  so 1h and 4h Binance symbols and Hyperliquid's hourly rate are judged on the same scale
 - `getCrossAssetAdj(btcCandles, assetCandles, btcAtrHistory)` / `buildAtrSeries` — L4 BTC→alt vol lead
 - `computeCompositeVol({atrPct, bbwAdj, fundingAdj, crossAssetAdj, kronosVol})` — `atr × bbwAdj × fundingAdj × crossAdj`
 - `classifyRegime(vol, volHistory)` → `low|medium|high|extreme` (relative percentile bands)
@@ -65,7 +67,9 @@ of the same positions it was measuring: under 10 positions the history was `[]` 
 function returned `'medium'` by its own guard, and at 10 or more a notional-weighted mean
 of N values necessarily lands between their 25th and 75th percentiles — so the badge read
 "Medium" for any book in any market. `regimeBasis` now exposes the bar count and the
-percentile the current reading sits at, so the label is falsifiable.
+percentile the current reading sits at, so the label is falsifiable. Today's reading and its
+history are both weighted by each leg's real notional; the reading used to be weighted by the
+*suggested* size, which shrinks with volatility, so it leaned toward "low".
 
 ### Endpoint: `GET /api/volstops?risk=&k=`
 - `risk` = fraction (0.01 = 1%), `k` = stop multiplier (default 1.5)

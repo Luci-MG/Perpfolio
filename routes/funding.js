@@ -3,7 +3,8 @@ import { analytics } from '../lib/analytics.js';
 import { getBinanceData } from '../lib/binance-account.js';
 import { fundingMeta, refreshFundingMeta } from '../lib/binance-meta.js';
 import { publicGet } from '../lib/confluence-data.js';
-import { syncState } from '../lib/history-sync.js';
+import * as store from '../history-store.js';
+import { META_FILE, syncState } from '../lib/history-sync.js';
 import { getHyperliquidData } from '../lib/hyperliquid.js';
 
 const HISTORY_TTL_MS = 3_600_000;
@@ -24,7 +25,7 @@ export function register(app) {
         legs: [...bn.openPositions, ...hl.openPositions], meta: fundingMeta,
         history: Object.fromEntries(symbols.map((s, i) => [s, histories[i]])),
         income: analytics().income, equity: (parseFloat(bn.equity) || 0) + (parseFloat(hl.equity) || 0) || null,
-        now: Date.now(), syncedAt: syncState.finishedAt
+        now: Date.now(), syncedAt: syncState.finishedAt ?? store.readJson(META_FILE, {}).walletAtSync?.at ?? null
       }) });
     } catch (err) {
       console.error('[funding]', err);

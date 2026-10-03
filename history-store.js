@@ -27,11 +27,30 @@ export function readNdjson(file) {
 
 // Appends only rows whose key is not already present, so a re-run is a no-op rather than a
 // duplicate. Returns what it actually wrote.
+const keyCache = new Map();
+
+function fileStamp(file) {
+  try {
+    const st = fs.statSync(file);
+    return `${st.mtimeMs}:${st.size}`;
+  } catch {
+    return '-';
+  }
+}
+
+function keysIn(file, keyOf) {
+  const hit = keyCache.get(file);
+  if (hit && hit.stamp === fileStamp(file) && hit.keyOf === String(keyOf)) return hit.seen;
+  const seen = new Set(readNdjson(file).map(keyOf));
+  keyCache.set(file, { stamp: fileStamp(file), keyOf: String(keyOf), seen });
+  return seen;
+}
+
 export function appendNdjson(file, rows, keyOf) {
   if (!Array.isArray(rows) || !rows.length) return { added: 0, skipped: 0 };
   ensureDir(path.dirname(file));
 
-  const seen = new Set(readNdjson(file).map(keyOf));
+  const seen = keysIn(file, keyOf);
   const fresh = [];
   for (const row of rows) {
     const key = keyOf(row);
@@ -45,6 +64,7 @@ export function appendNdjson(file, rows, keyOf) {
   // the first new row to the torn one, and both would then be skipped on every read.
   const torn = endsWithoutNewline(file);
   fs.appendFileSync(file, (torn ? '\n' : '') + fresh.map(r => JSON.stringify(r)).join('\n') + '\n');
+  keyCache.get(file).stamp = fileStamp(file);
   return { added: fresh.length, skipped: rows.length - fresh.length };
 }
 
@@ -67,9 +87,12 @@ export function readJson(file, fallback = {}) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (_) { return fallback; }
 }
 
+/** Writes `value` to a temp file then renames it over `file`, so a crash never leaves half a file. */
 export function writeJson(file, value) {
   ensureDir(path.dirname(file));
-  fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n');
+  const tmp = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(value, null, 2) + '\n');
+  fs.renameSync(tmp, file);
 }
 
 // A symbol can contain only characters that are already filesystem-safe, but the path is

@@ -40,6 +40,20 @@ function snapshotCloses(snapshots, tz) {
   return out;
 }
 
+/**
+ * A venue switched on or off between two equity snapshots, as transfer rows: its last value
+ * leaves the account value, or its first value joins it, so returns and drawdown net it out.
+ */
+export function venueSwitches(snapshots) {
+  const sorted = [...(snapshots || [])].sort((a, b) => a.t - b.t);
+  return sorted.slice(1).flatMap((s, i) => ['binance', 'hyperliquid'].flatMap(venue => {
+    const before = sorted[i][venue], now = s[venue];
+    if (!before === !now) return [];
+    const amount = now ? now.equity : -before.equity;
+    return [{ incomeType: 'TRANSFER', income: String(amount), time: s.t, venueSwitch: venue }];
+  }));
+}
+
 function flowsOf(income, { start, end }) {
   return income.filter(r => r.incomeType === 'TRANSFER' && r.time >= start && r.time < end)
     .map(r => ({ amount: parseFloat(r.income), weight: (end - r.time) / (end - start) }));
@@ -52,8 +66,8 @@ function flowsOf(income, { start, end }) {
  * from wallet to account, has a null return rather than a zero.
  */
 export function dailySeries({ income = [], walletNow = null, snapshots = [], now = Date.now(), tz = 0, from = 0 } = {}) {
-  const firstSnapshot = snapshots.length ? Math.min(...snapshots.map(s => s.t)) : null;
-  const firstIncome = walletNow != null && income.length ? Math.min(...income.map(r => r.time)) : null;
+  const firstSnapshot = snapshots.length ? snapshots.reduce((m, s) => Math.min(m, s.t), Infinity) : null;
+  const firstIncome = walletNow != null && income.length ? income.reduce((m, r) => Math.min(m, r.time), Infinity) : null;
   const starts = [firstIncome, firstSnapshot].filter(v => v != null);
   if (!starts.length) return [];
   const days = [];
@@ -61,13 +75,14 @@ export function dailySeries({ income = [], walletNow = null, snapshots = [], now
   const wallet = walletNow != null ? walletCloses(income, walletNow, days) : new Map();
   const account = snapshotCloses(snapshots, tz);
   const accountFrom = firstSnapshot == null ? Infinity : localDayStart(firstSnapshot, tz);
+  const accountIncome = [...income, ...venueSwitches(snapshots)];
 
   let prev = null;
   const rows = days.map(span => {
     const day = span.start;
     const source = day >= accountFrom ? 'account' : 'wallet';
     const value = source === 'account' ? account.get(day) ?? null : wallet.get(day) ?? null;
-    const flows = flowsOf(income, span);
+    const flows = flowsOf(source === 'account' ? accountIncome : income, span);
     const flow = sumOf(flows.map(f => f.amount));
     const comparable = prev && prev.value != null && value != null && prev.source === source;
     const base = comparable ? prev.value + sumOf(flows.map(f => f.amount * f.weight)) : null;

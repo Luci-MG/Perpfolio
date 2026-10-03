@@ -6,6 +6,7 @@ const DAY_MS = 86_400_000;
 const HISTORY_DAYS = 7;
 const NEAR_CAP_SHARE = 0.5;
 const DEFAULT_CAP_PCT = 2;
+const HYPERLIQUID_CAP_PCT = 4;
 const REALISED_WINDOWS = { d1: 1, d7: 7, d30: 30 };
 const GAP_SHARE = 0.5;
 const GAP_MIN_USD = 1;
@@ -34,7 +35,8 @@ function usualRate(history, now) {
 }
 
 function capFor(leg, meta) {
-  const m = leg.exchange === 'binance' ? meta?.[leg.symbol] : null;
+  if (leg.exchange === 'hyperliquid') return HYPERLIQUID_CAP_PCT;
+  const m = meta?.[leg.symbol];
   const cap = leg.fundingRate >= 0 ? m?.capPct : m?.floorPct;
   return Math.abs(Number.isFinite(cap) && cap ? cap : DEFAULT_CAP_PCT);
 }
@@ -69,12 +71,14 @@ function pairRows(legs) {
   }).sort((a, b) => a.perDay - b.perDay);
 }
 
-function realisedFrom(income, now) {
-  const rows = (income || []).filter(r => r.incomeType === 'FUNDING_FEE');
+function realisedFrom(income, until) {
+  const rows = (income || []).filter(r => r.incomeType === 'FUNDING_FEE' && r.time <= until);
   const sumSince = (days, symbol) => round(rows
-    .filter(r => r.time >= now - days * DAY_MS && (!symbol || r.symbol === symbol))
+    .filter(r => r.time >= until - days * DAY_MS && (!symbol || r.symbol === symbol))
     .reduce((s, r) => s + parseFloat(r.income), 0));
-  return { sumSince, total: Object.fromEntries(Object.entries(REALISED_WINDOWS).map(([k, d]) => [k, sumSince(d)])) };
+  const first = rows.reduce((m, r) => Math.min(m, r.time), Infinity);
+  const coveredDays = Math.min(REALISED_WINDOWS.d7, Math.max(0, (until - first) / DAY_MS));
+  return { sumSince, coveredDays, total: Object.fromEntries(Object.entries(REALISED_WINDOWS).map(([k, d]) => [k, sumSince(d)])) };
 }
 
 function nextSettlement(legs, now) {
@@ -86,17 +90,20 @@ function nextSettlement(legs, now) {
 
 /**
  * The book's funding: rows worst first (a same-symbol long and short as one pair row), totals
- * at the estimated rate, the next settlement, realised funding from the ledger, and whether
- * the two disagree. `history` maps symbol to `{ t, ratePct, rateType }` rows; `meta` maps
- * symbol to its cap and floor in percent.
+ * at the estimated rate, the next settlement, realised funding from the ledger up to
+ * `syncedAt`, and whether it disagrees with the Binance estimate, the only venue the ledger
+ * covers. `history` maps symbol to `{ t, ratePct, rateType }` rows; `meta` maps symbol to its
+ * cap and floor in percent.
  */
 export function fundingBook({ legs = [], meta = {}, history = {}, income = [], equity = null, now = Date.now(), syncedAt = null } = {}) {
   const rows = legs.map(leg => legRow(leg, { meta, history, now }));
   const day = rows.reduce((s, r) => s + r.perDay, 0);
   const gross = rows.reduce((s, r) => s + (r.notional || 0), 0);
-  const realised = realisedFrom(income, now);
-  const realisedPerDay = realised.total.d7 / 7;
-  const gap = Math.abs(realisedPerDay - day) > Math.max(GAP_MIN_USD, GAP_SHARE * Math.abs(day));
+  const realised = realisedFrom(income, syncedAt ?? now);
+  const comparable = realised.coveredDays >= 1;
+  const realisedPerDay = comparable ? realised.total.d7 / realised.coveredDays : null;
+  const binanceDay = rows.filter(r => r.exchange === 'binance').reduce((s, r) => s + r.perDay, 0);
+  const gap = comparable ? Math.abs(realisedPerDay - binanceDay) > Math.max(GAP_MIN_USD, GAP_SHARE * Math.abs(binanceDay)) : null;
   const groups = pairRows(rows).map(r => ({ ...r, realised7d: realised.sumSince(7, r.symbol) }));
   return {
     rows: groups,
@@ -107,6 +114,7 @@ export function fundingBook({ legs = [], meta = {}, history = {}, income = [], e
       legs: rows.length, pairs: groups.filter(g => g.pair).length
     },
     next: nextSettlement(rows, now),
-    realised: { ...realised.total, perDay7d: round(realisedPerDay, 4), syncedAt, differsFromEstimate: gap }
+    realised: { ...realised.total, perDay7d: round(realisedPerDay, 4), coveredDays: round(realised.coveredDays, 2),
+                estimatePerDay: round(binanceDay, 4), syncedAt, differsFromEstimate: gap }
   };
 }

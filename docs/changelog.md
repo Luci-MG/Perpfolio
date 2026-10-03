@@ -1,5 +1,28 @@
 # Changelog
 
+## Funding, journal and goals, batch 3 of the 2026-10-03 review (2026-10-03)
+
+- **The funding warning compares like with like**: realised Binance funding against the Binance
+  estimate, over the week to the last sync, and "sync to compare" when the ledger is too short.
+  A Hyperliquid leg the ledger never sees no longer sets it off. Hyperliquid's cap reads 4%/h.
+- **Stops judge funding per 8 hours on every symbol**, so 1h and 4h symbols and Hyperliquid
+  are no longer read as calm; the portfolio regime weighs today and its history the same way.
+- **Funding intervals catch up at once**: a next settlement off the declared interval's hours
+  shows the symbol has moved to a shorter one, minutes after a cap hit.
+- **Factors judge the previous trip and usual size on every trip**, so a session filter no
+  longer makes each trip the first of its day; new context and notes reach Factors at once,
+  and a full build is several times faster.
+- **Switching a venue on or off is a transfer**, not a loss or gain, in returns, drawdown,
+  period change and milestones.
+- **Notes edit in place** when found by opening order, leaving nothing behind.
+- **Funding rates match within a minute and page past 1000 rows**, so a sync stops
+  re-requesting most of them.
+- **Milestones read "reached late"** when the target came after its date; a goal's date must
+  be a real one, ahead on your own clock; loss caps skip trips older than the wallet curve.
+- One definition of a win everywhere, `meta.json` written whole, the wallet stamped when it was
+  read, half-hour and midnight daylight-saving zones handled, and a ledger past the call stack's
+  limit still builds.
+
 ## Risk maths, batch 2 of the 2026-10-03 review (2026-10-03)
 
 - **Stress rows agree with the pool header when stops are honoured**: each asset's kill price

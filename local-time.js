@@ -5,6 +5,7 @@
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
+const OFFSET_STEP_MS = 15 * 60_000;
 
 function offsetFromParts(format, ts) {
   const p = Object.fromEntries(format.formatToParts(new Date(ts)).map(x => [x.type, x.value]));
@@ -28,13 +29,13 @@ export function clockFor(zone, fallbackOffsetMin = 0) {
     format = null;
   }
   if (!format) return { zone: null, offsetAt: () => fallbackOffsetMin };
-  const byHour = new Map();
+  const byStep = new Map();
   return {
     zone,
     offsetAt(ts) {
-      const hour = Math.floor(ts / HOUR_MS);
-      if (!byHour.has(hour)) byHour.set(hour, offsetFromParts(format, ts));
-      return byHour.get(hour);
+      const step = Math.floor(ts / OFFSET_STEP_MS);
+      if (!byStep.has(step)) byStep.set(step, offsetFromParts(format, step * OFFSET_STEP_MS));
+      return byStep.get(step);
     }
   };
 }
@@ -49,11 +50,16 @@ export function wallTime(ts, tz) {
   return new Date(ts + offsetAt(tz, ts) * 60_000);
 }
 
-/** The instant local midnight starts on calendar date (y, m, d), m from 0; overflowing days roll over. */
+/**
+ * The first instant of calendar date (y, m, d) on the local clock, m from 0; overflowing days
+ * roll over. Where the clock skips midnight, the day starts when it resumes.
+ */
 export function localMidnight(y, m, d, tz) {
   const wall = Date.UTC(y, m, d);
   const guess = wall - offsetAt(tz, wall) * 60_000;
-  return wall - offsetAt(tz, guess) * 60_000;
+  const date = new Date(wall).toISOString().slice(0, 10);
+  const onDate = [wall - offsetAt(tz, guess) * 60_000, guess].filter(c => localDate(c, tz) === date);
+  return onDate.length ? Math.min(...onDate) : guess;
 }
 
 /** Start of the local day containing `ts`. */

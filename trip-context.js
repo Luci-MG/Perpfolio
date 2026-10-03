@@ -11,6 +11,7 @@ export const CONTEXT_VERSION = 1;
 
 const HOUR = 3_600_000;
 const MAX_BARS = 1500;
+const RATE_MATCH_MS = 60_000;
 const PATH_INTERVALS = [['1m', 60_000], ['5m', 5 * 60_000], ['15m', 15 * 60_000], ['1h', HOUR], ['4h', 4 * HOUR]];
 
 export { sessionOf } from './sessions.js';
@@ -155,6 +156,17 @@ export function unmatchedFunding({ trips, stillOpen = [], income, from = 0, preH
   return { rows: rows.length, amount: +rows.reduce((s, r) => s + parseFloat(r.income), 0).toFixed(2) };
 }
 
+/** Settlement times with no funding rate within a minute of them; income lands a few ms after the rate's own time. */
+export function ratesMissing(times, rateTimes) {
+  const sorted = [...rateTimes].sort((a, b) => a - b);
+  const near = t => {
+    let lo = 0, hi = sorted.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (sorted[mid] < t - RATE_MATCH_MS) lo = mid + 1; else hi = mid; }
+    return lo < sorted.length && sorted[lo] <= t + RATE_MATCH_MS;
+  };
+  return times.filter(t => !near(t));
+}
+
 function settlementsOf(income) {
   const groups = new Map();
   for (const row of income) {
@@ -167,7 +179,7 @@ function settlementsOf(income) {
 
 function modelledShares(legs, rateAt, symbol, time, sizeSteps) {
   const nearest = rateAt.get(`${symbol}:${time}`)
-    || [...rateAt.values()].find(r => r.symbol === symbol && Math.abs(r.fundingTime - time) < 60_000);
+    || [...rateAt.values()].find(r => r.symbol === symbol && Math.abs(r.fundingTime - time) <= RATE_MATCH_MS);
   if (!nearest) return null;
   const rate = parseFloat(nearest.fundingRate) || 0;
   const mark = parseFloat(nearest.markPrice) || 0;
