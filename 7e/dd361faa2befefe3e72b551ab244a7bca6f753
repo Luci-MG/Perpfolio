@@ -1,0 +1,91 @@
+public/js/render.js
+  s_ce0783ce808ef4::t_cfe6c77168509e 329
+docs/stops.md
+  s_ce0783ce808ef4::t_48c21ea3069b4e 97-98
+public/js/boot.js
+  s_ce0783ce808ef4::t_115484c43e874a 19-20
+docs/changelog.md
+  s_ce0783ce808ef4::t_fa4d96c0707f2e 8
+  s_ce0783ce808ef4::t_48c21ea3069b4e 3-5,7,9-12
+  s_ce0783ce808ef4::t_403631fbae2536 6
+CLAUDE.md
+  s_ce0783ce808ef4::t_48c21ea3069b4e 31,49,63
+docs/roadmap.md
+  s_ce0783ce808ef4::t_48c21ea3069b4e 20,217-218
+trip-context.js
+  s_ce0783ce808ef4::t_51b23884da3e6f 16
+sessions.test.js
+  s_ce0783ce808ef4::t_6d1919183cf22f 1-8,10-16,19-37
+  s_ce0783ce808ef4::t_ccaf84eed7f6a7 9,17-18
+routes/performance.js
+  s_ce0783ce808ef4::t_51b23884da3e6f 1
+  s_ce0783ce808ef4::t_4db7ce18a1dd0a 21-23,77-78
+lib/confluence-reading.js
+  s_ce0783ce808ef4::t_d4d055100bfa28 9,68
+  s_ce0783ce808ef4::t_2d9203285c2f35 8
+confluence.js
+  s_ce0783ce808ef4::t_d4d055100bfa28 10,583,612-613,622-623,625,672,700-708,712-713,715,734-735
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_d9c90dded43872 309-311,314-345
+  s_ce0783ce808ef4::t_cfe6c77168509e 312-313
+public/js/journal-trades.js
+  s_ce0783ce808ef4::t_13bbd72f241cff 127,152-153
+public/index.html
+  s_ce0783ce808ef4::t_115484c43e874a 410
+docs/frontend.md
+  s_ce0783ce808ef4::t_48c21ea3069b4e 6,13
+docs/api.md
+  s_ce0783ce808ef4::t_51b23884da3e6f 40
+confluence.test.js
+  s_ce0783ce808ef4::t_2d9203285c2f35 275,331-341
+  s_ce0783ce808ef4::t_2b917ef3c93339 342
+sessions.js
+  s_ce0783ce808ef4::t_6d1919183cf22f 1-65
+public/css/app.css
+  s_ce0783ce808ef4::t_d58884dfa4d6ff 788-789,793-795
+  s_ce0783ce808ef4::t_cfe6c77168509e 790-792
+docs/sessions.md
+  s_ce0783ce808ef4::t_48c21ea3069b4e 1-22,24-39
+  s_ce0783ce808ef4::t_fa4d96c0707f2e 23
+routes/confluence.js
+  s_ce0783ce808ef4::t_d4d055100bfa28 4,32-33
+docs/confluence.md
+  s_ce0783ce808ef4::t_48c21ea3069b4e 70-74
+docs/journal.md
+  s_ce0783ce808ef4::t_48c21ea3069b4e 179-180
+test/golden/routes.json
+  s_ce0783ce808ef4::t_23ff49c9378b4a 3434,3686,3758,3938,4010,4118,4190,4370,4442,5047-5113,5777-5804,6471-6537,7201-7267,7913
+public/js/sessions-view.js
+  s_ce0783ce808ef4::t_115484c43e874a 1-26,29-30,32,39-61
+  s_ce0783ce808ef4::t_cfe6c77168509e 27-28,31,33-38
+public/js/confluence-view.js
+  s_ce0783ce808ef4::t_cfc9e9616689d2 24,144-151,170,191-192
+public/js/stops.js
+  s_ce0783ce808ef4::t_d58884dfa4d6ff 95-97
+routes/assets.js
+  s_ce0783ce808ef4::t_51b23884da3e6f 11
+test/routes.test.js
+  s_ce0783ce808ef4::t_2d9203285c2f35 127-145
+  s_ce0783ce808ef4::t_51b23884da3e6f 155
+docs/architecture.md
+  s_ce0783ce808ef4::t_48c21ea3069b4e 9,16-17,48
+public/js/journal.js
+  s_ce0783ce808ef4::t_115484c43e874a 18-19
+  s_ce0783ce808ef4::t_13bbd72f241cff 299,304-305,384-386
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7edd361faa2befefe3e72b551ab244a7bca6f753",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
