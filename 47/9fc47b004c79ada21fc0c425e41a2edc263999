@@ -1,0 +1,37 @@
+calc-engine.test.js
+  s_ce0783ce808ef4::t_8621f9a0306d38 43-71
+calc-engine.js
+  s_ce0783ce808ef4::t_8621f9a0306d38 53-90
+public/css/app.css
+  s_ce0783ce808ef4::t_44e6bc6e057602 173,751-754
+public/js/calculators.js
+  s_ce0783ce808ef4::t_44e6bc6e057602 13-16,63-95,116,124,129,157,205-211,229-230,236,321-353
+public/index.html
+  s_ce0783ce808ef4::t_bfcc8dbff68366 76-77,126,166-262
+  s_ce0783ce808ef4::t_bd7796d63e85f8 263
+docs/roadmap.md
+  s_ce0783ce808ef4::t_f60d401e4ad7a0 19,190-191
+docs/changelog.md
+  s_ce0783ce808ef4::t_f60d401e4ad7a0 3-10
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_6e14d366d34b61 189-193,195-203,208-209
+  s_ce0783ce808ef4::t_1ccfbd9f26f9b5 194
+docs/frontend.md
+  s_ce0783ce808ef4::t_f60d401e4ad7a0 116,131-137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "479fc47b004c79ada21fc0c425e41a2edc263999",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
