@@ -1,0 +1,38 @@
+test/routes.test.js
+  s_ce0783ce808ef4::t_eca4029cdb59bc 222-267
+server.js
+  s_ce0783ce808ef4::t_a882bb441b3db3 26,38
+lib/goals-store.js
+  s_ce0783ce808ef4::t_b7b9d97ce2ed62 1-27,31-32,35,44-58
+  s_ce0783ce808ef4::t_f30e3b4fab04f3 28-30,33-34,36-43
+routes/goals.js
+  s_ce0783ce808ef4::t_bd260bd01698e6 1,3-13,17-49,51-77
+  s_ce0783ce808ef4::t_d8f7cfa428fbb4 2,14-16,50
+goals.js
+  s_ce0783ce808ef4::t_bfc76e46ffbbb3 1-320
+habits.js
+  s_ce0783ce808ef4::t_782a11a9b2487d 9
+goals.test.js
+  s_ce0783ce808ef4::t_279d700b9b2067 1-140
+docs/api.md
+  s_ce0783ce808ef4::t_a882bb441b3db3 32-34
+test/golden/routes.json
+  s_ce0783ce808ef4::t_50f653dee9a716 7958-7988
+  s_ce0783ce808ef4::t_e7686fd5985ee5 7989-8128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e2f8b28c5fcbcc7da2a10947df800ae634f59c83",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
