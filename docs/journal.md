@@ -177,7 +177,7 @@ One row per closed trip, built in three layers so each can be tested alone:
 | From candles, cached | MAE / MFE, ATR % at entry, BTC trend at entry | `trip-context.js` maths, fetched by `lib/trip-enrichment.js` |
 
 - **Sessions** follow each market's own clock, daylight saving included — Asia, Europe,
-  Europe + US, US, Off-hours (`docs/sessions.md`). A trip's session is where it opened.
+  Europe + US, US, Off-hours, Weekend (`docs/sessions.md`). A trip's session is where it opened.
 - **Hedged at entry** means the same symbol's opposite hedge-mode leg was already open at the
   trip's first fill; the leg opened second is the hedge.
 - **MAE / MFE** are the worst and best move against the *average* entry while held, in

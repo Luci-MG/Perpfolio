@@ -13,8 +13,11 @@ browser at `/sessions.js`, so the clock and the analytics run the same definitio
 
 Markets count as open on their local weekdays only. Each moment gets one label:
 **Europe + US** while London and New York are both open, else **US**, **Europe** (London takes
-over from Tokyo at its open), **Asia**, or **Off-hours** — the weekday gap after New York
-closes and the whole weekend. `Intl.DateTimeFormat` with each zone handles daylight saving,
+over from Tokyo at its open), **Asia**; with no market open, **Weekend** from New York's
+Friday 17:00 close to Tokyo's Monday 09:00 open (about 50 hours, read off New York's clock),
+else **Off-hours** — the weekday gap after New York closes. Weekend was split from Off-hours
+because the two behaved differently on the live book: most of what had been Off-hours was
+weekend, net negative, while the weeknight gap was net positive. `Intl.DateTimeFormat` with each zone handles daylight saving,
 so the week in autumn when only London has moved is right without a table of dates. Fixed
 UTC buckets (Asia 22–08, Europe 08–14, US 14–22, used until 2026-10-03) drifted by an hour
 twice a year and had no overlap.
@@ -26,7 +29,7 @@ tooltip lists each market's next open or close. It updates every minute in the b
 costs no request.
 
 ## Session filter
-One choice — All, Asia, Europe, Europe + US, US, Off-hours — remembered per browser, shown as
+One choice — All, Asia, Europe, Europe + US, US, Off-hours, Weekend — remembered per browser, shown as
 a control in the views that honour it:
 
 | View | With a session |

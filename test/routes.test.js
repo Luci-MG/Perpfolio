@@ -152,7 +152,7 @@ test('trips carry context from the sync, funding from the ledger, and a re-sync 
   for (const t of body.trips) {
     assert.ok(t.mae <= 0 && t.mfe >= 0, `${t.key} mae ${t.mae} mfe ${t.mfe}`);
     assert.ok(Number.isFinite(t.atrPct) && ['up', 'down', 'flat'].includes(t.btcTrend), t.key);
-    assert.ok(['Asia', 'Europe', 'Europe + US', 'US', 'Off-hours'].includes(t.session));
+    assert.ok(['Asia', 'Europe', 'Europe + US', 'US', 'Off-hours', 'Weekend'].includes(t.session));
     assert.ok(t.openNotional > 0 && t.side === 'Long');
   }
   const covered = body.trips.filter(t => t.funding != null);

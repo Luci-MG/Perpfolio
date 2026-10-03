@@ -7,12 +7,14 @@ export const MARKETS = [
   { id: 'europe', name: 'London',   zone: 'Europe/London',    open: 8, close: 17 },
   { id: 'us',     name: 'New York', zone: 'America/New_York', open: 8, close: 17 }
 ];
-export const SESSIONS = ['Asia', 'Europe', 'Europe + US', 'US', 'Off-hours'];
+export const SESSIONS = ['Asia', 'Europe', 'Europe + US', 'US', 'Off-hours', 'Weekend'];
 
 const STEP_MS = 15 * 60_000;
 const HORIZON_MS = 4 * 86_400_000;
 const formatters = new Map();
 const WEEKDAYS = new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
+const NEW_YORK = 'America/New_York';
+const FRIDAY_CLOSE_HOUR = 17;
 
 function localClock(ts, zone) {
   if (!formatters.has(zone)) {
@@ -33,14 +35,23 @@ export function marketsOpen(ts) {
   return MARKETS.filter(m => isOpen(m, ts));
 }
 
-/** The one session label for `ts`: London takes over from Tokyo at its open, the London–New York overlap is its own. */
+function isWeekend(ts) {
+  const { weekday, hour } = localClock(ts, NEW_YORK);
+  return weekday === 'Sat' || weekday === 'Sun' || (weekday === 'Fri' && hour >= FRIDAY_CLOSE_HOUR);
+}
+
+/**
+ * The one session label for `ts`: London takes over from Tokyo at its open, the London–New York
+ * overlap is its own, and with no market open it is Weekend from New York's Friday close to
+ * Tokyo's Monday open, else Off-hours.
+ */
 export function sessionOf(ts) {
   const open = new Set(marketsOpen(ts).map(m => m.id));
   if (open.has('europe') && open.has('us')) return 'Europe + US';
   if (open.has('us')) return 'US';
   if (open.has('europe')) return 'Europe';
   if (open.has('asia')) return 'Asia';
-  return 'Off-hours';
+  return isWeekend(ts) ? 'Weekend' : 'Off-hours';
 }
 
 function nextFlip(now, read) {

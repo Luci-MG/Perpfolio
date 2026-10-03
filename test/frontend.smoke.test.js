@@ -309,9 +309,11 @@ test('only a stop that cannot lose reads safe; a risking stop is grey, width tur
 test('the session clock reads, and a chosen session narrows Journal, Trades and Confluence but says where it does not apply', async () => {
   const { markup, run, settle } = await bootPage();
   await settle('sessionsModule', 'the session clock');
+  assert.equal(run('JSON.stringify(SESSION_CHOICES)'), JSON.stringify(['All', ...run('sessionsModule.SESSIONS')]),
+    'the menu offers exactly the sessions the module defines');
   run(`render(lastData)`);
   const clock = markup.get('content').match(/id="sessionClock">([\s\S]*?)<\/span>\s*<div class="view-tabs">/)[1];
-  assert.match(clock, /(Asia|Europe|Europe \+ US|US|Off-hours) · /);
+  assert.match(clock, /(Asia|Europe|Europe \+ US|US|Off-hours|Weekend) · /);
   assert.match(clock, /next: .+ in \d+(h \d{2})?m/);
   assert.deepEqual(strayValues(clock), []);
 

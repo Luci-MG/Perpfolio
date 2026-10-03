@@ -1,5 +1,13 @@
 # Changelog
 
+## Weekend session (2026-10-03)
+
+- *Weekend* — New York's Friday close to Tokyo's Monday open — is its own session, split from
+  *Off-hours*, which is now only the weekday gap after New York closes. On the live book most
+  former off-hours trips were weekend and net negative; the weeknight gap was net positive.
+- The clock, the session filter, Trades, habits and Confluence pick it up from `SESSIONS`; a
+  smoke test keeps the browser's menu equal to that list.
+
 ## Sessions across the dashboard (2026-10-03)
 
 - Sessions follow each market's own clock with daylight saving — Tokyo, London and New York
