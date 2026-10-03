@@ -1,0 +1,67 @@
+outcome-factors.test.js
+  s_ce0783ce808ef4::t_07e0d10fe2da19 113-121
+docs/api.md
+  s_ce0783ce808ef4::t_6a5ec1bc3b57a1 36
+test/golden/routes.json
+  s_ce0783ce808ef4::t_90bb3635670051 3613,3643,3655,3681,3693,3719,3731,3757,3769,3795,3807,3833,3845,3871,3883,3909,3921,3947,3959,3985,3997,4023,4035,4061,4073,4099,4111,4137,4149,4175,4187,4213,4225,4251,4263,4289,4301,4327,4339,4365,4377,4403,4415,4441,4453,4479,4491,4517,4529,8318-8323
+test/routes.test.js
+  s_ce0783ce808ef4::t_90bb3635670051 434-452
+docs/known-gaps.md
+  s_ce0783ce808ef4::t_dc8d9d1a447cba 57-58
+server.js
+  s_ce0783ce808ef4::t_6a5ec1bc3b57a1 28,42
+test/annotations.test.js
+  s_ce0783ce808ef4::t_90bb3635670051 1-35
+routes/annotations.js
+  s_ce0783ce808ef4::t_6a5ec1bc3b57a1 1-23
+docs/roadmap.md
+  s_ce0783ce808ef4::t_dc8d9d1a447cba 27,296-297
+docs/journal.md
+  s_ce0783ce808ef4::t_dc8d9d1a447cba 198-208
+public/js/goals-view.js
+  s_ce0783ce808ef4::t_b05f282c008250 99
+outcome-factors.js
+  s_ce0783ce808ef4::t_07e0d10fe2da19 272-279,297-298,328-329
+lib/trip-enrichment.js
+  s_ce0783ce808ef4::t_6a5ec1bc3b57a1 95
+  s_ce0783ce808ef4::t_1d916b987287d2 10,126-131,135-136
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_3ffa10e73b613a 592-633
+docs/changelog.md
+  s_ce0783ce808ef4::t_dc8d9d1a447cba 3-10
+public/css/app.css
+  s_ce0783ce808ef4::t_b05f282c008250 883-889
+public/js/boot.js
+  s_ce0783ce808ef4::t_b05f282c008250 16
+CLAUDE.md
+  s_ce0783ce808ef4::t_dc8d9d1a447cba 30
+lib/annotations-store.js
+  s_ce0783ce808ef4::t_07af39c71e675a 1-64
+routes/factors.js
+  s_ce0783ce808ef4::t_a796071b94ba96 8-9,11
+public/js/factors-view.js
+  s_ce0783ce808ef4::t_c1240c1f32d962 69,71,73,79,107
+  s_ce0783ce808ef4::t_b05f282c008250 98,104-106,108
+public/js/journal-trades.js
+  s_ce0783ce808ef4::t_b05f282c008250 260,281-283
+  s_ce0783ce808ef4::t_012c6a92c20736 6-7,46-53,79-80,143
+  s_ce0783ce808ef4::t_75ecf95caeec94 163-164,172-216,276
+goals.js
+  s_ce0783ce808ef4::t_b05f282c008250 249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2479d9bfdff457620096419fc862916f167fc962",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
