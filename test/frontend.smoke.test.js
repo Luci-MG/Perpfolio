@@ -854,6 +854,37 @@ test('Unwind plans, loads the plan into Build, keeps the slider being dragged, a
   assert.equal(run('Object.keys(uwSel).length'), 0);
 });
 
+test('Stress maps two coins at once: axes, hover, a click that sets both sliders, and a drag that leaves the map', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`setView('stress')`);
+  await settle('riskBook && riskEngine && !riskLoading', 'the risk book');
+  run(`riskForceRender = true; render(lastData)`);
+  const content = () => markup.get('content');
+  const coins = JSON.parse(run('JSON.stringify(riskBook.pools.map(P => Object.keys(P.marks).filter(a => P.marks[a] > 0).length))'));
+  coins.forEach((n, k) => assert.equal(content().includes(`id="st-heat-${k}"`), n >= 2, `pool ${k} with ${n} coins`));
+  const i = coins.findIndex(n => n >= 2);
+  assert.match(content(), /Closest joint move to liquidation|No liquidation within|Already liquidated/);
+  assert.deepEqual(strayValues(content()), []);
+
+  const [x, y] = JSON.parse(run(`JSON.stringify([heatGrids[${i}].assetX, heatGrids[${i}].assetY])`));
+  run(`setHeatAxis(${i}, 'x', ${JSON.stringify(y)})`);
+  assert.deepEqual(JSON.parse(run(`JSON.stringify([heatGrids[${i}].assetX, heatGrids[${i}].assetY])`)), [y, x], 'picking the other axis swaps them');
+  assert.match(markup.get(`st-heat-${i}`), new RegExp(`${y} move`));
+
+  run(`heatShowCell(${i}, 0, 0)`);
+  assert.match(markup.get(`st-heat-tip-${i}`), /pool used|liquidated/);
+  assert.deepEqual(strayValues(markup.get(`st-heat-tip-${i}`)), []);
+
+  const map = markup.get(`st-heat-${i}`);
+  run(`setStressShift(${JSON.stringify(y)}, 5)`);
+  assert.equal(markup.get(`st-heat-${i}`), map, 'dragging moves the dot, not the map');
+
+  run(`heatPick(${i}, 40, 0)`);
+  assert.equal(run(`riskShift[${JSON.stringify(y)}]`), run('riskRange'));
+  assert.equal(run(`riskShift[${JSON.stringify(x)}]`), run('Math.max(-99, -riskRange)'));
+  assert.equal(run(`riskLink[${JSON.stringify(x)}] || riskLink[${JSON.stringify(y)}]`), false, 'both are set exactly, off the beta chain');
+});
+
 const shownText = html => [...html.matchAll(/>([^<]+)</g)].map(m => m[1]).join(' ');
 
 test('exchange text with a quote or a tag renders as text everywhere, and handler arguments survive it', async () => {

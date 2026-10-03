@@ -110,6 +110,7 @@ function setStressPrice(asset, value) {
   const price = parseFloat(value);
   if (!(mark > 0) || !(price > 0)) { rerenderStress(); return; }
   setStressShift(asset, (price / mark - 1) * 100);
+  refreshHeat();
 }
 
 function markOf(asset) {
@@ -307,6 +308,7 @@ function updateStress() {
       placeTick(`st-freetickdn-${i}-${asset}`, freeK.downPct, '▽', freeK.down, dec);
     });
   });
+  placeHeatDots();
 }
 
 function placeTick(id, pct, glyph, price, dec) {
@@ -484,7 +486,7 @@ function renderStressRow(P, poolIdx, asset) {
       <span class="st-tick freez" id="st-freetickdn-${poolIdx}-${asset}" style="display:none"></span>
       <input type="range" id="st-range-${poolIdx}-${asset}" min="${-riskRange}" max="${riskRange}" step="0.1"
         value="${Math.max(-riskRange, Math.min(riskRange, shift))}"
-        oninput="setStressShift(${jsArg(asset)}, this.value)" />
+        oninput="setStressShift(${jsArg(asset)}, this.value)" onchange="refreshHeat()" />
       <div class="st-scale"><span>−${riskRange}%</span><span>mark</span><span>+${riskRange}%</span></div>
     </div>
 
@@ -538,6 +540,7 @@ function renderStressPool(P, poolIdx) {
     })()}
     ${assets.map(a => renderStressRow(P, poolIdx, a)).join('')}
     ${renderScenarioTable(P, poolIdx)}
+    ${renderHeatSection(P, poolIdx)}
   </div>`;
 }
 

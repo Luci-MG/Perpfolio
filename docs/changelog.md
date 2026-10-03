@@ -1,5 +1,15 @@
 # Changelog
 
+## Stress: two coins at once (2026-10-04)
+
+- Each pool with two or more coins gets a map of pool used across joint moves of two coins:
+  liquidated region hatched, a solid line where liquidation starts, a dashed line where free
+  margin runs out, the path a BTC move takes by beta, and a dot at the current scenario.
+- Hover reads both prices, pool used, buffer and free margin; a click sets both sliders there.
+  The line below names the closest joint move to liquidation.
+- Same engine reading as the rows (calibrated tiers re-tiering with notional, stops when
+  honoured), via the new `marginGrid`; rebuilt on a settled change so dragging stays smooth.
+
 ## Unwind: one tool, priced at the book (2026-10-04)
 
 - **One place to unwind**: Tools → Unwind has **Plan** and **Build** over one readout. The

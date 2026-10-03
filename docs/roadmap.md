@@ -35,6 +35,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Review fixes, batch 4: frontend](#p5--review-fixes-batch-4-frontend) | done (2026-10-03) |
 | P5 | [Review fixes, batch 5: guardrails and docs](#p5--review-fixes-batch-5-guardrails-and-docs) | done (2026-10-03) |
 | P5 | [Unwind: one tool, priced at the book](#p5--unwind-one-tool-priced-at-the-book) | done (2026-10-04) |
+| P5 | [Stress: two coins at once](#p5--stress-two-coins-at-once) | done (2026-10-04) |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | deferred |
 | P7 | [Leaner account read](#p7--leaner-account-read) | parked |
 | — | [Parked](#parked) | parked |
@@ -411,6 +412,15 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   and both drawers go.
 - **Done when:** the plan loads into Build, every number comes from one pool and one engine
   path, and verify stays green.
+
+## P5 — Stress: two coins at once
+
+- **Status:** done (2026-10-04) — see `docs/stress-engine.md`, *Two coins at once*.
+- **Problem:** Stress moves one coin at a time, so a joint move that kills the pool while each
+  coin alone survives never shows.
+- **Scope:** a map per pool of pool used across two coins' moves, with the liquidation and
+  free-margin edges, the BTC-beta path, the current scenario, hover and click-to-set.
+- **Done when:** the map's edge meets each row's liquidation tick and a click sets both sliders.
 
 ## P7 — Leaner account read
 

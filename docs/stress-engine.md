@@ -35,6 +35,8 @@ so the panel and the API cannot disagree.
 - `liquidationDetail(...)` — the solve plus its conditioning (see *Conditioning*)
 - `alignedReturns(a, b)` — returns paired on equal timestamps
 - `drainPer1Pct(pool, asset, base)` — buffer cost of a ±1% move
+- `marginGrid(pool, marks, prices, assetX, assetY, opts)` — the pool across joint moves of two
+  coins, every other coin at `prices`, and the nearest point on the liquidation edge
 - `scenarioDir(pool, mode, {betas, sign, prices})` — `uniform` | `adverse` | `btcBeta`
 - `cascade(pool, prices)` — force-close largest-MM-first until solvent
 - `closePositions(pool, prices, closes, feeRate)` → `{ pool, realized, notionalClosed, fees }`
@@ -198,6 +200,29 @@ with the candle stats, and the cross-check reuses the baseline's kill scans.
   leaves the remaining side naked.
 - Cascade appears automatically when the current state is liquidated (no toggle) —
   largest-MM-first, labelled approximate because Binance's ordering is not public.
+
+### Two coins at once (`public/js/stress-heatmap.js`)
+The one-coin rows move one price at a time; a book with offsetting legs in two coins can
+survive each move alone and still die on the two together. Each pool with two or more coins
+gets a map below its scenario table:
+
+- **Axes**: two coins of the pool (*Across* and *Up*), defaulting to the two with the nearest
+  liquidation; a choice stays while the page is open. Both span the Stress range, never below
+  −99%. Every other coin sits where its slider puts it.
+- **Shading** is pool used (maintenance margin ÷ equity), one hue mixed into the surface so
+  overlapping cells never darken; the liquidated region is hatched in the danger colour.
+  A **solid line** is where the buffer reaches zero and a **dashed line** where free margin
+  does, both traced on the grid by marching squares. A dotted diagonal is a pure BTC move with
+  each coin following its beta (or β = 1 under *Stress correlation*). A dot marks the current
+  scenario.
+- **Same engine as the rows**: `marginGrid` evaluates every cell with the calibrated tier
+  mode, re-tiering with notional, and honours reduce-only stops when that toggle is on — so the
+  map's edge on each axis passes through the row's liquidation tick.
+- Hover shows both prices, pool used, buffer and free margin; a click moves both sliders to
+  that cell, taking both coins off the beta chain so the cell is exactly what is applied. The
+  line under the map names the **closest joint move to liquidation**, refined to the edge.
+- 41 × 41 cells, about 10ms per pool: the map is rebuilt on a settled change (slider release,
+  typed price, range, toggles, a refreshed book), and only the dot moves while dragging.
 
 ### Limits stated in the UI
 Mark price only (no basis blowout); no liquidation fees or slippage; stops-honoured is

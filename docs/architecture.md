@@ -51,7 +51,7 @@ the watchdog share `lib/orders-stream.js`.
 
 ## Frontend scripts — load order is part of the contract
 
-`core → venues → tools-nav → sessions-view → positions → tiles-threads → stops → stress → hedge-ledger → confluence-view →
+`core → venues → tools-nav → sessions-view → positions → tiles-threads → stops → stress → stress-heatmap → hedge-ledger → confluence-view →
 journal → journal-trades → goals-view → factors-view → journal-overview → journal-performance → journal-behaviour →
 journal-timing → journal-symbols → journal-costs → unwind → render → calculators → drawers → funding-view → boot`
 

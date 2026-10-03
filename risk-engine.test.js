@@ -998,3 +998,45 @@ test('unwindOutcome prices the exit at the book and reports BTC-beta exposure', 
   assert.equal(r.betaAfter, -10_000);
   assert.equal(r.rows.find(x => x.asset === 'A').closed, true);
 });
+
+const twoLongs = (collateral = 400) => ({ collateral, freeReserved: 0, positions: [
+  pos({ key: 'AL', q: 10, entry: 100, mark: 100, leverage: 10 }),
+  pos({ key: 'BL', asset: 'B', symbol: 'BUSDT', q: 10, entry: 100, mark: 100, leverage: 10 })
+], orders: [] });
+
+test('marginGrid meets killPrices on each axis', () => {
+  const pool = twoLongs(), marks = { A: 100, B: 100 };
+  const g = re.marginGrid(pool, marks, marks, 'A', 'B', { range: 50, steps: 41 });
+  const zero = g.ys.indexOf(0);
+  assert.equal(g.xs[zero], 0);
+  const kill = re.killPrices(pool, 'A', marks).downPct;
+  const firstLiquidated = g.xs.filter((x, i) => g.cells[zero][i].liquidated).reduce((m, x) => Math.max(m, x), -Infinity);
+  assert.ok(firstLiquidated <= kill && kill - firstLiquidated < 2.5 + 1e-9, `grid edge ${firstLiquidated} vs kill ${kill}`);
+  assert.ok(g.cells.every(row => row.every(c => isFinite(c.usedPct))));
+});
+
+test('marginGrid finds the closest joint move to liquidation on the edge', () => {
+  const pool = twoLongs(), marks = { A: 100, B: 100 };
+  const { nearest } = re.marginGrid(pool, marks, marks, 'A', 'B', { range: 30, steps: 41 });
+  assert.ok(Math.abs(nearest.xPct - nearest.yPct) < 1e-6, 'two equal longs fail together, on the diagonal');
+  const s = re.evalPool(pool, { A: 100 * (1 + nearest.xPct / 100), B: 100 * (1 + nearest.yPct / 100) });
+  assert.ok(Math.abs(s.buffer) < 1e-6, `buffer at the point ${s.buffer}`);
+  const alone = re.killPrices(pool, 'A', marks).downPct;
+  assert.ok(Math.hypot(nearest.xPct, nearest.yPct) < Math.abs(alone), 'the joint move is closer than either coin alone');
+});
+
+test('a book of same-symbol hedges has no liquidation on the map', () => {
+  const pool = { collateral: 2_000, freeReserved: 0, positions: [...hedge('A', 10), ...hedge('B', 10)], orders: [] };
+  const g = re.marginGrid(pool, { A: 100, B: 100 }, { A: 100, B: 100 }, 'A', 'B', { range: 30, steps: 21 });
+  assert.equal(g.nearest, null);
+  assert.ok(g.cells.every(row => row.every(c => !c.liquidated)));
+});
+
+test('marginGrid honours reduce-only stops when asked, and never moves a price below −99%', () => {
+  const pool = { ...twoLongs(2_000), orders: [{ asset: 'A', positionSide: 'LONG', side: 'Sell', q: 10, trigger: 90, reduceOnly: true }] };
+  const marks = { A: 100, B: 100 };
+  const plain = re.marginGrid(pool, marks, marks, 'A', 'B', { range: 120, steps: 11 });
+  const stopped = re.marginGrid(pool, marks, marks, 'A', 'B', { range: 120, steps: 11, honorStops: true });
+  assert.equal(plain.xs[0], -99);
+  assert.ok(stopped.cells[5][0].buffer > plain.cells[5][0].buffer, 'the stop caps the long\'s loss');
+});

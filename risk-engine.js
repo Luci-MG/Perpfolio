@@ -601,6 +601,50 @@ export function exitCost(levels, qty, mark, feeRate = 0, side = 'sell') {
   };
 }
 
+// ─── TWO-COIN GRID ───────────────────────────────────────────────────────────
+
+function cellAt(pool, marks, prices, assetX, assetY, x, y, opts) {
+  const at = { ...prices,
+    [assetX]: marks[assetX] * (1 + x / 100),
+    [assetY]: marks[assetY] * (1 + y / 100) };
+  const live = opts.honorStops ? applyStops(pool, marks, at).pool : pool;
+  const s = evalPool(live, at, opts);
+  return { usedPct: s.usedPct, buffer: s.buffer, free: s.free, liquidated: s.liquidated };
+}
+
+/**
+ * The pool across joint moves of two coins: `cells[j][i]` is the pool with `assetX` moved by
+ * `xs[i]` % and `assetY` by `ys[j]` % from `marks`, every other coin at `prices`. Moves span
+ * ±`opts.range` (never below −99%) in `opts.steps` points per axis. `nearest` is the point on
+ * the liquidation edge closest to both at their mark, or null when none lies in range.
+ */
+export function marginGrid(pool, marks, prices, assetX, assetY, opts = {}) {
+  const range = opts.range ?? 30;
+  const steps = opts.steps ?? 41;
+  const lo = Math.max(-99, -range);
+  const axis = Array.from({ length: steps }, (_, i) => lo + (range - lo) * i / (steps - 1));
+  const at = (x, y) => cellAt(pool, marks, prices, assetX, assetY, x, y, opts);
+  const cells = axis.map(y => axis.map(x => at(x, y)));
+
+  let best = null;
+  cells.forEach((row, j) => row.forEach((c, i) => {
+    const d = Math.hypot(axis[i], axis[j]);
+    if (c.liquidated && (!best || d < best.d)) best = { d, x: axis[i], y: axis[j] };
+  }));
+
+  let nearest = null;
+  if (best && at(0, 0).liquidated) nearest = { xPct: 0, yPct: 0 };
+  else if (best) {
+    let a = 0, b = 1;
+    for (let k = 0; k < 40; k++) {
+      const t = (a + b) / 2;
+      if (at(best.x * t, best.y * t).liquidated) b = t; else a = t;
+    }
+    nearest = { xPct: best.x * b, yPct: best.y * b };
+  }
+  return { assetX, assetY, xs: axis, ys: axis, cells, nearest };
+}
+
 // ─── HEDGE LEDGER ────────────────────────────────────────────────────────────
 //
 // A matched same-symbol hedge pins its PnL at (entryShort − entryLong) × matchedQty. The

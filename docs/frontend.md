@@ -15,6 +15,7 @@ behaviour as twenty-six **classic** scripts loaded in this order — no build st
 | 3 | `tiles-threads.js` | hedge popups, tile drag and focus, the hedge-thread SVG |
 | 4 | `stops.js` | Stops tab |
 | 5 | `stress.js` | Stress tab |
+| 5b | `stress-heatmap.js` | Stress's *Two coins at once* map |
 | 6 | `hedge-ledger.js` | hedge-ledger drawer |
 | 7 | `confluence-view.js` | Confluence tab (the engine is the server's `confluence.js`) |
 | 8 | `journal.js` | Journal tab |

@@ -46,8 +46,6 @@
   reconcile rather than a source of truth (see *Order cache*)
 - **Stress simulator: Hyperliquid** — engine is per-pool, so HL slots in by building a pool
   with `collateral = crossMarginSummary.accountValue − Σ uPnL` and `mm = notional / (2 × maxLeverage)`
-- **Stress simulator: two-coin heatmap** — a 2D margin-ratio grid with the liquidation
-  contour would show joint extremes the one-coin-at-a-time view hides
 - **Stress simulator: funding drag** — a days-held slider subtracting accrued funding from
   pool collateral before the shock
 - **Unwind: no execution** — it produces a plan only; nothing is ever sent to an

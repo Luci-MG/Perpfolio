@@ -588,6 +588,17 @@ button.jr-cal-cell:focus-visible { outline: 2px solid var(--text); outline-offse
   .st-row { grid-template-columns: 1fr; gap: 4px; }
   .st-pool { gap: 10px; }
 }
+.st-heat-wrap { position: relative; max-width: 358px; }
+.st-heat { display: block; width: 100%; height: auto; cursor: crosshair; }
+.st-heat-tick { font-size: 9px; fill: var(--text3); font-variant-numeric: tabular-nums; }
+.st-heat-axis { font-size: 10px; fill: var(--text2); }
+.st-heat-tip { position: absolute; transform: translate(10px, -50%); pointer-events: none; z-index: 2;
+               background: var(--surface); border: 0.5px solid var(--border2); border-radius: 6px;
+               padding: 6px 8px; font-size: 10px; line-height: 1.5; white-space: nowrap;
+               font-variant-numeric: tabular-nums; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.st-heat-key { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text3); }
+.st-heat-key i { display: inline-block; width: 18px; height: 8px; border-radius: 2px; }
+.st-heat-key i.line { height: 0; border-radius: 0; }
 .uw-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 20px; align-items: start; }
 .uw-main, .uw-out { min-width: 0; }
 .uw-out { position: sticky; top: 12px; border-left: 0.5px solid var(--border); padding-left: 16px; }
