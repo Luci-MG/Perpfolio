@@ -17,7 +17,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P3 | [Journal: context at entry](#p3--journal-context-at-entry) | done (2026-10-03) |
 | P3 | [Confluence: verdict and honest calibration](#p3--confluence-verdict-and-honest-calibration) | done (2026-10-03) |
 | P3 | [Calculators: live and account-aware](#p3--calculators-live-and-account-aware) | done (2026-10-03) |
-| P3 | [Sessions across the dashboard](#p3--sessions-across-the-dashboard) | planned |
+| P3 | [Sessions across the dashboard](#p3--sessions-across-the-dashboard) | done (2026-10-03) |
 | P3 | [Protected tiles read as safe](#p3--protected-tiles-read-as-safe) | done (2026-10-03) |
 | P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | idea |
 | P4 | [Goals: design spike](#p4--goals-design-spike) | idea |
@@ -214,6 +214,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Done when:** the clock is always visible and correct across a DST change, and every view
   that honours the session says so in its header with its sample size.
 - **Depends on:** — (Confluence and Stops by session build on their own cards).
+- **Status:** done (2026-10-03) — see `docs/sessions.md`. Stops is deliberately not split by
+  session: its 24h windows cover all of them.
 
 ## P3 — Protected tiles read as safe
 

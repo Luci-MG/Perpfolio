@@ -94,6 +94,8 @@ no request.
   passed as a stop.
 - **Distance is from the current mark**, the risk carried now; the suggestion's distance
   (k × composite vol) is compared on the same basis. `atrMultiple` is that distance in 1h ATRs.
+- **Not by session.** The hit rate counts 24h windows, which always cover every session, so
+  the session filter does not apply here and the tab says so.
 - **The hit rate is measured, not modelled** — the share of 24h windows on the symbol's own
   held 1h candles (200 at start, growing to 720 while the server runs) whose move against the
   leg reached the distance. Windows overlap, so the tooltip gives windows and the roughly

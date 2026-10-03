@@ -8,4 +8,5 @@ export function register(app) {
   const serve = file => (req, res) => res.type('application/javascript').sendFile(path.join(ROOT_DIR, file));
   app.get('/risk-engine.js', serve('risk-engine.js'));
   app.get('/calc-engine.js', serve('calc-engine.js'));
+  app.get('/sessions.js', serve('sessions.js'));
 }

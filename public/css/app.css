@@ -785,3 +785,11 @@ tr:last-child td { border-bottom: none; }
 .stop-mark.caution { color: var(--warning); }
 td .stop-mark { margin-left: 4px; vertical-align: -2px; }
 .stop-mark.risk { color: var(--text3); }
+
+/* Sessions: the clock and the filter notes */
+.session-clock { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); cursor: help;
+                 font-variant-numeric: tabular-nums; margin-left: auto; margin-right: 4px; white-space: nowrap; }
+@media (max-width: 900px) { .session-clock { order: 3; width: 100%; margin-left: 0; } }
+.session-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+.session-dot.off { background: var(--text3); }
+.jr-session-note { font-size: 11px; color: var(--text3); margin: 0 0 10px; }

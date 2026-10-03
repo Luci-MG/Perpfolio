@@ -1,5 +1,15 @@
 # Changelog
 
+## Sessions across the dashboard (2026-10-03)
+
+- Sessions follow each market's own clock with daylight saving — Tokyo, London and New York
+  hours, a *Europe + US* overlap and *Off-hours* — in `sessions.js`, shared by server and
+  browser. The fixed UTC buckets they replace drifted an hour twice a year and had no overlap.
+- A session clock in the main header bar: the session now, the nearest close, the next change.
+- One session filter, remembered, narrows the Journal's trip statistics, habit costs and Trades
+  and adds the composite's record for that session to the Confluence verdict. Overview and
+  Stops say why it does not apply to them.
+
 ## Protected tiles read as safe (2026-10-03)
 
 - Every tile and List row now says whether the leg needs attention: a green shield only when

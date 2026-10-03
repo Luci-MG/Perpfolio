@@ -8,12 +8,6 @@ const bar = (t, low, high, close = (low + high) / 2) => ({ t, open: close, high,
 const trip = o => ({ symbol: 'XUSDT', positionSide: 'LONG', side: 'Long', openTime: 0, closeTime: 10 * HOUR,
                      avgEntry: 100, ...o });
 
-test('sessions split the UTC day at 08, 14 and 22', () => {
-  const at = h => Date.UTC(2026, 0, 5, h, 30);
-  assert.deepEqual([7, 8, 13, 14, 21, 22, 23].map(h => tc.sessionOf(at(h))),
-    ['Asia', 'Europe', 'Europe', 'US', 'US', 'Asia', 'Asia']);
-});
-
 test('the path interval is the finest that fits 1,500 bars', () => {
   for (const [hours, interval] of [[0.5, '1m'], [24, '1m'], [48, '5m'], [24 * 10, '15m'], [24 * 40, '1h'], [24 * 200, '4h']]) {
     assert.equal(tc.pathInterval(0, hours * HOUR).interval, interval, `${hours}h`);

@@ -21,7 +21,7 @@ async function fetchConfluence() {
     }).catch(() => {});
   }
   try {
-    const res = await fetch(`/api/confluence?symbol=${encodeURIComponent(cfSymbol)}&tfs=${cfTfs.join(',')}`);
+    const res = await fetch(`/api/confluence?symbol=${encodeURIComponent(cfSymbol)}&tfs=${cfTfs.join(',')}${sessionParam() ? `&${sessionParam()}` : ''}`);
     if (!(res.headers.get('content-type') || '').includes('json')) {
       throw new Error(`server returned ${res.status} without JSON — restart it so it picks up /api/confluence`);
     }
@@ -141,6 +141,14 @@ function cfReasonLine(r) {
   return `<div class="cf-v-line">${cfGlyph(cfStateOf(r.score))} <b>${esc(r.name)}</b> <span class="cf-v-tf">${r.tf}</span> ${cfRecordText(r.record)}</div>`;
 }
 
+function cfSessionText(t) {
+  if (!t.tf) return 'Only 4h and 1d are selected, and their bars span several sessions — add 1h or 15m to see this session.';
+  if (!t.record || t.record.hitRate == null) return `No composite readings on ${t.tf} bars closing in this session yet.`;
+  const r = t.record;
+  const mark = r.significant ? (r.edge > 0 ? ' ✓' : ' ✗') : '';
+  return `Composite on ${t.tf} bars closing in this session: <span class="cf-hit${r.thin ? ' thin' : ''}">${fmt(r.hitRate * 100, 0)}% vs ${fmt(r.expected * 100, 0)}% by chance, n≈${r.nEff}${r.thin ? '⚠' : ''}${mark}</span>`;
+}
+
 function renderCfVerdict(d) {
   const v = d.verdict;
   if (!v) return '';
@@ -159,6 +167,7 @@ function renderCfVerdict(d) {
     <div class="cf-v-row"><span class="k">${v.direction ? 'Why' : 'Strongest pulls'}</span><div>${v.reasons.map(cfReasonLine).join('') || '—'}</div></div>
     ${v.against ? `<div class="cf-v-row"><span class="k">Against</span><div>${cfReasonLine(v.against)}</div></div>` : ''}
     <div class="cf-v-row"><span class="k">Can you trust it?</span><div class="cf-v-line">${trust}</div></div>
+    ${v.sessionTrust ? `<div class="cf-v-row"><span class="k">In ${esc(v.sessionTrust.session)}</span><div class="cf-v-line">${cfSessionText(v.sessionTrust)}</div></div>` : ''}
   </div>`;
 }
 
@@ -179,6 +188,8 @@ function renderConfluence() {
     <span class="st-sep"></span>
     ${CF_ALL_TFS.map(tf => `<button class="st-btn${cfTfs.includes(tf) ? ' on' : ''}" onclick="toggleCfTf('${tf}')">${tf}</button>`).join('')}
     <span class="st-sep"></span>
+    <span class="st-sep"></span>
+    ${sessionSelectHtml()}
     <button class="st-btn" onclick="fetchConfluence()">${cfLoading ? 'Loading…' : 'Refresh'}</button>
     <span id="cf-age">${cfData?.lastUpdated ? `updated ${cfAge(cfData.lastUpdated)}` : ''}</span>
   </div>`;

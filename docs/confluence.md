@@ -67,6 +67,11 @@ each signal's overall record and the record for its timeframe's current regime (
 the composite ships every regime. History is 1,500 bars per timeframe, the most one request
 returns.
 
+**By session.** Each replayed bar is also tagged with the session its close falls in
+(`sessions.js`), so the composite carries `bySession`. With a session chosen, the verdict adds
+the composite's record on 1h (else 15m) bars closing in it; 4h and 1d bars span sessions, so
+with only those selected it says so.
+
 **The verdict.** `explainVerdict(timeframes, overall)` turns the reading into words: the lean
 and strength, the three signals pulling hardest that way across 1h–1d (timeframe weight ×
 source weight ÷ live signals in the source × score), each with its record **in its timeframe's

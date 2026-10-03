@@ -124,6 +124,25 @@ test('history sync fills the store and the journal reconciles every fill', async
   record('performance', clockFree);
 });
 
+test('a session narrows trip statistics and habits, never the account overview', async () => {
+  const all = (await get('/api/performance')).body;
+  const { sessionOf } = await import('../sessions.js');
+  const trips = (await get('/api/trips')).body.trips;
+  const session = sessionOf(trips[0].openTime);
+  const inIt = trips.filter(t => t.session === session).length;
+  const one = (await get(`/api/performance?session=${encodeURIComponent(session)}`)).body;
+  assert.equal(one.session, session);
+  assert.equal(one.overall.trips, inIt);
+  assert.ok(inIt < all.overall.trips || trips.every(t => t.session === session));
+  assert.deepEqual(one.periods, all.periods, 'the overview is the whole account');
+  assert.deepEqual(one.equity, all.equity);
+  assert.ok(one.habits.every((h, i) => h.trips <= all.habits[i].trips));
+  assert.equal((await get('/api/performance?session=Mars')).body.session, null);
+
+  const cf = (await get(`/api/confluence?symbol=BTCUSDT&session=${encodeURIComponent(session)}`)).body;
+  assert.deepEqual([cf.verdict.sessionTrust.session, cf.verdict.sessionTrust.tf], [session, '1h']);
+});
+
 test('trips carry context from the sync, funding from the ledger, and a re-sync fetches nothing', async () => {
   const { status, body } = await get('/api/trips');
   assert.equal(status, 200);
@@ -133,7 +152,7 @@ test('trips carry context from the sync, funding from the ledger, and a re-sync 
   for (const t of body.trips) {
     assert.ok(t.mae <= 0 && t.mfe >= 0, `${t.key} mae ${t.mae} mfe ${t.mfe}`);
     assert.ok(Number.isFinite(t.atrPct) && ['up', 'down', 'flat'].includes(t.btcTrend), t.key);
-    assert.ok(['Asia', 'Europe', 'US'].includes(t.session));
+    assert.ok(['Asia', 'Europe', 'Europe + US', 'US', 'Off-hours'].includes(t.session));
     assert.ok(t.openNotional > 0 && t.side === 'Long');
   }
   const covered = body.trips.filter(t => t.funding != null);

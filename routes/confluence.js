@@ -1,6 +1,7 @@
 import * as cf from '../confluence.js';
 import { refreshSymbolFilters, symbolFilters } from '../lib/binance-meta.js';
 import { readConfluence } from '../lib/confluence-reading.js';
+import { SESSIONS } from '../sessions.js';
 import { perpSymbols } from '../lib/confluence-data.js';
 
 export function register(app) {
@@ -28,7 +29,8 @@ export function register(app) {
         .split(',').filter(tf => cf.TIMEFRAMES[tf]);
       if (!tfs.length) return res.status(400).json({ ok: false, error: 'no valid timeframes' });
 
-      res.json({ ok: true, lastUpdated: new Date().toISOString(), ...await readConfluence(symbol, tfs) });
+      const session = SESSIONS.includes(req.query.session) ? req.query.session : undefined;
+      res.json({ ok: true, lastUpdated: new Date().toISOString(), ...await readConfluence(symbol, tfs, { session }) });
     } catch (err) {
       console.error('[confluence]', err);
       res.status(500).json({ ok: false, error: err.message });

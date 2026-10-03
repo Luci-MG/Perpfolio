@@ -15,7 +15,8 @@ async function fetchPerformance() {
   if (posView === 'journal') rerenderStress();
   try {
     const tz = -new Date().getTimezoneOffset();
-    const res = await fetch(`/api/performance?tz=${tz}${perfDays ? `&days=${perfDays}` : ''}`);
+    const query = [`tz=${tz}`, perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
+    const res = await fetch(`/api/performance?${query}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'performance failed');
     perfData = data;
@@ -295,11 +296,13 @@ function renderJournal() {
   if (perfData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(perfData.error)}</p>`;
 
   const syncBar = `<div class="jr-sync" id="jr-mounted">
-    <span id="jr-sync-state">${perfData.empty ? 'no cached history' : `${perfData.overall.trips} round trips · ${perfData.equity.days} days`}</span>
+    <span id="jr-sync-state">${perfData.empty ? 'no cached history' : `${perfData.session ? `${perfData.session} · ` : ''}${perfData.overall.trips} round trips · ${perfData.equity.days} days`}</span>
     <button class="st-btn" onclick="startSync(false)">Sync recent</button>
     <button class="st-btn" onclick="startSync(true)">Full rebuild</button>
     <span class="st-sep"></span>
     ${[0, 7, 30, 90].map(d => `<button class="st-btn${perfDays === d ? ' on' : ''}" onclick="setPerfDays(${d})">${d ? d + 'd' : 'all'}</button>`).join('')}
+    <span class="st-sep"></span>
+    ${sessionSelectHtml()}
   </div>`;
 
   if (perfData.empty) return `${syncBar}<p style="font-size:12px;color:var(--text3)">${perfData.hint}</p>`;
@@ -378,7 +381,9 @@ function renderJournal() {
         <td style="color:var(--text3)">${fmtUsd(p.sizeUsd)}</td>
       </tr>`).join('') : '';
 
-    body = `
+    const sessionNote = perfData.session
+      ? `<p class="jr-session-note">Overview is the whole account, so the ${esc(perfData.session)} filter does not apply here — it narrows the trip-based tabs.</p>` : '';
+    body = `${sessionNote}
       ${jrSection('How it is going', jrPeriodStrip(perfData.periods),
         'Realised is net of fees and funding, from the Binance ledger — exact. Account value includes open positions on both venues, net of deposits and withdrawals, from snapshots the server records every 15 minutes while it runs.')}
       ${jrSection('Wallet and account value', renderOverviewChart(perfData.walletCurve, perfData.accountCurve),

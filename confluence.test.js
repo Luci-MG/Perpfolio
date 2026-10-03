@@ -272,6 +272,7 @@ test('regime buckets and the early/recent split each account for every scored re
     const regimes = Object.values(rec.byRegime).reduce((a, r) => a + r.n, 0);
     assert.equal(regimes, rec.n);
     assert.equal(rec.early.n + rec.recent.n, rec.n);
+    assert.equal(Object.values(rec.bySession).reduce((a, r) => a + r.n, 0), rec.n);
     assert.ok(['holds', 'fades', 'thin'].includes(rec.stability));
   }
   assert.ok(Object.keys(cal.composite.byRegime).every(k => ['trend', 'range', 'transition', 'squeeze', 'unknown'].includes(k)));
@@ -326,4 +327,16 @@ test('a signal record trimmed for a reading keeps its overall record, stability 
                 byRegime: { trend: { n: 6 }, range: { n: 4 } } };
   assert.deepEqual(cf.forRegime(rec, 'trend'), { n: 10, hitRate: 0.6, stability: 'holds', byRegime: { trend: { n: 6 } } });
   assert.deepEqual(cf.forRegime(rec, 'squeeze').byRegime, {});
+});
+
+test('with a session, the verdict adds the composite record on 1h bars closing in it, else says nothing', () => {
+  const input = verdictInput();
+  input['1h'].calibration.composite.bySession = { 'Europe + US': { hitRate: 0.6, expected: 0.5, edge: 0.1, nEff: 33, thin: false, significant: false } };
+  const withIt = cf.explainVerdict(input, { score: 0.45, state: 'bull' }, cf.TF_WEIGHTS, { session: 'Europe + US' });
+  assert.deepEqual([withIt.sessionTrust.tf, withIt.sessionTrust.record.hitRate, withIt.sessionTrust.record.scope], ['1h', 0.6, 'session']);
+  assert.equal(cf.explainVerdict(input, { score: 0.45, state: 'bull' }, cf.TF_WEIGHTS, { session: 'Asia' }).sessionTrust.record, null);
+  assert.equal(cf.explainVerdict(input, { score: 0.45, state: 'bull' }).sessionTrust, null);
+  delete input['1h'];
+  assert.equal(cf.explainVerdict(input, { score: 0.45, state: 'bull' }, cf.TF_WEIGHTS, { session: 'Asia' }).sessionTrust.tf, null,
+    'only 4h and 1d: their bars span sessions');
 });

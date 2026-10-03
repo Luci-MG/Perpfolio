@@ -3431,6 +3431,7 @@
     "wins": 12
    }
   },
+  "session": null,
   "side": [
    {
     "avgLoss": -65.9,
@@ -3682,7 +3683,7 @@
     "peakNotional": 19600,
     "positionSide": "LONG",
     "realized": 200,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": true
@@ -3754,7 +3755,7 @@
     "peakNotional": 10000,
     "positionSide": "LONG",
     "realized": -100,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": false
@@ -3934,7 +3935,7 @@
     "peakNotional": 10000,
     "positionSide": "LONG",
     "realized": 100,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": true
@@ -4006,7 +4007,7 @@
     "peakNotional": 10000,
     "positionSide": "LONG",
     "realized": 100,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": true
@@ -4114,7 +4115,7 @@
     "peakNotional": 784,
     "positionSide": "LONG",
     "realized": 8,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": true
@@ -4186,7 +4187,7 @@
     "peakNotional": 400,
     "positionSide": "LONG",
     "realized": -4,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": false
@@ -4366,7 +4367,7 @@
     "peakNotional": 400,
     "positionSide": "LONG",
     "realized": 4,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": true
@@ -4438,7 +4439,7 @@
     "peakNotional": 400,
     "positionSide": "LONG",
     "realized": 4,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": true
@@ -5039,6 +5040,73 @@
         "hitRate": 0.25,
         "n": 8,
         "nEff": 1,
+        "significant": false,
+        "thin": true
+       }
+      },
+      "bySession": {
+       "Asia": {
+        "ci": [
+         0.3196998603127883,
+         0.6515988171302683
+        ],
+        "edge": -0.016931992738444368,
+        "expected": 0.5008029604803799,
+        "hitRate": 0.4838709677419355,
+        "n": 186,
+        "nEff": 31,
+        "significant": false,
+        "thin": false
+       },
+       "Europe": {
+        "ci": [
+         0.21916032330601526,
+         0.6230815390914495
+        ],
+        "edge": -0.09670846394984334,
+        "expected": 0.5018808777429468,
+        "hitRate": 0.4051724137931034,
+        "n": 116,
+        "nEff": 19,
+        "significant": false,
+        "thin": true
+       },
+       "Europe + US": {
+        "ci": [
+         0.26240059209075395,
+         0.7707856757936273
+        ],
+        "edge": -0.007377883310719202,
+        "expected": 0.5297659430122117,
+        "hitRate": 0.5223880597014925,
+        "n": 67,
+        "nEff": 11,
+        "significant": false,
+        "thin": true
+       },
+       "Off-hours": {
+        "ci": [
+         0.23191747760218445,
+         0.5412812171716976
+        ],
+        "edge": -0.15239311871912792,
+        "expected": 0.5261795264861182,
+        "hitRate": 0.3737864077669903,
+        "n": 206,
+        "nEff": 34,
+        "significant": false,
+        "thin": false
+       },
+       "US": {
+        "ci": [
+         0.0889298828516839,
+         0.5510781255263115
+        ],
+        "edge": -0.21168831168831176,
+        "expected": 0.4688311688311689,
+        "hitRate": 0.2571428571428571,
+        "n": 70,
+        "nEff": 11,
         "significant": false,
         "thin": true
        }
@@ -5704,6 +5772,34 @@
         "nEff": 2,
         "significant": false,
         "thin": true
+       }
+      },
+      "bySession": {
+       "Asia": {
+        "ci": [
+         0.4359450658882046,
+         0.619352652370249
+        ],
+        "edge": 0.02886828211723308,
+        "expected": 0.49974617571409224,
+        "hitRate": 0.5286144578313253,
+        "n": 664,
+        "nEff": 110,
+        "significant": false,
+        "thin": false
+       },
+       "Off-hours": {
+        "ci": [
+         0.38037517438890633,
+         0.6605735250803986
+        ],
+        "edge": 0.022483046426708397,
+        "expected": 0.49973917579551386,
+        "hitRate": 0.5222222222222223,
+        "n": 270,
+        "nEff": 45,
+        "significant": false,
+        "thin": false
        }
       },
       "ci": [
@@ -6372,6 +6468,73 @@
         "thin": true
        }
       },
+      "bySession": {
+       "Asia": {
+        "ci": [
+         0.3080605619269719,
+         0.639601732233896
+        ],
+        "edge": -0.029515938606847647,
+        "expected": 0.5001041739009653,
+        "hitRate": 0.47058823529411764,
+        "n": 187,
+        "nEff": 31,
+        "significant": false,
+        "thin": false
+       },
+       "Europe": {
+        "ci": [
+         0.3201458361360947,
+         0.713135903105472
+        ],
+        "edge": 0.020937723693629173,
+        "expected": 0.49874731567644953,
+        "hitRate": 0.5196850393700787,
+        "n": 127,
+        "nEff": 21,
+        "significant": false,
+        "thin": true
+       },
+       "Europe + US": {
+        "ci": [
+         0.22934700959726753,
+         0.6784717475537622
+        ],
+        "edge": -0.05739488385768893,
+        "expected": 0.49950014701558365,
+        "hitRate": 0.4421052631578947,
+        "n": 95,
+        "nEff": 15,
+        "significant": false,
+        "thin": true
+       },
+       "Off-hours": {
+        "ci": [
+         0.34964269936764697,
+         0.630033497586926
+        ],
+        "edge": -0.01654411764705882,
+        "expected": 0.5055147058823529,
+        "hitRate": 0.4889705882352941,
+        "n": 272,
+        "nEff": 45,
+        "significant": false,
+        "thin": false
+       },
+       "US": {
+        "ci": [
+         0.28686409689452785,
+         0.6798541638639052
+        ],
+        "edge": -0.01959676565093038,
+        "expected": 0.4999117262808516,
+        "hitRate": 0.48031496062992124,
+        "n": 127,
+        "nEff": 21,
+        "significant": false,
+        "thin": true
+       }
+      },
       "ci": [
        0.39973383483883823,
        0.5665784804822576
@@ -7035,6 +7198,73 @@
         "thin": true
        }
       },
+      "bySession": {
+       "Asia": {
+        "ci": [
+         0.3476833916004746,
+         0.6749769455808106
+        ],
+        "edge": 0.016318219622013796,
+        "expected": 0.4963721357079354,
+        "hitRate": 0.5126903553299492,
+        "n": 197,
+        "nEff": 32,
+        "significant": false,
+        "thin": false
+       },
+       "Europe": {
+        "ci": [
+         0.366662400355371,
+         0.7805010727549192
+        ],
+        "edge": 0.08484092326887094,
+        "expected": 0.5044447910168434,
+        "hitRate": 0.5892857142857143,
+        "n": 112,
+        "nEff": 18,
+        "significant": false,
+        "thin": true
+       },
+       "Europe + US": {
+        "ci": [
+         0.24865193736093436,
+         0.6994277973980447
+        ],
+        "edge": -0.03260869565217389,
+        "expected": 0.5,
+        "hitRate": 0.4673913043478261,
+        "n": 92,
+        "nEff": 15,
+        "significant": false,
+        "thin": true
+       },
+       "Off-hours": {
+        "ci": [
+         0.38543448189358664,
+         0.6774950823543024
+        ],
+        "edge": 0.02878992352676568,
+        "expected": 0.5056230319388214,
+        "hitRate": 0.5344129554655871,
+        "n": 247,
+        "nEff": 41,
+        "significant": false,
+        "thin": false
+       },
+       "US": {
+        "ci": [
+         0.3868443127183109,
+         0.7366841667029983
+        ],
+        "edge": 0.0706483401380903,
+        "expected": 0.49990380710117355,
+        "hitRate": 0.5705521472392638,
+        "n": 163,
+        "nEff": 27,
+        "significant": false,
+        "thin": true
+       }
+      },
       "ci": [
        0.4524127504158689,
        0.6183240344145439
@@ -7680,6 +7910,7 @@
     }
    ],
    "score": -0.11942599126282116,
+   "sessionTrust": null,
    "state": "neutral",
    "strength": "weak",
    "trust": {

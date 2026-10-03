@@ -92,7 +92,9 @@ function renderVolStops() {
   }
 
   const tiles = positions.map(renderVolTile).join('');
-  return `${controls}${combined}<div class="vol-tile-grid">${tiles}</div>`;
+  const sessionNote = sessionFilter === 'All' ? ''
+    : `<p class="jr-session-note">The ${esc(sessionFilter)} filter does not apply here: each hit rate counts 24h windows, which cover every session.</p>`;
+  return `${controls}${combined}${sessionNote}<div class="vol-tile-grid">${tiles}</div>`;
 }
 
 function renderVolCombined(c, positions) {

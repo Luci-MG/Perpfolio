@@ -7,6 +7,7 @@
 
 import { percentileRank, pearsonCorr } from './vol-estimator.js';
 import { alignedReturns } from './risk-engine.js';
+import { sessionOf } from './sessions.js';
 
 export const TIMEFRAMES = { '15m': 15 * 60e3, '1h': 3600e3, '4h': 4 * 3600e3, '1d': 86400e3 };
 export const TF_WEIGHTS = { '15m': 0.15, '1h': 0.25, '4h': 0.35, '1d': 0.25 };
@@ -579,7 +580,7 @@ function finish(st, base, horizon) {
 /** A signal's record trimmed to what a reading shows: overall, the current regime's record and stability. */
 export function forRegime(record, regime) {
   if (!record) return record;
-  const { byRegime = {}, early, recent, ...overall } = record;
+  const { byRegime = {}, bySession, early, recent, ...overall } = record;
   return { ...overall, byRegime: byRegime[regime] ? { [regime]: byRegime[regime] } : {} };
 }
 
@@ -608,7 +609,8 @@ export function calibrate(x, { horizon = 6, informational = [], signalMin = 0.25
     if (fwd === 0) continue;
     const up = fwd > 0;
     const r = scoreTimeframe(x, { i, informational });
-    const keys = ['all', `regime:${regimeKey(r.regime)}`, i < split ? 'early' : 'recent'];
+    const keys = ['all', `regime:${regimeKey(r.regime)}`, i < split ? 'early' : 'recent',
+                  `session:${sessionOf(x.candles[i].t + x.intervalMs)}`];
     for (const k of keys) { const b = baseOf(k); b.total++; if (up) b.ups++; }
     const active = [...r.signals.filter(s => s.score != null && Math.abs(s.score) >= signalMin).map(s => [s.id, s.score]),
                     ...(r.score != null && Math.abs(r.score) >= compositeMin ? [['composite', r.score]] : [])];
@@ -617,9 +619,10 @@ export function calibrate(x, { horizon = 6, informational = [], signalMin = 0.25
 
   const record = id => {
     const at = k => finish(records[id].get(k) || blankStat(), bases.get(k) || { ups: 0, total: 0 }, horizon);
-    const regimes = [...bases.keys()].filter(k => k.startsWith('regime:'));
+    const bucketsOf = prefix => Object.fromEntries([...bases.keys()].filter(k => k.startsWith(prefix))
+      .map(k => [k.slice(prefix.length), at(k)]));
     const early = at('early'), recent = at('recent');
-    return { ...at('all'), byRegime: Object.fromEntries(regimes.map(k => [k.slice(7), at(k)])),
+    return { ...at('all'), byRegime: bucketsOf('regime:'), bySession: bucketsOf('session:'),
              early, recent, stability: stabilityOf(early, recent) };
   };
   const all = bases.get('all') || { ups: 0, total: 0 };
@@ -666,6 +669,7 @@ export function btcCorrelation(assetCandles, btcCandles, bars = 72) {
 
 const VERDICT_TFS = ['1h', '4h', '1d'];
 const TRUST_TF = '4h';
+const SESSION_TFS = ['1h', '15m'];
 
 function strengthOf(score) {
   const a = Math.abs(score ?? 0);
@@ -693,12 +697,22 @@ function contributionsOf(timeframes, weights) {
   });
 }
 
+function sessionTrust(timeframes, session) {
+  if (!session) return null;
+  const tf = SESSION_TFS.find(t => timeframes[t]);
+  const r = tf ? timeframes[tf].calibration?.composite?.bySession?.[session] : null;
+  return { session, tf: tf ?? null,
+           record: r ? { hitRate: r.hitRate, expected: r.expected, edge: r.edge, nEff: r.nEff,
+                         significant: r.significant, thin: r.thin, scope: 'session' } : null };
+}
+
 /**
  * The reading in words: lean and strength, the three signals pulling hardest that way across
  * 1h–1d with their records in each timeframe's current regime, the strongest signal against,
- * and the composite's record and stability on 4h (or the heaviest timeframe present).
+ * the composite's record and stability on 4h (or the heaviest timeframe present), and with a
+ * `session` the composite's record on 1h (else 15m) bars closing in it.
  */
-export function explainVerdict(timeframes, overall, weights = TF_WEIGHTS) {
+export function explainVerdict(timeframes, overall, weights = TF_WEIGHTS, { session } = {}) {
   const direction = overall?.state === 'bull' ? 1 : overall?.state === 'bear' ? -1 : 0;
   const byPull = list => [...list].sort((a, b) => Math.abs(b.pull) - Math.abs(a.pull));
   const contributions = contributionsOf(timeframes, weights);
@@ -717,6 +731,7 @@ export function explainVerdict(timeframes, overall, weights = TF_WEIGHTS) {
     reasons: reasons.slice(0, 3).map(strip),
     against: against && strip(against),
     trust: trustTf ? { tf: trustTf, regime: trustRegime, record: recordIn(composite, trustRegime),
-                       stability: composite?.stability ?? 'thin' } : null
+                       stability: composite?.stability ?? 'thin' } : null,
+    sessionTrust: sessionTrust(timeframes, session)
   };
 }

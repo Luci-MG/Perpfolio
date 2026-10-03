@@ -306,6 +306,43 @@ test('only a stop that cannot lose reads safe; a risking stop is grey, width tur
   assert.deepEqual(strayValues(list), []);
 });
 
+test('the session clock reads, and a chosen session narrows Journal, Trades and Confluence but says where it does not apply', async () => {
+  const { markup, run, settle } = await bootPage();
+  await settle('sessionsModule', 'the session clock');
+  run(`render(lastData)`);
+  const clock = markup.get('content').match(/id="sessionClock">([\s\S]*?)<\/span>\s*<div class="view-tabs">/)[1];
+  assert.match(clock, /(Asia|Europe|Europe \+ US|US|Off-hours) · /);
+  assert.match(clock, /next: .+ in \d+(h \d{2})?m/);
+  assert.deepEqual(strayValues(clock), []);
+
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal'); setJrTab('trades')`);
+  await settle('perfData && !perfLoading && tripsData && !tripsLoading', 'the journal');
+  const session = run('tripsData.trips[0].session');
+  run(`setSession(${JSON.stringify(session)})`);
+  await settle('perfData && !perfLoading', 'the journal in one session');
+  assert.equal(run('perfData.session'), session);
+  run(`jrTab = 'trades'; riskForceRender = true; render(lastData)`);
+  const inIt = run(`tripsData.trips.filter(t => t.session === ${JSON.stringify(session)}).length`);
+  assert.match(markup.get('content'), new RegExp(`${session.replace('+', '\\+')} · \\d+ trips · ${inIt} match`));
+  run(`jrTab = 'overview'; riskForceRender = true; render(lastData)`);
+  assert.match(markup.get('content'), /Overview is the whole account/);
+
+  run(`setView('stops')`);
+  await settle('volStopData && !volLoading', 'the stops');
+  assert.match(markup.get('content'), /does not apply here: each hit rate counts 24h windows/);
+
+  run(`setView('confluence')`);
+  await settle('cfData && !cfLoading', 'the confluence');
+  run(`riskForceRender = true; render(lastData)`);
+  assert.match(markup.get('content'), new RegExp(`In ${session.replace('+', '\\+')}`));
+  assert.deepEqual(strayValues(markup.get('content')), []);
+  run(`setSession('All')`);
+});
+
 test('the tool widgets open each tool and toggle back to the last positions view', async () => {
   const { markup, run } = await bootPage();
   assert.equal(run('TOOLS.every(t => VIEWS.includes(t.view))'), true);
