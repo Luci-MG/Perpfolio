@@ -1,3 +1,4 @@
+import { SESSIONS, sessionOf } from '../sessions.js';
 import * as ta from '../trade-analytics.js';
 import { habitCosts } from '../habits.js';
 import { analytics } from '../lib/analytics.js';
@@ -17,7 +18,9 @@ export function register(app) {
 
       const days = parseInt(req.query.days, 10);
       const cutoff = days > 0 ? Date.now() - days * 86_400_000 : 0;
-      const inWindow = trips.filter(t => t.closeTime >= cutoff);
+      const session = SESSIONS.includes(req.query.session) ? req.query.session : null;
+      const inSession = t => !session || sessionOf(t.openTime) === session;
+      const inWindow = trips.filter(t => t.closeTime >= cutoff && inSession(t));
       const incomeWindow = income.filter(r => r.time >= cutoff);
 
       const equity = ta.equityCurve(incomeWindow);
@@ -71,7 +74,8 @@ export function register(app) {
         periods,
         walletCurve: bn.disabled ? [] : ta.walletCurve(incomeWindow, bn.walletBalance, now),
         accountCurve: snapshots.filter(s => s.t >= cutoff).map(s => ({ t: s.t, accountValue: s.accountValue })),
-        habits: habitCosts(enrichedTrips().trips.filter(t => t.closeTime >= cutoff)),
+        habits: habitCosts(enrichedTrips().trips.filter(t => t.closeTime >= cutoff && inSession(t))),
+        session,
         syncedAt: syncState.finishedAt
       });
     } catch (err) {

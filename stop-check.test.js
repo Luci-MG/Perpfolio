@@ -14,14 +14,16 @@ test('a leg\'s stop is its nearest closing stop order, never a take-profit, a li
     order({ positionSide: 'SHORT', side: 'Buy', stopPrice: 98 }),
     order({ symbol: 'YUSDT', stopPrice: 99.5 })
   ];
-  assert.deepEqual(sc.legStop(orders, long, 100), { price: 95, distancePct: 5 });
+  const stop = sc.legStop(orders, long, 100);
+  assert.deepEqual([stop.price, stop.distancePct, stop.takeProfit], [95, 5, 99]);
   assert.equal(sc.legStop(orders.slice(2), long, 100), null);
 });
 
 test('Hyperliquid orders match by pair, one-way', () => {
   const hl = [{ pair: 'SOL-PERP', side: 'Buy', type: 'Stop market', stopPrice: 220, exchange: 'hyperliquid' }];
   const leg = sc.legOf({ exchange: 'hyperliquid', pair: 'SOL-PERP', side: 'Short' });
-  assert.deepEqual(sc.legStop(sc.stopOrders([], hl), leg, 200), { price: 220, distancePct: 10 });
+  const stop = sc.legStop(sc.stopOrders([], hl), leg, 200);
+  assert.deepEqual([stop.price, stop.distancePct, stop.coverage], [220, 10, null], 'HL sizes are unknown');
 });
 
 test('the hit rate counts windows whose adverse move reached the distance', () => {
@@ -65,4 +67,33 @@ test('the breakeven band is ±0.05% of entry on either side, and a stop beyond i
   assert.equal(v(100.04, 'Short'), 'breakeven');
   assert.equal(v(99.94, 'Short'), 'locks');
   assert.equal(v(100.06, 'Short'), 'tight');
+});
+
+test('a trailing stop and a stop-limit protect; a reduce-only limit is a take-profit, not a stop', () => {
+  const long = { symbol: 'XUSDT', positionSide: 'LONG', side: 'Long', qty: 2 };
+  const trail = order({ type: 'Trailing stop market', stopPrice: null, callbackRate: 1.5, activatePrice: 104 });
+  const onlyTrail = sc.legStop([trail], long, 100);
+  assert.deepEqual([onlyTrail.price, onlyTrail.trailing], [null, { callbackRate: 1.5, activatePrice: 104 }]);
+  assert.equal(sc.stopVerdict({ stop: onlyTrail, entry: 100, side: 'Long' }).verdict, 'trailing');
+  assert.equal(sc.legStop([order({ type: 'Stop', stopPrice: 94 })], long, 100).price, 94, 'stop-limit');
+  const tpOnly = [order({ type: 'Limit', stopPrice: null, price: 110, reduceOnly: true })];
+  assert.equal(sc.legStop(tpOnly, long, 100), null);
+});
+
+test('coverage sums the leg\'s stops, a closePosition stop covers all, and under 95% is partial', () => {
+  const long = { symbol: 'XUSDT', positionSide: 'LONG', side: 'Long', qty: 2 };
+  const verdict = orders => sc.stopVerdict({ stop: sc.legStop(orders, long, 100), entry: 100, side: 'Long' }).verdict;
+  assert.equal(sc.legStop([order({ sizeRaw: 0.6 })], long, 100).coverage, 0.3);
+  assert.equal(verdict([order({ sizeRaw: 0.6 })]), 'partial');
+  assert.equal(verdict([order({ sizeRaw: 1 }), order({ sizeRaw: 1, stopPrice: 85 })]), 'set');
+  assert.equal(sc.legStop([order({ sizeRaw: 0, closePosition: true })], long, 100).coverage, 1);
+});
+
+test('judged from orders alone, a fixed stop is set, breakeven or locks — never tight or wide', () => {
+  const pos = { exchange: 'binance', symbol: 'XUSDT', positionSide: 'LONG', side: 'Long', sizeRaw: 1, entry: 100, mark: 110 };
+  const at = stopPrice => sc.legProtection(pos, [order({ stopPrice, sizeRaw: 1 })]);
+  assert.equal(at(99.2).verdict, 'set', 'a 0.8% stop would be too tight against any suggestion, but there is none');
+  assert.equal(at(100).verdict, 'breakeven');
+  assert.deepEqual([at(105).verdict, at(105).lockedPct], ['locks', 5]);
+  assert.equal(sc.legProtection(pos, []), null);
 });

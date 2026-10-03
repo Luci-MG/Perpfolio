@@ -21,7 +21,7 @@ async function fetchConfluence() {
     }).catch(() => {});
   }
   try {
-    const res = await fetch(`/api/confluence?symbol=${encodeURIComponent(cfSymbol)}&tfs=${cfTfs.join(',')}`);
+    const res = await fetch(`/api/confluence?symbol=${encodeURIComponent(cfSymbol)}&tfs=${cfTfs.join(',')}${sessionParam() ? `&${sessionParam()}` : ''}`);
     if (!(res.headers.get('content-type') || '').includes('json')) {
       throw new Error(`server returned ${res.status} without JSON — restart it so it picks up /api/confluence`);
     }
@@ -109,6 +109,68 @@ function cfHit(h) {
   return `<span class="cf-hit${h.thin ? ' thin' : ''}${h.significant ? ' sig' : ''}" title="${esc(`${ci} · ${h.n} readings ≈ ${h.nEff} independent`)}">${fmt(h.hitRate * 100, 0)}% · n≈${h.nEff}${h.thin ? '⚠' : ''}${edge}${mark}</span>`;
 }
 
+let cfShowAll = loadPref('cfShowAll', false);
+
+function toggleCfDetail() {
+  cfShowAll = !cfShowAll;
+  savePref('cfShowAll', cfShowAll);
+  rerenderStress();
+}
+
+const CF_REGIME_PLURAL = { trend: 'trends', range: 'ranges', transition: 'transitions', squeeze: 'squeezes', unknown: 'unclassified bars' };
+const CF_LEAN = { 1: ['▲', 'Leaning long', 'up'], '-1': ['▼', 'Leaning short', 'dn'], 0: ['–', 'No clear lean', ''] };
+function cfStabilityText(trust) {
+  if (trust.stability === 'thin') return 'too few recent bars to say whether this holds';
+  if (trust.stability === 'fades') return 'it changed direction in the most recent 30% of bars';
+  return trust.record?.edge > 0
+    ? 'it held up in the most recent 30% of bars'
+    : 'it ran below chance in both the earlier and the recent bars, so the lean has not been a reliable guide here';
+}
+
+function cfRecordText(rec) {
+  if (!rec || rec.hitRate == null) return '<span class="cf-hit thin">no active history</span>';
+  const where = rec.scope === 'regime' ? `in ${CF_REGIME_PLURAL[rec.regime] ?? rec.regime}`
+    : `overall — too few in ${CF_REGIME_PLURAL[rec.regime] ?? rec.regime}`;
+  const mark = rec.significant ? (rec.edge > 0 ? ' ✓' : ' ✗') : '';
+  return `<span class="cf-hit${rec.thin ? ' thin' : ''}${rec.significant ? ' sig' : ''}">${fmt(rec.hitRate * 100, 0)}% vs ${fmt(rec.expected * 100, 0)}% by chance ${where}, n≈${rec.nEff}${rec.thin ? '⚠' : ''}${mark}</span>`;
+}
+
+const cfStateOf = score => (score >= 0.25 ? 'bull' : score <= -0.25 ? 'bear' : 'neutral');
+
+function cfReasonLine(r) {
+  return `<div class="cf-v-line">${cfGlyph(cfStateOf(r.score))} <b>${esc(r.name)}</b> <span class="cf-v-tf">${r.tf}</span> ${cfRecordText(r.record)}</div>`;
+}
+
+function cfSessionText(t) {
+  if (!t.tf) return 'Only 4h and 1d are selected, and their bars span several sessions — add 1h or 15m to see this session.';
+  if (!t.record || t.record.hitRate == null) return `No composite readings on ${t.tf} bars closing in this session yet.`;
+  const r = t.record;
+  const mark = r.significant ? (r.edge > 0 ? ' ✓' : ' ✗') : '';
+  return `Composite on ${t.tf} bars closing in this session: <span class="cf-hit${r.thin ? ' thin' : ''}">${fmt(r.hitRate * 100, 0)}% vs ${fmt(r.expected * 100, 0)}% by chance, n≈${r.nEff}${r.thin ? '⚠' : ''}${mark}</span>`;
+}
+
+function renderCfVerdict(d) {
+  const v = d.verdict;
+  if (!v) return '';
+  const [glyph, lean, cls] = CF_LEAN[v.direction];
+  const meta = [v.aligned == null ? null : v.aligned ? '1h · 4h · 1d aligned' : 'timeframes not aligned',
+    v.trust ? `regime on ${v.trust.tf}: ${v.trust.regime}` : null].filter(Boolean).join(' · ');
+  const trust = v.trust
+    ? `Composite on ${v.trust.tf} ${cfRecordText(v.trust.record)} — ${cfStabilityText(v.trust)}.`
+    : 'No timeframe to judge it on.';
+  return `<div class="cf-verdict">
+    <div class="cf-v-head">
+      <span class="cf-v-lean ${cls}">${glyph} ${lean}</span>
+      <span class="cf-v-strength">${v.direction ? `${v.strength} · ` : ''}${cfSigned(v.score)}</span>
+      <span class="cf-v-meta">${jrSym(d.symbol)} · ${meta}</span>
+    </div>
+    <div class="cf-v-row"><span class="k">${v.direction ? 'Why' : 'Strongest pulls'}</span><div>${v.reasons.map(cfReasonLine).join('') || '—'}</div></div>
+    ${v.against ? `<div class="cf-v-row"><span class="k">Against</span><div>${cfReasonLine(v.against)}</div></div>` : ''}
+    <div class="cf-v-row"><span class="k">Can you trust it?</span><div class="cf-v-line">${trust}</div></div>
+    ${v.sessionTrust ? `<div class="cf-v-row"><span class="k">In ${esc(v.sessionTrust.session)}</span><div class="cf-v-line">${cfSessionText(v.sessionTrust)}</div></div>` : ''}
+  </div>`;
+}
+
 function cfAge(iso) {
   const s = Math.max(0, Math.round((Date.now() - new Date(iso)) / 1000));
   return s < 60 ? `${s}s ago` : `${Math.round(s / 60)}m ago`;
@@ -126,6 +188,8 @@ function renderConfluence() {
     <span class="st-sep"></span>
     ${CF_ALL_TFS.map(tf => `<button class="st-btn${cfTfs.includes(tf) ? ' on' : ''}" onclick="toggleCfTf('${tf}')">${tf}</button>`).join('')}
     <span class="st-sep"></span>
+    <span class="st-sep"></span>
+    ${sessionSelectHtml()}
     <button class="st-btn" onclick="fetchConfluence()">${cfLoading ? 'Loading…' : 'Refresh'}</button>
     <span id="cf-age">${cfData?.lastUpdated ? `updated ${cfAge(cfData.lastUpdated)}` : ''}</span>
   </div>`;
@@ -217,6 +281,7 @@ function renderConfluence() {
     ${d.symbol !== 'BTCUSDT' ? 'For alts, a timeframe that disagrees with a clear BTC reading at correlation above 0.7 is halved.' : ''}
     ${cal ? `Up-bar share over the replay on ${live[0]}: ${fmt(cal.baseUp * 100, 0)}%.` : ''}</p>`;
 
-  return `${controls}${intro}${overall}
-    <div class="cf-table-wrap"><table class="cf-table">${head}${body}</table></div>${foot}`;
+  const toggle = `<button class="st-btn cf-detail-toggle" onclick="toggleCfDetail()">${cfShowAll ? 'Hide all signals' : 'Show all signals'}</button>`;
+  return `${controls}${renderCfVerdict(d)}${overall}${toggle}
+    ${cfShowAll ? `${intro}<div class="cf-table-wrap"><table class="cf-table">${head}${body}</table></div>` : ''}${foot}`;
 }

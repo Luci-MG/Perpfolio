@@ -264,3 +264,79 @@ test('anchored vwap slope is not compared across an anchor reset', () => {
   const resetBar = c.findIndex((k, i) => i > 0 && Math.floor(k.t / 86400e3) !== Math.floor(c[i - 1].t / 86400e3));
   assert.notEqual(x.vwapPeriod[resetBar], x.vwapPeriod[resetBar - 1]);
 });
+
+test('regime buckets and the early/recent split each account for every scored reading once', () => {
+  const x = cf.buildIndicators(walk(1000, 11), { tf: '1h' });
+  const cal = cf.calibrate(x, { horizon: 6 });
+  for (const rec of [cal.composite, ...Object.values(cal.signals)]) {
+    const regimes = Object.values(rec.byRegime).reduce((a, r) => a + r.n, 0);
+    assert.equal(regimes, rec.n);
+    assert.equal(rec.early.n + rec.recent.n, rec.n);
+    assert.equal(Object.values(rec.bySession).reduce((a, r) => a + r.n, 0), rec.n);
+    assert.ok(['holds', 'fades', 'thin'].includes(rec.stability));
+  }
+  assert.ok(Object.keys(cal.composite.byRegime).every(k => ['trend', 'range', 'transition', 'squeeze', 'unknown'].includes(k)));
+});
+
+test('stability: holds on the same sign, fades on a flip, thin without enough recent samples', () => {
+  const r = (edge, nEff) => ({ edge, nEff });
+  assert.equal(cf.stabilityOf(r(0.05, 60), r(0.02, 25)), 'holds');
+  assert.equal(cf.stabilityOf(r(0.05, 60), r(-0.03, 25)), 'fades');
+  assert.equal(cf.stabilityOf(r(0.05, 60), r(-0.03, 10)), 'thin');
+  assert.equal(cf.stabilityOf(r(null, 0), r(0.01, 40)), 'thin');
+});
+
+function verdictInput() {
+  const hit = (overall, inTrend) => ({ hitRate: overall, expected: 0.5, edge: overall - 0.5, nEff: 80, thin: false,
+    significant: false, byRegime: { trend: { hitRate: inTrend, expected: 0.5, edge: inTrend - 0.5, nEff: inTrend ? 40 : 5,
+      thin: !inTrend, significant: false } } });
+  const tf = (signals) => ({
+    regime: { label: 'trend', squeeze: false },
+    sources: [{ id: 'trend', weight: 0.3 }, { id: 'flow', weight: 0.2 }, { id: 'meanrev', weight: 0 }],
+    signals,
+    calibration: { composite: { ...hit(0.55, 0.58), stability: 'holds' } }
+  });
+  return {
+    '1h': tf([{ id: 'ema', name: 'EMA', source: 'trend', score: 0.8, hit: hit(0.54, 0.6) },
+              { id: 'cvd', name: 'CVD', source: 'flow', score: -0.9, hit: hit(0.51, 0) },
+              { id: 'bb', name: 'Bollinger', source: 'meanrev', score: -1, hit: hit(0.5, 0) }]),
+    '4h': tf([{ id: 'ema', name: 'EMA', source: 'trend', score: 0.6, hit: hit(0.56, 0) },
+              { id: 'cvd', name: 'CVD', source: 'flow', score: 0.4, hit: hit(0.5, 0.52) }])
+  };
+}
+
+test('the verdict leads with the signals pulling its way, names the strongest against, and ignores switched-off sources', () => {
+  const v = cf.explainVerdict(verdictInput(), { score: 0.45, state: 'bull', aligned: true });
+  assert.equal(v.strength, 'moderate');
+  assert.deepEqual(v.reasons.map(r => `${r.tf}:${r.id}`), ['4h:ema', '1h:ema', '4h:cvd']);
+  assert.equal(`${v.against.tf}:${v.against.id}`, '1h:cvd', 'the switched-off Bollinger never appears');
+  assert.equal(v.reasons[1].record.scope, 'regime');
+  assert.equal(v.reasons[0].record.scope, 'overall', 'too thin in the regime, so the overall record');
+  assert.deepEqual([v.trust.tf, v.trust.regime, v.trust.record.scope, v.trust.stability], ['4h', 'trend', 'regime', 'holds']);
+});
+
+test('a neutral verdict lists the strongest pulls either way and has no "against"', () => {
+  const v = cf.explainVerdict(verdictInput(), { score: 0.1, state: 'neutral', aligned: false });
+  assert.equal(v.direction, 0);
+  assert.equal(v.against, null);
+  assert.equal(v.reasons.length, 3);
+});
+
+test('a signal record trimmed for a reading keeps its overall record, stability and only the current regime', () => {
+  const rec = { n: 10, hitRate: 0.6, stability: 'holds', early: { n: 7 }, recent: { n: 3 },
+                byRegime: { trend: { n: 6 }, range: { n: 4 } } };
+  assert.deepEqual(cf.forRegime(rec, 'trend'), { n: 10, hitRate: 0.6, stability: 'holds', byRegime: { trend: { n: 6 } } });
+  assert.deepEqual(cf.forRegime(rec, 'squeeze').byRegime, {});
+});
+
+test('with a session, the verdict adds the composite record on 1h bars closing in it, else says nothing', () => {
+  const input = verdictInput();
+  input['1h'].calibration.composite.bySession = { 'Europe + US': { hitRate: 0.6, expected: 0.5, edge: 0.1, nEff: 33, thin: false, significant: false } };
+  const withIt = cf.explainVerdict(input, { score: 0.45, state: 'bull' }, cf.TF_WEIGHTS, { session: 'Europe + US' });
+  assert.deepEqual([withIt.sessionTrust.tf, withIt.sessionTrust.record.hitRate, withIt.sessionTrust.record.scope], ['1h', 0.6, 'session']);
+  assert.equal(cf.explainVerdict(input, { score: 0.45, state: 'bull' }, cf.TF_WEIGHTS, { session: 'Asia' }).sessionTrust.record, null);
+  assert.equal(cf.explainVerdict(input, { score: 0.45, state: 'bull' }).sessionTrust, null);
+  delete input['1h'];
+  assert.equal(cf.explainVerdict(input, { score: 0.45, state: 'bull' }, cf.TF_WEIGHTS, { session: 'Asia' }).sessionTrust.tf, null,
+    'only 4h and 1d: their bars span sessions');
+});

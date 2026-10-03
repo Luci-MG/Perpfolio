@@ -124,6 +124,7 @@ function filteredTrips() {
   const sym = f.symbol.trim().toUpperCase();
   return (tripsData?.trips || []).filter(t =>
     (!sym || t.symbol.includes(sym))
+    && (sessionFilter === 'All' || t.session === sessionFilter)
     && (f.side === 'all' || t.side === f.side)
     && (f.result === 'all' || (f.result === 'win') === (tripNet(t) > 0))
     && (f.hedged === 'all' || (f.hedged === 'yes') === t.hedged));
@@ -148,7 +149,8 @@ function tradesTableHtml() {
   const body = shown.map(t => `<tr>${cols.map(c => `<td>${c.cell(t)}</td>`).join('')}</tr>`).join('');
   const more = rows.length > shown.length
     ? `<button class="st-btn" onclick="showAllTrades()">Show all ${rows.length}</button>` : '';
-  return `<p class="jt-count">${tripsData.trips.length} trips · ${rows.length} match · ${shown.length} shown</p>
+  const scope = sessionFilter === 'All' ? '' : `${sessionFilter} · `;
+  return `<p class="jt-count">${scope}${tripsData.trips.length} trips · ${rows.length} match · ${shown.length} shown</p>
     <div class="jt-wrap"><table class="jr-tbl jt-tbl"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>${more}`;
 }
 

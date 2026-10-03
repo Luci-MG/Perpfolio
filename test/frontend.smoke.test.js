@@ -240,6 +240,109 @@ test('every Journal sub-tab renders, with and without equity snapshots', async (
   assert.deepEqual(strayValues(withSnaps), []);
 });
 
+test('the Confluence verdict leads, reads for every lean, and the matrix opens on demand', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`cfShowAll = false; setView('confluence')`);
+  await settle('cfData && !cfLoading', 'the confluence');
+  run(`riskForceRender = true; render(lastData)`);
+  let html = markup.get('content');
+  assert.match(html, /class="cf-verdict"[\s\S]*Can you trust it\?/);
+  assert.doesNotMatch(html, /class="cf-table"/, 'the matrix starts collapsed');
+  assert.deepEqual(strayValues(html), []);
+
+  for (const [direction, state, label] of [[1, 'bull', 'Leaning long'], [-1, 'bear', 'Leaning short'], [0, 'neutral', 'No clear lean']]) {
+    run(`cfData.verdict = { ...cfData.verdict, direction: ${direction}, state: '${state}',
+      against: ${direction} ? cfData.verdict.reasons[0] : null }; riskForceRender = true; render(lastData)`);
+    html = markup.get('content');
+    assert.match(html, new RegExp(label));
+    assert.deepEqual(strayValues(html), [], label);
+  }
+
+  for (const [edge, stability, text] of [[0.05, 'holds', /held up/], [-0.07, 'holds', /ran below chance/],
+                                         [0.05, 'fades', /changed direction/], [0.05, 'thin', /too few recent bars/]]) {
+    run(`cfData.verdict.trust = { ...cfData.verdict.trust, stability: '${stability}',
+      record: { ...cfData.verdict.trust.record, edge: ${edge} } }; riskForceRender = true; render(lastData)`);
+    assert.match(markup.get('content'), text, `${stability} at edge ${edge}`);
+  }
+
+  run(`toggleCfDetail()`);
+  assert.match(markup.get('content'), /class="cf-table"/);
+  run(`toggleCfDetail()`);
+});
+
+test('only a stop that cannot lose reads safe; a risking stop is grey, width turns it amber, a moved stop drops it', async () => {
+  const { markup, run, settle } = await bootPage();
+  const marks = () => [...markup.get('content').matchAll(/class="(stop-mark (?:safe|caution|risk)|sl-alert)"[^>]*title="([^"]*)"/g)]
+    .map(m => [m[1], m[2]]);
+  const btcLong = `lastData.binance.positions.find(p => p.symbol === 'BTCUSDT' && p.side === 'Long')`;
+
+  run(`setView('tiles')`);
+  let tiles = marks();
+  assert.equal(tiles.filter(([c]) => c === 'stop-mark risk').length, 1, 'the BTC long: stop below entry');
+  assert.equal(tiles.filter(([c]) => c === 'stop-mark safe').length, 0);
+  assert.equal(tiles.filter(([c]) => c === 'sl-alert').length, 3, 'ETH, ENA, SOL; the hedged BTC short shows nothing');
+  assert.match(tiles.find(([c]) => c === 'stop-mark risk')[1], /still risks a loss[\s\S]*about −\$[\d,.]+ if hit/);
+
+  run(`Object.assign(${btcLong}.stop, { price: ${btcLong}.entry, verdict: 'breakeven' }); render(lastData)`);
+  tiles = marks();
+  assert.equal(tiles.filter(([c]) => c === 'stop-mark safe').length, 1, 'a stop at entry reads safe');
+  assert.match(tiles.find(([c]) => c === 'stop-mark safe')[1], /Safe · stop at entry/);
+
+  run(`Object.assign(${btcLong}.stop, { price: 90000, verdict: 'set' }); setView('stops')`);
+  await settle('volStopData && !volLoading', 'the stops');
+  run(`const v = volStopData.positions.find(p => p.pair === 'BTC/USDT' && p.side === 'Long');
+       v.verdict = 'tight'; v.ratio = 0.4; setView('tiles')`);
+  tiles = marks();
+  assert.equal(tiles.filter(([c]) => c === 'stop-mark caution').length, 1);
+  assert.match(tiles.find(([c]) => c === 'stop-mark caution')[1], /Stop too tight[\s\S]*0\.40× suggested[\s\S]*judged on the Stops tab/);
+
+  run(`${btcLong}.stop.price = 91000; render(lastData)`);
+  assert.equal(marks().filter(([c]) => c === 'stop-mark caution').length, 0, 'judged against a stop that has since moved');
+
+  run(`setView('list')`);
+  const list = markup.get('content');
+  assert.equal((list.match(/class="stop-mark risk"/g) || []).length, 1);
+  assert.equal((list.match(/class="sl-alert"/g) || []).length, 3);
+  assert.deepEqual(strayValues(list), []);
+});
+
+test('the session clock reads, and a chosen session narrows Journal, Trades and Confluence but says where it does not apply', async () => {
+  const { markup, run, settle } = await bootPage();
+  await settle('sessionsModule', 'the session clock');
+  run(`render(lastData)`);
+  const clock = markup.get('content').match(/id="sessionClock">([\s\S]*?)<\/span>\s*<div class="view-tabs">/)[1];
+  assert.match(clock, /(Asia|Europe|Europe \+ US|US|Off-hours) · /);
+  assert.match(clock, /next: .+ in \d+(h \d{2})?m/);
+  assert.deepEqual(strayValues(clock), []);
+
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal'); setJrTab('trades')`);
+  await settle('perfData && !perfLoading && tripsData && !tripsLoading', 'the journal');
+  const session = run('tripsData.trips[0].session');
+  run(`setSession(${JSON.stringify(session)})`);
+  await settle('perfData && !perfLoading', 'the journal in one session');
+  assert.equal(run('perfData.session'), session);
+  run(`jrTab = 'trades'; riskForceRender = true; render(lastData)`);
+  const inIt = run(`tripsData.trips.filter(t => t.session === ${JSON.stringify(session)}).length`);
+  assert.match(markup.get('content'), new RegExp(`${session.replace('+', '\\+')} · \\d+ trips · ${inIt} match`));
+  run(`jrTab = 'overview'; riskForceRender = true; render(lastData)`);
+  assert.match(markup.get('content'), /Overview is the whole account/);
+
+  run(`setView('stops')`);
+  await settle('volStopData && !volLoading', 'the stops');
+  assert.match(markup.get('content'), /does not apply here: each hit rate counts 24h windows/);
+
+  run(`setView('confluence')`);
+  await settle('cfData && !cfLoading', 'the confluence');
+  run(`riskForceRender = true; render(lastData)`);
+  assert.match(markup.get('content'), new RegExp(`In ${session.replace('+', '\\+')}`));
+  assert.deepEqual(strayValues(markup.get('content')), []);
+  run(`setSession('All')`);
+});
+
 test('the tool widgets open each tool and toggle back to the last positions view', async () => {
   const { markup, run } = await bootPage();
   assert.equal(run('TOOLS.every(t => VIEWS.includes(t.view))'), true);

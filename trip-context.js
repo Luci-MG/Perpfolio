@@ -13,12 +13,7 @@ const HOUR = 3_600_000;
 const MAX_BARS = 1500;
 const PATH_INTERVALS = [['1m', 60_000], ['5m', 5 * 60_000], ['15m', 15 * 60_000], ['1h', HOUR], ['4h', 4 * HOUR]];
 
-/** Trading session by UTC hour: Asia 22–08, Europe 08–14, US 14–22. */
-export function sessionOf(ts) {
-  const h = new Date(ts).getUTCHours();
-  if (h >= 22 || h < 8) return 'Asia';
-  return h < 14 ? 'Europe' : 'US';
-}
+export { sessionOf } from './sessions.js';
 
 /** The finest kline interval, and its length, that covers the trip in one request of at most 1,500 bars. */
 export function pathInterval(openTime, closeTime) {

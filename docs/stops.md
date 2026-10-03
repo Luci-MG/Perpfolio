@@ -83,13 +83,19 @@ percentile the current reading sits at, so the label is falsifiable.
 Pure and unit-tested; the route passes it the orders and candles it already has, so it costs
 no request.
 
-- **Which order is your stop** — the leg's `Stop…` order on the closing side, nearest the
-  mark; take-profits and limit orders never count. One rule everywhere: the Stops tab, the
+- **Which order is your stop** — on the closing side of that leg: a `Stop market` or `Stop`
+  (stop-limit) order, nearest the mark, or a `Trailing stop market`. Take-profits and
+  reduce-only limits never count — a resting reduce-only limit can only sit on the profit
+  side, so it is a take-profit however it was meant; it is listed in the tooltip instead.
+  **Coverage** sums the leg's stop quantities (a `closePosition` stop covers all); under 95%
+  is `partial`. Hyperliquid order sizes are not known, so coverage there is null. One rule everywhere: the Stops tab, the
   entry capture and the tiles' "no stop" badge (`hasStop` on `/api/dashboard`). The badge used
   to count any reduce-only order, so a reduce-only limit sitting in profit — a take-profit —
   passed as a stop.
 - **Distance is from the current mark**, the risk carried now; the suggestion's distance
   (k × composite vol) is compared on the same basis. `atrMultiple` is that distance in 1h ATRs.
+- **Not by session.** The hit rate counts 24h windows, which always cover every session, so
+  the session filter does not apply here and the tab says so.
 - **The hit rate is measured, not modelled** — the share of 24h windows on the symbol's own
   held 1h candles (200 at start, growing to 720 while the server runs) whose move against the
   leg reached the distance. Windows overlap, so the tooltip gives windows and the roughly
@@ -98,12 +104,35 @@ no request.
 | Verdict | Rule (constants in `stop-check.js`) |
 |---|---|
 | `none` | no stop, and no opposite same-symbol leg |
+| `partial` | the stops cover under 95% of the leg |
+| `trailing` | only a trailing stop — its distance is not fixed, so it is never judged tight or wide |
+| `set` | a fixed stop with no suggestion to judge it against (the tiles, from orders alone) |
 | `hedged` | no stop, opposite same-symbol leg open — not flagged |
 | `breakeven` | stop within ±0.05% of entry (about one taker fee, and tick rounding) — risks nothing, so never tight or wide |
 | `locks` | stop further past entry in the profit direction; `lockedPct` |
 | `tight` | under 0.5× the suggestion, or hit in more than 60% of windows |
 | `wide` | over 2× the suggestion |
 | `ok` | otherwise |
+
+### On the position tiles
+Every 15s poll judges each leg from its orders alone (`legProtection` → `stop` on
+`/api/dashboard`): `set`, `breakeven`, `locks`, `trailing` or `partial`. Width needs the
+suggestion and the hit rate, so `tight` and `wide` come from the Stops tab's data once it has
+loaded, and only while that judgement was made against the same stop price — a moved stop
+falls back to the plain mark. `stopMarkHtml(p)` draws one mark for tiles and the List view:
+
+| Mark | Means |
+|---|---|
+| green shield ✓ | safe — the stop cannot lose: breakeven (at entry) or locks profit |
+| grey shield | a stop is set but still risks a loss (set, ok, trailing); the tooltip gives the loss if hit |
+| amber shield ! | partial, or judged too tight / too wide on the Stops tab |
+| red ring | no stop and not hedged |
+| nothing | no stop, hedged — the thread colour says so |
+
+Green means *nothing to worry about*, so only a stop that cannot lose earns it; a stop below a
+long's entry protects but still risks the gap, and reads grey. The tooltip carries the stop
+price and distance, the loss if hit, coverage, the take-profit and, for a width verdict, its
+ratio, hit rate and how long ago the Stops tab judged it.
 
 ### Frontend (`public/js/stops.js`)
 - 4th view tab **Stops** (`posView==='stops'`); `fetchVolStops()` runs only when the tab is active (not on the 15s poll) to limit candle API load

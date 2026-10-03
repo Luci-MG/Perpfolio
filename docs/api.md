@@ -37,6 +37,7 @@
 | `GET /api/venues` | per venue: enabled, configured, snapshot age | *Venue switch* |
 | `POST /api/venues` | `{ venue, enabled }` — switch a venue on or off; JSON only | *Venue switch* |
 | `GET /calc-engine.js` | the calculators' arithmetic, served to the browser | *Calculators* in `frontend.md` |
+| `GET /sessions.js` | trading-session definitions, served to the browser for the clock | `sessions.md` |
 | `GET /risk-engine.js` | the engine module, served to the browser | *Cross-Pool Stress Simulator* |
 
 Everything except `/api/dashboard` and `/api/volstops` is Binance-only. `/api/confluence` uses public

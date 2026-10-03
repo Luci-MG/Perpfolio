@@ -30,7 +30,9 @@
    "marginUsed": "12216.67",
    "orders": [
     {
+     "activatePrice": null,
      "asset": "ETH",
+     "callbackRate": null,
      "closePosition": false,
      "exchange": "binance",
      "pair": "ETH/USDT",
@@ -46,7 +48,9 @@
      "type": "Take profit market"
     },
     {
+     "activatePrice": null,
      "asset": "BTC",
+     "callbackRate": null,
      "closePosition": false,
      "exchange": "binance",
      "pair": "BTC/USDT",
@@ -62,7 +66,9 @@
      "type": "Limit"
     },
     {
+     "activatePrice": null,
      "asset": "BTC",
+     "callbackRate": null,
      "closePosition": false,
      "exchange": "binance",
      "pair": "BTC/USDT",
@@ -107,6 +113,16 @@
      "size": "0.5 BTC",
      "sizeRaw": 0.5,
      "sizeUsd": 50000,
+     "stop": {
+      "coverage": 1,
+      "distancePct": 10,
+      "lockedPct": null,
+      "price": 90000,
+      "ratio": null,
+      "takeProfit": null,
+      "trailing": null,
+      "verdict": "set"
+     },
      "symbol": "BTCUSDT",
      "type": "futures",
      "upnl": 1000
@@ -139,6 +155,7 @@
      "size": "0.4 BTC",
      "sizeRaw": -0.4,
      "sizeUsd": 40000,
+     "stop": null,
      "symbol": "BTCUSDT",
      "type": "futures",
      "upnl": 1200
@@ -171,6 +188,7 @@
      "size": "3 ETH",
      "sizeRaw": 3,
      "sizeUsd": 12000,
+     "stop": null,
      "symbol": "ETHUSDT",
      "type": "futures",
      "upnl": -300
@@ -203,6 +221,7 @@
      "size": "8000 ENA",
      "sizeRaw": 8000,
      "sizeUsd": 2000,
+     "stop": null,
      "symbol": "ENAUSDC",
      "type": "futures",
      "upnl": -160.00000000000014
@@ -234,6 +253,7 @@
      "side": "Short",
      "size": "20 SOL",
      "sizeUsd": 4000,
+     "stop": null,
      "type": "perpetual",
      "upnl": 200
     }
@@ -482,6 +502,7 @@
     "verdict": "wide",
     "yourStop": {
      "atrMultiple": 12.87,
+     "coverage": 1,
      "distancePct": 10,
      "hit": {
       "days": 8.3,
@@ -489,7 +510,9 @@
       "rate": 0,
       "windows": 176
      },
-     "price": 90000
+     "price": 90000,
+     "takeProfit": null,
+     "trailing": null
     }
    },
    {
@@ -3408,6 +3431,7 @@
     "wins": 12
    }
   },
+  "session": null,
   "side": [
    {
     "avgLoss": -65.9,
@@ -3659,7 +3683,7 @@
     "peakNotional": 19600,
     "positionSide": "LONG",
     "realized": 200,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": true
@@ -3731,7 +3755,7 @@
     "peakNotional": 10000,
     "positionSide": "LONG",
     "realized": -100,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": false
@@ -3911,7 +3935,7 @@
     "peakNotional": 10000,
     "positionSide": "LONG",
     "realized": 100,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": true
@@ -3983,7 +4007,7 @@
     "peakNotional": 10000,
     "positionSide": "LONG",
     "realized": 100,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": true
@@ -4091,7 +4115,7 @@
     "peakNotional": 784,
     "positionSide": "LONG",
     "realized": 8,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": true
@@ -4163,7 +4187,7 @@
     "peakNotional": 400,
     "positionSide": "LONG",
     "realized": -4,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": false
@@ -4343,7 +4367,7 @@
     "peakNotional": 400,
     "positionSide": "LONG",
     "realized": 4,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": true
@@ -4415,7 +4439,7 @@
     "peakNotional": 400,
     "positionSide": "LONG",
     "realized": 4,
-    "session": "Asia",
+    "session": "Off-hours",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": true
@@ -4897,7 +4921,7 @@
   "ok": true,
   "overall": {
    "aligned": false,
-   "score": 0.0038102606763150138,
+   "score": -0.11942599126282116,
    "state": "neutral"
   },
   "quote": "USDT",
@@ -4947,22 +4971,183 @@
   },
   "timeframes": {
    "15m": {
-    "bars": 1000,
+    "bars": 1500,
     "btc": null,
     "calibration": {
-     "bars": 994,
-     "baseUp": 0.5231388329979879,
+     "bars": 1494,
+     "baseUp": 0.5220883534136547,
      "composite": {
+      "byRegime": {
+       "range": {
+        "ci": [
+         0.34772644483427356,
+         0.7469846700292015
+        ],
+        "edge": 0.055833379128427674,
+        "expected": 0.5006182337747981,
+        "hitRate": 0.5564516129032258,
+        "n": 124,
+        "nEff": 20,
+        "significant": false,
+        "thin": true
+       },
+       "squeeze": {
+        "ci": [
+         0.18537288006054592,
+         0.7080346858230531
+        ],
+        "edge": -0.1333045729076791,
+        "expected": 0.5595340811044004,
+        "hitRate": 0.4262295081967213,
+        "n": 61,
+        "nEff": 10,
+        "significant": false,
+        "thin": true
+       },
+       "transition": {
+        "ci": [
+         0.21354764101977375,
+         0.5683534122974777
+        ],
+        "edge": -0.1251180173092053,
+        "expected": 0.4993115656963021,
+        "hitRate": 0.3741935483870968,
+        "n": 155,
+        "nEff": 25,
+        "significant": false,
+        "thin": true
+       },
+       "trend": {
+        "ci": [
+         0.2550546382693276,
+         0.517023212443538
+        ],
+        "edge": -0.12218855218855224,
+        "expected": 0.49929292929292934,
+        "hitRate": 0.3771043771043771,
+        "n": 297,
+        "nEff": 49,
+        "significant": false,
+        "thin": false
+       },
+       "unknown": {
+        "ci": [
+         0.01463444605730957,
+         0.882093908205744
+        ],
+        "edge": -0.24074074074074076,
+        "expected": 0.49074074074074076,
+        "hitRate": 0.25,
+        "n": 8,
+        "nEff": 1,
+        "significant": false,
+        "thin": true
+       }
+      },
+      "bySession": {
+       "Asia": {
+        "ci": [
+         0.3196998603127883,
+         0.6515988171302683
+        ],
+        "edge": -0.016931992738444368,
+        "expected": 0.5008029604803799,
+        "hitRate": 0.4838709677419355,
+        "n": 186,
+        "nEff": 31,
+        "significant": false,
+        "thin": false
+       },
+       "Europe": {
+        "ci": [
+         0.21916032330601526,
+         0.6230815390914495
+        ],
+        "edge": -0.09670846394984334,
+        "expected": 0.5018808777429468,
+        "hitRate": 0.4051724137931034,
+        "n": 116,
+        "nEff": 19,
+        "significant": false,
+        "thin": true
+       },
+       "Europe + US": {
+        "ci": [
+         0.26240059209075395,
+         0.7707856757936273
+        ],
+        "edge": -0.007377883310719202,
+        "expected": 0.5297659430122117,
+        "hitRate": 0.5223880597014925,
+        "n": 67,
+        "nEff": 11,
+        "significant": false,
+        "thin": true
+       },
+       "Off-hours": {
+        "ci": [
+         0.23191747760218445,
+         0.5412812171716976
+        ],
+        "edge": -0.15239311871912792,
+        "expected": 0.5261795264861182,
+        "hitRate": 0.3737864077669903,
+        "n": 206,
+        "nEff": 34,
+        "significant": false,
+        "thin": false
+       },
+       "US": {
+        "ci": [
+         0.0889298828516839,
+         0.5510781255263115
+        ],
+        "edge": -0.21168831168831176,
+        "expected": 0.4688311688311689,
+        "hitRate": 0.2571428571428571,
+        "n": 70,
+        "nEff": 11,
+        "significant": false,
+        "thin": true
+       }
+      },
       "ci": [
-       0.29157314216484553,
-       0.5047648465566553
+       0.32519206788393334,
+       0.5086793893273295
       ],
-      "edge": -0.10866060292641377,
-      "expected": 0.5017491558421805,
-      "hitRate": 0.3930885529157667,
-      "n": 463,
-      "nEff": 77,
+      "early": {
+       "ci": [
+        0.31397458350147833,
+        0.5264225440023877
+       ],
+       "edge": -0.08584612920662249,
+       "expected": 0.5021641208384217,
+       "hitRate": 0.41631799163179917,
+       "n": 478,
+       "nEff": 79,
+       "significant": false,
+       "thin": false
+      },
+      "edge": -0.08847794277886745,
+      "expected": 0.5024314311509605,
+      "hitRate": 0.413953488372093,
+      "n": 645,
+      "nEff": 107,
+      "recent": {
+       "ci": [
+        0.24496387977154008,
+        0.592529115147524
+       ],
+       "edge": -0.09598175586466273,
+       "expected": 0.5031673846071777,
+       "hitRate": 0.40718562874251496,
+       "n": 167,
+       "nEff": 27,
+       "significant": false,
+       "thin": true
+      },
       "significant": false,
+      "stability": "holds",
       "thin": false
      },
      "horizon": 6
@@ -4971,34 +5156,50 @@
      "bear": 1,
      "bull": 1,
      "na": 0,
-     "neutral": 5
+     "neutral": 4
     },
     "crowded": null,
-    "firstBarAt": 1787320800000,
+    "firstBarAt": 1786870800000,
     "informational": [],
     "lastClose": 100000,
     "lastClosedAt": 1788220799999,
     "live": null,
     "regime": {
-     "adx": 21.749063356511208,
-     "bbwPctile": 0.16666666666666666,
-     "label": "transition",
-     "squeeze": false
+     "adx": 19.82471561682665,
+     "bbwPctile": 0,
+     "label": "range",
+     "squeeze": true
     },
-    "score": 0.013333333333333332,
+    "score": 0.08725743174144253,
     "signals": [
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.3233298711060296,
+          0.7015071977224555
+         ],
+         "edge": -0.058733790999237256,
+         "expected": 0.5732265446224256,
+         "hitRate": 0.5144927536231884,
+         "n": 138,
+         "nEff": 23,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.3788777510782957,
-        0.5465626008699112
+        0.391888471733201,
+        0.523901892491099
        ],
-       "edge": -0.047300153119977706,
-       "expected": 0.5089353732457639,
-       "hitRate": 0.46163522012578617,
-       "n": 795,
-       "nEff": 132,
+       "edge": -0.04996976322277541,
+       "expected": 0.5071126203656325,
+       "hitRate": 0.45714285714285713,
+       "n": 1295,
+       "nEff": 215,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "emaStack",
@@ -5008,66 +5209,114 @@
       "source": "trend",
       "state": "bull",
       "unit": "pct",
-      "value": 0.8597856711784368
+      "value": 1.8534226736353743
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.25107014581763953,
+          0.6120661427012833
+         ],
+         "edge": -0.10387811634349031,
+         "expected": 0.5249307479224377,
+         "hitRate": 0.42105263157894735,
+         "n": 152,
+         "nEff": 25,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.40085815254435775,
-        0.5524299403628486
+        0.4152820298927288,
+        0.5389032190914295
        ],
-       "edge": -0.02604845758170593,
-       "expected": 0.5021420486295187,
-       "hitRate": 0.4760935910478128,
-       "n": 983,
-       "nEff": 163,
+       "edge": -0.024589253846132975,
+       "expected": 0.5013255990922557,
+       "hitRate": 0.47673634524612274,
+       "n": 1483,
+       "nEff": 247,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "supertrend",
       "name": "Supertrend 10 × 3",
-      "note": "up",
-      "score": 1,
+      "note": "down",
+      "score": -1,
       "source": "trend",
-      "state": "bull",
+      "state": "bear",
       "unit": "pct",
-      "value": 1.7215167358194616
+      "value": -0.7205259861587487
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.015623848251380468,
+          0.7703936811926075
+         ],
+         "edge": -0.3717105263157895,
+         "expected": 0.5592105263157895,
+         "hitRate": 0.1875,
+         "n": 16,
+         "nEff": 2,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.2600934921318504,
-        0.4918731369072352
+        0.2592799610172873,
+        0.45488652639739297
        ],
-       "edge": -0.1324314306893996,
-       "expected": 0.5008524833209785,
-       "hitRate": 0.3684210526315789,
-       "n": 380,
-       "nEff": 63,
+       "edge": -0.1504404107989179,
+       "expected": 0.5012846884724639,
+       "hitRate": 0.350844277673546,
+       "n": 533,
+       "nEff": 88,
        "significant": true,
+       "stability": "holds",
        "thin": false
       },
       "id": "rsi",
       "name": "RSI 14",
-      "note": "trend: 55/45",
+      "note": "range: fade 30/70",
       "score": 0,
       "source": "momentum",
       "state": "neutral",
       "unit": "num",
-      "value": 52.965421739350376
+      "value": 50.700989648114565
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.23769414957842286,
+          0.700589210910232
+         ],
+         "edge": -0.030455351862803126,
+         "expected": 0.4911295091661739,
+         "hitRate": 0.4606741573033708,
+         "n": 89,
+         "nEff": 14,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.37277448520269185,
-        0.5781587270827997
+        0.38352640000091553,
+        0.5507041263887202
        ],
-       "edge": -0.025484978180277118,
-       "expected": 0.499868279888057,
-       "hitRate": 0.47438330170777987,
-       "n": 527,
-       "nEff": 87,
+       "edge": -0.03339171221225756,
+       "expected": 0.4995571257460921,
+       "hitRate": 0.46616541353383456,
+       "n": 798,
+       "nEff": 133,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "macd",
@@ -5077,112 +5326,191 @@
       "source": "momentum",
       "state": "neutral",
       "unit": "pct",
-      "value": 0.02391384964935014
+      "value": 0.01853779848812991
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": null,
+         "edge": null,
+         "expected": null,
+         "hitRate": null,
+         "n": 0,
+         "nEff": 0,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.3664443720839702,
-        0.7179354797575107
+        0.3915914860241136,
+        0.6866121248972812
        ],
-       "edge": 0.05209570677074499,
-       "expected": 0.4960970643135924,
-       "hitRate": 0.5481927710843374,
-       "n": 166,
-       "nEff": 27,
+       "edge": 0.04727481353987378,
+       "expected": 0.49558232931726903,
+       "hitRate": 0.5428571428571428,
+       "n": 245,
+       "nEff": 40,
        "significant": false,
-       "thin": true
+       "stability": "thin",
+       "thin": false
       },
       "id": "bbPctB",
       "name": "Bollinger %B 20 × 2σ",
       "note": "inside bands",
-      "score": 0,
+      "raw": 0,
+      "reason": "off in a squeeze",
+      "score": null,
       "source": "meanrev",
-      "state": "neutral",
+      "state": "gated",
       "unit": "num",
-      "value": 0.6286473173140383
+      "value": 0.4527455637509455
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.21440076300755226,
+          0.6891119673743592
+         ],
+         "edge": -0.0625,
+         "expected": 0.5,
+         "hitRate": 0.4375,
+         "n": 80,
+         "nEff": 13,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.3910413334492233,
-        0.6255375355463626
+        0.41334793226654787,
+        0.6038331808231032
        ],
-       "edge": 0.01091763614267055,
-       "expected": 0.4978542936818909,
-       "hitRate": 0.5087719298245614,
-       "n": 399,
-       "nEff": 66,
+       "edge": 0.010381884100421068,
+       "expected": 0.4985322163858026,
+       "hitRate": 0.5089141004862237,
+       "n": 617,
+       "nEff": 102,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "cvd",
       "name": "CVD 20-bar imbalance (z)",
-      "note": "diverging from price (distribution into strength)",
-      "score": -1,
+      "note": "confirms price",
+      "score": 0,
       "source": "flow",
-      "state": "bear",
+      "state": "neutral",
       "unit": "pct",
-      "value": -5.094509384682273
+      "value": 0.5533071663504894
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.24523464774784454,
+          0.791652049433684
+         ],
+         "edge": 0.03462603878116338,
+         "expected": 0.4916897506925208,
+         "hitRate": 0.5263157894736842,
+         "n": 57,
+         "nEff": 9,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.385513124463746,
-        0.6270422609865872
+        0.3963526443362543,
+        0.5905551287806907
        ],
-       "edge": 0.007345405767941016,
-       "expected": 0.4993212608987257,
-       "hitRate": 0.5066666666666667,
-       "n": 375,
-       "nEff": 62,
+       "edge": -0.006727590634647396,
+       "expected": 0.499924869546212,
+       "hitRate": 0.4931972789115646,
+       "n": 588,
+       "nEff": 98,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "taker",
       "name": "Taker buy/sell, 3 bars (z)",
-      "note": "buy ÷ sell volume, usual",
-      "score": 0,
+      "note": "buy ÷ sell volume, unusually sell-heavy",
+      "score": -0.1873413474834736,
       "source": "flow",
       "state": "neutral",
       "unit": "ratio",
-      "value": 1.0626159562253423
+      "value": 0.8964378197822255
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.3001045256266258,
+          0.6933423257165076
+         ],
+         "edge": -0.04671562627498982,
+         "expected": 0.5428396572827417,
+         "hitRate": 0.49612403100775193,
+         "n": 129,
+         "nEff": 21,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.372642691310703,
-        0.5304153781119129
+        0.3832363337461565,
+        0.512942266603664
        ],
-       "edge": -0.05212504074727686,
-       "expected": 0.5024043703562154,
-       "hitRate": 0.45027932960893857,
-       "n": 895,
-       "nEff": 149,
+       "edge": -0.053718995833521355,
+       "expected": 0.5009100070694764,
+       "hitRate": 0.44719101123595506,
+       "n": 1335,
+       "nEff": 222,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "avwap",
       "name": "Anchored VWAP",
       "note": "anchored at the UTC day open",
-      "score": -1,
+      "score": 1,
       "source": "structure",
-      "state": "bear",
+      "state": "bull",
       "unit": "pct",
-      "value": -0.669426476797097
+      "value": 1.267999066293557
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.20967479053347854,
+          0.6994253003664306
+         ],
+         "edge": -0.1336842105263158,
+         "expected": 0.5736842105263158,
+         "hitRate": 0.44,
+         "n": 75,
+         "nEff": 12,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.34448752190366816,
-        0.5211151083070114
+        0.37682664668188387,
+        0.523464391695442
        ],
-       "edge": -0.07019168837386919,
-       "expected": 0.5007865892237275,
-       "hitRate": 0.43059490084985835,
-       "n": 706,
-       "nEff": 117,
+       "edge": -0.05304294099474832,
+       "expected": 0.5020814025332099,
+       "hitRate": 0.44903846153846155,
+       "n": 1040,
+       "nEff": 173,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "structure",
@@ -5192,20 +5520,36 @@
       "source": "structure",
       "state": "bull",
       "unit": "num",
-      "value": 0.6602734756398324
+      "value": 0.6439445396079102
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.19491244482339348,
+          0.7900721794318439
+         ],
+         "edge": -0.000611995104039198,
+         "expected": 0.488984088127295,
+         "hitRate": 0.4883720930232558,
+         "n": 43,
+         "nEff": 7,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.31638793812015154,
-        0.5596789538110045
+        0.4780006691916954,
+        0.7182267519173074
        ],
-       "edge": -0.06695115749441694,
-       "expected": 0.501017091560351,
-       "hitRate": 0.4340659340659341,
+       "edge": 0.10536652102917154,
+       "expected": 0.4990290833664328,
+       "hitRate": 0.6043956043956044,
        "n": 364,
        "nEff": 60,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "oiQuadrant",
@@ -5219,16 +5563,32 @@
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.32333344409090875,
+          0.9405705250247867
+         ],
+         "edge": 0.15964912280701749,
+         "expected": 0.5736842105263158,
+         "hitRate": 0.7333333333333333,
+         "n": 30,
+         "nEff": 5,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.35181750266207684,
-        0.6445104911084809
+        0.4150532562423083,
+        0.639758929680821
        ],
-       "edge": 0.006448328525369029,
-       "expected": 0.4915436393461169,
-       "hitRate": 0.4979919678714859,
-       "n": 249,
-       "nEff": 41,
+       "edge": 0.02412421046773694,
+       "expected": 0.5047441498093993,
+       "hitRate": 0.5288683602771362,
+       "n": 433,
+       "nEff": 72,
        "significant": false,
+       "stability": "thin",
        "thin": false
       },
       "id": "crowding",
@@ -5242,16 +5602,32 @@
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.07776361407335325,
+          0.7101706964586771
+         ],
+         "edge": -0.02960526315789469,
+         "expected": 0.3421052631578947,
+         "hitRate": 0.3125,
+         "n": 32,
+         "nEff": 5,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.36316395730395484,
-        0.6436106437111875
+        0.3064733244449827,
+        0.5851330593127397
        ],
-       "edge": 0.007589655580542032,
-       "expected": 0.49608681500769325,
-       "hitRate": 0.5036764705882353,
+       "edge": -0.05508799905504369,
+       "expected": 0.49626446964327897,
+       "hitRate": 0.4411764705882353,
        "n": 272,
        "nEff": 45,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "lsGap",
@@ -5269,9 +5645,9 @@
       "id": "trend",
       "informational": false,
       "name": "Trend",
-      "score": 0.6666666666666666,
-      "state": "bull",
-      "weight": 0.2
+      "score": -0.33333333333333337,
+      "state": "bear",
+      "weight": 0.1
      },
      {
       "id": "momentum",
@@ -5285,24 +5661,24 @@
       "id": "meanrev",
       "informational": false,
       "name": "Mean reversion",
-      "score": 0,
-      "state": "neutral",
-      "weight": 0.1
+      "score": null,
+      "state": "n/a",
+      "weight": 0
      },
      {
       "id": "flow",
       "informational": false,
       "name": "Flow",
-      "score": -0.5,
-      "state": "bear",
+      "score": -0.0936706737417368,
+      "state": "neutral",
       "weight": 0.18
      },
      {
       "id": "structure",
       "informational": false,
       "name": "Structure",
-      "score": -0.2,
-      "state": "neutral",
+      "score": 0.8,
+      "state": "bull",
       "weight": 0.15
      },
      {
@@ -5325,34 +5701,156 @@
     "state": "neutral"
    },
    "1d": {
-    "bars": 1000,
+    "bars": 1500,
     "btc": null,
     "calibration": {
-     "bars": 994,
-     "baseUp": 0.4859154929577465,
+     "bars": 1494,
+     "baseUp": 0.49732262382864795,
      "composite": {
+      "byRegime": {
+       "range": {
+        "ci": [
+         0.3983084751611986,
+         0.78376823982805
+        ],
+        "edge": 0.10769230769230764,
+        "expected": 0.5,
+        "hitRate": 0.6076923076923076,
+        "n": 130,
+        "nEff": 21,
+        "significant": false,
+        "thin": true
+       },
+       "squeeze": {
+        "ci": [
+         0.420592083883185,
+         0.8244152118896226
+        ],
+        "edge": 0.15042008300435272,
+        "expected": 0.49822856564429596,
+        "hitRate": 0.6486486486486487,
+        "n": 111,
+        "nEff": 18,
+        "significant": false,
+        "thin": true
+       },
+       "transition": {
+        "ci": [
+         0.34951202221531374,
+         0.7136326040529978
+        ],
+        "edge": 0.041255443605535014,
+        "expected": 0.4951683974540676,
+        "hitRate": 0.5364238410596026,
+        "n": 151,
+        "nEff": 25,
+        "significant": false,
+        "thin": true
+       },
+       "trend": {
+        "ci": [
+         0.3754321929710604,
+         0.5808699665125966
+        ],
+        "edge": -0.023902721338203925,
+        "expected": 0.5010890331252762,
+        "hitRate": 0.47718631178707227,
+        "n": 526,
+        "nEff": 87,
+        "significant": false,
+        "thin": false
+       },
+       "unknown": {
+        "ci": [
+         0.11701290321426888,
+         0.9257835908969336
+        ],
+        "edge": 0.06944444444444442,
+        "expected": 0.4930555555555556,
+        "hitRate": 0.5625,
+        "n": 16,
+        "nEff": 2,
+        "significant": false,
+        "thin": true
+       }
+      },
+      "bySession": {
+       "Asia": {
+        "ci": [
+         0.4359450658882046,
+         0.619352652370249
+        ],
+        "edge": 0.02886828211723308,
+        "expected": 0.49974617571409224,
+        "hitRate": 0.5286144578313253,
+        "n": 664,
+        "nEff": 110,
+        "significant": false,
+        "thin": false
+       },
+       "Off-hours": {
+        "ci": [
+         0.38037517438890633,
+         0.6605735250803986
+        ],
+        "edge": 0.022483046426708397,
+        "expected": 0.49973917579551386,
+        "hitRate": 0.5222222222222223,
+        "n": 270,
+        "nEff": 45,
+        "significant": false,
+        "thin": false
+       }
+      },
       "ci": [
-       0.43147845506939114,
-       0.6217130134068047
+       0.4484702459418724,
+       0.6037682390621477
       ],
-      "edge": 0.0259511615145418,
-      "expected": 0.5016462410828608,
-      "hitRate": 0.5275974025974026,
-      "n": 616,
-      "nEff": 102,
+      "early": {
+       "ci": [
+        0.42177947028398194,
+        0.610417548866451
+       ],
+       "edge": 0.01670457398011571,
+       "expected": 0.49998858977187155,
+       "hitRate": 0.5166931637519873,
+       "n": 629,
+       "nEff": 104,
+       "significant": false,
+       "thin": false
+      },
+      "edge": 0.02680672726595168,
+      "expected": 0.49995986802312753,
+      "hitRate": 0.5267665952890792,
+      "n": 934,
+      "nEff": 155,
+      "recent": {
+       "ci": [
+        0.41115362040096104,
+        0.6771442452021365
+       ],
+       "edge": 0.047208733433130035,
+       "expected": 0.5003322501734273,
+       "hitRate": 0.5475409836065573,
+       "n": 305,
+       "nEff": 50,
+       "significant": false,
+       "thin": false
+      },
       "significant": false,
+      "stability": "holds",
       "thin": false
      },
      "horizon": 6
     },
     "counts": {
-     "bear": 0,
-     "bull": 2,
+     "bear": 3,
+     "bull": 0,
      "na": 0,
-     "neutral": 2
+     "neutral": 1
     },
     "crowded": null,
-    "firstBarAt": 1701820800000,
+    "firstBarAt": 1658620800000,
     "informational": [
      "leverage",
      "positioning"
@@ -5361,165 +5859,274 @@
     "lastClosedAt": 1788220799999,
     "live": null,
     "regime": {
-     "adx": 36.63648725387336,
-     "bbwPctile": 0.7416666666666667,
-     "label": "trend",
-     "squeeze": false
+     "adx": 13.7399170178483,
+     "bbwPctile": 0.041666666666666664,
+     "label": "range",
+     "squeeze": true
     },
-    "score": 0.38666666666666666,
+    "score": -0.5376193182276308,
     "signals": [
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.4243486305869467,
+          0.7696113432193316
+         ],
+         "edge": 0.10892821099374295,
+         "expected": 0.5018502321200295,
+         "hitRate": 0.6107784431137725,
+         "n": 167,
+         "nEff": 27,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.40432830188217905,
-        0.5724482011836559
+        0.4310994670809681,
+        0.5635900153475915
        ],
-       "edge": -0.012038267339888331,
-       "expected": 0.5000885818052971,
-       "hitRate": 0.4880503144654088,
-       "n": 795,
-       "nEff": 132,
+       "edge": -0.0025889917456182188,
+       "expected": 0.49988628904291554,
+       "hitRate": 0.4972972972972973,
+       "n": 1295,
+       "nEff": 215,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "emaStack",
       "name": "EMA 20/50/200 stack",
-      "note": "mixed stack",
-      "score": 0.3333333333333333,
+      "note": "bear stack",
+      "score": -1,
       "source": "trend",
-      "state": "bull",
+      "state": "bear",
       "unit": "pct",
-      "value": 0.6162026889137806
+      "value": -3.1697391567254707
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.43742678340355967,
+          0.770927761722545
+         ],
+         "edge": 0.12081807852543869,
+         "expected": 0.4971594495644489,
+         "hitRate": 0.6179775280898876,
+         "n": 178,
+         "nEff": 29,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.43458188808507486,
-        0.5862893895521308
+        0.45509099888796734,
+        0.5787720779498288
        ],
-       "edge": 0.009549668304844383,
-       "expected": 0.5011319186737925,
-       "hitRate": 0.5106815869786369,
-       "n": 983,
-       "nEff": 163,
+       "edge": 0.017156962306406953,
+       "expected": 0.5000379129464588,
+       "hitRate": 0.5171948752528658,
+       "n": 1483,
+       "nEff": 247,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "supertrend",
       "name": "Supertrend 10 × 3",
-      "note": "up",
-      "score": 1,
+      "note": "down",
+      "score": -1,
       "source": "trend",
-      "state": "bull",
+      "state": "bear",
       "unit": "pct",
-      "value": 2.5790864365741184
+      "value": -2.0951284309193463
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.25747928534726405,
+          0.8476283448660744
+         ],
+         "edge": 0.07943558923438732,
+         "expected": 0.501959759602822,
+         "hitRate": 0.5813953488372093,
+         "n": 43,
+         "nEff": 7,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.37644167189983707,
-        0.599969008206753
+        0.4021250020444974,
+        0.5789334045339085
        ],
-       "edge": -0.01301942580993859,
-       "expected": 0.5006040759228054,
-       "hitRate": 0.48758465011286684,
-       "n": 443,
-       "nEff": 73,
+       "edge": -0.009798972426016905,
+       "expected": 0.5000224361131678,
+       "hitRate": 0.49022346368715086,
+       "n": 716,
+       "nEff": 119,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "rsi",
       "name": "RSI 14",
-      "note": "trend: 55/45",
-      "score": 1,
+      "note": "range: fade 30/70",
+      "score": 0,
       "source": "momentum",
-      "state": "bull",
+      "state": "neutral",
       "unit": "num",
-      "value": 64.0990231582438
+      "value": 44.32560699546802
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.22042055304529362,
+          0.6449532549771977
+         ],
+         "edge": -0.08225155448892763,
+         "expected": 0.4997272826442674,
+         "hitRate": 0.4174757281553398,
+         "n": 103,
+         "nEff": 17,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.3905195465887582,
-        0.5950174879708264
+        0.3833989421426557,
+        0.548750203082919
        ],
-       "edge": -0.0073877225617858255,
-       "expected": 0.4998405527504651,
-       "hitRate": 0.49245283018867925,
-       "n": 530,
-       "nEff": 88,
+       "edge": -0.03480834803923982,
+       "expected": 0.49992462710900726,
+       "hitRate": 0.46511627906976744,
+       "n": 817,
+       "nEff": 136,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "macd",
       "name": "MACD 12/26/9",
-      "note": "histogram rising above zero",
-      "score": 1,
+      "note": "histogram falling below zero",
+      "score": -1,
       "source": "momentum",
-      "state": "bull",
+      "state": "bear",
       "unit": "pct",
-      "value": 0.04890541650295484
+      "value": -0.05541802421817644
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": null,
+         "edge": null,
+         "expected": null,
+         "hitRate": null,
+         "n": 0,
+         "nEff": 0,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.2702988579463124,
-        0.6545828649118608
+        0.3505516794055456,
+        0.6824016909376116
        ],
-       "edge": -0.04349627174813592,
-       "expected": 0.4993786246893124,
-       "hitRate": 0.45588235294117646,
-       "n": 136,
-       "nEff": 22,
+       "edge": 0.018362692392143498,
+       "expected": 0.500155826126375,
+       "hitRate": 0.5185185185185185,
+       "n": 189,
+       "nEff": 31,
        "significant": false,
-       "thin": true
+       "stability": "thin",
+       "thin": false
       },
       "id": "bbPctB",
       "name": "Bollinger %B 20 × 2σ",
       "note": "inside bands",
       "raw": 0,
-      "reason": "off in a trend",
+      "reason": "off in a squeeze",
       "score": null,
       "source": "meanrev",
       "state": "gated",
       "unit": "num",
-      "value": 0.803731943136818
+      "value": 0.19988441560363837
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.3675382171598715,
+          0.832583527233201
+         ],
+         "edge": 0.12928284089332787,
+         "expected": 0.5003467887363018,
+         "hitRate": 0.6296296296296297,
+         "n": 81,
+         "nEff": 13,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.45253322937446633,
-        0.6756394858455053
+        0.47661059458132,
+        0.6668835566225869
        ],
-       "edge": 0.06650659103361589,
-       "expected": 0.5009991297901827,
-       "hitRate": 0.5675057208237986,
-       "n": 437,
-       "nEff": 72,
+       "edge": 0.07447671480624485,
+       "expected": 0.5000265964520333,
+       "hitRate": 0.5745033112582781,
+       "n": 604,
+       "nEff": 100,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "cvd",
       "name": "CVD 20-bar imbalance (z)",
       "note": "confirms price",
-      "score": 0,
+      "score": -0.17434027805774402,
       "source": "flow",
       "state": "neutral",
       "unit": "pct",
-      "value": -0.02013961977770007
+      "value": -1.4501199502289541
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.2752703603096064,
+          0.7526295730739373
+         ],
+         "edge": 0.021795045349939035,
+         "expected": 0.4962772438066875,
+         "hitRate": 0.5180722891566265,
+         "n": 83,
+         "nEff": 13,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.4090222298578806,
-        0.6432137041131359
+        0.4216218127289494,
+        0.6157009689671796
        ],
-       "edge": 0.02770896737207157,
-       "expected": 0.49992922358270225,
-       "hitRate": 0.5276381909547738,
-       "n": 398,
-       "nEff": 66,
+       "edge": 0.01943355208354497,
+       "expected": 0.4999593652857636,
+       "hitRate": 0.5193929173693086,
+       "n": 593,
+       "nEff": 98,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "taker",
@@ -5529,20 +6136,36 @@
       "source": "flow",
       "state": "neutral",
       "unit": "ratio",
-      "value": 0.9791877666005149
+      "value": 0.9939459644762458
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.40518258327855006,
+          0.7530296389242266
+         ],
+         "edge": 0.08630025720860979,
+         "expected": 0.5040611885745228,
+         "hitRate": 0.5903614457831325,
+         "n": 166,
+         "nEff": 27,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.3823914656748889,
-        0.54044526877653
+        0.43101746528255314,
+        0.5578333483177008
        ],
-       "edge": -0.04222996843939891,
-       "expected": 0.5026536027760767,
-       "hitRate": 0.4604236343366778,
-       "n": 897,
-       "nEff": 149,
+       "edge": -0.005502652726107449,
+       "expected": 0.49983693034650406,
+       "hitRate": 0.4943342776203966,
+       "n": 1412,
+       "nEff": 235,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "avwap",
@@ -5552,43 +6175,75 @@
       "source": "structure",
       "state": "bear",
       "unit": "pct",
-      "value": -1.9044771290489648
+      "value": -5.4611707109979974
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.40527060806771026,
+          0.8299254782694132
+         ],
+         "edge": 0.14524812734082404,
+         "expected": 0.5005852059925093,
+         "hitRate": 0.6458333333333334,
+         "n": 96,
+         "nEff": 16,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.46816755631598,
-        0.64746921505707
+        0.4650219281358178,
+        0.6119633708825943
        ],
-       "edge": 0.0578368168192831,
-       "expected": 0.5019299470291134,
-       "hitRate": 0.5597667638483965,
-       "n": 686,
-       "nEff": 114,
+       "edge": 0.03917268562413434,
+       "expected": 0.5001747232050403,
+       "hitRate": 0.5393474088291746,
+       "n": 1042,
+       "nEff": 173,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "structure",
       "name": "Donchian 20 + swing structure",
-      "note": "higher highs, higher lows",
-      "score": 0.6,
+      "note": "lower highs, lower lows",
+      "score": -0.6,
       "source": "structure",
-      "state": "bull",
+      "state": "bear",
       "unit": "num",
-      "value": 0.932602770809578
+      "value": 0.35809450368133344
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.1885137402777498,
+          0.783414035503781
+         ],
+         "edge": -0.019296531509526094,
+         "expected": 0.4975574010747435,
+         "hitRate": 0.4782608695652174,
+         "n": 46,
+         "nEff": 7,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.35446260607370667,
-        0.5938583782534969
+        0.30415195898796676,
+        0.5408109939936444
        ],
-       "edge": -0.0272312727540176,
-       "expected": 0.4998161291508844,
-       "hitRate": 0.4725848563968668,
+       "edge": -0.08208464842835228,
+       "expected": 0.4998392176189528,
+       "hitRate": 0.4177545691906005,
        "n": 383,
        "nEff": 63,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "oiQuadrant",
@@ -5602,16 +6257,32 @@
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.2048417638393092,
+          0.8290280676244093
+         ],
+         "edge": 0.0012484394506866447,
+         "expected": 0.5265293383270911,
+         "hitRate": 0.5277777777777778,
+         "n": 36,
+         "nEff": 6,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.4381783428246965,
-        0.7235037255560396
+        0.3715082858422887,
+        0.6608281278338586
        ],
-       "edge": 0.09049986191659759,
-       "expected": 0.4977354322010495,
-       "hitRate": 0.5882352941176471,
+       "edge": 0.018077538913825242,
+       "expected": 0.4995695199097042,
+       "hitRate": 0.5176470588235295,
        "n": 255,
        "nEff": 42,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "crowding",
@@ -5625,16 +6296,32 @@
      },
      {
       "hit": {
+       "byRegime": {
+        "squeeze": {
+         "ci": [
+          0.3723829864557892,
+          0.9807631532645191
+         ],
+         "edge": 0.3245462402765774,
+         "expected": 0.5216076058772687,
+         "hitRate": 0.8461538461538461,
+         "n": 26,
+         "nEff": 4,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.3115680674539111,
-        0.5905600409573659
+        0.36146147734479395,
+        0.6419134154686104
        ],
-       "edge": -0.055435175153485006,
-       "expected": 0.5023216220399319,
-       "hitRate": 0.4468864468864469,
+       "edge": 0.0013901760889712955,
+       "expected": 0.5004413257425305,
+       "hitRate": 0.5018315018315018,
        "n": 273,
        "nEff": 45,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "lsGap",
@@ -5652,388 +6339,8 @@
       "id": "trend",
       "informational": false,
       "name": "Trend",
-      "score": 0.6666666666666666,
-      "state": "bull",
-      "weight": 0.30000000000000004
-     },
-     {
-      "id": "momentum",
-      "informational": false,
-      "name": "Momentum",
-      "score": 1,
-      "state": "bull",
-      "weight": 0.12
-     },
-     {
-      "id": "meanrev",
-      "informational": false,
-      "name": "Mean reversion",
-      "score": null,
-      "state": "n/a",
-      "weight": 0
-     },
-     {
-      "id": "flow",
-      "informational": false,
-      "name": "Flow",
-      "score": 0,
-      "state": "neutral",
-      "weight": 0.18
-     },
-     {
-      "id": "structure",
-      "informational": false,
-      "name": "Structure",
-      "score": -0.2,
-      "state": "neutral",
-      "weight": 0.15
-     },
-     {
-      "id": "leverage",
-      "informational": true,
-      "name": "Leverage",
-      "score": 0,
-      "state": "neutral",
-      "weight": 0
-     },
-     {
-      "id": "positioning",
-      "informational": true,
-      "name": "Positioning",
-      "score": 0,
-      "state": "neutral",
-      "weight": 0
-     }
-    ],
-    "state": "bull"
-   },
-   "1h": {
-    "bars": 1000,
-    "btc": null,
-    "calibration": {
-     "bars": 994,
-     "baseUp": 0.4909456740442656,
-     "composite": {
-      "ci": [
-       0.37661239866709617,
-       0.5931636939473052
-      ],
-      "edge": -0.014726838834274114,
-      "expected": 0.49887060204780476,
-      "hitRate": 0.48414376321353064,
-      "n": 473,
-      "nEff": 78,
-      "significant": false,
-      "thin": false
-     },
-     "horizon": 6
-    },
-    "counts": {
-     "bear": 1,
-     "bull": 1,
-     "na": 0,
-     "neutral": 4
-    },
-    "crowded": null,
-    "firstBarAt": 1784620800000,
-    "informational": [],
-    "lastClose": 100000,
-    "lastClosedAt": 1788220799999,
-    "live": null,
-    "regime": {
-     "adx": 15.692449372617109,
-     "bbwPctile": 0.05,
-     "label": "range",
-     "squeeze": true
-    },
-    "score": 0,
-    "signals": [
-     {
-      "hit": {
-       "ci": [
-        0.4092019431843962,
-        0.5773528743800346
-       ],
-       "edge": -0.007521860724092999,
-       "expected": 0.5006036217303823,
-       "hitRate": 0.4930817610062893,
-       "n": 795,
-       "nEff": 132,
-       "significant": false,
-       "thin": false
-      },
-      "id": "emaStack",
-      "name": "EMA 20/50/200 stack",
-      "note": "bear stack",
       "score": -1,
-      "source": "trend",
       "state": "bear",
-      "unit": "pct",
-      "value": -2.2373688785325307
-     },
-     {
-      "hit": {
-       "ci": [
-        0.3802065210879557,
-        0.5313390165448395
-       ],
-       "edge": -0.04421032809266584,
-       "expected": 0.498940745183205,
-       "hitRate": 0.4547304170905392,
-       "n": 983,
-       "nEff": 163,
-       "significant": false,
-       "thin": false
-      },
-      "id": "supertrend",
-      "name": "Supertrend 10 × 3",
-      "note": "up",
-      "score": 1,
-      "source": "trend",
-      "state": "bull",
-      "unit": "pct",
-      "value": 0.6370716708518742
-     },
-     {
-      "hit": {
-       "ci": [
-        0.33545344703314917,
-        0.5638714808468901
-       ],
-       "edge": -0.052702689567355854,
-       "expected": 0.49956259294899835,
-       "hitRate": 0.4468599033816425,
-       "n": 414,
-       "nEff": 69,
-       "significant": false,
-       "thin": false
-      },
-      "id": "rsi",
-      "name": "RSI 14",
-      "note": "range: fade 30/70",
-      "score": 0,
-      "source": "momentum",
-      "state": "neutral",
-      "unit": "num",
-      "value": 42.86641894943686
-     },
-     {
-      "hit": {
-       "ci": [
-        0.3597400246603497,
-        0.5592615763355724
-       ],
-       "edge": -0.042336604907722786,
-       "expected": 0.5001462997012596,
-       "hitRate": 0.4578096947935368,
-       "n": 557,
-       "nEff": 92,
-       "significant": false,
-       "thin": false
-      },
-      "id": "macd",
-      "name": "MACD 12/26/9",
-      "note": "histogram falling below zero",
-      "score": -1,
-      "source": "momentum",
-      "state": "bear",
-      "unit": "pct",
-      "value": -0.05903157307744473
-     },
-     {
-      "hit": {
-       "ci": [
-        0.3899022239862078,
-        0.7566997189000209
-       ],
-       "edge": 0.08447966711835642,
-       "expected": 0.5005543464870857,
-       "hitRate": 0.5850340136054422,
-       "n": 147,
-       "nEff": 24,
-       "significant": false,
-       "thin": true
-      },
-      "id": "bbPctB",
-      "name": "Bollinger %B 20 × 2σ",
-      "note": "inside bands",
-      "raw": 0,
-      "reason": "off in a squeeze",
-      "score": null,
-      "source": "meanrev",
-      "state": "gated",
-      "unit": "num",
-      "value": 0.11005424071601316
-     },
-     {
-      "hit": {
-       "ci": [
-        0.4332150720034157,
-        0.6665080746685249
-       ],
-       "edge": 0.05285481734628872,
-       "expected": 0.4999090017491886,
-       "hitRate": 0.5527638190954773,
-       "n": 398,
-       "nEff": 66,
-       "significant": false,
-       "thin": false
-      },
-      "id": "cvd",
-      "name": "CVD 20-bar imbalance (z)",
-      "note": "confirms price",
-      "score": 0,
-      "source": "flow",
-      "state": "neutral",
-      "unit": "pct",
-      "value": 0.1455876942108791
-     },
-     {
-      "hit": {
-       "ci": [
-        0.38188621199166595,
-        0.618113788008334
-       ],
-       "edge": 0.0003695643247238478,
-       "expected": 0.49963043567527615,
-       "hitRate": 0.5,
-       "n": 392,
-       "nEff": 65,
-       "significant": false,
-       "thin": false
-      },
-      "id": "taker",
-      "name": "Taker buy/sell, 3 bars (z)",
-      "note": "buy ÷ sell volume, unusually buy-heavy",
-      "score": 1,
-      "source": "flow",
-      "state": "bull",
-      "unit": "ratio",
-      "value": 1.3802569056442886
-     },
-     {
-      "hit": {
-       "ci": [
-        0.4307640513224513,
-        0.5872420403938261
-       ],
-       "edge": 0.009573182853909568,
-       "expected": 0.4996559159517365,
-       "hitRate": 0.509229098805646,
-       "n": 921,
-       "nEff": 153,
-       "significant": false,
-       "thin": false
-      },
-      "id": "avwap",
-      "name": "Anchored VWAP",
-      "note": "anchored at the UTC week open",
-      "score": -1,
-      "source": "structure",
-      "state": "bear",
-      "unit": "pct",
-      "value": -0.629756734905107
-     },
-     {
-      "hit": {
-       "ci": [
-        0.4069160760671324,
-        0.5930839239328676
-       ],
-       "edge": -0.0005923390812162532,
-       "expected": 0.5005923390812163,
-       "hitRate": 0.5,
-       "n": 642,
-       "nEff": 107,
-       "significant": false,
-       "thin": false
-      },
-      "id": "structure",
-      "name": "Donchian 20 + swing structure",
-      "note": "higher highs, higher lows",
-      "score": 0.6,
-      "source": "structure",
-      "state": "bull",
-      "unit": "num",
-      "value": 0.26799220343775804
-     },
-     {
-      "hit": {
-       "ci": [
-        0.42928607319054757,
-        0.6644128193306796
-       ],
-       "edge": 0.049364891639915864,
-       "expected": 0.5002534289707712,
-       "hitRate": 0.549618320610687,
-       "n": 393,
-       "nEff": 65,
-       "significant": false,
-       "thin": false
-      },
-      "id": "oiQuadrant",
-      "name": "Open interest × price",
-      "note": "open interest flat",
-      "score": 0,
-      "source": "leverage",
-      "state": "neutral",
-      "unit": "pct",
-      "value": -1.1696743682023003
-     },
-     {
-      "hit": {
-       "ci": [
-        0.2791143190549046,
-        0.5993549402966608
-       ],
-       "edge": -0.06269779480905535,
-       "expected": 0.49485859882915584,
-       "hitRate": 0.4321608040201005,
-       "n": 199,
-       "nEff": 33,
-       "significant": false,
-       "thin": false
-      },
-      "id": "crowding",
-      "name": "Funding + basis crowding",
-      "note": "normal",
-      "score": 0,
-      "source": "leverage",
-      "state": "neutral",
-      "unit": "z",
-      "value": 0.21203866212568612
-     },
-     {
-      "hit": {
-       "ci": [
-        0.33942647491960154,
-        0.6196248256110938
-       ],
-       "edge": -0.02383188016990828,
-       "expected": 0.5016096579476861,
-       "hitRate": 0.4777777777777778,
-       "n": 270,
-       "nEff": 45,
-       "significant": false,
-       "thin": false
-      },
-      "id": "lsGap",
-      "name": "Top traders vs all accounts L/S",
-      "note": "top traders shorter than the crowd",
-      "score": 0,
-      "source": "positioning",
-      "state": "neutral",
-      "unit": "z",
-      "value": -0.5663834268637625
-     }
-    ],
-    "sources": [
-     {
-      "id": "trend",
-      "informational": false,
-      "name": "Trend",
-      "score": 0,
-      "state": "neutral",
       "weight": 0.1
      },
      {
@@ -6056,16 +6363,746 @@
       "id": "flow",
       "informational": false,
       "name": "Flow",
-      "score": 0.5,
-      "state": "bull",
+      "score": -0.08717013902887201,
+      "state": "neutral",
       "weight": 0.18
      },
      {
       "id": "structure",
       "informational": false,
       "name": "Structure",
-      "score": -0.2,
+      "score": -0.8,
+      "state": "bear",
+      "weight": 0.15
+     },
+     {
+      "id": "leverage",
+      "informational": true,
+      "name": "Leverage",
+      "score": 0,
       "state": "neutral",
+      "weight": 0
+     },
+     {
+      "id": "positioning",
+      "informational": true,
+      "name": "Positioning",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0
+     }
+    ],
+    "state": "bear"
+   },
+   "1h": {
+    "bars": 1500,
+    "btc": null,
+    "calibration": {
+     "bars": 1494,
+     "baseUp": 0.4705488621151272,
+     "composite": {
+      "byRegime": {
+       "range": {
+        "ci": [
+         0.24902561974926676,
+         0.6569430476402103
+        ],
+        "edge": -0.05276344878408257,
+        "expected": 0.4962417096536478,
+        "hitRate": 0.4434782608695652,
+        "n": 115,
+        "nEff": 19,
+        "significant": false,
+        "thin": true
+       },
+       "squeeze": {
+        "ci": [
+         0.2711566892093161,
+         0.7486355712251634
+        ],
+        "edge": 0.01915535444947203,
+        "expected": 0.49366515837104075,
+        "hitRate": 0.5128205128205128,
+        "n": 78,
+        "nEff": 13,
+        "significant": false,
+        "thin": true
+       },
+       "transition": {
+        "ci": [
+         0.2647139408464363,
+         0.6033395847633595
+        ],
+        "edge": -0.07199032062915911,
+        "expected": 0.49727767695099817,
+        "hitRate": 0.42528735632183906,
+        "n": 174,
+        "nEff": 29,
+        "significant": false,
+        "thin": true
+       },
+       "trend": {
+        "ci": [
+         0.39153899615889387,
+         0.6196136523720793
+        ],
+        "edge": -0.012234390877272294,
+        "expected": 0.5181167438184487,
+        "hitRate": 0.5058823529411764,
+        "n": 425,
+        "nEff": 70,
+        "significant": false,
+        "thin": false
+       },
+       "unknown": {
+        "ci": [
+         0.1416867959962042,
+         0.9439061922262006
+        ],
+        "edge": -0.1527777777777778,
+        "expected": 0.7777777777777778,
+        "hitRate": 0.625,
+        "n": 16,
+        "nEff": 2,
+        "significant": false,
+        "thin": true
+       }
+      },
+      "bySession": {
+       "Asia": {
+        "ci": [
+         0.3080605619269719,
+         0.639601732233896
+        ],
+        "edge": -0.029515938606847647,
+        "expected": 0.5001041739009653,
+        "hitRate": 0.47058823529411764,
+        "n": 187,
+        "nEff": 31,
+        "significant": false,
+        "thin": false
+       },
+       "Europe": {
+        "ci": [
+         0.3201458361360947,
+         0.713135903105472
+        ],
+        "edge": 0.020937723693629173,
+        "expected": 0.49874731567644953,
+        "hitRate": 0.5196850393700787,
+        "n": 127,
+        "nEff": 21,
+        "significant": false,
+        "thin": true
+       },
+       "Europe + US": {
+        "ci": [
+         0.22934700959726753,
+         0.6784717475537622
+        ],
+        "edge": -0.05739488385768893,
+        "expected": 0.49950014701558365,
+        "hitRate": 0.4421052631578947,
+        "n": 95,
+        "nEff": 15,
+        "significant": false,
+        "thin": true
+       },
+       "Off-hours": {
+        "ci": [
+         0.34964269936764697,
+         0.630033497586926
+        ],
+        "edge": -0.01654411764705882,
+        "expected": 0.5055147058823529,
+        "hitRate": 0.4889705882352941,
+        "n": 272,
+        "nEff": 45,
+        "significant": false,
+        "thin": false
+       },
+       "US": {
+        "ci": [
+         0.28686409689452785,
+         0.6798541638639052
+        ],
+        "edge": -0.01959676565093038,
+        "expected": 0.4999117262808516,
+        "hitRate": 0.48031496062992124,
+        "n": 127,
+        "nEff": 21,
+        "significant": false,
+        "thin": true
+       }
+      },
+      "ci": [
+       0.39973383483883823,
+       0.5665784804822576
+      ],
+      "early": {
+       "ci": [
+        0.39105142237370644,
+        0.5901854478373485
+       ],
+       "edge": -0.008343885711371957,
+       "expected": 0.4985747915728284,
+       "hitRate": 0.49023090586145646,
+       "n": 563,
+       "nEff": 93,
+       "significant": false,
+       "thin": false
+      },
+      "edge": -0.017618328097870006,
+      "expected": 0.5002915954246027,
+      "hitRate": 0.48267326732673266,
+      "n": 808,
+      "nEff": 134,
+      "recent": {
+       "ci": [
+        0.3206643846672692,
+        0.6160279303011255
+       ],
+       "edge": -0.046052452161265356,
+       "expected": 0.5113585746102449,
+       "hitRate": 0.46530612244897956,
+       "n": 245,
+       "nEff": 40,
+       "significant": false,
+       "thin": false
+      },
+      "significant": false,
+      "stability": "holds",
+      "thin": false
+     },
+     "horizon": 6
+    },
+    "counts": {
+     "bear": 3,
+     "bull": 0,
+     "na": 0,
+     "neutral": 3
+    },
+    "crowded": null,
+    "firstBarAt": 1782820800000,
+    "informational": [],
+    "lastClose": 100000,
+    "lastClosedAt": 1788220799999,
+    "live": null,
+    "regime": {
+     "adx": 27.87939804886726,
+     "bbwPctile": 0.8333333333333334,
+     "label": "trend",
+     "squeeze": false
+    },
+    "score": -0.57,
+    "signals": [
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.40129239045207427,
+          0.6192351938438909
+         ],
+         "edge": -0.017125554305380875,
+         "expected": 0.5279014163743464,
+         "hitRate": 0.5107758620689655,
+         "n": 464,
+         "nEff": 77,
+         "significant": false,
+         "thin": false
+        }
+       },
+       "ci": [
+        0.42806830092273634,
+        0.560552018567034
+       ],
+       "edge": -0.012955296087826085,
+       "expected": 0.5071637902963203,
+       "hitRate": 0.4942084942084942,
+       "n": 1295,
+       "nEff": 215,
+       "significant": false,
+       "stability": "fades",
+       "thin": false
+      },
+      "id": "emaStack",
+      "name": "EMA 20/50/200 stack",
+      "note": "bear stack",
+      "score": -1,
+      "source": "trend",
+      "state": "bear",
+      "unit": "pct",
+      "value": -7.025927188653225
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.37012029374660615,
+          0.5765976167026345
+         ],
+         "edge": -0.039993958171388955,
+         "expected": 0.5121628641214849,
+         "hitRate": 0.472168905950096,
+         "n": 521,
+         "nEff": 86,
+         "significant": false,
+         "thin": false
+        }
+       },
+       "ci": [
+        0.40736818457428325,
+        0.5308814988391475
+       ],
+       "edge": -0.03006451519722403,
+       "expected": 0.49870915444199815,
+       "hitRate": 0.4686446392447741,
+       "n": 1483,
+       "nEff": 247,
+       "significant": false,
+       "stability": "holds",
+       "thin": false
+      },
+      "id": "supertrend",
+      "name": "Supertrend 10 × 3",
+      "note": "down",
+      "score": -1,
+      "source": "trend",
+      "state": "bear",
+      "unit": "pct",
+      "value": -2.8091331187063973
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.35386447437157575,
+          0.58145016414878
+         ],
+         "edge": -0.04646268488201416,
+         "expected": 0.5123450378231906,
+         "hitRate": 0.46588235294117647,
+         "n": 425,
+         "nEff": 70,
+         "significant": false,
+         "thin": false
+        }
+       },
+       "ci": [
+        0.3598479714892986,
+        0.5410260467145416
+       ],
+       "edge": -0.05428250893619052,
+       "expected": 0.5030195074503064,
+       "hitRate": 0.4487369985141159,
+       "n": 673,
+       "nEff": 112,
+       "significant": false,
+       "stability": "holds",
+       "thin": false
+      },
+      "id": "rsi",
+      "name": "RSI 14",
+      "note": "trend: 55/45",
+      "score": -1,
+      "source": "momentum",
+      "state": "bear",
+      "unit": "num",
+      "value": 22.606994473828465
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.36784001867837246,
+          0.6454394607845083
+         ],
+         "edge": 0.009645258840911886,
+         "expected": 0.4975489857634046,
+         "hitRate": 0.5071942446043165,
+         "n": 278,
+         "nEff": 46,
+         "significant": false,
+         "thin": false
+        }
+       },
+       "ci": [
+        0.37470210408554694,
+        0.5392265629955979
+       ],
+       "edge": -0.045563263153624634,
+       "expected": 0.5013208389112004,
+       "hitRate": 0.45575757575757575,
+       "n": 825,
+       "nEff": 137,
+       "significant": false,
+       "stability": "holds",
+       "thin": false
+      },
+      "id": "macd",
+      "name": "MACD 12/26/9",
+      "note": "histogram falling below zero",
+      "score": -1,
+      "source": "momentum",
+      "state": "bear",
+      "unit": "pct",
+      "value": -0.25697003074436703
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": null,
+         "edge": null,
+         "expected": null,
+         "hitRate": null,
+         "n": 0,
+         "nEff": 0,
+         "significant": false,
+         "thin": true
+        }
+       },
+       "ci": [
+        0.4110076858949785,
+        0.7388434297707471
+       ],
+       "edge": 0.08359050236031862,
+       "expected": 0.5006200239554709,
+       "hitRate": 0.5842105263157895,
+       "n": 190,
+       "nEff": 31,
+       "significant": false,
+       "stability": "thin",
+       "thin": false
+      },
+      "id": "bbPctB",
+      "name": "Bollinger %B 20 × 2σ",
+      "note": "at lower band",
+      "raw": 1,
+      "reason": "off in a trend",
+      "score": null,
+      "source": "meanrev",
+      "state": "gated",
+      "unit": "num",
+      "value": -0.13626089261355684
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.3697467142535548,
+          0.7008676507674962
+         ],
+         "edge": 0.035716824584386964,
+         "expected": 0.5039657150981527,
+         "hitRate": 0.5396825396825397,
+         "n": 189,
+         "nEff": 31,
+         "significant": false,
+         "thin": false
+        }
+       },
+       "ci": [
+        0.4408754331434179,
+        0.6317712399579363
+       ],
+       "edge": 0.04002238462044899,
+       "expected": 0.49768253341233787,
+       "hitRate": 0.5377049180327869,
+       "n": 610,
+       "nEff": 101,
+       "significant": false,
+       "stability": "holds",
+       "thin": false
+      },
+      "id": "cvd",
+      "name": "CVD 20-bar imbalance (z)",
+      "note": "confirms price",
+      "score": 0,
+      "source": "flow",
+      "state": "neutral",
+      "unit": "pct",
+      "value": 1.2011116273758267
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.3845212141682513,
+          0.705956217141283
+         ],
+         "edge": 0.053258108920296976,
+         "expected": 0.4972469415847535,
+         "hitRate": 0.5505050505050505,
+         "n": 198,
+         "nEff": 33,
+         "significant": false,
+         "thin": false
+        }
+       },
+       "ci": [
+        0.4186375530960129,
+        0.6099770426369786
+       ],
+       "edge": 0.016309462271528352,
+       "expected": 0.4985420228769865,
+       "hitRate": 0.5148514851485149,
+       "n": 606,
+       "nEff": 101,
+       "significant": false,
+       "stability": "fades",
+       "thin": false
+      },
+      "id": "taker",
+      "name": "Taker buy/sell, 3 bars (z)",
+      "note": "buy ÷ sell volume, usual",
+      "score": 0,
+      "source": "flow",
+      "state": "neutral",
+      "unit": "ratio",
+      "value": 1.0961850957983796
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.42175628047832897,
+          0.6317664551691027
+         ],
+         "edge": 0.00973896353166992,
+         "expected": 0.5182610364683301,
+         "hitRate": 0.528,
+         "n": 500,
+         "nEff": 83,
+         "significant": false,
+         "thin": false
+        }
+       },
+       "ci": [
+        0.43413357187768903,
+        0.56230534273004
+       ],
+       "edge": -0.0012344817357772264,
+       "expected": 0.4994241993317222,
+       "hitRate": 0.498189717595945,
+       "n": 1381,
+       "nEff": 230,
+       "significant": false,
+       "stability": "fades",
+       "thin": false
+      },
+      "id": "avwap",
+      "name": "Anchored VWAP",
+      "note": "anchored at the UTC week open",
+      "score": -1,
+      "source": "structure",
+      "state": "bear",
+      "unit": "pct",
+      "value": -3.267182163464122
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.3750266789921544,
+          0.6046264280419649
+         ],
+         "edge": -0.02716457702508951,
+         "expected": 0.5164247202231802,
+         "hitRate": 0.4892601431980907,
+         "n": 419,
+         "nEff": 69,
+         "significant": false,
+         "thin": false
+        }
+       },
+       "ci": [
+        0.4105895560370745,
+        0.5596061273976701
+       ],
+       "edge": -0.01845533560002044,
+       "expected": 0.5032144309785849,
+       "hitRate": 0.48475909537856443,
+       "n": 1017,
+       "nEff": 169,
+       "significant": false,
+       "stability": "fades",
+       "thin": false
+      },
+      "id": "structure",
+      "name": "Donchian 20 + swing structure",
+      "note": "closed below the 20-bar low",
+      "score": -1,
+      "source": "structure",
+      "state": "bear",
+      "unit": "num",
+      "value": -0.22395036436937432
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.31353772998914087,
+          0.6607501999423828
+         ],
+         "edge": -0.009439786285932394,
+         "expected": 0.4948199032449967,
+         "hitRate": 0.4853801169590643,
+         "n": 171,
+         "nEff": 28,
+         "significant": false,
+         "thin": true
+        }
+       },
+       "ci": [
+        0.3639484547646713,
+        0.6000135096502414
+       ],
+       "edge": -0.01511218751170923,
+       "expected": 0.4960282180460604,
+       "hitRate": 0.48091603053435117,
+       "n": 393,
+       "nEff": 65,
+       "significant": false,
+       "stability": "fades",
+       "thin": false
+      },
+      "id": "oiQuadrant",
+      "name": "Open interest × price",
+      "note": "open interest flat",
+      "score": 0,
+      "source": "leverage",
+      "state": "neutral",
+      "unit": "pct",
+      "value": -1.1696743682023003
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.2925806235692763,
+          0.8531336545754364
+         ],
+         "edge": 0.15193255805201156,
+         "expected": 0.45591057920289035,
+         "hitRate": 0.6078431372549019,
+         "n": 51,
+         "nEff": 8,
+         "significant": false,
+         "thin": true
+        }
+       },
+       "ci": [
+        0.3318077433846264,
+        0.6546888409877698
+       ],
+       "edge": 0.009185822015028322,
+       "expected": 0.48327648954276065,
+       "hitRate": 0.49246231155778897,
+       "n": 199,
+       "nEff": 33,
+       "significant": false,
+       "stability": "thin",
+       "thin": false
+      },
+      "id": "crowding",
+      "name": "Funding + basis crowding",
+      "note": "normal",
+      "score": 0,
+      "source": "leverage",
+      "state": "neutral",
+      "unit": "z",
+      "value": 0.21203866212568612
+     },
+     {
+      "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.3131373947287318,
+          0.7143665355829097
+         ],
+         "edge": -0.03387243950788199,
+         "expected": 0.5502658821308328,
+         "hitRate": 0.5163934426229508,
+         "n": 122,
+         "nEff": 20,
+         "significant": false,
+         "thin": true
+        }
+       },
+       "ci": [
+        0.45091226398830175,
+        0.7265321003786861
+       ],
+       "edge": 0.09106053845009676,
+       "expected": 0.5052357578461996,
+       "hitRate": 0.5962962962962963,
+       "n": 270,
+       "nEff": 45,
+       "significant": false,
+       "stability": "holds",
+       "thin": false
+      },
+      "id": "lsGap",
+      "name": "Top traders vs all accounts L/S",
+      "note": "top traders shorter than the crowd",
+      "score": 0,
+      "source": "positioning",
+      "state": "neutral",
+      "unit": "z",
+      "value": -0.5663834268637625
+     }
+    ],
+    "sources": [
+     {
+      "id": "trend",
+      "informational": false,
+      "name": "Trend",
+      "score": -1,
+      "state": "bear",
+      "weight": 0.30000000000000004
+     },
+     {
+      "id": "momentum",
+      "informational": false,
+      "name": "Momentum",
+      "score": -1,
+      "state": "bear",
+      "weight": 0.12
+     },
+     {
+      "id": "meanrev",
+      "informational": false,
+      "name": "Mean reversion",
+      "score": null,
+      "state": "n/a",
+      "weight": 0
+     },
+     {
+      "id": "flow",
+      "informational": false,
+      "name": "Flow",
+      "score": 0,
+      "state": "neutral",
+      "weight": 0.18
+     },
+     {
+      "id": "structure",
+      "informational": false,
+      "name": "Structure",
+      "score": -1,
+      "state": "bear",
       "weight": 0.15
      },
      {
@@ -6085,130 +7122,355 @@
       "weight": 0.07
      }
     ],
-    "state": "neutral"
+    "state": "bear"
    },
    "4h": {
-    "bars": 1000,
+    "bars": 1500,
     "btc": null,
     "calibration": {
-     "bars": 994,
-     "baseUp": 0.49899396378269617,
+     "bars": 1494,
+     "baseUp": 0.5180722891566265,
      "composite": {
+      "byRegime": {
+       "range": {
+        "ci": [
+         0.2799923761135083,
+         0.7200076238864916
+        ],
+        "edge": -0.0048908296943230845,
+        "expected": 0.5048908296943231,
+        "hitRate": 0.5,
+        "n": 100,
+        "nEff": 16,
+        "significant": false,
+        "thin": true
+       },
+       "squeeze": {
+        "ci": [
+         0.2726170608048592,
+         0.7366145037607033
+        ],
+        "edge": 0.0059809398619782295,
+        "expected": 0.4999014130791982,
+        "hitRate": 0.5058823529411764,
+        "n": 85,
+        "nEff": 14,
+        "significant": false,
+        "thin": true
+       },
+       "transition": {
+        "ci": [
+         0.3624691500567483,
+         0.7319987320441859
+        ],
+        "edge": 0.05027794322017076,
+        "expected": 0.5045165773277744,
+        "hitRate": 0.5547945205479452,
+        "n": 146,
+        "nEff": 24,
+        "significant": false,
+        "thin": true
+       },
+       "trend": {
+        "ci": [
+         0.42409578781738433,
+         0.6415924819297039
+        ],
+        "edge": 0.03078706585335489,
+        "expected": 0.5036956927673347,
+        "hitRate": 0.5344827586206896,
+        "n": 464,
+        "nEff": 77,
+        "significant": false,
+        "thin": false
+       },
+       "unknown": {
+        "ci": [
+         0.22960631880739252,
+         0.9843761517486196
+        ],
+        "edge": -0.0023148148148147696,
+        "expected": 0.8148148148148148,
+        "hitRate": 0.8125,
+        "n": 16,
+        "nEff": 2,
+        "significant": false,
+        "thin": true
+       }
+      },
+      "bySession": {
+       "Asia": {
+        "ci": [
+         0.3476833916004746,
+         0.6749769455808106
+        ],
+        "edge": 0.016318219622013796,
+        "expected": 0.4963721357079354,
+        "hitRate": 0.5126903553299492,
+        "n": 197,
+        "nEff": 32,
+        "significant": false,
+        "thin": false
+       },
+       "Europe": {
+        "ci": [
+         0.366662400355371,
+         0.7805010727549192
+        ],
+        "edge": 0.08484092326887094,
+        "expected": 0.5044447910168434,
+        "hitRate": 0.5892857142857143,
+        "n": 112,
+        "nEff": 18,
+        "significant": false,
+        "thin": true
+       },
+       "Europe + US": {
+        "ci": [
+         0.24865193736093436,
+         0.6994277973980447
+        ],
+        "edge": -0.03260869565217389,
+        "expected": 0.5,
+        "hitRate": 0.4673913043478261,
+        "n": 92,
+        "nEff": 15,
+        "significant": false,
+        "thin": true
+       },
+       "Off-hours": {
+        "ci": [
+         0.38543448189358664,
+         0.6774950823543024
+        ],
+        "edge": 0.02878992352676568,
+        "expected": 0.5056230319388214,
+        "hitRate": 0.5344129554655871,
+        "n": 247,
+        "nEff": 41,
+        "significant": false,
+        "thin": false
+       },
+       "US": {
+        "ci": [
+         0.3868443127183109,
+         0.7366841667029983
+        ],
+        "edge": 0.0706483401380903,
+        "expected": 0.49990380710117355,
+        "hitRate": 0.5705521472392638,
+        "n": 163,
+        "nEff": 27,
+        "significant": false,
+        "thin": true
+       }
+      },
       "ci": [
-       0.39458130328628627,
-       0.6073710900181676
+       0.4524127504158689,
+       0.6183240344145439
       ],
-      "edge": 0.0010780428995239566,
-      "expected": 0.49994445198800164,
-      "hitRate": 0.5010224948875256,
-      "n": 489,
-      "nEff": 81,
+      "early": {
+       "ci": [
+        0.41861411010658933,
+        0.6146565837520676
+       ],
+       "edge": 0.01716031191536571,
+       "expected": 0.5001407261469181,
+       "hitRate": 0.5173010380622838,
+       "n": 578,
+       "nEff": 96,
+       "significant": false,
+       "thin": false
+      },
+      "edge": 0.03501552449006884,
+      "expected": 0.5013593213792283,
+      "hitRate": 0.5363748458692972,
+      "n": 811,
+      "nEff": 135,
+      "recent": {
+       "ci": [
+        0.42644370343134974,
+        0.7255704409001105
+       ],
+       "edge": 0.05959834443732859,
+       "expected": 0.524092642687135,
+       "hitRate": 0.5836909871244635,
+       "n": 233,
+       "nEff": 38,
+       "significant": false,
+       "thin": false
+      },
       "significant": false,
+      "stability": "holds",
       "thin": false
      },
      "horizon": 6
     },
     "counts": {
-     "bear": 4,
-     "bull": 1,
+     "bear": 0,
+     "bull": 2,
      "na": 0,
-     "neutral": 2
+     "neutral": 4
     },
     "crowded": null,
-    "firstBarAt": 1773820800000,
+    "firstBarAt": 1766620800000,
     "informational": [],
     "lastClose": 100000,
     "lastClosedAt": 1788220799999,
     "live": null,
     "regime": {
-     "adx": 19.923785908062946,
-     "bbwPctile": 0.10833333333333334,
-     "label": "range",
+     "adx": 49.29091730859917,
+     "bbwPctile": 0.3416666666666667,
+     "label": "trend",
      "squeeze": false
     },
-    "score": -0.2710183028295762,
+    "score": 0.41254349580820043,
     "signals": [
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.43837418332195105,
+          0.6455520443785541
+         ],
+         "edge": 0.03884560981273888,
+         "expected": 0.5050140393100682,
+         "hitRate": 0.543859649122807,
+         "n": 513,
+         "nEff": 85,
+         "significant": false,
+         "thin": false
+        }
+       },
        "ci": [
-        0.4092019431843962,
-        0.5773528743800346
+        0.4455314284903392,
+        0.577986577897469
        ],
-       "edge": -0.00674993356364606,
-       "expected": 0.49983169456993537,
-       "hitRate": 0.4930817610062893,
-       "n": 795,
-       "nEff": 132,
+       "edge": 0.01025259338512341,
+       "expected": 0.5017165185839886,
+       "hitRate": 0.511969111969112,
+       "n": 1295,
+       "nEff": 215,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "emaStack",
       "name": "EMA 20/50/200 stack",
-      "note": "bear stack",
-      "score": -1,
+      "note": "bull stack",
+      "score": 1,
       "source": "trend",
-      "state": "bear",
+      "state": "bull",
       "unit": "pct",
-      "value": -6.020142141423202
+      "value": 10.980451957276195
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.4155416048312274,
+          0.6156470405491737
+         ],
+         "edge": 0.014388301685151594,
+         "expected": 0.5018571856794694,
+         "hitRate": 0.516245487364621,
+         "n": 554,
+         "nEff": 92,
+         "significant": false,
+         "thin": false
+        }
+       },
        "ci": [
-        0.4305959725060381,
-        0.582324342221756
+        0.45375760219426664,
+        0.5774495470484082
        ],
-       "edge": 0.006633903113492767,
-       "expected": 0.49997850787328246,
-       "hitRate": 0.5066124109867752,
-       "n": 983,
-       "nEff": 163,
+       "edge": 0.014152361299547445,
+       "expected": 0.5016938962864269,
+       "hitRate": 0.5158462575859744,
+       "n": 1483,
+       "nEff": 247,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "supertrend",
       "name": "Supertrend 10 × 3",
-      "note": "down",
-      "score": -1,
+      "note": "up",
+      "score": 1,
       "source": "trend",
-      "state": "bear",
+      "state": "bull",
       "unit": "pct",
-      "value": -2.722698784542865
+      "value": 1.4526775661494407
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.42242592100085674,
+          0.6426723308246494
+         ],
+         "edge": 0.02959810648624084,
+         "expected": 0.504618229054598,
+         "hitRate": 0.5342163355408388,
+         "n": 453,
+         "nEff": 75,
+         "significant": false,
+         "thin": false
+        }
+       },
        "ci": [
-        0.40166467195870337,
-        0.6296363934937919
+        0.4381063958220323,
+        0.621467212482999
        ],
-       "edge": 0.016537906685395343,
-       "expected": 0.4999715272768688,
-       "hitRate": 0.5165094339622641,
-       "n": 424,
-       "nEff": 70,
+       "edge": 0.028843192318144806,
+       "expected": 0.5019838753510282,
+       "hitRate": 0.530827067669173,
+       "n": 665,
+       "nEff": 110,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "rsi",
       "name": "RSI 14",
-      "note": "range: fade 30/70",
-      "score": 0,
+      "note": "trend: 55/45",
+      "score": 1,
       "source": "momentum",
-      "state": "neutral",
+      "state": "bull",
       "unit": "num",
-      "value": 38.767145990455255
+      "value": 63.504211153743334
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.3926685735700014,
+          0.664407290400035
+         ],
+         "edge": 0.02776816181197761,
+         "expected": 0.5030537559962416,
+         "hitRate": 0.5308219178082192,
+         "n": 292,
+         "nEff": 48,
+         "significant": false,
+         "thin": false
+        }
+       },
        "ci": [
-        0.4076480579870475,
-        0.612126587537723
+        0.4222302407252043,
+        0.5885601162828247
        ],
-       "edge": 0.01027176190350354,
-       "expected": 0.500047187439836,
-       "hitRate": 0.5103189493433395,
-       "n": 533,
-       "nEff": 88,
+       "edge": 0.006194940056155562,
+       "expected": 0.4993537652459406,
+       "hitRate": 0.5055487053020962,
+       "n": 811,
+       "nEff": 135,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "macd",
@@ -6218,135 +7480,230 @@
       "source": "momentum",
       "state": "bear",
       "unit": "pct",
-      "value": -0.002166249528838307
+      "value": -0.1660757663599561
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": null,
+         "edge": null,
+         "expected": null,
+         "hitRate": null,
+         "n": 0,
+         "nEff": 0,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.3129126919104471,
-        0.7141476266219743
+        0.34105369294078924,
+        0.673069180063421
        ],
-       "edge": 0.016161485039267842,
-       "expected": 0.49996754721879666,
-       "hitRate": 0.5161290322580645,
-       "n": 124,
-       "nEff": 20,
+       "edge": 0.008223369669152769,
+       "expected": 0.49971313826735514,
+       "hitRate": 0.5079365079365079,
+       "n": 189,
+       "nEff": 31,
        "significant": false,
-       "thin": true
+       "stability": "thin",
+       "thin": false
       },
       "id": "bbPctB",
       "name": "Bollinger %B 20 × 2σ",
-      "note": "at lower band",
-      "score": 0.5,
+      "note": "inside bands",
+      "raw": 0,
+      "reason": "off in a trend",
+      "score": null,
       "source": "meanrev",
-      "state": "bull",
+      "state": "gated",
       "unit": "num",
-      "value": 0.011582628354597497
+      "value": 0.7053557275323171
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.40201846833238525,
+          0.7221416502765396
+         ],
+         "edge": 0.05878042677913997,
+         "expected": 0.5105265039139293,
+         "hitRate": 0.5693069306930693,
+         "n": 202,
+         "nEff": 33,
+         "significant": false,
+         "thin": false
+        }
+       },
        "ci": [
-        0.3732120497625041,
-        0.6076971313940942
+        0.4257777238231319,
+        0.6093588167736271
        ],
-       "edge": -0.010014633254069927,
-       "expected": 0.4999136231530598,
-       "hitRate": 0.4898989898989899,
-       "n": 396,
-       "nEff": 66,
+       "edge": 0.017907995618839045,
+       "expected": 0.5002738225629791,
+       "hitRate": 0.5181818181818182,
+       "n": 660,
+       "nEff": 110,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "cvd",
       "name": "CVD 20-bar imbalance (z)",
-      "note": "confirms price",
-      "score": 0,
+      "note": "diverging from price (distribution into strength)",
+      "score": -0.38285004657555,
       "source": "flow",
-      "state": "neutral",
+      "state": "bear",
       "unit": "pct",
-      "value": 0.7793507273129898
+      "value": -2.05570485359168
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.32543415665107234,
+          0.6438859669759387
+         ],
+         "edge": -0.018578850048428297,
+         "expected": 0.501505679316721,
+         "hitRate": 0.48292682926829267,
+         "n": 205,
+         "nEff": 34,
+         "significant": false,
+         "thin": false
+        }
+       },
        "ci": [
-        0.37447716025825095,
-        0.6178744325563988
+        0.4171327618891929,
+        0.6151751924666502
        ],
-       "edge": -0.003996881015087883,
-       "expected": 0.49993184036468136,
-       "hitRate": 0.4959349593495935,
-       "n": 369,
-       "nEff": 61,
+       "edge": 0.01588655506983694,
+       "expected": 0.5009276042221985,
+       "hitRate": 0.5168141592920354,
+       "n": 565,
+       "nEff": 94,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "taker",
       "name": "Taker buy/sell, 3 bars (z)",
-      "note": "buy ÷ sell volume, unusually sell-heavy",
-      "score": -0.5496376409788603,
+      "note": "buy ÷ sell volume, usual",
+      "score": 0,
       "source": "flow",
-      "state": "bear",
+      "state": "neutral",
       "unit": "ratio",
-      "value": 0.8626675361747439
+      "value": 0.9570687489952534
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.4261243938307701,
+          0.6292150510632898
+         ],
+         "edge": 0.025223698982850262,
+         "expected": 0.5036403606074663,
+         "hitRate": 0.5288640595903166,
+         "n": 537,
+         "nEff": 89,
+         "significant": false,
+         "thin": false
+        }
+       },
        "ci": [
-        0.4019302692131185,
-        0.5593204541067128
+        0.4530077805872511,
+        0.581104535667499
        ],
-       "edge": -0.01982313305883876,
-       "expected": 0.4999555833899646,
-       "hitRate": 0.48013245033112584,
-       "n": 906,
-       "nEff": 151,
+       "edge": 0.017837244933491203,
+       "expected": 0.4995037955289366,
+       "hitRate": 0.5173410404624278,
+       "n": 1384,
+       "nEff": 230,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "avwap",
       "name": "Anchored VWAP",
       "note": "anchored at the UTC month open",
-      "score": -1,
+      "score": 1,
       "source": "structure",
-      "state": "bear",
+      "state": "bull",
       "unit": "pct",
-      "value": -7.350727039248683
+      "value": 12.328619041248112
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.41380034757527634,
+          0.6315558386786657
+         ],
+         "edge": 0.02054323534467939,
+         "expected": 0.5032662884648444,
+         "hitRate": 0.5238095238095238,
+         "n": 462,
+         "nEff": 77,
+         "significant": false,
+         "thin": false
+        }
+       },
        "ci": [
-        0.3741721355745554,
-        0.5590777661791887
+        0.44386651487756634,
+        0.5945922593150405
        ],
-       "edge": -0.03453903142356446,
-       "expected": 0.4999768194419976,
-       "hitRate": 0.46543778801843316,
-       "n": 651,
-       "nEff": 108,
+       "edge": 0.018674090914617025,
+       "expected": 0.5010030029299843,
+       "hitRate": 0.5196770938446014,
+       "n": 991,
+       "nEff": 165,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "structure",
       "name": "Donchian 20 + swing structure",
-      "note": "closed below the 20-bar low",
-      "score": -1,
+      "note": "higher highs, higher lows",
+      "score": 0.6,
       "source": "structure",
-      "state": "bear",
+      "state": "bull",
       "unit": "num",
-      "value": -0.07346353279001386
+      "value": 0.6903733044558436
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.27112612807963266,
+          0.6409127061886303
+         ],
+         "edge": -0.040988236449814586,
+         "expected": 0.4899678282865493,
+         "hitRate": 0.4489795918367347,
+         "n": 147,
+         "nEff": 24,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.3678341455452507,
-        0.6074923777623025
+        0.36538383763724935,
+        0.6050079903318142
        ],
-       "edge": -0.01308900523560208,
-       "expected": 0.5,
-       "hitRate": 0.4869109947643979,
+       "edge": -0.012489749574213116,
+       "expected": 0.4967829432914906,
+       "hitRate": 0.48429319371727747,
        "n": 382,
        "nEff": 63,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "oiQuadrant",
@@ -6360,16 +7717,32 @@
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.2847889098469848,
+          0.8084317135379678
+         ],
+         "edge": 0.06562245254454413,
+         "expected": 0.498893676487714,
+         "hitRate": 0.5645161290322581,
+         "n": 62,
+         "nEff": 10,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.37447164474417705,
-        0.6964769944609231
+        0.4113166476761615,
+        0.7305806307340384
        ],
-       "edge": 0.03981313624320176,
-       "expected": 0.4997908241528379,
-       "hitRate": 0.5396039603960396,
+       "edge": 0.07545031611594888,
+       "expected": 0.5037576046761303,
+       "hitRate": 0.5792079207920792,
        "n": 202,
        "nEff": 33,
        "significant": false,
+       "stability": "holds",
        "thin": false
       },
       "id": "crowding",
@@ -6383,16 +7756,32 @@
      },
      {
       "hit": {
+       "byRegime": {
+        "trend": {
+         "ci": [
+          0.10994425202572247,
+          0.5350801105127644
+         ],
+         "edge": -0.20006016847172076,
+         "expected": 0.4738696922812446,
+         "hitRate": 0.27380952380952384,
+         "n": 84,
+         "nEff": 14,
+         "significant": false,
+         "thin": true
+        }
+       },
        "ci": [
-        0.43954098342975134,
-        0.7162748399185227
+        0.2901886328347374,
+        0.5675447458472734
        ],
-       "edge": 0.08438868505148533,
-       "expected": 0.5001701384779265,
-       "hitRate": 0.5845588235294118,
+       "edge": -0.0741495393338058,
+       "expected": 0.4969436569808646,
+       "hitRate": 0.4227941176470588,
        "n": 272,
        "nEff": 45,
        "significant": false,
+       "stability": "fades",
        "thin": false
       },
       "id": "lsGap",
@@ -6410,40 +7799,40 @@
       "id": "trend",
       "informational": false,
       "name": "Trend",
-      "score": -1,
-      "state": "bear",
-      "weight": 0.1
+      "score": 1,
+      "state": "bull",
+      "weight": 0.30000000000000004
      },
      {
       "id": "momentum",
       "informational": false,
       "name": "Momentum",
-      "score": -0.5,
-      "state": "bear",
+      "score": 0,
+      "state": "neutral",
       "weight": 0.12
      },
      {
       "id": "meanrev",
       "informational": false,
       "name": "Mean reversion",
-      "score": 0.5,
-      "state": "bull",
-      "weight": 0.15000000000000002
+      "score": null,
+      "state": "n/a",
+      "weight": 0
      },
      {
       "id": "flow",
       "informational": false,
       "name": "Flow",
-      "score": -0.2748188204894301,
-      "state": "bear",
+      "score": -0.191425023287775,
+      "state": "neutral",
       "weight": 0.18
      },
      {
       "id": "structure",
       "informational": false,
       "name": "Structure",
-      "score": -1,
-      "state": "bear",
+      "score": 0.8,
+      "state": "bull",
       "weight": 0.15
      },
      {
@@ -6463,7 +7852,81 @@
       "weight": 0.07
      }
     ],
-    "state": "bear"
+    "state": "bull"
+   }
+  },
+  "verdict": {
+   "against": null,
+   "aligned": false,
+   "direction": 0,
+   "reasons": [
+    {
+     "id": "emaStack",
+     "name": "EMA 20/50/200 stack",
+     "record": {
+      "edge": 0.03884560981273888,
+      "expected": 0.5050140393100682,
+      "hitRate": 0.543859649122807,
+      "nEff": 85,
+      "regime": "trend",
+      "scope": "regime",
+      "significant": false,
+      "thin": false
+     },
+     "score": 1,
+     "tf": "4h"
+    },
+    {
+     "id": "supertrend",
+     "name": "Supertrend 10 × 3",
+     "record": {
+      "edge": 0.014388301685151594,
+      "expected": 0.5018571856794694,
+      "hitRate": 0.516245487364621,
+      "nEff": 92,
+      "regime": "trend",
+      "scope": "regime",
+      "significant": false,
+      "thin": false
+     },
+     "score": 1,
+     "tf": "4h"
+    },
+    {
+     "id": "emaStack",
+     "name": "EMA 20/50/200 stack",
+     "record": {
+      "edge": -0.017125554305380875,
+      "expected": 0.5279014163743464,
+      "hitRate": 0.5107758620689655,
+      "nEff": 77,
+      "regime": "trend",
+      "scope": "regime",
+      "significant": false,
+      "thin": false
+     },
+     "score": -1,
+     "tf": "1h"
+    }
+   ],
+   "score": -0.11942599126282116,
+   "sessionTrust": null,
+   "state": "neutral",
+   "strength": "weak",
+   "trust": {
+    "record": {
+     "edge": 0.03078706585335489,
+     "expected": 0.5036956927673347,
+     "hitRate": 0.5344827586206896,
+     "nEff": 77,
+     "regime": "trend",
+     "scope": "regime",
+     "significant": false,
+     "thin": false
+    },
+    "regime": "trend",
+    "stability": "holds",
+    "tf": "4h"
    }
   }
  }

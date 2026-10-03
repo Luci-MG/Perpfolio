@@ -56,6 +56,32 @@ signal × timeframe cells, two or three will still clear by luck — the intro s
 thresholds (|s| ≥ 0.5) silently dropped every mixed EMA stack and every OI covering/flush
 reading from calibration, so the record described a different subset than the one on screen.
 
+**Records are split by regime and by time.** Every replayed bar is tagged with its own regime
+at that bar (`regimeKey`: squeeze, else the ADX label), and the first 70% of bars are *early*,
+the last 30% *recent*. Each bucket's `expected` uses that bucket's own up-bar share, so a
+regime that trended up does not lend its drift to the signal. `stability` compares early and
+recent edges: **holds** (same sign), **fades** (sign flips), **thin** (under 20 independent
+recent samples). The signals are fixed rules — nothing is fitted — so this is a stability
+check, not a holdout: it asks whether an edge seen earlier is still there. A reading ships only
+each signal's overall record and the record for its timeframe's current regime (`forRegime`);
+the composite ships every regime. History is 1,500 bars per timeframe, the most one request
+returns.
+
+**By session.** Each replayed bar is also tagged with the session its close falls in
+(`sessions.js`), so the composite carries `bySession`. With a session chosen, the verdict adds
+the composite's record on 1h (else 15m) bars closing in it; 4h and 1d bars span sessions, so
+with only those selected it says so.
+
+**The verdict.** `explainVerdict(timeframes, overall)` turns the reading into words: the lean
+and strength, the three signals pulling hardest that way across 1h–1d (timeframe weight ×
+source weight ÷ live signals in the source × score), each with its record **in its timeframe's
+current regime** — or its overall record, said so, when the regime sample is thin — the
+strongest signal against, and the composite's record and stability on 4h. When the composite
+has run below chance early and recent, the panel says the lean has not been a reliable guide
+rather than calling it stable. Observed live on BTCUSDT on 2026-10-03: a weak long lean in a 4h
+trend whose composite ran 43% against 50% by chance (n≈89) — exactly what the panel exists to
+say.
+
 Observed live on BTCUSDT: most edges sit within ±4 points of zero, and the 15m EMA stack runs
 **−10pt** (15m trends mean-revert). That is the expected result for public indicators on a
 liquid market and exactly why the number is on screen.
@@ -66,7 +92,7 @@ kline `closeTime` (open + interval − 1ms), and the anchored-VWAP slope is neve
 an anchor reset.
 
 ### Server
-`getKlinesTf(symbol, interval)` — 1,000 bars with taker-buy volume (kline field 9), forming bar
+`getKlinesTf(symbol, interval)` — 1,500 bars with taker-buy volume (kline field 9), forming bar
 split off as `live`, TTL 60s–10min by timeframe; kept separate from `getBinanceKlines` so the
 stops and stress paths are untouched. `publicGet(path, params, ttl)` — cached public GET with
 stale fallback. One `Promise.all` fans out every kline, positioning and funding call. Symbols are
@@ -74,7 +100,10 @@ validated against `exchangeInfo` (`contractType: PERPETUAL`); `refreshSymbolFilt
 `contractType`, `status` and `quoteAsset`. Cold BTC request ~1.6s.
 
 ### Frontend
-8th tab **Confluence**, `#cf-mounted` so the poll cannot reset the picker. Symbol input with a
+8th tab **Confluence**, `#cf-mounted` so the poll cannot reset the picker. A **verdict card**
+leads (`renderCfVerdict`: lean, strength, alignment, why, against, can you trust it); the
+per-timeframe tiles follow, and the intro and the full matrix sit behind *Show all signals*
+(`cfShowAll`, remembered). Symbol input with a
 datalist of every trading perp, quick buttons for BTC and each held symbol (•), timeframe chips.
 Header tiles per timeframe (score as a diverging bar, regime, ADX, source counts, composite
 record, squeeze / crowded / BTC-disagrees badges); a matrix of source rows and signal rows ×

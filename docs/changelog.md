@@ -1,5 +1,37 @@
 # Changelog
 
+## Sessions across the dashboard (2026-10-03)
+
+- Sessions follow each market's own clock with daylight saving — Tokyo, London and New York
+  hours, a *Europe + US* overlap and *Off-hours* — in `sessions.js`, shared by server and
+  browser. The fixed UTC buckets they replace drifted an hour twice a year and had no overlap.
+- A session clock in the main header bar: the session now, the nearest close, the next change.
+- One session filter, remembered, narrows the Journal's trip statistics, habit costs and Trades
+  and adds the composite's record for that session to the Confluence verdict. Overview and
+  Stops say why it does not apply to them.
+
+## Protected tiles read as safe (2026-10-03)
+
+- Every tile and List row now says whether the leg needs attention: a green shield only when
+  the stop cannot lose (at entry or locking profit), a grey shield when a stop is set but still
+  risks a loss (the tooltip gives the loss if hit), an amber shield when only part of the leg
+  is covered or the Stops tab judged the stop too tight or wide, the red ring when nothing
+  protects it.
+- What counts as a stop: stop-market, stop-limit and trailing stops on the closing side;
+  reduce-only limits are take-profits. Trailing stops were silently ignored before, and a
+  stop for part of a leg passed as full protection.
+
+## Confluence: verdict and honest calibration (2026-10-03)
+
+- A verdict card leads: lean and strength, the three signals carrying it with their records in
+  the current regime, the strongest signal against, and whether the composite can be trusted —
+  its record in this regime and whether it held up in the most recent 30% of bars. The full
+  matrix sits behind *Show all signals*.
+- Calibration records each signal per regime (tagged at each bar, against that regime's own
+  up-bar share) and early against recent; history is 1,500 bars. A reading ships only the
+  current regime's record per signal, so the response grew 23 → 40 KB, not 92.
+- A composite that ran below chance both early and recent is called unreliable, not stable.
+
 ## Journal: Overview and Behaviour (2026-10-03)
 
 - **Fixed:** Overview counted unrealised PnL twice — it read the margin balance as the wallet

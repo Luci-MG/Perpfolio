@@ -28,6 +28,7 @@ expected to say so rather than assert correctness.
 | Stress / liquidation maths, calibration | [`docs/stress-engine.md`](docs/stress-engine.md) | `risk-engine.js`, `lib/pools.js` |
 | Unwind planner and drawers | [`docs/unwind.md`](docs/unwind.md) | `risk-engine.js`, `routes/deleverage.js` |
 | Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `trip-context.js`, `habits.js`, `lib/history-sync.js`, `lib/trip-enrichment.js`, `lib/entry-context.js`, `lib/equity-snapshots.js` |
+| Trading sessions, the clock and the session filter | [`docs/sessions.md`](docs/sessions.md) | `sessions.js`, `public/js/sessions-view.js` |
 | Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
 | Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |
 | What changed | [`docs/changelog.md`](docs/changelog.md) | — |
@@ -45,6 +46,7 @@ crypto-dashboard/
 ├── vol-estimator.js       # composite volatility for dynamic stops
 ├── stop-check.js          # your real stop against the suggestion
 ├── confluence.js          # market signals, regime gating, self-calibration
+├── sessions.js            # trading sessions by market clock — also served to the browser
 ├── trade-analytics.js     # round trips and statistics
 ├── trip-context.js        # per-trip funding, price path, market at entry
 ├── habits.js              # trading habits and their estimated cost
@@ -58,7 +60,7 @@ crypto-dashboard/
 └── public/
     ├── index.html         # markup only
     ├── css/app.css
-    └── js/                # 16 classic scripts, loaded in a fixed order (docs/frontend.md)
+    └── js/                # 17 classic scripts, loaded in a fixed order (docs/frontend.md)
 ```
 
 ## Running and verifying

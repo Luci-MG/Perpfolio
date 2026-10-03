@@ -76,6 +76,9 @@ test('each leg\'s real stop is judged against the suggestion, and the tiles agre
   const dash = (await get('/api/dashboard')).body;
   const withStop = [...dash.binance.positions, ...dash.hyperliquid.positions].filter(p => p.hasStop).map(p => p.pair);
   assert.deepEqual(withStop, ['BTC/USDT']);
+  const tileLeg = dash.binance.positions.find(p => p.symbol === 'BTCUSDT' && p.side === 'Long');
+  assert.deepEqual([tileLeg.stop.verdict, tileLeg.stop.coverage, tileLeg.stop.price], ['set', 1, 90000]);
+  assert.equal(dash.binance.positions.find(p => p.symbol === 'ETHUSDT').stop, null, 'a take-profit alone is no stop');
 });
 
 test('riskbook reproduces the exchange\'s own margin figures exactly', async () => {
@@ -121,6 +124,25 @@ test('history sync fills the store and the journal reconciles every fill', async
   record('performance', clockFree);
 });
 
+test('a session narrows trip statistics and habits, never the account overview', async () => {
+  const all = (await get('/api/performance')).body;
+  const { sessionOf } = await import('../sessions.js');
+  const trips = (await get('/api/trips')).body.trips;
+  const session = sessionOf(trips[0].openTime);
+  const inIt = trips.filter(t => t.session === session).length;
+  const one = (await get(`/api/performance?session=${encodeURIComponent(session)}`)).body;
+  assert.equal(one.session, session);
+  assert.equal(one.overall.trips, inIt);
+  assert.ok(inIt < all.overall.trips || trips.every(t => t.session === session));
+  assert.deepEqual(one.periods, all.periods, 'the overview is the whole account');
+  assert.deepEqual(one.equity, all.equity);
+  assert.ok(one.habits.every((h, i) => h.trips <= all.habits[i].trips));
+  assert.equal((await get('/api/performance?session=Mars')).body.session, null);
+
+  const cf = (await get(`/api/confluence?symbol=BTCUSDT&session=${encodeURIComponent(session)}`)).body;
+  assert.deepEqual([cf.verdict.sessionTrust.session, cf.verdict.sessionTrust.tf], [session, '1h']);
+});
+
 test('trips carry context from the sync, funding from the ledger, and a re-sync fetches nothing', async () => {
   const { status, body } = await get('/api/trips');
   assert.equal(status, 200);
@@ -130,7 +152,7 @@ test('trips carry context from the sync, funding from the ledger, and a re-sync 
   for (const t of body.trips) {
     assert.ok(t.mae <= 0 && t.mfe >= 0, `${t.key} mae ${t.mae} mfe ${t.mfe}`);
     assert.ok(Number.isFinite(t.atrPct) && ['up', 'down', 'flat'].includes(t.btcTrend), t.key);
-    assert.ok(['Asia', 'Europe', 'US'].includes(t.session));
+    assert.ok(['Asia', 'Europe', 'Europe + US', 'US', 'Off-hours'].includes(t.session));
     assert.ok(t.openNotional > 0 && t.side === 'Long');
   }
   const covered = body.trips.filter(t => t.funding != null);
@@ -160,6 +182,17 @@ test('confluence scores every timeframe and rejects anything that is not a perpe
   assert.equal(btc.status, 200);
   assert.deepEqual(Object.keys(btc.body.timeframes), ['15m', '1h', '4h', '1d']);
   for (const r of Object.values(btc.body.timeframes)) assert.ok(r.score == null || Math.abs(r.score) <= 1);
+  const v = btc.body.verdict;
+  assert.equal(v.state, btc.body.overall.state);
+  assert.ok(v.reasons.length > 0 && v.reasons.length <= 3);
+  for (const r of [...v.reasons, ...(v.against ? [v.against] : [])]) {
+    assert.ok(['1h', '4h', '1d'].includes(r.tf) && Number.isFinite(r.score) && r.record?.nEff >= 0, r.id);
+  }
+  assert.equal(v.trust.tf, '4h');
+  assert.ok(['holds', 'fades', 'thin'].includes(v.trust.stability));
+  const composite = btc.body.timeframes['4h'].calibration.composite;
+  assert.equal(Object.values(composite.byRegime).reduce((a, r) => a + r.n, 0), composite.n);
+  assert.ok(btc.body.timeframes['4h'].bars > 1000, 'calibrated on the deeper history');
   record('confluence', btc.body);
   const alt = await get('/api/confluence?symbol=ETHUSDT&tfs=1h,4h');
   assert.equal(alt.status, 200);
@@ -233,7 +266,8 @@ test('an increasing fill on the stream captures its entry context once, joined t
   assert.ok(joined.account.equity > 0 && joined.account.leverage === 10);
   assert.ok(Number.isFinite(joined.confluence.score) && '1h' in joined.confluence.byTf);
   assert.ok(joined.suggestedStop.price < trip.avgEntry && joined.suggestedStop.distancePct > 0);
-  assert.deepEqual(joined.yourStop, { price: 90000, distancePct: +((trip.avgEntry - 90000) / trip.avgEntry * 100).toFixed(3) });
+  assert.deepEqual([joined.yourStop.price, joined.yourStop.distancePct, joined.yourStop.coverage],
+    [90000, +((trip.avgEntry - 90000) / trip.avgEntry * 100).toFixed(3), null], 'coverage is not judged against one fill');
   assert.equal(joined.stopLooked, true);
 });
 

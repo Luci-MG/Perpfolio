@@ -16,6 +16,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeVenuePopover(); hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); closeUpnlDrawerForce(); closeExpDrawerForce(); closeFundDrawerForce(); closeLiqDrawerForce(); closeSimDrawerForce(); closeHlDrawerForce(); }
 });
 
+startSessionClock();
+
 const VIEWS = ['tiles', 'list', 'orders', 'stops', 'stress', 'unwind', 'journal', 'confluence'];
 const savedView = loadPref('posView', 'tiles');
 fetchData().then(() => { if (VIEWS.includes(savedView) && savedView !== posView) setView(savedView); });

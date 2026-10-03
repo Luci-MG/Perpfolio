@@ -326,6 +326,7 @@ function render(data) {
         <p class="section-label" style="margin:0">${sectionLabel}</p>
         ${isToolView(posView) && !toolFor(posView).exchangeFilter ? '' : exchTabsHtml}
       </div>
+      <span class="session-clock" id="sessionClock">${sessionClockInner()}</span>
       ${tabsHtml}
     </div>
 

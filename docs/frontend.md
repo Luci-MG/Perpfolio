@@ -3,13 +3,14 @@
 ## Files
 
 `public/index.html` holds markup only, `public/css/app.css` every style, and `public/js/` the
-behaviour as sixteen **classic** scripts loaded in this order — no build step, no framework:
+behaviour as seventeen **classic** scripts loaded in this order — no build step, no framework:
 
 | # | File | Holds |
 |---|---|---|
 | 1 | `core.js` | preferences, shared view state, `fmt*` / `esc` / badges — load-time code in later files calls these |
 | 1b | `venues.js` | status bulb, exchange switches, `venueOn()` / `offOr()` / `venueOffHtml()` |
 | 1c | `tools-nav.js` | `TOOLS`, the tool widgets and narrow-screen strip, `openTool()` |
+| 1d | `sessions-view.js` | session clock, `sessionFilter`, `setSession()`, the session select |
 | 2 | `positions.js` | `setView`, HL/BN filter, positions list and tiles, orders table |
 | 3 | `tiles-threads.js` | hedge popups, tile drag and focus, the hedge-thread SVG |
 | 4 | `stops.js` | Stops tab |
@@ -111,6 +112,12 @@ arc's `large-arc-flag` must always be `0`; it was `pct > 50 ? 1 : 0`, which drew
 complement and painted the fill out of the viewBox for every utilisation between 50% and
 100% — exactly the range worth looking at. A `conic-gradient` survives elsewhere, for the
 small long/short split donut only.
+
+### Stop mark on tiles and List
+One mark per leg from `stopMarkHtml(p)` in `positions.js` — green shield ✓ safe (stop at or
+past entry), grey shield stop set but still risking a loss, amber shield ! needs a look, red
+ring unprotected, nothing for a hedged leg without a stop. States and
+sources: `docs/stops.md`, *On the position tiles*.
 
 ### Calculators
 One modal, five tabs (P&L, Avg down/up, Liq price, Size, Break-even), and a **position picker** at the top:
