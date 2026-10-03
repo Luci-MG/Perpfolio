@@ -878,3 +878,5 @@ td .stop-mark { margin-left: 4px; vertical-align: -2px; }
 .fx-ci.dn { background: var(--danger); }
 .fx-ci.up { background: var(--success); }
 .fx-dot { position: absolute; top: 2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--text); }
+.load-error { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; font-size: 11px; color: var(--text2); margin: 8px 0; }
+.load-error .st-btn { margin-left: 6px; }

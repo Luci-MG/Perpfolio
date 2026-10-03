@@ -1,5 +1,15 @@
 # Changelog
 
+## Error states keep their controls (2026-10-03)
+
+- A failed load no longer replaces a tab's controls: Stress, Unwind, Stops, Confluence, the
+  Journal and its Trades, Goals and Factors, and the hedge-ledger, liquidation and simulator
+  drawers show the error under their controls with a **Retry**. The Journal keeps **Sync**
+  usable when history fails to load.
+- A failed refresh keeps the last good data and says so, instead of blanking the panel.
+- Two Unwind drawer errors reached the page unescaped; `scripts/check.mjs` now fails on any
+  error interpolated or concatenated into markup without `esc()`.
+
 ## What goes with better or worse trips (2026-10-03)
 
 - A Journal **Factors** tab: each condition known at entry — session, hour, side, hedged, size

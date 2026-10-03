@@ -32,6 +32,18 @@ function esc(v) {
   return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 function fmtUsd(n) { return '$' + fmt(n); }
+
+// A failed load keeps the panel's last good data; the failure is held here, apart from it.
+const loadErrors = {};
+function noteLoadError(key, err) { loadErrors[key] = { message: err?.message || String(err), at: Date.now() }; }
+function clearLoadError(key) { delete loadErrors[key]; }
+function loadErrorHtml(key, retryCall, hasData) {
+  const e = loadErrors[key];
+  if (!e) return '';
+  const when = new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return `<p class="load-error"><span class="dn">${hasData ? 'Couldn’t refresh' : 'Couldn’t load'}</span> · ${esc(e.message)} · ${when}${
+    hasData ? ' · showing the last good data' : ''}<button class="st-btn" onclick="${retryCall}">Retry</button></p>`;
+}
 // a negative dollar figure reads as "$-13,040" through fmtUsd; the sign belongs outside
 function fmtSignedUsd(n) {
   const num = parseFloat(n);

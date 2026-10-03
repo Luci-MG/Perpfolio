@@ -17,8 +17,10 @@ async function openHlDrawer() {
   try {
     const res = await fetch('/api/hedgeledger');
     const data = await res.json();
-    hlData = data.ok ? data : { error: data.error || 'failed' };
-  } catch (err) { hlData = { error: err.message }; }
+    if (!data.ok) throw new Error(data.error || 'hedge ledger failed');
+    hlData = data;
+    clearLoadError('hl');
+  } catch (err) { noteLoadError('hl', err); }
   hlLoading = false;
   renderHlBody();
 }
@@ -117,7 +119,7 @@ function renderMarginInflation(inf) {
 function renderHlBody() {
   const body = document.getElementById('hlDrawerBody');
   if (!body) return;
-  if (hlData?.error) { body.innerHTML = `<p style="font-size:12px;color:var(--danger)">Error: ${esc(hlData.error)}</p>`; return; }
+  if (!hlData && loadErrors.hl) { body.innerHTML = loadErrorHtml('hl', 'openHlDrawer()', false); return; }
   const pool = hlData?.pools?.[0];
   if (!pool) { body.innerHTML = `<p style="font-size:12px;color:var(--text3)">No Binance cross positions.</p>`; return; }
 
@@ -165,7 +167,7 @@ function renderHlBody() {
 
   const anyMismatch = pool.carry.some(c => c.observedHours && c.declaredHours && c.observedHours !== c.declaredHours);
 
-  body.innerHTML = `
+  body.innerHTML = `${loadErrorHtml('hl', 'openHlDrawer()', true)}
     <div>
       <div class="hl-headline">
         <div class="k">Already decided — no price can change it</div>

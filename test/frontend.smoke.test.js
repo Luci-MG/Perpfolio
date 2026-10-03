@@ -92,9 +92,7 @@ test('every view and drawer renders against live payloads without errors or NaN'
     run(`posView = '${v}'; riskForceRender = true; render(lastData)`);
     for (const hit of strayValues(markup.get('content') + markup.get('sidebar'))) bad.push(`${v}: …${hit}…`);
   }
-  for (const data of ['volStopData', 'riskBook', 'unwindData', 'perfData', 'cfData']) {
-    assert.equal(run(`${data}?.error ?? null`), null, `${data} failed to load`);
-  }
+  assert.equal(run('JSON.stringify(loadErrors)'), '{}', 'every tab loaded');
   for (const fn of ['buildFundingDrawerContent(lastData)']) run(fn);
   assert.deepEqual(bad, []);
 });
@@ -532,4 +530,62 @@ test('Factors: verdict first, the board on demand, waiting factors named, a goal
 
   run(`openFactorGoal(0)`);
   assert.deepEqual(JSON.parse(run('JSON.stringify(goalDraft)')), { id: null, type: 'noSessions', params: { sessions: ['Weekend'] }, session: null });
+});
+
+test('a failed load keeps each tab\'s controls with Retry, escapes the message, and a failed refresh keeps the last good data', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('stress')`);
+  await settle('riskBook && !riskLoading', 'the risk book');
+  const view = v => { run(`posView = '${v}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+  const failing = () => run(`realFetch = realFetch || fetch; fetch = () => Promise.reject(new Error('<b>down</b>'))`);
+  const working = () => run('fetch = realFetch');
+  run('var realFetch = null');
+  const failed = (html, controls, retry, what) => {
+    assert.match(html, controls, `${what}: controls kept`);
+    assert.match(html, new RegExp(`Couldn’t load</span> · &lt;b&gt;down&lt;/b&gt;[\\s\\S]*onclick="${retry}">Retry`), `${what}: escaped error with Retry`);
+    assert.doesNotMatch(html, /<b>down/, `${what}: never raw`);
+  };
+
+  failing();
+  await run(`riskBook = null; fetchRiskBook(true)`);
+  failed(view('stress'), /Refresh marks/, 'fetchRiskBook\\(true\\)', 'stress');
+  run('renderLiqBody()');
+  failed(markup.get('liqDrawerBody'), /./, 'fetchRiskBook\\(true\\)\\.then\\(renderLiqBody\\)', 'liquidation drawer');
+  await run(`unwindData = null; fetchUnwind()`);
+  failed(view('unwind'), /Liquidation buffer/, 'fetchUnwind\\(\\)', 'unwind');
+  await run(`volStopData = null; fetchVolStops()`);
+  failed(view('stops'), /vol-|Risk/, 'fetchVolStops\\(\\)', 'stops');
+  await run(`cfData = null; fetchConfluence()`);
+  failed(view('confluence'), /cf-sym/, 'fetchConfluence\\(\\)', 'confluence');
+  await run(`perfData = null; fetchPerformance()`);
+  failed(view('journal'), /Sync recent[\s\S]*Full rebuild/, 'fetchPerformance\\(\\)', 'journal');
+  await run(`hlData = null; openHlDrawer()`);
+  failed(markup.get('hlDrawerBody'), /./, 'openHlDrawer\\(\\)', 'hedge ledger');
+
+  working();
+  await run('fetchRiskBook(true)');
+  await run('fetchPerformance()');
+  await settle('perfData && !perfLoading', 'the journal');
+  assert.equal(run('loadErrors.risk ?? null'), null, 'a good load clears the error');
+  for (const [tab, reset, fetcher, retry] of [['trades', 'tripsData', 'fetchTrips()', 'fetchTrips\\(\\)'],
+    ['goals', 'goalsData', 'fetchGoals()', 'fetchGoals\\(\\)'], ['factors', 'factorsData', 'fetchFactors()', 'fetchFactors\\(\\)']]) {
+    failing();
+    await run(`${reset} = null; ${fetcher}`);
+    run(`jrTab = '${tab}'`);
+    failed(view('journal'), /jr-subtab/, retry, tab);
+    working();
+  }
+
+  failing();
+  await run('fetchRiskBook(true)');
+  const stale = view('stress');
+  assert.match(stale, /Couldn’t refresh<\/span> · &lt;b&gt;down&lt;\/b&gt;[\s\S]*showing the last good data/);
+  assert.match(stale, /Refresh marks/);
+  assert.ok(run('riskBook.pools.length') > 0, 'the last good book is kept');
+  assert.deepEqual(strayValues(stale), []);
+  working();
 });

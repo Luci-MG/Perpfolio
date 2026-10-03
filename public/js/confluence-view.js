@@ -6,7 +6,7 @@ const CF_ALL_TFS = ['15m', '1h', '4h', '1d'];
 let cfData = null, cfLoading = false, cfSymbols = null;
 let cfSymbol = (s => /^[A-Z0-9]{2,30}$/.test(s) ? s : 'BTCUSDT')(String(loadPref('cfSymbol', 'BTCUSDT')));
 let cfTfs = (t => Array.isArray(t) && t.length && t.every(x => CF_ALL_TFS.includes(x)) ? t : [...CF_ALL_TFS])(loadPref('cfTfs', null));
-let cfSeq = 0;
+let cfSeq = 0, cfQuery = null;
 
 async function fetchConfluence() {
   const seq = ++cfSeq;
@@ -20,8 +20,9 @@ async function fetchConfluence() {
       if (list) list.innerHTML = cfSymbolOptions();
     }).catch(() => {});
   }
+  const query = `symbol=${encodeURIComponent(cfSymbol)}&tfs=${cfTfs.join(',')}${sessionParam() ? `&${sessionParam()}` : ''}`;
   try {
-    const res = await fetch(`/api/confluence?symbol=${encodeURIComponent(cfSymbol)}&tfs=${cfTfs.join(',')}${sessionParam() ? `&${sessionParam()}` : ''}`);
+    const res = await fetch(`/api/confluence?${query}`);
     if (!(res.headers.get('content-type') || '').includes('json')) {
       throw new Error(`server returned ${res.status} without JSON — restart it so it picks up /api/confluence`);
     }
@@ -29,9 +30,12 @@ async function fetchConfluence() {
     if (!data.ok) throw new Error(data.error || 'confluence failed');
     if (seq !== cfSeq) return;
     cfData = data;
+    cfQuery = query;
+    clearLoadError('cf');
   } catch (err) {
     if (seq !== cfSeq) return;
-    cfData = { error: err.message, symbol: cfSymbol };
+    noteLoadError('cf', err);
+    if (query !== cfQuery) cfData = null;
   } finally {
     if (seq === cfSeq) {
       cfLoading = false;
@@ -194,8 +198,11 @@ function renderConfluence() {
     <span id="cf-age">${cfData?.lastUpdated ? `updated ${cfAge(cfData.lastUpdated)}` : ''}</span>
   </div>`;
 
-  if (!cfData) return `${controls}<p style="font-size:12px;color:var(--text3);padding:14px 0">Loading confluences…</p>`;
-  if (cfData.error) return `${controls}<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(cfData.error)}</p>`;
+  if (!cfData) {
+    return `${controls}${loadErrors.cf ? loadErrorHtml('cf', 'fetchConfluence()', false)
+      : '<p style="font-size:12px;color:var(--text3);padding:14px 0">Loading confluences…</p>'}`;
+  }
+  const stale = loadErrorHtml('cf', 'fetchConfluence()', true);
 
   const d = cfData;
   const tfs = CF_ALL_TFS.filter(tf => d.timeframes[tf] !== undefined);
@@ -282,6 +289,6 @@ function renderConfluence() {
     ${cal ? `Up-bar share over the replay on ${live[0]}: ${fmt(cal.baseUp * 100, 0)}%.` : ''}</p>`;
 
   const toggle = `<button class="st-btn cf-detail-toggle" onclick="toggleCfDetail()">${cfShowAll ? 'Hide all signals' : 'Show all signals'}</button>`;
-  return `${controls}${renderCfVerdict(d)}${overall}${toggle}
+  return `${controls}${stale}${renderCfVerdict(d)}${overall}${toggle}
     ${cfShowAll ? `${intro}<div class="cf-table-wrap"><table class="cf-table">${head}${body}</table></div>` : ''}${foot}`;
 }

@@ -74,10 +74,8 @@ function renderVolStops() {
     return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Computing volatility-adjusted stops…</p>`;
   }
   if (!volStopData) {
-    return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No stop data yet.</p>`;
-  }
-  if (volStopData.error) {
-    return `${volControlsHtml()}<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(volStopData.error)}</p>`;
+    return loadErrors.vol ? `${volControlsHtml()}${loadErrorHtml('vol', 'fetchVolStops()', false)}`
+      : `<p style="font-size:12px;color:var(--text3);padding:14px 0">No stop data yet.</p>`;
   }
 
   // Apply the same HL/BN exchange filter used elsewhere.
@@ -85,7 +83,7 @@ function renderVolStops() {
   const positions = all.filter(p => exchFilter.has(p.exchange));
 
   const combined = renderVolCombined(volStopData.combined, positions);
-  const controls = volControlsHtml();
+  const controls = volControlsHtml() + loadErrorHtml('vol', 'fetchVolStops()', true);
 
   if (!positions.length) {
     return `${controls}${combined}<p style="font-size:12px;color:var(--text3);padding:14px 0">No open positions for selected exchanges.</p>`;

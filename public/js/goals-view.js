@@ -21,8 +21,9 @@ async function fetchGoals() {
     const data = await (await fetch(`/api/goals?tz=${goalTz()}`)).json();
     if (!data.ok) throw new Error(data.error || 'goals failed');
     goalsData = data;
+    clearLoadError('goals');
   } catch (err) {
-    goalsData = { error: err.message };
+    noteLoadError('goals', err);
   } finally {
     goalsLoading = false;
     if (posView === 'journal') rerenderStress();
@@ -155,8 +156,7 @@ function goalEmptyHtml(suggestions) {
 }
 
 function renderGoalsTab() {
-  if (!goalsData) return `<p class="jt-count">Loading goals…</p>`;
-  if (goalsData.error) return `<p style="font-size:12px;color:var(--danger)">Error: ${esc(goalsData.error)}</p>`;
+  if (!goalsData) return loadErrors.goals ? loadErrorHtml('goals', 'fetchGoals()', false) : `<p class="jt-count">Loading goals…</p>`;
   const { goals, today, suggestions } = goalsData;
   const head = `<div class="gl-top"><span class="section-label">Goals</span>
     <span class="gl-n">${goals.length ? goalsTodayText(today, goals) : ''}</span>
@@ -166,7 +166,7 @@ function renderGoalsTab() {
   const ruleBlock = rules.length ? `<div class="gl-list">${rules.map(goalRow).join('')}</div>` : goalEmptyHtml(suggestions);
   const milestoneBlock = milestones.length
     ? `<p class="section-label gl-block">Milestones</p><div class="gl-list">${milestones.map(milestoneRow).join('')}</div>` : '';
-  return `${head}${error}${ruleBlock}${milestoneBlock}`;
+  return `${head}${loadErrorHtml('goals', 'fetchGoals()', true)}${error}${ruleBlock}${milestoneBlock}`;
 }
 
 const MILESTONE_MARK = { onpace: '◎', open: '◎', early: '◎', late: '◔', reached: '★', missed: '✗', paused: '‖',

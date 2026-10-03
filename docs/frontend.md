@@ -151,6 +151,17 @@ The flat formula it replaced (entry ± 1/leverage with a fixed 0.5% rate) was 54
 from Binance's reported price on every leg of the live book that has one, and showed a
 price on eight legs where Binance reports none.
 
+### Error states
+A failed load never replaces a panel's controls or its last good data. Each fetch clears or
+records its failure with `clearLoadError(key)` / `noteLoadError(key, err)` (`core.js`) and keeps
+the previous payload; the panel renders `loadErrorHtml(key, retryCall, hasData)` —
+*Couldn't load* under its controls when nothing has loaded, *Couldn't refresh · showing the
+last good data* above its content otherwise — with a **Retry** that re-runs its own fetch. A
+fetch whose parameters changed (window, session, symbol, objective) drops the old payload
+instead, so a failure never shows results for settings no longer selected. The message is
+always escaped; `scripts/check.mjs` fails on an error or message interpolated or concatenated
+into markup without `esc()`.
+
 ### Drawers
 All at body level, outside `#sidebar`, so the poll's sidebar rebuild cannot wipe them:
 `openUpnlDrawer` · `openExpDrawer` · `openFundDrawer` (pre-existing) and `openLiqDrawer` ·

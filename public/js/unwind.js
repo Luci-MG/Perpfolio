@@ -70,8 +70,8 @@ function renderLiqBody() {
   if (!body) return;
   const P = simPool();
   if (!P || !riskEngine) {
-    body.innerHTML = `<p style="font-size:12px;color:var(--danger)">
-      ${riskBook?.error ? 'Error: ' + riskBook.error : 'No open Binance cross positions.'}</p>`;
+    body.innerHTML = loadErrors.risk && !riskBook ? loadErrorHtml('risk', 'fetchRiskBook(true).then(renderLiqBody)', false)
+      : `<p style="font-size:12px;color:var(--text3)">No open Binance cross positions.</p>`;
     return;
   }
 
@@ -329,8 +329,8 @@ function renderSimBody() {
   const body = document.getElementById('simDrawerBody');
   if (!body) return;
   if (!P || !riskEngine) {
-    body.innerHTML = `<p style="font-size:12px;color:var(--danger)">
-      ${riskBook?.error ? 'Error: ' + riskBook.error : 'No open Binance cross positions.'}</p>`;
+    body.innerHTML = loadErrors.risk && !riskBook ? loadErrorHtml('risk', 'fetchRiskBook(true).then(renderSimBody)', false)
+      : `<p style="font-size:12px;color:var(--text3)">No open Binance cross positions.</p>`;
     return;
   }
 
@@ -470,7 +470,10 @@ let uwFee         = 0.05;       // taker fee, %; replaced by the account's real 
 let uwFeeTouched  = false;      // once set by hand, stop overwriting it
 let uwBreakHedges = false;
 
+let unwindQuery = null;
+
 async function fetchUnwind() {
+  let query = null;
   unwindLoading = true;
   if (posView === 'unwind') rerenderStress();
   try {
@@ -481,12 +484,16 @@ async function fetchUnwind() {
       uwTarget  !== '' ? `target=${encodeURIComponent(uwTarget)}`   : '',
       uwMaxLoss !== '' ? `maxLoss=${encodeURIComponent(uwMaxLoss)}` : ''
     ].filter(Boolean).join('&');
+    query = q;
     const res  = await fetch(`/api/deleverage?${q}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'deleverage failed');
     unwindData = data;
+    unwindQuery = q;
+    clearLoadError('unwind');
   } catch (err) {
-    unwindData = { error: err.message };
+    noteLoadError('unwind', err);
+    if (query !== unwindQuery) unwindData = null;
   } finally {
     unwindLoading = false;
     if (posView === 'unwind') rerenderStress();
@@ -600,12 +607,15 @@ function renderUnwind() {
   if (unwindLoading && !unwindData) {
     return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Planning…</p>`;
   }
-  if (!unwindData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No plan yet.</p>`;
-  if (unwindData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(unwindData.error)}</p>`;
-  if (!unwindData.plans?.length) {
-    return `${renderUnwindControls()}<p style="font-size:12px;color:var(--text3);padding:14px 0">No open Binance cross positions.</p>`;
+  if (!unwindData) {
+    return loadErrors.unwind ? `${renderUnwindControls()}${loadErrorHtml('unwind', 'fetchUnwind()', false)}`
+      : `<p style="font-size:12px;color:var(--text3);padding:14px 0">No plan yet.</p>`;
   }
-  return renderUnwindControls() + unwindData.plans.map(p => `<div style="margin-bottom:22px">
+  const stale = loadErrorHtml('unwind', 'fetchUnwind()', true);
+  if (!unwindData.plans?.length) {
+    return `${renderUnwindControls()}${stale}<p style="font-size:12px;color:var(--text3);padding:14px 0">No open Binance cross positions.</p>`;
+  }
+  return renderUnwindControls() + stale + unwindData.plans.map(p => `<div style="margin-bottom:22px">
     ${unwindData.plans.length > 1 ? `<p class="section-label" style="margin:0 0 8px">${p.marginAsset} pool</p>` : ''}
     ${renderUnwindPlan(p)}</div>`).join('');
 }

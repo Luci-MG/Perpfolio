@@ -14,8 +14,9 @@ async function fetchFactors() {
     const data = await (await fetch(`/api/factors?${query}`)).json();
     if (!data.ok) throw new Error(data.error || 'factors failed');
     factorsData = data;
+    clearLoadError('factors');
   } catch (err) {
-    factorsData = { error: err.message };
+    noteLoadError('factors', err);
   } finally {
     factorsLoading = false;
     if (posView === 'journal' && jrTab === 'factors') rerenderStress();
@@ -80,8 +81,7 @@ function factorTable(factors, scale) {
 }
 
 function renderFactorsTab() {
-  if (!factorsData) return `<p class="jt-count">Comparing factors…</p>`;
-  if (factorsData.error) return `<p style="font-size:12px;color:var(--danger)">Error: ${esc(factorsData.error)}</p>`;
+  if (!factorsData) return loadErrors.factors ? loadErrorHtml('factors', 'fetchFactors()', false) : `<p class="jt-count">Comparing factors…</p>`;
   const d = factorsData;
   const verdicts = [...d.worse, ...d.better];
   const head = `<div class="gl-top"><span class="section-label">What goes with better or worse trips</span>
@@ -92,10 +92,11 @@ function renderFactorsTab() {
   const waiting = d.waiting.length ? `<p class="gl-n fx-waiting">${esc(d.waiting.join(', '))}: waiting for captured entries (${d.entryCaptured} so far)</p>` : '';
   const session = d.session ? `<p class="jr-session-note">Session and weekend factors are hidden while the ${esc(d.session)} filter is on.</p>` : '';
   const toggle = `<button class="st-btn fx-toggle" onclick="toggleFactorsShowAll()">${factorsShowAll ? 'Hide factors' : 'Show all factors'}</button>`;
-  if (!factorsShowAll) return `${head}${session}${verdict}${waiting}${toggle}`;
+  const stale = loadErrorHtml('factors', 'fetchFactors()', true);
+  if (!factorsShowAll) return `${head}${stale}${session}${verdict}${waiting}${toggle}`;
   const all = [...d.factors, ...d.during].flatMap(f => f.buckets);
   const scale = Math.max(1, ...all.flatMap(b => [Math.abs(b.ci.lo), Math.abs(b.ci.hi)]));
-  return `${head}${session}${verdict}${waiting}${toggle}
+  return `${head}${stale}${session}${verdict}${waiting}${toggle}
     ${factorTable(d.factors, scale)}
     <p class="section-label gl-block">During the trade</p>
     <p class="gl-n">Not known at entry, so never ranked with the factors above; the cost of each habit is under Behaviour.</p>

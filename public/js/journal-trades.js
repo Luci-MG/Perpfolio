@@ -111,8 +111,9 @@ async function fetchTrips() {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'trips failed');
     tripsData = data;
+    clearLoadError('trips');
   } catch (err) {
-    tripsData = { error: err.message };
+    noteLoadError('trips', err);
   } finally {
     tripsLoading = false;
     if (posView === 'journal' && jrTab === 'trades') rerenderStress();
@@ -207,8 +208,7 @@ function reloadTrips() {
 }
 
 function renderTradesTab() {
-  if (!tripsData) return `<p class="jt-count">Loading trips…</p>`;
-  if (tripsData.error) return `<p style="font-size:12px;color:var(--danger)">Error: ${esc(tripsData.error)}</p>`;
+  if (!tripsData) return loadErrors.trips ? loadErrorHtml('trips', 'fetchTrips()', false) : `<p class="jt-count">Loading trips…</p>`;
   const pending = tripsData.coverage.pending;
   const controls = `<div class="jt-controls">
     <input class="cf-sym" placeholder="Symbol" value="${esc(tradesFilter.symbol)}" oninput="filterTrades('symbol', this.value)">
@@ -220,5 +220,5 @@ function renderTradesTab() {
     <button class="st-btn" onclick="exportTradesCsv()">Export CSV</button>
   </div>`;
   const note = pending ? `<p class="jt-count">Price path and market context for ${pending} trips arrive with the next sync.</p>` : '';
-  return `${controls}${note}<div id="jt-table">${tradesTableHtml()}</div>`;
+  return `${controls}${loadErrorHtml('trips', 'fetchTrips()', true)}${note}<div id="jt-table">${tradesTableHtml()}</div>`;
 }

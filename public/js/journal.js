@@ -3,7 +3,7 @@
 // ── Journal ───────────────────────────────────────────────────────────────────
 // What already happened, rebuilt from the cached fill and income history.
 let perfData = null, perfLoading = false, perfDays = 0, syncPoll = null;
-let jrTab = 'overview';
+let jrTab = 'overview', perfQuery = null;
 function setJrTab(t) {
   jrTab = t;
   if (t === 'trades' && !tripsData && !tripsLoading) fetchTrips();
@@ -15,17 +15,19 @@ function setJrTab(t) {
 async function fetchPerformance() {
   perfLoading = true;
   if (posView === 'journal') rerenderStress();
+  const query = [`tz=${-new Date().getTimezoneOffset()}`, perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
   try {
-    const tz = -new Date().getTimezoneOffset();
-    const query = [`tz=${tz}`, perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
     const res = await fetch(`/api/performance?${query}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'performance failed');
     perfData = data;
+    perfQuery = query;
+    clearLoadError('perf');
     fetchGoals();
     reloadFactors();
   } catch (err) {
-    perfData = { error: err.message };
+    noteLoadError('perf', err);
+    if (query !== perfQuery) perfData = null;
   } finally {
     perfLoading = false;
     if (posView === 'journal') rerenderStress();
@@ -294,13 +296,15 @@ function jrLockedFromPositions(positions) {
   return { locked, matchedNotional, pairs };
 }
 
-function renderJournal() {
-  if (perfLoading && !perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Loading history…</p>`;
-  if (!perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No history loaded.</p>`;
-  if (perfData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(perfData.error)}</p>`;
+function journalSyncState() {
+  if (!perfData) return 'history not loaded';
+  if (perfData.empty) return 'no cached history';
+  return `${perfData.session ? `${perfData.session} · ` : ''}${perfData.overall.trips} round trips · ${perfData.equity.days} days`;
+}
 
-  const syncBar = `<div class="jr-sync" id="jr-mounted">
-    <span id="jr-sync-state">${perfData.empty ? 'no cached history' : `${perfData.session ? `${perfData.session} · ` : ''}${perfData.overall.trips} round trips · ${perfData.equity.days} days`}</span>
+function journalSyncBar() {
+  return `<div class="jr-sync" id="jr-mounted">
+    <span id="jr-sync-state">${journalSyncState()}</span>
     <button class="st-btn" onclick="startSync(false)">Sync recent</button>
     <button class="st-btn" onclick="startSync(true)">Full rebuild</button>
     <span class="st-sep"></span>
@@ -308,6 +312,15 @@ function renderJournal() {
     <span class="st-sep"></span>
     ${sessionSelectHtml()}
   </div>`;
+}
+
+function renderJournal() {
+  if (perfLoading && !perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Loading history…</p>`;
+  if (!perfData) {
+    return loadErrors.perf ? `${journalSyncBar()}${loadErrorHtml('perf', 'fetchPerformance()', false)}`
+      : `<p style="font-size:12px;color:var(--text3);padding:14px 0">No history loaded.</p>`;
+  }
+  const syncBar = journalSyncBar() + loadErrorHtml('perf', 'fetchPerformance()', true);
 
   if (perfData.empty) return `${syncBar}<p style="font-size:12px;color:var(--text3)">${perfData.hint}</p>`;
 
