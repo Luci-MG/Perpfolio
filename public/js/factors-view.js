@@ -10,7 +10,7 @@ const factorPct = v => `${fmt(v * 100, 0)}%`;
 async function fetchFactors() {
   factorsLoading = true;
   try {
-    const query = [`tz=${-new Date().getTimezoneOffset()}`, perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
+    const query = [clockParam(), perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
     const data = await (await fetch(`/api/factors?${query}`)).json();
     if (!data.ok) throw new Error(data.error || 'factors failed');
     factorsData = data;

@@ -115,3 +115,35 @@ export function groupByDay(trips) {
   }
   return [...days.values()];
 }
+
+/**
+ * Each group's average pulled toward the overall average in proportion to how little data it
+ * has (one-way random-effects, method-of-moments between-group variance; Efron & Morris 1975),
+ * with a 90% interval. A group under `min` values gets `needs` instead. `chance` says how many
+ * of the groups shown would clear the overall average by luck alone at 90%, and how many do.
+ */
+export function shrunkMeans(groups, { min = 8 } = {}) {
+  const all = groups.flatMap(g => g.values);
+  const n = all.length, k = groups.filter(g => g.values.length).length;
+  if (!n) return { overall: null, groups: groups.map(g => ({ key: g.key, n: 0, total: 0, needs: min })), chance: { shown: 0, byChance: 0, clear: 0 } };
+  const overall = mean(all);
+  const means = groups.map(g => (g.values.length ? mean(g.values) : null));
+  const within = n > k ? groups.reduce((s, g, i) => s + g.values.reduce((a, v) => a + (v - means[i]) ** 2, 0), 0) / (n - k) : 0;
+  const between = groups.reduce((s, g, i) => s + (g.values.length ? g.values.length * (means[i] - overall) ** 2 : 0), 0);
+  const scale = n - groups.reduce((s, g) => s + g.values.length ** 2, 0) / n;
+  const tau2 = k > 1 && scale > 0 ? Math.max(0, (between - (k - 1) * within) / scale) : 0;
+  const rows = groups.map((g, i) => {
+    const size = g.values.length;
+    const base = { key: g.key, n: size, total: g.values.reduce((s, v) => s + v, 0) };
+    if (size < min) return { ...base, needs: min - size };
+    const v = within / size;
+    const weight = tau2 + v > 0 ? tau2 / (tau2 + v) : 0;
+    const shrunk = overall + weight * (means[i] - overall);
+    const half = Z90 * Math.sqrt((tau2 + v > 0 ? tau2 * v / (tau2 + v) : 0) + (1 - weight) ** 2 * within / n);
+    return { ...base, mean: means[i], shrunk, ci: { lo: shrunk - half, hi: shrunk + half }, needs: 0 };
+  });
+  const shown = rows.filter(r => !r.needs);
+  return { overall, tau: Math.sqrt(tau2), groups: rows,
+           chance: { shown: shown.length, byChance: Math.round(shown.length * 0.1),
+                     clear: shown.filter(r => r.ci.lo > overall || r.ci.hi < overall).length } };
+}

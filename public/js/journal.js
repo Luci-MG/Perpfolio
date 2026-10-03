@@ -15,7 +15,7 @@ function setJrTab(t) {
 async function fetchPerformance() {
   perfLoading = true;
   if (posView === 'journal') rerenderStress();
-  const query = [`tz=${-new Date().getTimezoneOffset()}`, perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
+  const query = [clockParam(), perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
   try {
     const res = await fetch(`/api/performance?${query}`);
     const data = await res.json();
@@ -140,29 +140,6 @@ function jrSection(title, body, note) {
     ${note ? `<p style="font-size:10px;color:var(--text3);line-height:1.5;margin-top:6px">${note}</p>` : ''}`;
 }
 
-function jrCalendar(cal) {
-  if (!cal?.weeks?.length) return '';
-  const max = cal.maxAbs || 1;
-  const cells = cal.weeks.map(week => `<div class="jr-cal-col">${week.map(d => {
-    if (d.pnl == null) return `<div class="jr-cal-cell" title="${d.date} · no trading"></div>`;
-    const mag = Math.min(1, Math.abs(d.pnl) / max);
-    const col = d.pnl >= 0 ? 'var(--success)' : 'var(--danger)';
-    return `<div class="jr-cal-cell" style="background:${col};opacity:${(0.18 + mag * 0.82).toFixed(2)}"
-      title="${d.date} · ${fmtSignedUsd(d.pnl)}"></div>`;
-  }).join('')}</div>`).join('');
-
-  return `<div class="jr-cal">${cells}</div>
-    <div class="jr-cal-key">
-      <span>loss</span>
-      <span class="jr-cal-cell" style="background:var(--danger);opacity:1"></span>
-      <span class="jr-cal-cell" style="background:var(--danger);opacity:.4"></span>
-      <span class="jr-cal-cell"></span>
-      <span class="jr-cal-cell" style="background:var(--success);opacity:.4"></span>
-      <span class="jr-cal-cell" style="background:var(--success);opacity:1"></span>
-      <span>profit · each column is a week, Monday at the top · hover for the number</span>
-    </div>`;
-}
-
 function journalSyncState() {
   if (!perfData) return 'history not loaded';
   if (perfData.empty) return 'no cached history';
@@ -191,8 +168,6 @@ function renderJournal() {
 
   if (perfData.empty) return `${syncBar}<p style="font-size:12px;color:var(--text3)">${perfData.hint}</p>`;
 
-  const o = perfData.overall;
-
   const tabs = `<div class="jr-subtabs">${
     [['overview','Overview'],['goals','Goals'],['performance','Performance'],['behaviour','Behaviour'],['factors','Factors'],
      ['timing','Timing'],['symbols','Symbols'],['costs','Costs'],['trades','Trades']]
@@ -205,45 +180,9 @@ function renderJournal() {
   if (jrTab === 'performance') body = renderPerformanceTab();
   if (jrTab === 'behaviour') body = renderBehaviourTab();
 
-  if (jrTab === 'timing') {
-    body = `${jrSection('Every day, coloured by result', jrCalendar(perfData.calendar))}
-      ${jrSection('Day of the week', jrDivergingBars(perfData.dayOfWeek), 'Grouped by the day a position was closed, your local time.')}
-      ${jrSection('Hour of the day', jrDivergingBars(perfData.hourOfDay), 'Grouped by the hour a position was opened, your local time. Most hours hold few trips — read the counts before the bars.')}`;
-  }
-
-  if (jrTab === 'symbols') {
-    const rows = perfData.bySymbol.filter(x => x.trips > 0).map(x => `<tr>
-        <td>${esc(jrSym(x.symbol))}</td>
-        <td class="${x.net >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(x.net)}</td>
-        <td>${x.trips}</td><td>${fmt(x.winRate, 0)}%</td>
-        <td>${x.payoff == null ? '—' : fmt(x.payoff, 2)}</td><td style="color:var(--text3)">${fmtUsd(x.fees)}</td>
-      </tr>`).join('');
-    const worst3 = perfData.bySymbol.slice(0, 3);
-    body = `${jrSection('Where the money went',
-      `<table class="jr-tbl"><tr><th>symbol</th><th>net</th><th>trips</th><th>win</th><th>payoff</th><th>fees</th></tr>${rows}</table>`,
-      `${perfData.bySymbol.length} symbols traded. The worst three account for
-       ${fmtSignedUsd(worst3.reduce((s, x) => s + x.net, 0))} against a total of ${fmtSignedUsd(o.net)}.`)}`;
-  }
-
-  if (jrTab === 'costs') {
-    const x = perfData.execution, c = perfData.costs;
-    const fees = c.bySymbol.fees.slice(0, 10)
-      .map(f => ({ label: jrSym(f.symbol), net: -f.fees, trips: 1, thin: false }));
-    const fund = c.bySymbol.funding.filter(f => Math.abs(f.funding) > 0.5).slice(0, 10)
-      .map(f => ({ label: jrSym(f.symbol), net: f.funding, trips: 1, thin: false }));
-    body = `${walletBridgeSection()}
-      ${jrSection('Execution', `<div class="jr-hero">
-        ${jrStat('Maker share', `${fmt(x.makerPct, 1)}%`, `${x.maker} of ${x.fills} fills`)}
-        ${jrStat('Taker fees', fmtUsd(x.takerFee), `${x.taker} fills`)}
-        ${jrStat('Maker fees', fmtUsd(x.makerFee), `${x.maker} fills`)}
-        ${jrStat('Total fees', fmtUsd(x.totalFee), `${fmt(c.feeDragPct, 1)}% of gross realised`)}
-        ${jrStat('Funding', fmtSignedUsd(c.funding), 'paid or received')}
-      </div>`, 'Taker costs 0.05% against maker at 0.02% — two and a half times as much per fill.')}
-      ${jrSection('Fees by symbol', jrDivergingBars(fees, { showCount: false }))}
-      ${fund.length ? jrSection('Funding by symbol', jrDivergingBars(fund, { showCount: false }),
-        'Negative is funding you paid to hold the position.') : ''}`;
-  }
-
+  if (jrTab === 'timing') body = renderTimingTab();
+  if (jrTab === 'symbols') body = renderSymbolsTab();
+  if (jrTab === 'costs') body = renderCostsTab();
   if (jrTab === 'trades') body = renderTradesTab();
   if (jrTab === 'goals') body = renderGoalsTab();
   if (jrTab === 'factors') body = renderFactorsTab();
@@ -254,6 +193,6 @@ function renderJournal() {
       the earliest reachable fill — an excluded bucket worth ${fmtSignedUsd(perfData.orphans?.realized ?? 0)}. Closed-trip
       totals therefore differ from the income ledger by those orphans and by trips that straddle the window edge.
       Fills reach back further than income does — Binance caps income at three months, so
-      the curve and calendar cover ${perfData.account.days} days while trip statistics start ${(perfData.window.tripsFrom || '').slice(0, 10)}. Fees paid in BNB are tracked
-      separately${perfData.nonQuoteFees ? ` (${fmt(perfData.nonQuoteFees, 4)} BNB)` : ''} rather than mixed into dollar totals.</p>`;
+      the curve and calendar cover ${perfData.account.days} days while trip statistics start ${(perfData.window.tripsFrom || '').slice(0, 10)}. Fees paid in BNB are kept
+      out of dollar totals and priced separately under Costs.</p>`;
 }

@@ -6,6 +6,7 @@
 
 import { medianSizesBefore, netOf, previousTrips } from './habits.js';
 import { BOOTSTRAP_DRAWS, benjaminiHochberg, dayBootstrap, groupByDay, mean, median as medianOf, quantile, welch, wilson } from './stats.js';
+import { wallTime } from './local-time.js';
 import { periodStarts } from './trade-analytics.js';
 
 export const MIN_TRIPS = 20;
@@ -96,7 +97,7 @@ function contextOf(trips, tz) {
     const prev = before.get(t);
     return [t, prev && prev.closeTime >= localDay(t.openTime) ? prev : null];
   }));
-  return { medians: medianSizesBefore(trips), previous, localHour: ts => new Date(ts + tz * 60_000).getUTCHours() };
+  return { medians: medianSizesBefore(trips), previous, localHour: ts => wallTime(ts, tz).getUTCHours() };
 }
 
 function tercileBucketer(def, early) {
@@ -201,10 +202,10 @@ function scoreFactor(def, trips, days, ctx) {
  * behaviours and your own tags apart, since both are known only after entry. `session` hides
  * the factors a session filter makes meaningless.
  */
-export function outcomeFactors(trips, { tzOffsetMin = 0, session = null } = {}) {
+export function outcomeFactors(trips, { tz = 0, session = null } = {}) {
   const sorted = [...(trips || [])].sort((a, b) => a.openTime - b.openTime);
   const split = Math.floor(sorted.length * (1 - RECENT_SHARE));
-  const facts = contextOf(sorted, tzOffsetMin);
+  const facts = contextOf(sorted, tz);
   const early = sorted.slice(0, split);
   const size = FACTORS.find(f => f.id === 'size'), hedged = FACTORS.find(f => f.id === 'hedged');
   const strata = [{ id: 'size', of: t => size.bucket(t, facts) }, { id: 'hedged', of: t => hedged.bucket(t) }];

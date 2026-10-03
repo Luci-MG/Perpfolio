@@ -64,12 +64,13 @@ function perfSharpeStat(a) {
 }
 
 function perfCostsLine(a, u) {
-  const c = perfData.costs;
+  const c = perfData.costs.summary;
+  const funding = c.fundingPaid + c.fundingReceived;
   const beta = a.curve !== 'account' ? '' : a.beta.needs ? ` · beta to BTC after ${a.beta.needs} more days`
     : ` · beta to BTC ${fmt(a.beta.beta, 2)} (correlation ${fmt(a.beta.correlation, 2)})`;
   const r = u.r.trips ? ` · ${fmt(u.r.avg, 2)}R a trip on the ${u.r.trips} of ${u.r.of} with a stop` : '';
   return `<p class="gl-line">Net ${ovUsd(u.net)} after fees <span class="dn">${ovUsd(-c.fees)}</span> and funding
-    <span class="${ovTone(c.funding)}">${ovUsd(c.funding)}</span>${beta}${r}</p>`;
+    <span class="${ovTone(funding)}">${ovUsd(funding)}</span>${beta}${r}</p>`;
 }
 
 function perfChartPoints(a) {

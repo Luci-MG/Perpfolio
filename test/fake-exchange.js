@@ -26,6 +26,8 @@ const SYMBOLS = {
   ENAUSDC: { quote: 'USDC', base: 0.25, fundingRate: 0.00015, intervalHours: 4, step: '1', tick: '0.0001' }
 };
 
+const FEE_ASSET_PRICE = { BNBUSDT: 600 };
+
 const POSITIONS = [
   { symbol: 'BTCUSDT', positionSide: 'LONG', amt: 0.5, entry: 98000, leverage: 10 },
   { symbol: 'BTCUSDT', positionSide: 'SHORT', amt: -0.4, entry: 103000, leverage: 10 },
@@ -65,7 +67,7 @@ function closes(symbol, interval, n) {
   const r = rng(seedOf(symbol + interval));
   const out = [1];
   for (let i = 1; i < n; i++) out.push(out[i - 1] * (1 + (r() - 0.5) * 0.02 + 0.0002 * Math.sin(i / 40)));
-  const scale = SYMBOLS[symbol].base / out[n - 1];
+  const scale = (SYMBOLS[symbol]?.base ?? FEE_ASSET_PRICE[symbol]) / out[n - 1];
   return out.map(v => v * scale);
 }
 
@@ -184,6 +186,7 @@ function incomeRows() {
     const settlement = id++;
     rows.push({ symbol: 'SOLUSDT', incomeType: 'FUNDING_FEE', income: '-2.5', asset: 'USDT', time: time + 3, tranId: settlement });
     rows.push({ symbol: 'SOLUSDT', incomeType: 'FUNDING_FEE', income: '2.4', asset: 'USDT', time: time + 3, tranId: settlement });
+    if (d === 10) rows.push({ symbol: 'BTCUSDT', incomeType: 'COMMISSION_REBATE', income: '0.3', asset: 'USDT', time: time + 4, tranId: id++ });
   }
   return rows;
 }
@@ -203,9 +206,10 @@ function tradeRows(symbol) {
         realizedPnl: '0', commission: '0.4', commissionAsset: 'USDT', time: t + HOUR, maker: true });
     }
     const qty = k % 4 === 1 ? '0.2' : '0.1';
+    const paidInBnb = symbol === 'ETHUSDT' && k === 4;
     out.push({ symbol, id, orderId: id++, side: 'SELL', positionSide: 'LONG', price: String(px * (win ? 1.01 : 0.99)), qty,
-      realizedPnl: String((win ? 1 : -1) * px * 0.001 * (k % 4 === 1 ? 2 : 1)), commission: '0.4',
-      commissionAsset: 'USDT', time: t + 6 * HOUR, maker: k % 2 === 0 });
+      realizedPnl: String((win ? 1 : -1) * px * 0.001 * (k % 4 === 1 ? 2 : 1)), commission: paidInBnb ? '0.0006' : '0.4',
+      commissionAsset: paidInBnb ? 'BNB' : 'USDT', time: t + 6 * HOUR, maker: k % 2 === 0 });
     if (symbol === 'BTCUSDT' && k % 5 === 2) {
       out.push({ symbol, id, orderId: id++, side: 'SELL', positionSide: 'SHORT', price: String(px), qty: '0.05',
         realizedPnl: '0', commission: '0.2', commissionAsset: 'USDT', time: t + 2 * HOUR, maker: false });
@@ -233,6 +237,7 @@ function binance(url) {
   if (path === '/fapi/v2/positionRisk') return positionRisk();
   if (path === '/fapi/v1/openOrders') return ORDERS;
   if (path === '/fapi/v1/openAlgoOrders') return ALGO_ORDERS;
+  if (path === '/fapi/v1/feeBurn') return { feeBurn: true };
   if (path === '/fapi/v1/commissionRate') return { symbol, makerCommissionRate: '0.0002', takerCommissionRate: '0.0005' };
   if (path === '/fapi/v1/leverageBracket') {
     return Object.keys(SYMBOLS).map(s => ({ symbol: s, notionalCoef: 1, brackets: TIERS }));
@@ -255,7 +260,7 @@ function binance(url) {
     })) };
   }
   if (path === '/fapi/v1/klines') {
-    if (!known(symbol)) return { status: 400, body: { code: -1121, msg: 'Invalid symbol.' } };
+    if (!known(symbol) && !FEE_ASSET_PRICE[symbol]) return { status: 400, body: { code: -1121, msg: 'Invalid symbol.' } };
     const limit = Math.min(1500, parseInt(q.get('limit') || '500', 10));
     if (q.has('startTime') || q.has('endTime')) {
       const num = k => (q.has(k) ? parseInt(q.get(k), 10) : null);

@@ -6,6 +6,7 @@
 // docs/research/performance-behaviour.md. Pure.
 
 import { hedgeUnits, netOf, resultOf } from './habits.js';
+import { localDate, localDayStart, nextLocalDay } from './local-time.js';
 import { dayBootstrap, groupByDay, mean, median, normalCdf, seededRandom, wilson } from './stats.js';
 
 export const MIN_DAILY_RETURNS = 60;
@@ -22,24 +23,13 @@ const round2 = v => (v == null ? null : +v.toFixed(2));
 const round4 = v => (v == null ? null : +v.toFixed(4));
 const sumOf = xs => xs.reduce((s, x) => s + x, 0);
 
-/** Start of the local day containing `ts`, for a clock `tzOffsetMin` minutes ahead of UTC. */
-export function localDayStart(ts, tzOffsetMin = 0) {
-  const shift = tzOffsetMin * 60_000;
-  return Math.floor((ts + shift) / DAY_MS) * DAY_MS - shift;
-}
-
-/** The local calendar date (YYYY-MM-DD) of the day starting at `dayStart`. */
-export function localDate(dayStart, tzOffsetMin = 0) {
-  return new Date(dayStart + tzOffsetMin * 60_000).toISOString().slice(0, 10);
-}
-
 function walletCloses(income, walletNow, days) {
   const rows = income.filter(r => USD_ASSETS.has((r.asset || 'USDT').toUpperCase())).sort((a, b) => b.time - a.time);
   const out = new Map();
   let wallet = walletNow, i = 0;
-  for (const day of [...days].reverse()) {
-    while (i < rows.length && rows[i].time >= day + DAY_MS) wallet -= parseFloat(rows[i++].income);
-    out.set(day, wallet);
+  for (const { start, end } of [...days].reverse()) {
+    while (i < rows.length && rows[i].time >= end) wallet -= parseFloat(rows[i++].income);
+    out.set(start, wallet);
   }
   return out;
 }
@@ -50,9 +40,9 @@ function snapshotCloses(snapshots, tz) {
   return out;
 }
 
-function flowsOf(income, day) {
-  return income.filter(r => r.incomeType === 'TRANSFER' && r.time >= day && r.time < day + DAY_MS)
-    .map(r => ({ amount: parseFloat(r.income), weight: (day + DAY_MS - r.time) / DAY_MS }));
+function flowsOf(income, { start, end }) {
+  return income.filter(r => r.incomeType === 'TRANSFER' && r.time >= start && r.time < end)
+    .map(r => ({ amount: parseFloat(r.income), weight: (end - r.time) / (end - start) }));
 }
 
 /**
@@ -61,23 +51,23 @@ function flowsOf(income, day) {
  * Modified Dietz return. A day whose value or the previous one is missing, or that crosses
  * from wallet to account, has a null return rather than a zero.
  */
-export function dailySeries({ income = [], walletNow = null, snapshots = [], now = Date.now(), tzOffsetMin = 0, from = 0 } = {}) {
-  const tz = tzOffsetMin;
+export function dailySeries({ income = [], walletNow = null, snapshots = [], now = Date.now(), tz = 0, from = 0 } = {}) {
   const firstSnapshot = snapshots.length ? Math.min(...snapshots.map(s => s.t)) : null;
   const firstIncome = walletNow != null && income.length ? Math.min(...income.map(r => r.time)) : null;
   const starts = [firstIncome, firstSnapshot].filter(v => v != null);
   if (!starts.length) return [];
   const days = [];
-  for (let d = localDayStart(Math.min(...starts), tz); d <= localDayStart(now, tz); d += DAY_MS) days.push(d);
+  for (let d = localDayStart(Math.min(...starts), tz); d <= localDayStart(now, tz); d = nextLocalDay(d, tz)) days.push({ start: d, end: nextLocalDay(d, tz) });
   const wallet = walletNow != null ? walletCloses(income, walletNow, days) : new Map();
   const account = snapshotCloses(snapshots, tz);
   const accountFrom = firstSnapshot == null ? Infinity : localDayStart(firstSnapshot, tz);
 
   let prev = null;
-  const rows = days.map(day => {
+  const rows = days.map(span => {
+    const day = span.start;
     const source = day >= accountFrom ? 'account' : 'wallet';
     const value = source === 'account' ? account.get(day) ?? null : wallet.get(day) ?? null;
-    const flows = flowsOf(income, day);
+    const flows = flowsOf(income, span);
     const flow = sumOf(flows.map(f => f.amount));
     const comparable = prev && prev.value != null && value != null && prev.source === source;
     const base = comparable ? prev.value + sumOf(flows.map(f => f.amount * f.weight)) : null;
@@ -251,17 +241,17 @@ export function streaksVsChance(trips) {
 }
 
 /** Net per local day from trips, by the day each closed, for a curve narrowed to some trips. */
-export function dailyTripNet(trips, tzOffsetMin = 0) {
+export function dailyTripNet(trips, tz = 0) {
   const byDay = new Map();
   for (const t of trips) {
-    const day = localDayStart(t.closeTime, tzOffsetMin);
+    const day = localDayStart(t.closeTime, tz);
     byDay.set(day, (byDay.get(day) || 0) + netOf(t));
   }
   let cum = 0, peak = 0;
   return [...byDay].sort((a, b) => a[0] - b[0]).map(([day, pnl]) => {
     cum += pnl;
     peak = Math.max(peak, cum);
-    return { day, date: localDate(day, tzOffsetMin), source: 'trips', value: round2(cum), pnl: round2(pnl), ddUsd: round2(cum - peak) };
+    return { day, date: localDate(day, tz), source: 'trips', value: round2(cum), pnl: round2(pnl), ddUsd: round2(cum - peak) };
   });
 }
 

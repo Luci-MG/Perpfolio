@@ -1884,372 +1884,156 @@
    "curve": "account"
   },
   "accountCurve": [],
-  "bySymbol": [
-   {
-    "avgLoss": -6.3,
-    "avgWin": 3.5,
-    "expectancy": 0.23,
-    "fees": 10.8,
-    "funding": -6.4,
-    "losses": 4,
-    "medianHoldHours": 6,
-    "net": 2.8,
-    "payoff": 0.56,
-    "symbol": "ETHUSDT",
-    "trips": 12,
-    "winRate": 66.67,
-    "wins": 8
-   },
-   {
-    "avgLoss": -90.73,
-    "avgWin": 124.1,
-    "expectancy": 32.03,
-    "fees": 11.6,
-    "funding": 0,
-    "losses": 6,
-    "medianHoldHours": 6,
-    "net": 448.4,
-    "payoff": 1.37,
-    "symbol": "BTCUSDT",
-    "trips": 14,
-    "winRate": 57.14,
-    "wins": 8
-   }
-  ],
-  "calendar": {
-   "maxAbs": 25.6,
-   "weeks": [
-    [
-     {
-      "date": "2026-07-27",
-      "pnl": null
-     },
-     {
-      "date": "2026-07-28",
-      "pnl": null
-     },
-     {
-      "date": "2026-07-29",
-      "pnl": null
-     },
-     {
-      "date": "2026-07-30",
-      "pnl": null
-     },
-     {
-      "date": "2026-07-31",
-      "pnl": null
-     },
-     {
-      "date": "2026-08-01",
-      "pnl": null
-     },
-     {
-      "date": "2026-08-02",
-      "pnl": -22.4
-     }
-    ],
-    [
-     {
-      "date": "2026-08-03",
-      "pnl": 25.6
-     },
-     {
-      "date": "2026-08-04",
-      "pnl": 13.6
-     },
-     {
-      "date": "2026-08-05",
-      "pnl": 1.6
-     },
-     {
-      "date": "2026-08-06",
-      "pnl": -10.4
-     },
-     {
-      "date": "2026-08-07",
-      "pnl": -22.4
-     },
-     {
-      "date": "2026-08-08",
-      "pnl": 25.6
-     },
-     {
-      "date": "2026-08-09",
-      "pnl": 13.6
-     }
-    ],
-    [
-     {
-      "date": "2026-08-10",
-      "pnl": 1.6
-     },
-     {
-      "date": "2026-08-11",
-      "pnl": -10.4
-     },
-     {
-      "date": "2026-08-12",
-      "pnl": -22.4
-     },
-     {
-      "date": "2026-08-13",
-      "pnl": 25.6
-     },
-     {
-      "date": "2026-08-14",
-      "pnl": 13.6
-     },
-     {
-      "date": "2026-08-15",
-      "pnl": 1.6
-     },
-     {
-      "date": "2026-08-16",
-      "pnl": -10.4
-     }
-    ],
-    [
-     {
-      "date": "2026-08-17",
-      "pnl": -22.4
-     },
-     {
-      "date": "2026-08-18",
-      "pnl": 25.6
-     },
-     {
-      "date": "2026-08-19",
-      "pnl": 13.6
-     },
-     {
-      "date": "2026-08-20",
-      "pnl": 1.6
-     },
-     {
-      "date": "2026-08-21",
-      "pnl": -10.4
-     },
-     {
-      "date": "2026-08-22",
-      "pnl": -22.4
-     },
-     {
-      "date": "2026-08-23",
-      "pnl": 25.6
-     }
-    ],
-    [
-     {
-      "date": "2026-08-24",
-      "pnl": 13.6
-     },
-     {
-      "date": "2026-08-25",
-      "pnl": 1.6
-     },
-     {
-      "date": "2026-08-26",
-      "pnl": -10.4
-     },
-     {
-      "date": "2026-08-27",
-      "pnl": -22.4
-     },
-     {
-      "date": "2026-08-28",
-      "pnl": 25.6
-     },
-     {
-      "date": "2026-08-29",
-      "pnl": 13.6
-     },
-     {
-      "date": "2026-08-30",
-      "pnl": 1.6
-     }
-    ],
-    [
-     {
-      "date": "2026-08-31",
-      "pnl": -10.4
-     },
-     {
-      "date": "2026-09-01",
-      "pnl": null
-     },
-     {
-      "date": "2026-09-02",
-      "pnl": null
-     },
-     {
-      "date": "2026-09-03",
-      "pnl": null
-     },
-     {
-      "date": "2026-09-04",
-      "pnl": null
-     },
-     {
-      "date": "2026-09-05",
-      "pnl": null
-     },
-     {
-      "date": "2026-09-06",
-      "pnl": null
-     }
-    ]
-   ]
-  },
   "costs": {
    "bySymbol": {
-    "fees": [
-     {
-      "fees": 45,
-      "funding": 0,
-      "symbol": "BTCUSDT"
+    "fees": {
+     "others": {
+      "symbols": 0,
+      "value": 0
+     },
+     "top": [
+      {
+       "symbol": "BTCUSDT",
+       "trips": 14,
+       "value": 11.6
+      },
+      {
+       "symbol": "ETHUSDT",
+       "trips": 12,
+       "value": 10.4
+      }
+     ]
+    },
+    "paid": {
+     "others": {
+      "symbols": 0,
+      "value": 0
+     },
+     "top": [
+      {
+       "symbol": "ETHUSDT",
+       "trips": 12,
+       "value": -6.4
+      }
+     ]
+    },
+    "received": {
+     "others": {
+      "symbols": 0,
+      "value": 0
+     },
+     "top": []
+    }
+   },
+   "feeBurn": true,
+   "feeCheck": {
+    "assumed": false,
+    "effectiveBp": 0.36,
+    "expectedBp": 4.16,
+    "pricedShare": 0.9639,
+    "rates": {
+     "BTCUSDT": {
+      "makerBp": 2,
+      "takerBp": 5
      }
-    ],
-    "funding": [
+    }
+   },
+   "ledger": {
+    "checks": [
      {
-      "fees": 0,
-      "funding": -24,
-      "symbol": "ETHUSDT"
+      "checked": false,
+      "id": "start"
      },
      {
-      "fees": 0,
-      "funding": -3,
-      "symbol": "SOLUSDT"
+      "checked": true,
+      "diff": -276,
+      "id": "realised"
+     },
+     {
+      "checked": true,
+      "diff": -30.6,
+      "id": "fees"
+     },
+     {
+      "checked": true,
+      "diff": -20.6,
+      "id": "funding",
+      "rows": 82
      }
-    ]
+    ],
+    "fees": -45,
+    "from": 1785628800000,
+    "funding": -27,
+    "other": [
+     {
+      "amount": 0.3,
+      "type": "COMMISSION_REBATE"
+     }
+    ],
+    "realised": 120,
+    "sinceSync": 0,
+    "start": 21151.7,
+    "transfers": 0,
+    "wallet": 21200
    },
-   "feeDragPct": 37.5,
-   "fees": 45,
-   "funding": -27,
-   "realised": 120
-  },
-  "dayOfWeek": [
-   {
-    "avgLoss": null,
-    "avgWin": 76.8,
-    "expectancy": 76.8,
-    "fees": 4,
-    "funding": -0.8,
-    "label": "Sunday",
-    "losses": 0,
-    "medianHoldHours": 6,
-    "net": 307.2,
-    "payoff": null,
-    "thin": true,
-    "trips": 4,
-    "winRate": 100,
-    "wins": 4
+   "makerTrend": null,
+   "previous": null,
+   "summary": {
+    "bnb": {
+     "fee": 0.0006,
+     "usd": 0.36
+    },
+    "costs": 28.76,
+    "feeDragPct": 5.99,
+    "fees": 22,
+    "feesBp": 0.67,
+    "fundingBp": -0.19,
+    "fundingPaid": -6.4,
+    "fundingReceived": 0,
+    "fundingUnknown": 9,
+    "gross": 480,
+    "makerShare": 0.2807,
+    "traded": 331936,
+    "trips": 26
    },
-   {
-    "avgLoss": -53.2,
-    "avgWin": null,
-    "expectancy": -53.2,
-    "fees": 1.6,
-    "funding": -0.8,
-    "label": "Monday",
-    "losses": 2,
-    "medianHoldHours": 6,
-    "net": -106.4,
-    "payoff": null,
-    "thin": true,
-    "trips": 2,
-    "winRate": 0,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": 50.8,
-    "expectancy": 50.8,
-    "fees": 3.2,
-    "funding": -1.6,
-    "label": "Tuesday",
-    "losses": 0,
-    "medianHoldHours": 6,
-    "net": 203.2,
-    "payoff": null,
-    "thin": true,
-    "trips": 4,
-    "winRate": 100,
-    "wins": 4
-   },
-   {
-    "avgLoss": -77.2,
-    "avgWin": 51.2,
-    "expectancy": -25.84,
-    "fees": 4.4,
-    "funding": -0.8,
-    "label": "Wednesday",
-    "losses": 3,
-    "medianHoldHours": 6,
-    "net": -129.2,
-    "payoff": 0.66,
-    "thin": true,
-    "trips": 5,
-    "winRate": 40,
-    "wins": 2
-   },
-   {
-    "avgLoss": -42,
-    "avgWin": 50.8,
-    "expectancy": -4.88,
-    "fees": 3.6,
-    "funding": -0.8,
-    "label": "Thursday",
-    "losses": 3,
-    "medianHoldHours": 6,
-    "net": -24.4,
-    "payoff": 1.21,
-    "thin": true,
-    "trips": 5,
-    "winRate": 40,
-    "wins": 2
-   },
-   {
-    "avgLoss": null,
-    "avgWin": 102.4,
-    "expectancy": 102.4,
-    "fees": 2.4,
-    "funding": -0.8,
-    "label": "Friday",
-    "losses": 0,
-    "medianHoldHours": 6,
-    "net": 204.8,
-    "payoff": null,
-    "thin": true,
-    "trips": 2,
-    "winRate": 100,
-    "wins": 2
-   },
-   {
-    "avgLoss": -52.8,
-    "avgWin": 50.8,
-    "expectancy": -1,
-    "fees": 3.2,
-    "funding": -0.8,
-    "label": "Saturday",
-    "losses": 2,
-    "medianHoldHours": 6,
-    "net": -4,
-    "payoff": 0.96,
-    "thin": true,
-    "trips": 4,
-    "winRate": 50,
-    "wins": 2
-   }
-  ],
-  "execution": {
-   "fills": 58,
-   "maker": 18,
-   "makerFee": 7.2,
-   "makerPct": 31,
-   "taker": 40,
-   "takerFee": 15.2,
-   "totalFee": 22.4
+   "weekly": [
+    {
+     "fees": 4,
+     "paid": 0,
+     "received": 0,
+     "week": "2026-07-20"
+    },
+    {
+     "fees": 3.6,
+     "paid": 0,
+     "received": 0,
+     "week": "2026-07-27"
+    },
+    {
+     "fees": 3.6,
+     "paid": -1.6,
+     "received": 0,
+     "week": "2026-08-03"
+    },
+    {
+     "fees": 5.2,
+     "paid": -2.4,
+     "received": 0,
+     "week": "2026-08-10"
+    },
+    {
+     "fees": 4,
+     "paid": -1.6,
+     "received": 0,
+     "week": "2026-08-17"
+    },
+    {
+     "fees": 1.6,
+     "paid": -0.8,
+     "received": 0,
+     "week": "2026-08-24"
+    }
+   ]
   },
   "habits": [
    {
@@ -2328,11 +2112,11 @@
    {
     "against": "trips on your quietest days",
     "ci": {
-     "hi": 413.45,
-     "lo": -259.85
+     "hi": 413.32,
+     "lo": -259.96
     },
     "comparisonTrips": 20,
-    "cost": 76.8,
+    "cost": 76.68,
     "costed": null,
     "goal": {
      "params": {
@@ -2445,14 +2229,14 @@
    },
    {
     "avgLoss": -66.1,
-    "avgWin": 63.8,
-    "expectancy": 20.5,
-    "fees": 21.6,
+    "avgWin": 63.83,
+    "expectancy": 20.52,
+    "fees": 21.2,
     "funding": -6.4,
     "label": "4 – 24h",
     "losses": 8,
     "medianHoldHours": 6,
-    "net": 492,
+    "net": 492.4,
     "payoff": 0.97,
     "thin": false,
     "trips": 24,
@@ -2492,392 +2276,6 @@
     "wins": 0
    }
   ],
-  "hourOfDay": [
-   {
-    "avgLoss": -66.1,
-    "avgWin": 63.8,
-    "expectancy": 20.5,
-    "fees": 21.6,
-    "funding": -6.4,
-    "label": "00:00",
-    "losses": 8,
-    "medianHoldHours": 6,
-    "net": 492,
-    "payoff": 0.97,
-    "thin": false,
-    "trips": 24,
-    "winRate": 66.67,
-    "wins": 16
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "01:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": -20.4,
-    "avgWin": null,
-    "expectancy": -20.4,
-    "fees": 0.8,
-    "funding": 0,
-    "label": "02:00",
-    "losses": 2,
-    "medianHoldHours": 2,
-    "net": -40.8,
-    "payoff": null,
-    "thin": true,
-    "trips": 2,
-    "winRate": 0,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "03:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "04:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "05:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "06:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "07:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "08:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "09:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "10:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "11:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "12:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "13:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "14:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "15:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "16:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "17:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "18:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "19:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "20:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "21:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "22:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   },
-   {
-    "avgLoss": null,
-    "avgWin": null,
-    "expectancy": null,
-    "fees": 0,
-    "funding": 0,
-    "label": "23:00",
-    "losses": 0,
-    "medianHoldHours": null,
-    "net": 0,
-    "payoff": null,
-    "thin": true,
-    "trips": 0,
-    "winRate": null,
-    "wins": 0
-   }
-  ],
   "month": [
    {
     "avgLoss": -42,
@@ -2897,14 +2295,14 @@
    },
    {
     "avgLoss": -63.37,
-    "avgWin": 59.4,
-    "expectancy": 14.17,
-    "fees": 16.4,
+    "avgWin": 59.43,
+    "expectancy": 14.19,
+    "fees": 16,
     "funding": -6.4,
     "label": "2026-08",
     "losses": 7,
     "medianHoldHours": 6,
-    "net": 269.2,
+    "net": 269.6,
     "payoff": 0.94,
     "thin": false,
     "trips": 19,
@@ -2912,7 +2310,7 @@
     "wins": 12
    }
   ],
-  "nonQuoteFees": 0,
+  "nonQuoteFees": 0.0006,
   "ok": true,
   "orphans": {
    "fills": 0,
@@ -2920,13 +2318,13 @@
   },
   "overall": {
    "avgLoss": -56.96,
-   "avgWin": 63.8,
-   "expectancy": 17.35,
-   "fees": 22.4,
+   "avgWin": 63.83,
+   "expectancy": 17.37,
+   "fees": 22,
    "funding": -6.4,
    "losses": 10,
    "medianHoldHours": 6,
-   "net": 451.2,
+   "net": 451.6,
    "payoff": 1.12,
    "trips": 26,
    "winRate": 61.54,
@@ -3050,14 +2448,14 @@
   "side": [
    {
     "avgLoss": -66.1,
-    "avgWin": 63.8,
-    "expectancy": 20.5,
-    "fees": 21.6,
+    "avgWin": 63.83,
+    "expectancy": 20.52,
+    "fees": 21.2,
     "funding": -6.4,
     "label": "Long",
     "losses": 8,
     "medianHoldHours": 6,
-    "net": 492,
+    "net": 492.4,
     "payoff": 0.97,
     "thin": false,
     "trips": 24,
@@ -3117,24 +2515,812 @@
    "longestWin": 4,
    "units": 24
   },
-  "totals": {
-   "COMMISSION": -45,
-   "FUNDING_FEE": -27,
-   "REALIZED_PNL": 120
+  "symbols": {
+   "chance": {
+    "byChance": 0,
+    "clear": 0,
+    "shown": 2
+   },
+   "concentration": {
+    "effectiveSymbols": 1.07,
+    "symbols": 2,
+    "top": [
+     "BTCUSDT",
+     "ETHUSDT"
+    ],
+    "topShare": 1
+   },
+   "min": 8,
+   "overall": 18.82,
+   "rest": {
+    "net": 0,
+    "symbols": 0,
+    "units": 0
+   },
+   "rows": [
+    {
+     "ci": {
+      "hi": 49.63,
+      "lo": -12
+     },
+     "costBp": 0.36,
+     "fees": 11.6,
+     "fundingPerHour": 0,
+     "legs": 14,
+     "needs": 0,
+     "net": 448.4,
+     "shrunk": 18.82,
+     "symbol": "BTCUSDT",
+     "traded": 319940,
+     "units": 12,
+     "winRate": 0.6667
+    },
+    {
+     "ci": {
+      "hi": 49.63,
+      "lo": -12
+     },
+     "costBp": 8.67,
+     "fees": 10.4,
+     "fundingPerHour": -0.1333,
+     "legs": 12,
+     "needs": 0,
+     "net": 3.2,
+     "shrunk": 18.82,
+     "symbol": "ETHUSDT",
+     "traded": 11996,
+     "units": 12,
+     "winRate": 0.6667
+    }
+   ],
+   "shown": [
+    "BTCUSDT",
+    "ETHUSDT"
+   ]
+  },
+  "timing": {
+   "calendar": {
+    "maxAbs": 25.6,
+    "months": [
+     {
+      "month": "2026-08",
+      "total": 48
+     }
+    ],
+    "weeks": [
+     {
+      "days": [
+       {
+        "date": "2026-07-27",
+        "pnl": null,
+        "trips": 0
+       },
+       {
+        "date": "2026-07-28",
+        "pnl": null,
+        "trips": 0
+       },
+       {
+        "date": "2026-07-29",
+        "pnl": null,
+        "trips": 3
+       },
+       {
+        "date": "2026-07-30",
+        "pnl": null,
+        "trips": 0
+       },
+       {
+        "date": "2026-07-31",
+        "pnl": null,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-01",
+        "pnl": null,
+        "trips": 2
+       },
+       {
+        "date": "2026-08-02",
+        "pnl": -22.4,
+        "trips": 0
+       }
+      ],
+      "start": "2026-07-27",
+      "total": -22.4
+     },
+     {
+      "days": [
+       {
+        "date": "2026-08-03",
+        "pnl": 25.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-04",
+        "pnl": 13.6,
+        "trips": 2
+       },
+       {
+        "date": "2026-08-05",
+        "pnl": 1.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-06",
+        "pnl": -10.4,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-07",
+        "pnl": -22.4,
+        "trips": 2
+       },
+       {
+        "date": "2026-08-08",
+        "pnl": 25.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-09",
+        "pnl": 13.6,
+        "trips": 0
+       }
+      ],
+      "start": "2026-08-03",
+      "total": 47.2
+     },
+     {
+      "days": [
+       {
+        "date": "2026-08-10",
+        "pnl": 1.6,
+        "trips": 2
+       },
+       {
+        "date": "2026-08-11",
+        "pnl": -10.4,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-12",
+        "pnl": -22.4,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-13",
+        "pnl": 25.6,
+        "trips": 3
+       },
+       {
+        "date": "2026-08-14",
+        "pnl": 13.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-15",
+        "pnl": 1.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-16",
+        "pnl": -10.4,
+        "trips": 2
+       }
+      ],
+      "start": "2026-08-10",
+      "total": -0.8
+     },
+     {
+      "days": [
+       {
+        "date": "2026-08-17",
+        "pnl": -22.4,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-18",
+        "pnl": 25.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-19",
+        "pnl": 13.6,
+        "trips": 2
+       },
+       {
+        "date": "2026-08-20",
+        "pnl": 1.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-21",
+        "pnl": -10.4,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-22",
+        "pnl": -22.4,
+        "trips": 2
+       },
+       {
+        "date": "2026-08-23",
+        "pnl": 25.6,
+        "trips": 0
+       }
+      ],
+      "start": "2026-08-17",
+      "total": 11.2
+     },
+     {
+      "days": [
+       {
+        "date": "2026-08-24",
+        "pnl": 13.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-25",
+        "pnl": 1.6,
+        "trips": 2
+       },
+       {
+        "date": "2026-08-26",
+        "pnl": -10.4,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-27",
+        "pnl": -22.4,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-28",
+        "pnl": 25.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-29",
+        "pnl": 13.6,
+        "trips": 0
+       },
+       {
+        "date": "2026-08-30",
+        "pnl": 1.6,
+        "trips": 0
+       }
+      ],
+      "start": "2026-08-24",
+      "total": 23.2
+     },
+     {
+      "days": [
+       {
+        "date": "2026-08-31",
+        "pnl": -10.4,
+        "trips": 0
+       },
+       {
+        "date": "2026-09-01",
+        "pnl": null,
+        "trips": 0
+       },
+       {
+        "date": "2026-09-02",
+        "pnl": null,
+        "trips": 0
+       },
+       {
+        "date": "2026-09-03",
+        "pnl": null,
+        "trips": 0
+       },
+       {
+        "date": "2026-09-04",
+        "pnl": null,
+        "trips": 0
+       },
+       {
+        "date": "2026-09-05",
+        "pnl": null,
+        "trips": 0
+       },
+       {
+        "date": "2026-09-06",
+        "pnl": null,
+        "trips": 0
+       }
+      ],
+      "start": "2026-08-31",
+      "total": -10.4
+     }
+    ]
+   },
+   "calendarSource": "ledger",
+   "grid": {
+    "counts": [
+     [
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     [
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    ],
+    "max": 4,
+    "weekdays": [
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday",
+     "Saturday",
+     "Sunday"
+    ]
+   },
+   "hour": {
+    "chance": {
+     "byChance": 0,
+     "clear": 0,
+     "shown": 1
+    },
+    "min": 8,
+    "overall": 18.82,
+    "rows": [
+     {
+      "ci": {
+       "hi": 49.62,
+       "lo": -11.99
+      },
+      "label": "00:00",
+      "mean": 18.82,
+      "needs": 0,
+      "shrunk": 18.82,
+      "total": 451.6,
+      "units": 24
+     },
+     {
+      "label": "01:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "02:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "03:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "04:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "05:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "06:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "07:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "08:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "09:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "10:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "11:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "12:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "13:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "14:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "15:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "16:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "17:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "18:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "19:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "20:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "21:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "22:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     },
+     {
+      "label": "23:00",
+      "mean": null,
+      "needs": 8,
+      "shrunk": null,
+      "total": 0,
+      "units": 0
+     }
+    ]
+   },
+   "weekday": {
+    "chance": {
+     "byChance": 0,
+     "clear": 0,
+     "shown": 0
+    },
+    "min": 8,
+    "overall": 18.82,
+    "rows": [
+     {
+      "label": "Monday",
+      "mean": null,
+      "needs": 6,
+      "shrunk": null,
+      "total": -106.4,
+      "units": 2
+     },
+     {
+      "label": "Tuesday",
+      "mean": null,
+      "needs": 4,
+      "shrunk": null,
+      "total": 203.6,
+      "units": 4
+     },
+     {
+      "label": "Wednesday",
+      "mean": null,
+      "needs": 4,
+      "shrunk": null,
+      "total": -129.2,
+      "units": 4
+     },
+     {
+      "label": "Thursday",
+      "mean": null,
+      "needs": 4,
+      "shrunk": null,
+      "total": -24.4,
+      "units": 4
+     },
+     {
+      "label": "Friday",
+      "mean": null,
+      "needs": 6,
+      "shrunk": null,
+      "total": 204.8,
+      "units": 2
+     },
+     {
+      "label": "Saturday",
+      "mean": null,
+      "needs": 4,
+      "shrunk": null,
+      "total": -4,
+      "units": 4
+     },
+     {
+      "label": "Sunday",
+      "mean": null,
+      "needs": 4,
+      "shrunk": null,
+      "total": 307.2,
+      "units": 4
+     }
+    ]
+   }
   },
   "units": {
    "avgLoss": -66.1,
-   "avgWin": 61.25,
-   "expectancy": 18.8,
+   "avgWin": 61.28,
+   "expectancy": 18.82,
    "expectancyCi": {
-    "hi": 48.22,
-    "lo": -11.31
+    "hi": 48.25,
+    "lo": -11.29
    },
    "flat": 0,
    "legs": 26,
    "losses": 8,
    "medianHoldHours": 6,
-   "net": 451.2,
+   "net": 451.6,
    "payoff": 0.93,
    "profitFactor": {
     "needs": 6
@@ -3155,87 +3341,87 @@
   "walletCurve": [
    {
     "t": 1785628799999,
-    "wallet": 21152
+    "wallet": 21151.7
    },
    {
     "t": 1785715199999,
-    "wallet": 21129.6
+    "wallet": 21129.3
    },
    {
     "t": 1785801599999,
-    "wallet": 21155.2
+    "wallet": 21154.9
    },
    {
     "t": 1785887999999,
-    "wallet": 21168.8
+    "wallet": 21168.5
    },
    {
     "t": 1785974399999,
-    "wallet": 21170.4
+    "wallet": 21170.1
    },
    {
     "t": 1786060799999,
-    "wallet": 21160
+    "wallet": 21159.7
    },
    {
     "t": 1786147199999,
-    "wallet": 21137.6
+    "wallet": 21137.3
    },
    {
     "t": 1786233599999,
-    "wallet": 21163.2
+    "wallet": 21162.9
    },
    {
     "t": 1786319999999,
-    "wallet": 21176.8
+    "wallet": 21176.5
    },
    {
     "t": 1786406399999,
-    "wallet": 21178.4
+    "wallet": 21178.1
    },
    {
     "t": 1786492799999,
-    "wallet": 21168
+    "wallet": 21167.7
    },
    {
     "t": 1786579199999,
-    "wallet": 21145.6
+    "wallet": 21145.3
    },
    {
     "t": 1786665599999,
-    "wallet": 21171.2
+    "wallet": 21170.9
    },
    {
     "t": 1786751999999,
-    "wallet": 21184.8
+    "wallet": 21184.5
    },
    {
     "t": 1786838399999,
-    "wallet": 21186.4
+    "wallet": 21186.1
    },
    {
     "t": 1786924799999,
-    "wallet": 21176
+    "wallet": 21175.7
    },
    {
     "t": 1787011199999,
-    "wallet": 21153.6
+    "wallet": 21153.3
    },
    {
     "t": 1787097599999,
-    "wallet": 21179.2
+    "wallet": 21178.9
    },
    {
     "t": 1787183999999,
-    "wallet": 21192.8
+    "wallet": 21192.5
    },
    {
     "t": 1787270399999,
-    "wallet": 21194.4
+    "wallet": 21194.1
    },
    {
     "t": 1787356799999,
-    "wallet": 21184
+    "wallet": 21183.7
    },
    {
     "t": 1787443199999,
@@ -3302,6 +3488,7 @@
     "atrPct": 0.55,
     "avgEntry": 100000,
     "avgExit": 99000,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1784786400000,
     "commission": 0.8,
@@ -3317,6 +3504,7 @@
     "key": "BTCUSDT:LONG:1784764800000",
     "mae": -4.13,
     "makerFills": 1,
+    "makerNotional": 9900,
     "maxSize": 0.1,
     "mfe": 0,
     "net": -100.8,
@@ -3335,6 +3523,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 19900,
     "win": false
    },
    {
@@ -3343,6 +3532,7 @@
     "atrPct": 0.56,
     "avgEntry": 99000,
     "avgExit": 101000,
+    "bnbFee": 0,
     "btcTrend": "flat",
     "closeTime": 1785045600000,
     "commission": 1.2,
@@ -3358,6 +3548,7 @@
     "key": "BTCUSDT:LONG:1785024000000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 9800,
     "maxSize": 0.2,
     "mfe": 4.31,
     "net": 198.8,
@@ -3376,6 +3567,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 40000,
     "win": true
    },
    {
@@ -3384,6 +3576,7 @@
     "atrPct": 0.52,
     "avgEntry": 100000,
     "avgExit": 100400,
+    "bnbFee": 0,
     "btcTrend": "up",
     "closeTime": 1785297600000,
     "commission": 0.4,
@@ -3399,6 +3592,7 @@
     "key": "BTCUSDT:SHORT:1785290400000",
     "mae": -2.04,
     "makerFills": 0,
+    "makerNotional": 0,
     "maxSize": 0.05,
     "mfe": 0,
     "net": -20.4,
@@ -3417,6 +3611,7 @@
     "side": "Short",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 10020,
     "win": false
    },
    {
@@ -3425,6 +3620,7 @@
     "atrPct": 0.51,
     "avgEntry": 100000,
     "avgExit": 101000,
+    "bnbFee": 0,
     "btcTrend": "up",
     "closeTime": 1785304800000,
     "commission": 0.8,
@@ -3440,6 +3636,7 @@
     "key": "BTCUSDT:LONG:1785283200000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 10100,
     "maxSize": 0.1,
     "mfe": 2.51,
     "net": 99.2,
@@ -3458,6 +3655,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 20100,
     "win": true
    },
    {
@@ -3466,6 +3664,7 @@
     "atrPct": 0.57,
     "avgEntry": 100000,
     "avgExit": 99000,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1785564000000,
     "commission": 0.8,
@@ -3481,6 +3680,7 @@
     "key": "BTCUSDT:LONG:1785542400000",
     "mae": -4.19,
     "makerFills": 0,
+    "makerNotional": 0,
     "maxSize": 0.1,
     "mfe": 0,
     "net": -100.8,
@@ -3499,6 +3699,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 19900,
     "win": false
    },
    {
@@ -3507,6 +3708,7 @@
     "atrPct": 0.52,
     "avgEntry": 100000,
     "avgExit": 101000,
+    "bnbFee": 0,
     "btcTrend": "flat",
     "closeTime": 1785823200000,
     "commission": 0.8,
@@ -3522,6 +3724,7 @@
     "key": "BTCUSDT:LONG:1785801600000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 10100,
     "maxSize": 0.1,
     "mfe": 2.36,
     "net": 99.2,
@@ -3540,6 +3743,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 20100,
     "win": true
    },
    {
@@ -3548,6 +3752,7 @@
     "atrPct": 0.5,
     "avgEntry": 99000,
     "avgExit": 101000,
+    "bnbFee": 0,
     "btcTrend": "up",
     "closeTime": 1786082400000,
     "commission": 1.2,
@@ -3563,6 +3768,7 @@
     "key": "BTCUSDT:LONG:1786060800000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 9800,
     "maxSize": 0.2,
     "mfe": 4.47,
     "net": 198.8,
@@ -3581,6 +3787,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 40000,
     "win": true
    },
    {
@@ -3589,6 +3796,7 @@
     "atrPct": 0.54,
     "avgEntry": 100000,
     "avgExit": 99000,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1786341600000,
     "commission": 0.8,
@@ -3604,6 +3812,7 @@
     "key": "BTCUSDT:LONG:1786320000000",
     "mae": -4.1,
     "makerFills": 1,
+    "makerNotional": 9900,
     "maxSize": 0.1,
     "mfe": 0,
     "net": -100.8,
@@ -3622,6 +3831,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 19900,
     "win": false
    },
    {
@@ -3630,6 +3840,7 @@
     "atrPct": 0.5,
     "avgEntry": 100000,
     "avgExit": 100400,
+    "bnbFee": 0,
     "btcTrend": "flat",
     "closeTime": 1786593600000,
     "commission": 0.4,
@@ -3645,6 +3856,7 @@
     "key": "BTCUSDT:SHORT:1786586400000",
     "mae": -0.34,
     "makerFills": 0,
+    "makerNotional": 0,
     "maxSize": 0.05,
     "mfe": 0.59,
     "net": -20.4,
@@ -3663,6 +3875,7 @@
     "side": "Short",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 10020,
     "win": false
    },
    {
@@ -3671,6 +3884,7 @@
     "atrPct": 0.49,
     "avgEntry": 100000,
     "avgExit": 101000,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1786600800000,
     "commission": 0.8,
@@ -3686,6 +3900,7 @@
     "key": "BTCUSDT:LONG:1786579200000",
     "mae": -1.01,
     "makerFills": 0,
+    "makerNotional": 0,
     "maxSize": 0.1,
     "mfe": 0.9,
     "net": 99.2,
@@ -3704,6 +3919,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 20100,
     "win": true
    },
    {
@@ -3712,6 +3928,7 @@
     "atrPct": 0.5,
     "avgEntry": 100000,
     "avgExit": 101000,
+    "bnbFee": 0,
     "btcTrend": "up",
     "closeTime": 1786860000000,
     "commission": 0.8,
@@ -3727,6 +3944,7 @@
     "key": "BTCUSDT:LONG:1786838400000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 10100,
     "maxSize": 0.1,
     "mfe": 3.76,
     "net": 99.2,
@@ -3745,6 +3963,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 20100,
     "win": true
    },
    {
@@ -3753,6 +3972,7 @@
     "atrPct": 0.51,
     "avgEntry": 99000,
     "avgExit": 99000,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1787119200000,
     "commission": 1.2,
@@ -3768,6 +3988,7 @@
     "key": "BTCUSDT:LONG:1787097600000",
     "mae": -2.43,
     "makerFills": 1,
+    "makerNotional": 9800,
     "maxSize": 0.2,
     "mfe": 0,
     "net": -201.2,
@@ -3786,6 +4007,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 39600,
     "win": false
    },
    {
@@ -3794,6 +4016,7 @@
     "atrPct": 0.47,
     "avgEntry": 100000,
     "avgExit": 101000,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1787378400000,
     "commission": 0.8,
@@ -3809,6 +4032,7 @@
     "key": "BTCUSDT:LONG:1787356800000",
     "mae": -1.92,
     "makerFills": 1,
+    "makerNotional": 10100,
     "maxSize": 0.1,
     "mfe": 0,
     "net": 99.2,
@@ -3827,6 +4051,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 20100,
     "win": true
    },
    {
@@ -3835,6 +4060,7 @@
     "atrPct": 0.51,
     "avgEntry": 100000,
     "avgExit": 101000,
+    "bnbFee": 0,
     "btcTrend": "up",
     "closeTime": 1787637600000,
     "commission": 0.8,
@@ -3850,6 +4076,7 @@
     "key": "BTCUSDT:LONG:1787616000000",
     "mae": 0,
     "makerFills": 0,
+    "makerNotional": 0,
     "maxSize": 0.1,
     "mfe": 3.96,
     "net": 99.2,
@@ -3868,6 +4095,7 @@
     "side": "Long",
     "symbol": "BTCUSDT",
     "tags": [],
+    "tradedNotional": 20100,
     "win": true
    },
    {
@@ -3876,6 +4104,7 @@
     "atrPct": 0.55,
     "avgEntry": 4000,
     "avgExit": 3960,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1784786400000,
     "commission": 0.8,
@@ -3891,6 +4120,7 @@
     "key": "ETHUSDT:LONG:1784764800000",
     "mae": -4.13,
     "makerFills": 1,
+    "makerNotional": 396,
     "maxSize": 0.1,
     "mfe": 0,
     "net": -4.8,
@@ -3909,6 +4139,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 796,
     "win": false
    },
    {
@@ -3917,6 +4148,7 @@
     "atrPct": 0.56,
     "avgEntry": 3960,
     "avgExit": 4040,
+    "bnbFee": 0,
     "btcTrend": "flat",
     "closeTime": 1785045600000,
     "commission": 1.2,
@@ -3932,6 +4164,7 @@
     "key": "ETHUSDT:LONG:1785024000000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 392,
     "maxSize": 0.2,
     "mfe": 4.31,
     "net": 6.8,
@@ -3950,6 +4183,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 1600,
     "win": true
    },
    {
@@ -3958,6 +4192,7 @@
     "atrPct": 0.51,
     "avgEntry": 4000,
     "avgExit": 4040,
+    "bnbFee": 0,
     "btcTrend": "up",
     "closeTime": 1785304800000,
     "commission": 0.8,
@@ -3973,6 +4208,7 @@
     "key": "ETHUSDT:LONG:1785283200000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 404,
     "maxSize": 0.1,
     "mfe": 2.51,
     "net": 3.2,
@@ -3991,6 +4227,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 804,
     "win": true
    },
    {
@@ -3999,6 +4236,7 @@
     "atrPct": 0.57,
     "avgEntry": 4000,
     "avgExit": 3960,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1785564000000,
     "commission": 0.8,
@@ -4014,6 +4252,7 @@
     "key": "ETHUSDT:LONG:1785542400000",
     "mae": -4.19,
     "makerFills": 0,
+    "makerNotional": 0,
     "maxSize": 0.1,
     "mfe": 0,
     "net": -4.8,
@@ -4032,6 +4271,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 796,
     "win": false
    },
    {
@@ -4040,9 +4280,10 @@
     "atrPct": 0.52,
     "avgEntry": 4000,
     "avgExit": 4040,
+    "bnbFee": 0.0006,
     "btcTrend": "flat",
     "closeTime": 1785823200000,
-    "commission": 0.8,
+    "commission": 0.4,
     "context": "ready",
     "enteredQty": 0.1,
     "entry": null,
@@ -4055,10 +4296,11 @@
     "key": "ETHUSDT:LONG:1785801600000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 404,
     "maxSize": 0.1,
     "mfe": 2.36,
-    "net": 3.2,
-    "netAfterFunding": 2.4,
+    "net": 3.6,
+    "netAfterFunding": 2.8,
     "note": null,
     "openNotional": 400,
     "openOrderId": 2009,
@@ -4073,6 +4315,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 804,
     "win": true
    },
    {
@@ -4081,6 +4324,7 @@
     "atrPct": 0.5,
     "avgEntry": 3960,
     "avgExit": 4040,
+    "bnbFee": 0,
     "btcTrend": "up",
     "closeTime": 1786082400000,
     "commission": 1.2,
@@ -4096,6 +4340,7 @@
     "key": "ETHUSDT:LONG:1786060800000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 392,
     "maxSize": 0.2,
     "mfe": 4.47,
     "net": 6.8,
@@ -4114,6 +4359,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 1600,
     "win": true
    },
    {
@@ -4122,6 +4368,7 @@
     "atrPct": 0.54,
     "avgEntry": 4000,
     "avgExit": 3960,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1786341600000,
     "commission": 0.8,
@@ -4137,6 +4384,7 @@
     "key": "ETHUSDT:LONG:1786320000000",
     "mae": -4.1,
     "makerFills": 1,
+    "makerNotional": 396,
     "maxSize": 0.1,
     "mfe": 0,
     "net": -4.8,
@@ -4155,6 +4403,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 796,
     "win": false
    },
    {
@@ -4163,6 +4412,7 @@
     "atrPct": 0.49,
     "avgEntry": 4000,
     "avgExit": 4040,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1786600800000,
     "commission": 0.8,
@@ -4178,6 +4428,7 @@
     "key": "ETHUSDT:LONG:1786579200000",
     "mae": -1.01,
     "makerFills": 0,
+    "makerNotional": 0,
     "maxSize": 0.1,
     "mfe": 0.9,
     "net": 3.2,
@@ -4196,6 +4447,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 804,
     "win": true
    },
    {
@@ -4204,6 +4456,7 @@
     "atrPct": 0.5,
     "avgEntry": 4000,
     "avgExit": 4040,
+    "bnbFee": 0,
     "btcTrend": "up",
     "closeTime": 1786860000000,
     "commission": 0.8,
@@ -4219,6 +4472,7 @@
     "key": "ETHUSDT:LONG:1786838400000",
     "mae": 0,
     "makerFills": 1,
+    "makerNotional": 404,
     "maxSize": 0.1,
     "mfe": 3.76,
     "net": 3.2,
@@ -4237,6 +4491,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 804,
     "win": true
    },
    {
@@ -4245,6 +4500,7 @@
     "atrPct": 0.51,
     "avgEntry": 3960,
     "avgExit": 3960,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1787119200000,
     "commission": 1.2,
@@ -4260,6 +4516,7 @@
     "key": "ETHUSDT:LONG:1787097600000",
     "mae": -2.43,
     "makerFills": 1,
+    "makerNotional": 392,
     "maxSize": 0.2,
     "mfe": 0,
     "net": -9.2,
@@ -4278,6 +4535,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 1584,
     "win": false
    },
    {
@@ -4286,6 +4544,7 @@
     "atrPct": 0.47,
     "avgEntry": 4000,
     "avgExit": 4040,
+    "bnbFee": 0,
     "btcTrend": "down",
     "closeTime": 1787378400000,
     "commission": 0.8,
@@ -4301,6 +4560,7 @@
     "key": "ETHUSDT:LONG:1787356800000",
     "mae": -1.92,
     "makerFills": 1,
+    "makerNotional": 404,
     "maxSize": 0.1,
     "mfe": 0,
     "net": 3.2,
@@ -4319,6 +4579,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 804,
     "win": true
    },
    {
@@ -4327,6 +4588,7 @@
     "atrPct": 0.51,
     "avgEntry": 4000,
     "avgExit": 4040,
+    "bnbFee": 0,
     "btcTrend": "up",
     "closeTime": 1787637600000,
     "commission": 0.8,
@@ -4342,6 +4604,7 @@
     "key": "ETHUSDT:LONG:1787616000000",
     "mae": 0,
     "makerFills": 0,
+    "makerNotional": 0,
     "maxSize": 0.1,
     "mfe": 3.96,
     "net": 3.2,
@@ -4360,6 +4623,7 @@
     "side": "Long",
     "symbol": "ETHUSDT",
     "tags": [],
+    "tradedNotional": 804,
     "win": true
    }
   ]
@@ -7851,9 +8115,9 @@
     "preview": {
      "adherence": 0.9615,
      "avgBroken": -201.2,
-     "avgKept": 26.1,
+     "avgKept": 26.11,
      "brokenTrips": 1,
-     "cost": -227.3,
+     "cost": -227.31,
      "keptTrips": 25,
      "label": "Max loss 0.5% a trade",
      "n": 26,

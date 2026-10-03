@@ -3,6 +3,7 @@
 // and withdrawals removed, the wallet curve standing in before snapshots began. Pure;
 // goals.js sends here every GOAL_TYPES entry whose unit is 'milestone'.
 
+import { localMidnight } from './local-time.js';
 import { periodStarts } from './trade-analytics.js';
 
 const DAY_MS = 86_400_000;
@@ -15,10 +16,10 @@ const localDay = (ts, tz) => periodStarts(ts, tz).today;
 const localMonth = (ts, tz) => periodStarts(ts, tz).month;
 const round2 = v => (v == null ? null : +v.toFixed(2));
 
-/** End of the local day `by` (YYYY-MM-DD) on a clock `tz` minutes ahead of UTC. */
+/** End of the local day `by` (YYYY-MM-DD) on the reader's clock `tz` (local-time.js). */
 export function deadlineOf(by, tz = 0) {
   const [y, m, d] = by.split('-').map(Number);
-  return Date.UTC(y, m - 1, d + 1) - tz * 60_000;
+  return localMidnight(y, m - 1, d + 1, tz);
 }
 
 const transfersBetween = (transfers, from, to) =>
@@ -76,7 +77,7 @@ function projectionLine(fit, last, eta, deadline) {
 }
 
 function scoreAccountTarget(goal, ctx, paused) {
-  const tz = ctx.tzOffsetMin || 0;
+  const tz = ctx.tz ?? 0;
   const all = snapshotSeries(ctx);
   const start = all.filter(p => p.t <= goal.setAt).at(-1) ?? all.find(p => p.t > goal.setAt);
   if (!start) return { status: paused ? 'paused' : 'early', waiting: true, days: 0 };
@@ -110,7 +111,7 @@ function worstFall(points) {
 }
 
 function monthlyDrawdowns(ctx) {
-  const tz = ctx.tzOffsetMin || 0;
+  const tz = ctx.tz ?? 0;
   const byMonth = new Map();
   for (const p of valueSeries(ctx)) {
     const month = localMonth(p.t, tz);
@@ -143,7 +144,7 @@ function monthCells(months, now, tz, setMonth) {
 }
 
 function scoreDrawdown(goal, ctx, paused, isPaused) {
-  const tz = ctx.tzOffsetMin || 0;
+  const tz = ctx.tz ?? 0;
   const current = localMonth(ctx.now, tz);
   const setMonth = localMonth(goal.setAt, tz);
   const months = monthlyDrawdowns(ctx).map(m => ({ ...m, kept: m.ddPct > -goal.params.maxPct, current: m.month === current }));
@@ -172,7 +173,7 @@ function recentPace(ctx) {
   const snaps = snapshotSeries(ctx).filter(p => p.t >= since);
   const enoughSnaps = snaps.length > 1 && (snaps.at(-1).t - snaps[0].t) / DAY_MS >= MIN_HISTORY_DAYS;
   const points = enoughSnaps ? snaps : (ctx.wallet || []).filter(p => p.t >= since).map(p => ({ t: p.t, value: p.wallet }));
-  const fit = fitLine(dailyCloses(netOfTransfers(points, ctx.transfers, points[0]?.t ?? since), ctx.tzOffsetMin || 0));
+  const fit = fitLine(dailyCloses(netOfTransfers(points, ctx.transfers, points[0]?.t ?? since), ctx.tz ?? 0));
   return fit ? { perDay: round2(fit.perDay), approx: !enoughSnaps } : null;
 }
 
@@ -186,7 +187,7 @@ export function previewMilestone(goal, ctx) {
   const snaps = snapshotSeries(ctx);
   const wallet = ctx.wallet || [];
   const current = snaps.at(-1)?.value ?? wallet.at(-1)?.wallet ?? null;
-  const daysLeft = goal.params.by ? Math.max(0, (deadlineOf(goal.params.by, ctx.tzOffsetMin || 0) - ctx.now) / DAY_MS) : null;
+  const daysLeft = goal.params.by ? Math.max(0, (deadlineOf(goal.params.by, ctx.tz ?? 0) - ctx.now) / DAY_MS) : null;
   const needed = current == null ? null : goal.params.target - current;
   return {
     current: round2(current), currentApprox: !snaps.length, needed: round2(needed),

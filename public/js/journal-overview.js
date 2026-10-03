@@ -124,21 +124,3 @@ function renderOverview() {
   return `${ovAttention()}${sessionNote}${ovPeriods(perfData.periods)}${ovAccount()}
     <div class="ov-pair">${ovNextMilestone()}${ovRecentTrades()}</div>${ovFooter()}`;
 }
-
-function walletBridgeSection() {
-  const a = ovAccountNow();
-  const t = perfData.totals || {};
-  const realised = t.REALIZED_PNL || 0, fees = t.COMMISSION || 0, funding = t.FUNDING_FEE || 0, transfers = t.TRANSFER || 0;
-  const startWallet = a.wallet - (realised + fees + funding + transfers);
-  const row = (k, v, cls = '', extra = '') => `<div class="jr-flow-row ${extra}"><span class="k">${k}</span><span class="${cls}">${v}</span></div>`;
-  return jrSection('How the wallet got here', `<div class="jr-flow">
-      ${row('wallet at the start of the window', fmtUsd(startWallet), '', 'muted')}
-      ${row('deposits and withdrawals', fmtSignedUsd(transfers), ovTone(transfers))}
-      ${row('realised profit and loss', fmtSignedUsd(realised), ovTone(realised))}
-      ${row('trading fees', fmtSignedUsd(fees), 'dn')}
-      ${row('funding', fmtSignedUsd(funding), ovTone(funding))}
-      ${row('wallet now', fmtUsd(a.wallet), '', 'rule')}
-      ${row('open positions, unrealised', fmtSignedUsd(a.upnl), ovTone(a.upnl))}
-      ${row('account value', fmtUsd(a.accountValue), '', 'total')}
-    </div>`, 'The starting wallet is derived from the ledger, so it is exact only for the window the income history covers.');
-}

@@ -16,8 +16,10 @@ escape the directory. A torn final line (killed mid-write) is skipped, not fatal
 **`userTrades` silently clamps `startTime` to a 7-day window** — a naive 90-day pull returned
 a small fraction of the fills the income data implied. `fromId` paging has no such limit and
 reaches all of them. A first full build of a few months of activity takes about a minute.
-A routine resync touches only symbols traded in the last 7 days plus anything open (~10s);
-`?full=true` forces all of them.
+A routine resync pulls fills only for symbols the ledger shows trading after their fills were
+last pulled (`meta.tradesSyncedAt`), plus anything open (~10s); `?full=true` forces all of them.
+**Fixed:** the rule used to be "traded in the last 7 days", so a symbol closed out more than a
+week before the next sync kept its fills missing; the Costs ledger checks found it.
 
 ### `trade-analytics.js` — round trips and statistics
 `buildRoundTrips(fills)` walks fills per `(symbol, positionSide)` and closes a trip when size
@@ -112,23 +114,7 @@ are in [`research/overview.md`](research/overview.md). Top to bottom (`journal-o
 
 Open positions and account stats stay on the main view and sidebar; they are not repeated.
 
-**How the wallet got here** sits at the top of **Costs**. Round-trip statistics alone mislead
-while a large position is still open: the closed-trip net (plus the orphan fills) can be a
-fraction of the unrealised loss the account carries. The reconciliation shows the whole thing —
-
-```
-wallet at the start of the window   (derived from the ledger)
-+ deposits and withdrawals
-+ realised PnL
-− fees
-− funding
-= wallet now
-+ open positions, unrealised
-= account value
-```
-
-The starting wallet is derived as `wallet − Σledger`, so it is exact only for the window
-income covers.
+**How the wallet got here** sits at the top of **Costs** — see *Costs* below.
 `jrLockedFromPositions()` computes the hedge lock from the dashboard poll, with no extra
 request.
 
@@ -145,9 +131,9 @@ strips path characters so a malformed symbol cannot escape `data/`, `ensureDir`,
 | Performance | return, drawdown, win rate, expectancy, payoff, Sharpe against the window before; the account by day with its underwater strip; months, hold time, side; records; streaks against chance — see *Performance* below |
 | Behaviour | each habit: how often, its 8-week trend, against the window before, its cost or why it cannot be told yet, a rule to set; position size at open — see *Behaviour* below |
 | Factors | which conditions at entry go with better or worse trips — see *Factors* below |
-| Timing | calendar heatmap, day of week, hour of day |
-| Symbols | full per-symbol table with concentration |
-| Costs | how the wallet got here, maker/taker split, fees by symbol, funding by symbol |
+| Timing | calendar of days, weekday and hour opened with shrunk averages, a weekday × hour count grid — see *Timing* below |
+| Symbols | best and worst symbols with the rest folded, shrunk averages, costs, concentration, a way into each symbol's trades — see *Symbols* below |
+| Costs | the wallet ledger and its checks, costs in basis points against the window before, the fee check, costs by week and by symbol — see *Costs* below |
 | Trades | one sortable, filterable table of every round trip, with CSV export — see *Trades* below |
 
 **Two stacked panels, never two y-axes.** Daily results are bars whose *direction* encodes
@@ -223,6 +209,53 @@ comparison). The verdict is *costs* or *helps* when the interval clears zero, *c
 when it spans it, and *thin* under 10 trips a side. Each habit also reports its share against
 the window before, its share week by week for 8 weeks, and the goal that rules it out. A habit
 that *costs* joins Overview's attention list after the factors.
+
+### Timing, Symbols and Costs: facts and estimates
+`breakdowns.js` and `costs.js`; the method and its sources are in
+[`research/timing-symbols-costs.md`](research/timing-symbols-costs.md). **A total is a fact** and is
+shown at any size with its count. **An average is an estimate**: it is pulled toward the book's
+average in proportion to how few trades it rests on (`stats.shrunkMeans`, one-way random effects
+after Efron & Morris), carries a 90% range, and appears only from 8 hedge units. Under each chart a
+line says how many buckets are shown, how many would stand clear of the average by chance alone,
+and how many do. All three tabs follow the window and the session, except the wallet ledger, and
+say so under a session.
+
+**Time zone.** The browser sends its zone name (`zone=Europe/Madrid`) beside its offset;
+`local-time.js` converts each timestamp at the offset in force at that moment, so trades either
+side of a daylight-saving change land on the right day and hour on every Journal tab. An unknown
+zone falls back to the offset.
+
+**Timing.**
+- **Calendar:** net by the day it landed (the ledger; trips by close day under a session). Blue is a
+  gain, orange a loss, three steps each, checked for colour blindness; a flat day and a day without
+  trading are drawn apart. Every day is a button with its net and trades closed in its label, and
+  opens Trades for that close day. Week totals are in each column's title; month totals and the
+  best and worst week sit below.
+- **Weekday and hour** are by the local time a position *opened*, as in Factors.
+- **When you open positions:** a weekday × hour grid of counts only, in one hue.
+
+**Symbols.** Sorted by total net; the best and worst five show, with the rest folded into one row
+and "Show all". Columns: units (with legs when hedged), net, adjusted average with its range, win
+rate on units, fees in basis points of notional traded, funding per hour held; every column sorts.
+A symbol opens Trades filtered to exactly that symbol. **Concentration:** the top three symbols'
+share of gross |net|, and "effectively N symbols" — the inverse of the Herfindahl index of notional.
+
+**Costs.**
+- **Headline:** fees and funding in basis points of notional traded, funding paid and received apart,
+  maker share **by notional** with its 8-week trend, each against the window before. **Fee drag**
+  (costs ÷ gross realised) appears only when gross is at least twice the costs.
+- **Fee check:** the rate paid against the one your own maker and taker rates
+  (`/fapi/v1/commissionRate`, the largest symbols covering 80% of notional, at most 5) imply for
+  your maker share, whether the BNB discount is on (`/fapi/v1/feeBurn`), and BNB-paid fees priced at
+  that day's BNB close. BNB fees never enter dollar totals.
+- **Slippage is not measured:** it needs the price when each order was sent, which history lacks.
+- **Costs by week** (fees and funding paid down, received up) and **by symbol** (fees, funding paid
+  and funding received, each the top ten plus "others").
+- **How the wallet got here:** from the ledger, dollar assets only — the wallet at the start,
+  transfers, realised, fees, funding, every other income type by name, the wallet the last sync saw
+  (`meta.walletAtSync`), and what moved since. **Checks:** the start against an equity snapshot
+  when one is that old; ledger realised and fees against the fills; funding payments no rebuilt
+  position explains. Each says *matches* or by how much it is off.
 
 ### Factors: what goes with better or worse trips
 

@@ -3,7 +3,7 @@
 
 let tripsData = null, tripsLoading = false;
 let tradesSort = { id: 'closed', dir: -1 };
-let tradesFilter = { symbol: '', side: 'all', result: 'all', hedged: 'all', tag: 'all', day: null };
+let tradesFilter = { symbol: '', exact: false, side: 'all', result: 'all', hedged: 'all', tag: 'all', day: null, closeDay: null };
 let noteEditing = null, noteError = null;
 let tradesMore = loadPref('tradesMore', false);
 let tradesShowAll = false;
@@ -12,6 +12,10 @@ const TRADES_PAGE = 50;
 const tripNet = t => t.netAfterFunding ?? t.net;
 const tripCosts = t => (t.funding ?? 0) - t.commission;
 const heldText = h => h >= 48 ? `${fmt(h / 24, 1)}d` : h >= 1 ? `${fmt(h, 1)}h` : `${fmt(h * 60, 0)}m`;
+const browserDate = t => {
+  const d = new Date(t);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 const utcText = t => new Date(t).toISOString().slice(5, 16).replace('T', ' ');
 const pctText = v => `${v < 0 ? '−' : v > 0 ? '+' : ''}${fmt(Math.abs(v), 2)}%`;
 const signedCell = v => `<span class="${v >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(v)}</span>`;
@@ -141,13 +145,14 @@ function filteredTrips() {
   const f = tradesFilter;
   const sym = f.symbol.trim().toUpperCase();
   return (tripsData?.trips || []).filter(t =>
-    (!sym || t.symbol.includes(sym))
+    (!sym || (f.exact ? t.symbol === sym : t.symbol.includes(sym)))
     && (sessionFilter === 'All' || t.session === sessionFilter)
     && (f.side === 'all' || t.side === f.side)
     && (f.result === 'all' || (f.result === 'win') === (tripNet(t) > 0))
     && (f.hedged === 'all' || (f.hedged === 'yes') === t.hedged)
     && (f.tag === 'all' || (f.tag === 'untagged' ? !t.tags?.length : t.tags?.includes(f.tag)))
-    && (!f.day || (t.openTime >= f.day && t.openTime < f.day + 86_400_000)));
+    && (!f.day || (t.openTime >= f.day && t.openTime < f.day + 86_400_000))
+    && (!f.closeDay || browserDate(t.closeTime) === f.closeDay));
 }
 
 function sortedTrips(trips) {
@@ -236,6 +241,12 @@ function filterTrades(key, value) {
   refreshTradesTable();
 }
 
+function openTradesFor(filter) {
+  tradesFilter = { ...tradesFilter, symbol: '', exact: false, day: null, closeDay: null, ...filter };
+  tradesShowAll = false;
+  setJrTab('trades');
+}
+
 function showAllTrades() { tradesShowAll = true; refreshTradesTable(); }
 
 function toggleTradeColumns() {
@@ -275,12 +286,13 @@ function renderTradesTab() {
   if (!tripsData) return loadErrors.trips ? loadErrorHtml('trips', 'fetchTrips()', false) : `<p class="jt-count">Loading trips…</p>`;
   const pending = tripsData.coverage.pending;
   const controls = `<div class="jt-controls">
-    <input class="cf-sym" placeholder="Symbol" value="${esc(tradesFilter.symbol)}" oninput="filterTrades('symbol', this.value)">
+    <input class="cf-sym" placeholder="Symbol" value="${esc(tradesFilter.symbol)}" oninput="tradesFilter.exact = false; filterTrades('symbol', this.value)">
     ${tradesSelect('side', [['all', 'Long + short'], ['Long', 'Long'], ['Short', 'Short']])}
     ${tradesSelect('result', [['all', 'Wins + losses'], ['win', 'Wins'], ['loss', 'Losses']])}
     ${tradesSelect('hedged', [['all', 'Hedged or not'], ['yes', 'Hedged at entry'], ['no', 'Not hedged']])}
     ${tradesSelect('tag', [['all', 'Any tag'], ['untagged', 'Untagged'], ...knownTags().map(tag => [tag, tag])])}
     ${tradesFilter.day ? `<button class="st-btn on" onclick="filterTrades('day', null)" title="Show every day">${new Date(tradesFilter.day).toLocaleDateString([], { month: 'short', day: 'numeric' })} ✕</button>` : ''}
+    ${tradesFilter.closeDay ? `<button class="st-btn on" onclick="filterTrades('closeDay', null)" title="Show every day">closed ${esc(tradesFilter.closeDay)} ✕</button>` : ''}
     <button class="st-btn" onclick="toggleTradeColumns()">${tradesMore ? 'Fewer columns' : 'More columns'}</button>
     <button class="st-btn" onclick="exportTradesCsv()">Export CSV</button>
   </div>`;

@@ -6,7 +6,7 @@ const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const T0 = Date.UTC(2026, 8, 1);
 const NOW = T0 + 20 * DAY + 12 * HOUR;
-const ctx = { tzOffsetMin: 0, now: NOW, equityAt: () => ({ value: 1000, approx: false }) };
+const ctx = { tz: 0, now: NOW, equityAt: () => ({ value: 1000, approx: false }) };
 
 const trip = (openTime, o = {}) => ({
   symbol: 'BTCUSDT', side: 'Long', openTime, closeTime: openTime + HOUR, openNotional: 100,
@@ -53,7 +53,7 @@ test('days start at the reader\'s local midnight', () => {
   const trips = [trip(T0 + 5 * DAY + 22 * HOUR), trip(T0 + 5 * DAY + 23 * HOUR)];
   const g = goal('maxTradesPerDay', { max: 1 });
   assert.equal(score(g, trips).brokenTrips, 1, 'same UTC day');
-  assert.equal(score(g, trips, { ...ctx, tzOffsetMin: 90 }).brokenTrips, 0, 'midnight falls between them at UTC+1:30');
+  assert.equal(score(g, trips, { ...ctx, tz: 90 }).brokenTrips, 0, 'midnight falls between them at UTC+1:30');
 });
 
 test('a session scope scores only that session', () => {

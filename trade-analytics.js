@@ -11,6 +11,7 @@
 // trip whenever size returns to zero.
 
 import { netOf, resultOf } from './habits.js';
+import { localDate, localMidnight, wallTime } from './local-time.js';
 import { median } from './stats.js';
 
 const CLOSED = 1e-12;
@@ -37,7 +38,8 @@ function blankTrip(symbol, positionSide, fill) {
   return {
     symbol, positionSide, side: null, openOrderId: null,
     openTime: fill.time, closeTime: null,
-    size: 0, avgEntry: 0, openNotional: 0, openQty: 0, enteredQty: 0, exitQty: 0, exitValue: 0,
+    size: 0, avgEntry: 0, openNotional: 0, openQty: 0, enteredQty: 0, entryValue: 0, exitQty: 0, exitValue: 0,
+    makerNotional: 0, bnbFee: 0,
     realized: 0, commission: 0, fills: 0, adds: 0, partialCloses: 0,
     addsWhileUnderwater: 0, peakNotional: 0, maxSize: 0, makerFills: 0, steps: []
   };
@@ -73,15 +75,17 @@ function finishTrip(trip, fill) {
     win: net > 0,
     fills: trip.fills,
     makerFills: trip.makerFills,
+    tradedNotional: +(trip.entryValue + trip.exitValue).toFixed(2),
+    makerNotional: +trip.makerNotional.toFixed(2),
+    bnbFee: +trip.bnbFee.toFixed(8),
     addsWhileUnderwater: trip.addsWhileUnderwater,
     peakNotional: +trip.peakNotional.toFixed(2),
     maxSize: +trip.maxSize.toFixed(8)
   };
 }
 
-// Commission can be charged in BNB; only quote-denominated fees are comparable with PnL, so
-// anything else is counted separately rather than silently added to a dollar figure.
-function quoteCommission(fill) {
+/** A fill's fee when paid in a dollar stablecoin; 0 for BNB and other assets, which are counted apart. */
+export function quoteCommission(fill) {
   const asset = (fill.commissionAsset || '').toUpperCase();
   return (asset === 'USDT' || asset === 'USDC' || asset === 'BUSD' || asset === 'FDUSD')
     ? Math.abs(parseFloat(fill.commission) || 0) : 0;
@@ -109,6 +113,7 @@ export function buildRoundTrips(fills) {
     const qty   = Math.abs(parseFloat(fill.qty) || 0);
     const price = parseFloat(fill.price) || 0;
     const fee   = quoteCommission(fill);
+    const bnb = !fee && (fill.commissionAsset || '').toUpperCase() === 'BNB' ? Math.abs(parseFloat(fill.commission) || 0) : 0;
     if (!fee && parseFloat(fill.commission)) nonQuoteFees += Math.abs(parseFloat(fill.commission));
 
     const adding = isIncrease(fill.side, positionSide, trip.size);
@@ -141,6 +146,7 @@ export function buildRoundTrips(fills) {
         trip.openQty = qty;
       }
       trip.enteredQty += qty;
+      trip.entryValue += qty * price;
       const held = Math.abs(trip.size);
       trip.avgEntry = held <= CLOSED ? price : (trip.avgEntry * held + price * qty) / (held + qty);
     }
@@ -156,8 +162,9 @@ export function buildRoundTrips(fills) {
     trip.steps.push([fill.time, Math.abs(after)]);
     trip.realized += parseFloat(fill.realizedPnl) || 0;
     trip.commission += fee;
+    trip.bnbFee += bnb;
     trip.fills++;
-    if (fill.maker) trip.makerFills++;
+    if (fill.maker) { trip.makerFills++; trip.makerNotional += qty * price; }
     trip.maxSize = Math.max(trip.maxSize, Math.abs(after));
     trip.peakNotional = Math.max(trip.peakNotional, Math.abs(after) * price);
 
@@ -176,6 +183,7 @@ export function buildRoundTrips(fills) {
       next.openNotional = Math.abs(after) * price;
       next.openQty = Math.abs(after);
       next.enteredQty = Math.abs(after);
+      next.entryValue = Math.abs(after) * price;
       next.fills = 1;
       next.maxSize = Math.abs(after);
       next.peakNotional = Math.abs(after) * price;
@@ -230,14 +238,6 @@ export function summarise(trips) {
   };
 }
 
-export function bySymbol(trips) {
-  const groups = {};
-  for (const t of trips) (groups[t.symbol] = groups[t.symbol] || []).push(t);
-  return Object.entries(groups)
-    .map(([symbol, list]) => ({ symbol, ...summarise(list) }))
-    .sort((a, b) => a.net - b.net);
-}
-
 // ─── BREAKDOWNS ──────────────────────────────────────────────────────────────
 //
 // Every bucket carries its trip count and a `thin` flag. A slice with three trades in it
@@ -248,21 +248,6 @@ const THIN = 10;
 
 function bucketStats(trips, label) {
   return { label, ...summarise(trips), thin: trips.length < THIN };
-}
-
-const DOW = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-const local = (ts, tz) => new Date(ts + tz * 60_000);
-
-export function byDayOfWeek(trips, stamp = 'closeTime', tzOffsetMin = 0) {
-  return DOW.map((label, day) =>
-    bucketStats((trips || []).filter(t => local(t[stamp], tzOffsetMin).getUTCDay() === day), label));
-}
-
-export function byHourOfDay(trips, stamp = 'openTime', tzOffsetMin = 0) {
-  return Array.from({ length: 24 }, (_, hour) =>
-    bucketStats((trips || []).filter(t => local(t[stamp], tzOffsetMin).getUTCHours() === hour),
-                `${String(hour).padStart(2, '0')}:00`));
 }
 
 const HOLD_BUCKETS = [
@@ -281,90 +266,27 @@ export function bySide(trips) {
     .filter(b => b.trips > 0);
 }
 
-export function byMonth(trips, tzOffsetMin = 0) {
+export function byMonth(trips, tz = 0) {
   const groups = {};
   for (const t of trips || []) {
-    const m = local(t.closeTime, tzOffsetMin).toISOString().slice(0, 7);
+    const m = localDate(t.closeTime, tz).slice(0, 7);
     (groups[m] = groups[m] || []).push(t);
   }
   return Object.entries(groups).sort().map(([month, list]) => bucketStats(list, month));
 }
 
-export function makerTaker(fills) {
-  let maker = 0, taker = 0, makerFee = 0, takerFee = 0;
-  for (const f of fills || []) {
-    const fee = Math.abs(parseFloat(f.commission) || 0);
-    if (f.maker) { maker++; makerFee += fee; } else { taker++; takerFee += fee; }
-  }
-  const total = maker + taker;
-  return {
-    maker, taker, fills: total,
-    makerPct: total ? +(maker / total * 100).toFixed(1) : null,
-    makerFee: +makerFee.toFixed(2), takerFee: +takerFee.toFixed(2),
-    totalFee: +(makerFee + takerFee).toFixed(2)
-  };
-}
-
 /** Net per local date from the ledger's realised, fees and funding rows. */
-export function dailyIncomeNet(income, tzOffsetMin = 0) {
+export function dailyIncomeNet(income, tz = 0) {
   const byDay = new Map();
   for (const r of income || []) {
     if (!NET_TYPES.includes(r.incomeType)) continue;
-    const d = local(r.time, tzOffsetMin).toISOString().slice(0, 10);
+    const d = localDate(r.time, tz);
     byDay.set(d, (byDay.get(d) || 0) + parseFloat(r.income));
   }
   return [...byDay.entries()].sort().map(([date, pnl]) => ({ date, pnl: +pnl.toFixed(2) }));
 }
 
-/** `{ date, pnl }` days laid out in Monday-first weeks for a calendar, with the largest magnitude. */
-export function calendar(days) {
-  if (!days.length) return { weeks: [], maxAbs: 0 };
-  const maxAbs = Math.max(...days.map(d => Math.abs(d.pnl)));
-  const first = new Date(days[0].date + 'T00:00:00Z');
-  const startMonday = new Date(first);
-  startMonday.setUTCDate(first.getUTCDate() - ((first.getUTCDay() + 6) % 7));
-
-  const map = new Map(days.map(d => [d.date, d.pnl]));
-  const last = new Date(days[days.length - 1].date + 'T00:00:00Z');
-  const weeks = [];
-  for (let cur = new Date(startMonday); cur <= last; ) {
-    const week = [];
-    for (let i = 0; i < 7; i++) {
-      const key = cur.toISOString().slice(0, 10);
-      week.push({ date: key, pnl: map.has(key) ? map.get(key) : null });
-      cur.setUTCDate(cur.getUTCDate() + 1);
-    }
-    weeks.push(week);
-  }
-  return { weeks, maxAbs: +maxAbs.toFixed(2) };
-}
-
 // ─── INCOME-BASED SERIES ─────────────────────────────────────────────────────
-
-/** Fees and funding per symbol, worst first, from `{ symbol, fees, funding }` items. */
-export function costsBySymbol(items) {
-  const by = new Map();
-  for (const { symbol, fees = 0, funding = 0 } of items) {
-    if (!symbol) continue;
-    const c = by.get(symbol) || { symbol, fees: 0, funding: 0 };
-    c.fees += fees; c.funding += funding;
-    by.set(symbol, c);
-  }
-  const rows = [...by.values()].map(c => ({ symbol: c.symbol, fees: +c.fees.toFixed(2), funding: +c.funding.toFixed(2) }));
-  return { fees: rows.filter(r => r.fees).sort((a, b) => b.fees - a.fees),
-           funding: rows.filter(r => r.funding).sort((a, b) => a.funding - b.funding) };
-}
-
-export function incomeTotals(income) {
-  const totals = {};
-  for (const r of income || []) {
-    totals[r.incomeType] = (totals[r.incomeType] || 0) + parseFloat(r.income);
-  }
-  for (const k of Object.keys(totals)) totals[k] = +totals[k].toFixed(2);
-  const gross = totals.REALIZED_PNL || 0;
-  const fees = Math.abs(totals.COMMISSION || 0);
-  return { totals, feeDragPct: gross ? +(fees / Math.abs(gross) * 100).toFixed(1) : null };
-}
 
 // Funding settlements actually observed per day, which is how the declared
 // fundingIntervalHours gets checked against reality rather than trusted.
@@ -396,16 +318,11 @@ const DAY_MS = 86_400_000;
 const NET_TYPES = ['REALIZED_PNL', 'COMMISSION', 'FUNDING_FEE'];
 const USD_ASSETS = new Set(['USDT', 'USDC', 'BUSD', 'FDUSD']);
 
-/** Start of today, this week (Monday) and this month for a clock `tzOffsetMin` minutes ahead of UTC. */
-export function periodStarts(now, tzOffsetMin = 0) {
-  const shift = tzOffsetMin * 60_000;
-  const local = new Date(now + shift);
-  const today = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()) - shift;
-  return {
-    today,
-    week: today - ((local.getUTCDay() + 6) % 7) * DAY_MS,
-    month: Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), 1) - shift
-  };
+/** Start of today, this week (Monday) and this month on the reader's clock `tz` (local-time.js). */
+export function periodStarts(now, tz = 0) {
+  const w = wallTime(now, tz);
+  const [y, m, d] = [w.getUTCFullYear(), w.getUTCMonth(), w.getUTCDate()];
+  return { today: localMidnight(y, m, d, tz), week: localMidnight(y, m, d - (w.getUTCDay() + 6) % 7, tz), month: localMidnight(y, m, 1, tz) };
 }
 
 /**
@@ -413,14 +330,14 @@ export function periodStarts(now, tzOffsetMin = 0) {
  * elapsed time as the current one, so a Tuesday is compared with last week's Monday and Tuesday.
  * A previous month shorter than the elapsed time ends at its own end.
  */
-export function previousPeriodStarts(now, tzOffsetMin = 0) {
-  const shift = tzOffsetMin * 60_000;
-  const current = periodStarts(now, tzOffsetMin);
-  const local = new Date(current.month + shift);
-  const lastMonth = Date.UTC(local.getUTCFullYear(), local.getUTCMonth() - 1, 1) - shift;
+export function previousPeriodStarts(now, tz = 0) {
+  const current = periodStarts(now, tz);
+  const w = wallTime(now, tz);
+  const [y, m, d] = [w.getUTCFullYear(), w.getUTCMonth(), w.getUTCDate()];
   const back = (from, start) => ({ from, to: Math.min(from + (now - start), start) });
-  return { today: back(current.today - DAY_MS, current.today), week: back(current.week - 7 * DAY_MS, current.week),
-           month: back(lastMonth, current.month) };
+  return { today: back(localMidnight(y, m, d - 1, tz), current.today),
+           week: back(localMidnight(y, m, d - (w.getUTCDay() + 6) % 7 - 7, tz), current.week),
+           month: back(localMidnight(y, m - 1, 1, tz), current.month) };
 }
 
 const sumIncome = (rows, type) => rows.filter(r => r.incomeType === type).reduce((s, r) => s + parseFloat(r.income), 0);

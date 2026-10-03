@@ -1,6 +1,7 @@
 import { SESSIONS } from '../sessions.js';
 import { outcomeFactors } from '../outcome-factors.js';
 import { enrichedTrips } from '../lib/trip-enrichment.js';
+import { readerClock } from '../lib/util.js';
 
 const CACHE_SIZE = 8;
 const cache = new Map();
@@ -24,10 +25,10 @@ export function register(app) {
       const days = parseInt(req.query.days, 10);
       const cutoff = days > 0 ? Date.now() - days * 86_400_000 : 0;
       const session = SESSIONS.includes(req.query.session) ? req.query.session : null;
-      const tzOffsetMin = parseInt(req.query.tz, 10) || 0;
+      const tz = readerClock(req.query);
       const trips = enrichedTrips().trips.filter(t => t.closeTime >= cutoff && (!session || t.session === session));
-      const key = [days > 0 ? days : 0, session, tzOffsetMin, fingerprint(trips)].join('|');
-      res.json({ ok: true, session, ...remember(key, () => outcomeFactors(trips, { tzOffsetMin, session })) });
+      const key = [days > 0 ? days : 0, session, tz.zone ?? tz.offsetAt(0), fingerprint(trips)].join('|');
+      res.json({ ok: true, session, ...remember(key, () => outcomeFactors(trips, { tz, session })) });
     } catch (err) {
       console.error('[factors]', err);
       res.status(500).json({ ok: false, error: err.message });
