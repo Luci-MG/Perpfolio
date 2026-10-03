@@ -1,0 +1,46 @@
+routes/volstops.js
+  s_ce0783ce808ef4::t_f6bad0cd654e2b 15
+docs/roadmap.md
+  s_ce0783ce808ef4::t_0fdb3ac917519a 11,44-45
+routes/dashboard.js
+  s_ce0783ce808ef4::t_4eceddcf77caff 53
+public/js/render.js
+  s_ce0783ce808ef4::t_a8f417650031ce 228
+  s_ce0783ce808ef4::t_4eceddcf77caff 222-227,356
+test/routes.test.js
+  s_ce0783ce808ef4::t_0930e619f72adc 44-54
+docs/api.md
+  s_ce0783ce808ef4::t_0fdb3ac917519a 63-64,71-77
+  s_ce0783ce808ef4::t_e01db98c6a34b1 78
+public/index.html
+  s_ce0783ce808ef4::t_f6bad0cd654e2b 99,135,149
+docs/changelog.md
+  s_ce0783ce808ef4::t_0fdb3ac917519a 3-12
+test/fake-exchange.js
+  s_ce0783ce808ef4::t_74956ad7826bac 112-113,134
+public/js/calculators.js
+  s_ce0783ce808ef4::t_f6bad0cd654e2b 123,128,142,146
+test/golden/routes.json
+  s_ce0783ce808ef4::t_6037aca0b4bd23 4-25
+public/css/app.css
+  s_ce0783ce808ef4::t_4eceddcf77caff 67
+lib/binance-account.js
+  s_ce0783ce808ef4::t_7b183facb866c3 27,29,146-176,180,183-198
+  s_ce0783ce808ef4::t_16f267c3ade79d 199
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ddf9b21916bcb68544bc6748bb47f887333a217d",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
