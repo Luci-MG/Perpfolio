@@ -8329,5 +8329,48 @@
    "Stop within 5 minutes"
   ],
   "worse": []
+ },
+ "funding": {
+  "rows": [
+   {
+    "aprPct": 43.8,
+    "nearCap": null,
+    "pair": false,
+    "perDay": -14.4,
+    "symbol": "ETHUSDT"
+   },
+   {
+    "aprPct": 10.95,
+    "nearCap": null,
+    "pair": true,
+    "perDay": -3,
+    "symbol": "BTCUSDT"
+   },
+   {
+    "aprPct": 32.85,
+    "nearCap": null,
+    "pair": false,
+    "perDay": -1.8,
+    "symbol": "ENAUSDC"
+   },
+   {
+    "aprPct": 8.76,
+    "nearCap": null,
+    "pair": false,
+    "perDay": 0.96,
+    "symbol": "SOL"
+   }
+  ],
+  "totals": {
+   "aprOnGrossPct": -6.164,
+   "byExchange": {
+    "binance": -19.2,
+    "hyperliquid": 0.96
+   },
+   "legs": 5,
+   "pairs": 1,
+   "pctOfEquityPerDay": -0.0703,
+   "perDay": -18.24
+  }
  }
 }

@@ -296,6 +296,26 @@ test('factors compare buckets with intervals, cache the result, and drop the ses
   record('factors', body);
 });
 
+test('funding nets hedged pairs, ranks worst first, reads realised from the ledger, and caches rate history for an hour', async () => {
+  const before = fake.calls.filter(c => c === '/fapi/v1/fundingRate').length;
+  const { status, body } = await get('/api/funding');
+  assert.equal(status, 200);
+  const fetched = fake.calls.filter(c => c === '/fapi/v1/fundingRate').length - before;
+  assert.ok(fetched > 0, 'history read per held symbol');
+  const pair = body.rows.find(r => r.pair);
+  assert.ok(pair && pair.symbol === 'BTCUSDT', 'the BTC long and short are one row');
+  assert.ok(Math.abs(pair.perDay - (pair.long.perDay + pair.short.perDay)) < 1e-6);
+  assert.deepEqual(body.rows.map(r => r.perDay), [...body.rows.map(r => r.perDay)].sort((a, b) => a - b));
+  const eth = body.rows.find(r => r.symbol === 'ETHUSDT');
+  assert.equal(eth.intervalHours, 4);
+  assert.ok(Math.abs(eth.aprPct - 0.02 * 6 * 365) < 0.01);
+  assert.ok(Math.abs(body.totals.perDay - body.rows.reduce((s, r) => s + r.perDay, 0)) < 1e-3);
+  assert.equal(typeof body.realised.d7, 'number');
+  await get('/api/funding');
+  assert.equal(fake.calls.filter(c => c === '/fapi/v1/fundingRate').length - before, fetched, 'second read is cached');
+  record('funding', { totals: body.totals, rows: body.rows.map(({ symbol, pair, perDay, aprPct, nearCap }) => ({ symbol, pair, perDay, aprPct, nearCap })) });
+});
+
 test('route output matches the golden snapshot', () => {
   if (!fs.existsSync(GOLDEN) || process.env.UPDATE_GOLDEN) {
     fs.mkdirSync(path.dirname(GOLDEN), { recursive: true });
