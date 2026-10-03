@@ -1,0 +1,115 @@
+lib/health.js
+  s_ce0783ce808ef4::t_1ffa5f8f2c21f4 7,15
+lib/venues.js
+  s_ce0783ce808ef4::t_d6858afec3622b 36-37
+  s_ce0783ce808ef4::t_06e888e721979e 1-35
+docs/roadmap.md
+  s_ce0783ce808ef4::t_10a38d27d3c6c3 12,65
+public/js/boot.js
+  s_ce0783ce808ef4::t_9286a3f7f965cf 7-8,16
+test/routes.test.js
+  s_ce0783ce808ef4::t_c84629308ba9ac 164-223
+public/js/venues.js
+  s_ce0783ce808ef4::t_7cec8fc0c87e29 93
+  s_ce0783ce808ef4::t_64ca1db4bad775 1-92,94-110,112-114
+  s_ce0783ce808ef4::t_9286a3f7f965cf 111
+public/index.html
+  s_ce0783ce808ef4::t_9286a3f7f965cf 21-23,35,279
+lib/orders-stream.js
+  s_ce0783ce808ef4::t_7cec8fc0c87e29 17,48,194
+  s_ce0783ce808ef4::t_f1a570b0b0fb17 18,67,159,168
+  s_ce0783ce808ef4::t_e75fe125a1d051 8,51,164,171,175-193,195-196,242
+  s_ce0783ce808ef4::t_1ab34b6eccc4c5 57
+routes/dashboard.js
+  s_ce0783ce808ef4::t_b3fe2b298ac815 3,37
+lib/binance-account.js
+  s_ce0783ce808ef4::t_2d3c0216e4e9b6 8,22-25,27
+lib/binance-client.js
+  s_ce0783ce808ef4::t_2d3c0216e4e9b6 7,76
+routes/hedgeledger.js
+  s_ce0783ce808ef4::t_d6858afec3622b 6,11
+public/js/hedge-ledger.js
+  s_ce0783ce808ef4::t_9286a3f7f965cf 13
+public/js/journal.js
+  s_ce0783ce808ef4::t_9286a3f7f965cf 28-33
+public/css/app.css
+  s_ce0783ce808ef4::t_912a812ab95be8 668-700
+docs/operations.md
+  s_ce0783ce808ef4::t_10a38d27d3c6c3 118,120,126-141
+  s_ce0783ce808ef4::t_3f5164394523b8 142
+public/js/stress.js
+  s_ce0783ce808ef4::t_9286a3f7f965cf 533
+docs/frontend.md
+  s_ce0783ce808ef4::t_10a38d27d3c6c3 6,11,74-90
+  s_ce0783ce808ef4::t_cb8f4525d77eaf 91
+test/fake-exchange.js
+  s_ce0783ce808ef4::t_7cec8fc0c87e29 112-113,134
+  s_ce0783ce808ef4::t_16f196e293286b 303,310,324
+public/js/render.js
+  s_ce0783ce808ef4::t_7cd8a1238f3db6 250,255-258,289,291,356-357,366-367,374-375,427-429,458
+  s_ce0783ce808ef4::t_912a812ab95be8 322
+lib/config.js
+  s_ce0783ce808ef4::t_06e888e721979e 20
+public/js/unwind.js
+  s_ce0783ce808ef4::t_9286a3f7f965cf 599
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_a060074c0d981b 108,120
+  s_ce0783ce808ef4::t_e0bb9e94b6d101 63,78-84,91,99-107,109-119,121-127
+  s_ce0783ce808ef4::t_d22d6fd4793549 128
+test/golden/routes.json
+  s_ce0783ce808ef4::t_bdca2c1e535028 246-249
+routes/venues.js
+  s_ce0783ce808ef4::t_f944374236c123 1
+  s_ce0783ce808ef4::t_c9a198b3ada2f5 2-6,11-18,21-23,25-43
+  s_ce0783ce808ef4::t_7cec8fc0c87e29 19-20
+  s_ce0783ce808ef4::t_90731ab702a7ba 7-10,24
+routes/health.js
+  s_ce0783ce808ef4::t_1ffa5f8f2c21f4 22
+  s_ce0783ce808ef4::t_b3fe2b298ac815 7-8,17-20,23
+CLAUDE.md
+  s_ce0783ce808ef4::t_10a38d27d3c6c3 57,88
+lib/history-sync.js
+  s_ce0783ce808ef4::t_06e888e721979e 7,15
+docs/api.md
+  s_ce0783ce808ef4::t_1ffa5f8f2c21f4 36-37
+  s_ce0783ce808ef4::t_10a38d27d3c6c3 52,74-75
+  s_ce0783ce808ef4::t_f02843f0517116 76
+test/health.test.js
+  s_ce0783ce808ef4::t_1ffa5f8f2c21f4 51
+  s_ce0783ce808ef4::t_b73021deed2971 48
+server.js
+  s_ce0783ce808ef4::t_1ab34b6eccc4c5 51
+  s_ce0783ce808ef4::t_c9a198b3ada2f5 11,22,38
+docs/changelog.md
+  s_ce0783ce808ef4::t_10a38d27d3c6c3 3-12
+routes/deleverage.js
+  s_ce0783ce808ef4::t_d6858afec3622b 3,12
+routes/volstops.js
+  s_ce0783ce808ef4::t_d6858afec3622b 6,55
+routes/riskbook.js
+  s_ce0783ce808ef4::t_d6858afec3622b 3,7
+lib/hyperliquid.js
+  s_ce0783ce808ef4::t_2d3c0216e4e9b6 5,8,45-47,49
+routes/history.js
+  s_ce0783ce808ef4::t_d6858afec3622b 3,8
+docs/architecture.md
+  s_ce0783ce808ef4::t_10a38d27d3c6c3 23-24,43
+public/js/positions.js
+  s_ce0783ce808ef4::t_9286a3f7f965cf 10-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3d90658ad67a72c789aed8bc6c05ef1fe323cd1a",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
