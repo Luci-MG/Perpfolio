@@ -1,0 +1,134 @@
+routes/goals.js
+  s_bc801fe6b1f892::t_f48e3b6af3cb04 2,26-27
+  s_bc801fe6b1f892::t_9892c638afa367 82
+docs/roadmap.md
+  s_bc801fe6b1f892::t_0e0947322dc314 34,370-377
+  s_bc801fe6b1f892::t_97c8a243984ddf 378
+docs/stops.md
+  s_bc801fe6b1f892::t_c4a50db17b824c 11-13,70-72
+goals.js
+  s_bc801fe6b1f892::t_9892c638afa367 97-104,109-110,114-115,130,132,136
+  s_bc801fe6b1f892::t_3ec95ed765aa5a 271-280,283,289-290,292
+funding.test.js
+  s_bc801fe6b1f892::t_6322e3880d03d7 70
+  s_bc801fe6b1f892::t_56ad1933bf5f44 65-69,71-82
+public/js/journal-overview.js
+  s_bc801fe6b1f892::t_0d32a06ef44ce2 19
+routes/performance.js
+  s_bc801fe6b1f892::t_e5e608c8f26c9d 128,131
+docs/goals.md
+  s_bc801fe6b1f892::t_c4a50db17b824c 17,44-45,86
+test/golden/routes.json
+  s_bc801fe6b1f892::t_e192f7ce7f3b35 416,421,569,581,585,587,592-594,604,616,620,622,627-629,8105,8109,8111,8113-8116
+  s_bc801fe6b1f892::t_9b41a0ff6eef2a 105,148,182,216
+funding.js
+  s_bc801fe6b1f892::t_0d32a06ef44ce2 9,38-39,74-75,77,79-81,93-96,102-106,117-118
+trip-context.test.js
+  s_bc801fe6b1f892::t_268c53942131fb 132-137
+routes/factors.js
+  s_bc801fe6b1f892::t_f459d3b6b0baaf 27,29
+  s_bc801fe6b1f892::t_80f2fbffe1b7b9 9,26,28
+public/js/goals-view.js
+  s_bc801fe6b1f892::t_9892c638afa367 33
+  s_bc801fe6b1f892::t_b6b15800a1f6c3 163,173-174
+routes/funding.js
+  s_bc801fe6b1f892::t_0d32a06ef44ce2 6-7,28
+goals.test.js
+  s_bc801fe6b1f892::t_97e8b8d623624e 113-114
+  s_bc801fe6b1f892::t_b7a734d6a4f635 176-178
+  s_bc801fe6b1f892::t_f23b93e856ac68 123-125
+  s_bc801fe6b1f892::t_9892c638afa367 120-122
+lib/goals-store.js
+  s_bc801fe6b1f892::t_9892c638afa367 46-48,62,65
+local-time.test.js
+  s_bc801fe6b1f892::t_6465a6f3744a61 38-55
+  s_bc801fe6b1f892::t_2f41989ca26333 3
+lib/binance-meta.js
+  s_bc801fe6b1f892::t_6e97ad41bf7cad 39-49
+test/routes.test.js
+  s_bc801fe6b1f892::t_a9dfd10871e406 96-101
+test/binance-meta.test.js
+  s_bc801fe6b1f892::t_6e97ad41bf7cad 1-12
+test/fake-exchange.js
+  s_bc801fe6b1f892::t_268c53942131fb 295
+  s_bc801fe6b1f892::t_8b70f003cee1c8 261
+public/css/app.css
+  s_bc801fe6b1f892::t_b6b15800a1f6c3 870
+trade-analytics.js
+  s_bc801fe6b1f892::t_1b830453f8a23f 356,364,375
+  s_bc801fe6b1f892::t_f48e3b6af3cb04 15
+  s_bc801fe6b1f892::t_a4cf7582249702 412-413
+history-store.js
+  s_bc801fe6b1f892::t_ce17478ab27034 30-48,53,67,90,93-95
+local-time.js
+  s_bc801fe6b1f892::t_6465a6f3744a61 8,32,36-38,53-56,60-62
+lib/stop-suggestion.js
+  s_bc801fe6b1f892::t_3c4c9437b566f0 24-25
+routes/volstops.js
+  s_bc801fe6b1f892::t_1e113eac2a8386 99-101
+  s_bc801fe6b1f892::t_1691690bc94ad5 67,76-78
+lib/annotations-store.js
+  s_bc801fe6b1f892::t_eba98521a9a661 44-53,57-58
+test/annotations.test.js
+  s_bc801fe6b1f892::t_90039cfb49b613 36-45
+performance.js
+  s_bc801fe6b1f892::t_982818b56e434e 69-70
+  s_bc801fe6b1f892::t_f48e3b6af3cb04 43-56,78,85
+lib/trip-enrichment.js
+  s_bc801fe6b1f892::t_268c53942131fb 56-57,59-60,62,64-70
+  s_bc801fe6b1f892::t_982818b56e434e 84-86,169
+  s_bc801fe6b1f892::t_80f2fbffe1b7b9 106,119-122,127
+milestones.js
+  s_bc801fe6b1f892::t_b6b15800a1f6c3 64,66,93
+lib/history-sync.js
+  s_bc801fe6b1f892::t_677175be189075 5,107
+docs/journal.md
+  s_bc801fe6b1f892::t_c4a50db17b824c 172-176,304-309,315-317,347-350
+trade-analytics.test.js
+  s_bc801fe6b1f892::t_d885331a6456b7 282-284
+  s_bc801fe6b1f892::t_e5e608c8f26c9d 259,302
+docs/api.md
+  s_bc801fe6b1f892::t_0e0947322dc314 34,37
+performance.test.js
+  s_bc801fe6b1f892::t_d885331a6456b7 37-44
+  s_bc801fe6b1f892::t_982818b56e434e 116-121
+docs/changelog.md
+  s_bc801fe6b1f892::t_0e0947322dc314 3-25
+public/js/funding-view.js
+  s_bc801fe6b1f892::t_0d32a06ef44ce2 136-139
+lib/binance-account.js
+  s_bc801fe6b1f892::t_6e97ad41bf7cad 5,60-61
+trip-context.js
+  s_bc801fe6b1f892::t_268c53942131fb 14,182
+  s_bc801fe6b1f892::t_8e8b2312c1938e 159-169
+history-store.test.js
+  s_bc801fe6b1f892::t_50046ea5b44e2b 64,68-77
+outcome-factors.js
+  s_bc801fe6b1f892::t_48ed46a8baf030 90-101
+  s_bc801fe6b1f892::t_1b830453f8a23f 21
+  s_bc801fe6b1f892::t_26c4805b7d9db8 7
+  s_bc801fe6b1f892::t_f459d3b6b0baaf 214-215,217,220
+test/frontend.smoke.test.js
+  s_bc801fe6b1f892::t_a79b3c4fdd934d 533-535,546-547,728-731,769
+  s_bc801fe6b1f892::t_b40c5e1a498516 556
+test/stop-suggestion.test.js
+  s_bc801fe6b1f892::t_3c4c9437b566f0 1-18
+outcome-factors.test.js
+  s_bc801fe6b1f892::t_f4eb1e55cd1c8a 90-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cb3d4a0b6c93d6297062ffc1843fa5885e02edaa",
+  "prompts": {},
+  "sessions": {
+    "s_bc801fe6b1f892": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a437d9a6-a038-4659-865a-c44dff360498",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
