@@ -102,53 +102,22 @@ test('fees paid in BNB are not added to a dollar figure', () => {
   assert.ok(nonQuoteFees > 0, 'but they are reported separately, not silently dropped');
 });
 
-test('summarise computes payoff, expectancy and profit factor', () => {
+test('summarise reads net after fees and funding, counts a flat trip as neither, and takes the true median hold', () => {
   const trips = [
-    { net: 100, win: true,  commission: 1, holdHours: 1 },
-    { net: 200, win: true,  commission: 1, holdHours: 2 },
-    { net: -50, win: false, commission: 1, holdHours: 3 },
-    { net: -50, win: false, commission: 1, holdHours: 4 }
+    { net: 100, funding: 0, netAfterFunding: 100, commission: 1, holdHours: 1 },
+    { net: 210, funding: -10, netAfterFunding: 200, commission: 1, holdHours: 2 },
+    { net: -50, funding: 0, netAfterFunding: -50, commission: 1, holdHours: 3 },
+    { net: -50, commission: 1, holdHours: 4 },
+    { net: 0.004, commission: 1, holdHours: 5 },
+    { net: 0, commission: 1, holdHours: 6 }
   ];
   const s = ta.summarise(trips);
-  assert.equal(s.trips, 4);
-  assert.equal(s.winRate, 50);
+  assert.deepEqual([s.trips, s.wins, s.losses], [6, 2, 2]);
   assert.equal(s.net, 200);
-  assert.equal(s.avgWin, 150);
-  assert.equal(s.avgLoss, -50);
-  assert.equal(s.payoff, 3);
-  assert.equal(s.expectancy, 50);
-  assert.equal(s.profitFactor, 3);
+  assert.equal(s.funding, -10);
+  assert.deepEqual([s.avgWin, s.avgLoss, s.payoff], [150, -50, 3]);
+  assert.equal(s.medianHoldHours, 3.5);
   assert.equal(ta.summarise([]).trips, 0);
-});
-
-test('behaviourSplit separates the two populations exactly', () => {
-  const trips = [
-    { net: 10, win: true,  commission: 0, holdHours: 1, addsWhileUnderwater: 0 },
-    { net: -80, win: false, commission: 0, holdHours: 1, addsWhileUnderwater: 3 },
-    { net: 5,  win: true,  commission: 0, holdHours: 1, addsWhileUnderwater: 0 }
-  ];
-  const b = ta.behaviourSplit(trips);
-  assert.equal(b.addedWhileUnderwater.trips, 1);
-  assert.equal(b.addedWhileUnderwater.net, -80);
-  assert.equal(b.clean.trips, 2);
-  assert.equal(b.clean.net, 15);
-});
-
-test('equityCurve tracks cumulative PnL and the worst drawdown', () => {
-  const day = d => Date.UTC(2026, 0, d);
-  const eq = ta.equityCurve([
-    { incomeType: 'REALIZED_PNL', income: '100', time: day(1) },
-    { incomeType: 'COMMISSION',   income: '-10', time: day(1) },
-    { incomeType: 'REALIZED_PNL', income: '-200', time: day(2) },
-    { incomeType: 'REALIZED_PNL', income: '50',  time: day(3) },
-    { incomeType: 'TRANSFER',     income: '9999', time: day(3) }   // must be excluded
-  ]);
-  assert.equal(eq.days, 3);
-  assert.equal(eq.net, -60);
-  assert.equal(eq.greenDays, 2);
-  assert.equal(eq.redDays, 1);
-  assert.equal(eq.maxDrawdown, -200, 'peak 90 then trough -110');
-  assert.equal(eq.worstDay.pnl, -200);
 });
 
 test('incomeTotals reports fee drag against gross realised PnL', () => {
@@ -208,39 +177,6 @@ test('hour buckets cover the whole clock', () => {
   assert.equal(hours[23].label, '23:00');
 });
 
-test('streaks find the longest runs and the current one', () => {
-  const seq = [1, 1, 1, 0, 0, 1, 1, 1, 1, 0].map((w, i) =>
-    trip({ win: !!w, net: w ? 10 : -5, closeTime: Date.UTC(2026, 0, 1 + i) }));
-  const s = ta.streaks(seq);
-  assert.equal(s.longestWin, 4);
-  assert.equal(s.longestLoss, 2);
-  assert.equal(s.current, -1);
-  assert.equal(s.currentIsWin, false);
-  assert.equal(s.longestWinPnl, 40);
-  assert.deepEqual(ta.streaks([]).longestWin, 0);
-});
-
-test('sequenceEffect compares size after a loss with size after a win', () => {
-  const seq = [
-    trip({ win: true,  net: 10,  closeTime: 1, peakNotional: 100 }),
-    trip({ win: false, net: -10, closeTime: 2, peakNotional: 5000 }),  // after a win
-    trip({ win: true,  net: 10,  closeTime: 3, peakNotional: 200 })    // after a loss
-  ];
-  const e = ta.sequenceEffect(seq);
-  assert.equal(e.afterWin.trips, 1);
-  assert.equal(e.afterWin.avgSize, 5000);
-  assert.equal(e.afterLoss.trips, 1);
-  assert.equal(e.afterLoss.avgSize, 200, 'sizing down after a loss is the opposite of revenge');
-});
-
-test('sizeDistribution reports the spread of position sizes', () => {
-  const d = ta.sizeDistribution(Array.from({ length: 100 }, (_, i) => trip({ peakNotional: i + 1 })));
-  assert.equal(d.count, 100);
-  assert.equal(d.max, 100);
-  assert.ok(d.median > d.p10 && d.p90 > d.median);
-  assert.equal(ta.sizeDistribution([]), null);
-});
-
 test('makerTaker splits fills and their fees', () => {
   const m = ta.makerTaker([
     { maker: true,  commission: '0.02' },
@@ -255,46 +191,39 @@ test('makerTaker splits fills and their fees', () => {
   assert.equal(m.totalFee, 0.12);
 });
 
-test('records surface the extremes', () => {
-  const trips = [
-    trip({ net: 500, symbol: 'BEST' }),
-    trip({ net: -900, win: false, symbol: 'WORST' }),
-    trip({ net: 1, holdHours: 900, symbol: 'SLOW' }),
-    trip({ net: 2, fills: 999, symbol: 'BUSY' })
-  ];
-  const r = ta.records(trips, { bestDay: { date: 'x', pnl: 1 }, worstDay: { date: 'y', pnl: -1 } });
-  assert.equal(r.bestTrip.symbol, 'BEST');
-  assert.equal(r.worstTrip.symbol, 'WORST');
-  assert.equal(r.longestHeld.symbol, 'SLOW');
-  assert.equal(r.mostFills.symbol, 'BUSY');
-  assert.equal(r.bestDay.pnl, 1);
-});
-
-test('calendar lays days into Monday-first weeks with gaps preserved', () => {
-  const d = (y, m, day) => Date.UTC(y, m, day);
-  const cal = ta.calendar([
-    { incomeType: 'REALIZED_PNL', income: '100', time: d(2026, 0, 7) },   // Wed
-    { incomeType: 'REALIZED_PNL', income: '-50', time: d(2026, 0, 9) }    // Fri
-  ]);
-  assert.equal(cal.days.length, 2);
+test('daily net is cut at local midnight, and the calendar lays days into Monday-first weeks with gaps preserved', () => {
+  const days = ta.dailyIncomeNet([
+    { incomeType: 'REALIZED_PNL', income: '100', time: Date.UTC(2026, 0, 7, 12) },
+    { incomeType: 'COMMISSION', income: '-1', time: Date.UTC(2026, 0, 7, 23, 30) },
+    { incomeType: 'TRANSFER', income: '500', time: Date.UTC(2026, 0, 8) },
+    { incomeType: 'REALIZED_PNL', income: '-50', time: Date.UTC(2026, 0, 9, 12) }
+  ], 60);
+  assert.deepEqual(days, [{ date: '2026-01-07', pnl: 100 }, { date: '2026-01-08', pnl: -1 }, { date: '2026-01-09', pnl: -50 }],
+    'a fee at 23:30 UTC is the next day at UTC+1, and transfers are not trading');
+  const cal = ta.calendar(days);
   assert.equal(cal.maxAbs, 100);
-  assert.equal(cal.weeks[0].length, 7);
   assert.equal(cal.weeks[0][0].date, '2026-01-05', 'week starts on the Monday');
-  assert.equal(cal.weeks[0][2].pnl, 100, 'Wednesday holds the value');
-  assert.equal(cal.weeks[0][3].pnl, null, 'a day with no trading is null, not zero');
+  assert.equal(cal.weeks[0][2].pnl, 100);
+  assert.equal(cal.weeks[0][4].pnl, -50);
+  assert.equal(cal.weeks[0][5].pnl, null, 'a day with no trading is null, not zero');
   assert.deepEqual(ta.calendar([]).weeks, []);
 });
 
-test('bySide and byMonth group without dropping trips', () => {
+test('bySide groups on the side held, one-way trips included, and byMonth on the local month', () => {
   const trips = [
-    trip({ positionSide: 'LONG',  closeTime: Date.UTC(2026, 0, 5) }),
-    trip({ positionSide: 'SHORT', closeTime: Date.UTC(2026, 1, 5) }),
-    trip({ positionSide: 'SHORT', closeTime: Date.UTC(2026, 1, 6) })
+    trip({ positionSide: 'BOTH', side: 'Long', closeTime: Date.UTC(2026, 0, 31, 23, 30) }),
+    trip({ positionSide: 'SHORT', side: 'Short', closeTime: Date.UTC(2026, 1, 5) }),
+    trip({ positionSide: 'BOTH', side: 'Short', closeTime: Date.UTC(2026, 1, 6) })
   ];
-  assert.equal(ta.bySide(trips).reduce((s, b) => s + b.trips, 0), 3);
-  assert.equal(ta.bySide(trips).find(b => b.side === 'SHORT').trips, 2);
-  const months = ta.byMonth(trips);
-  assert.deepEqual(months.map(m => m.month), ['2026-01', '2026-02']);
+  assert.deepEqual(ta.bySide(trips).map(b => [b.label, b.trips]), [['Long', 1], ['Short', 2]]);
+  assert.deepEqual(ta.byMonth(trips).map(m => m.label), ['2026-01', '2026-02']);
+  assert.deepEqual(ta.byMonth(trips, 60).map(m => [m.label, m.trips]), [['2026-02', 3]]);
+});
+
+test('costs by symbol sum fees and funding, worst first, leaving out zeros', () => {
+  const c = ta.costsBySymbol([{ symbol: 'A', fees: 1 }, { symbol: 'B', fees: 3, funding: -2 }, { symbol: 'A', funding: 1 }, { fees: 9 }]);
+  assert.deepEqual(c.fees.map(r => r.symbol), ['B', 'A']);
+  assert.deepEqual(c.funding.map(r => [r.symbol, r.funding]), [['B', -2], ['A', 1]]);
 });
 
 test('float dust left by summed fill sizes still closes the trip', () => {
@@ -320,7 +249,7 @@ test('a hedge-mode close with nothing open is an orphan, not a negative trip', (
   assert.equal(r.stillOpen.length, 0);
 });
 
-test('a trip records its side, opening notional, adds, partial closes and average exit', () => {
+test('a trip records its side, opening lot, quantity entered, adds, partial closes and average exit', () => {
   const { trips, sizeSteps } = ta.buildRoundTrips([
     fill({ side: 'SELL', positionSide: 'SHORT', qty: '2', price: '100', time: 1000 }),
     fill({ side: 'SELL', positionSide: 'SHORT', qty: '1', price: '106', time: 2000 }),
@@ -330,6 +259,7 @@ test('a trip records its side, opening notional, adds, partial closes and averag
   const [t] = trips;
   assert.equal(t.side, 'Short');
   assert.equal(t.openNotional, 200);
+  assert.deepEqual([t.openQty, t.enteredQty], [2, 3]);
   assert.equal(t.adds, 1);
   assert.equal(t.partialCloses, 1);
   assert.ok(Math.abs(t.avgExit - (95 + 2 * 92) / 3) < 1e-12);

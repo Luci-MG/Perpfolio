@@ -3,7 +3,7 @@
 ## Files
 
 `public/index.html` holds markup only, `public/css/app.css` every style, and `public/js/` the
-behaviour as seventeen **classic** scripts loaded in this order — no build step, no framework:
+behaviour as twenty-three **classic** scripts loaded in this order — no build step, no framework:
 
 | # | File | Holds |
 |---|---|---|
@@ -22,6 +22,8 @@ behaviour as seventeen **classic** scripts loaded in this order — no build ste
 | 8c | `goals-view.js` | Journal's Goals tab, the goal drawer and the Overview goals line |
 | 8d | `factors-view.js` | Journal's Factors tab: the verdict and the factor board |
 | 8e | `journal-overview.js` | Journal's Overview and the Costs tab's wallet reconciliation |
+| 8f | `journal-performance.js` | Journal's Performance tab: hero against the window before, the account chart, records, streaks |
+| 8g | `journal-behaviour.js` | Journal's Behaviour tab: habit rows, trends, rule links, sizing |
 | 9 | `unwind.js` | liquidation-after-close and unwind-simulator drawers, Unwind tab |
 | 10 | `render.js` | sidebar widgets, `render()`, `fetchData()` and the poll guard |
 | 11 | `calculators.js` | context menu and the calculator modal — page code only; the arithmetic is `/calc-engine.js` |

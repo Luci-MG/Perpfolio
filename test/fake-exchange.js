@@ -206,8 +206,14 @@ function tradeRows(symbol) {
     out.push({ symbol, id, orderId: id++, side: 'SELL', positionSide: 'LONG', price: String(px * (win ? 1.01 : 0.99)), qty,
       realizedPnl: String((win ? 1 : -1) * px * 0.001 * (k % 4 === 1 ? 2 : 1)), commission: '0.4',
       commissionAsset: 'USDT', time: t + 6 * HOUR, maker: k % 2 === 0 });
+    if (symbol === 'BTCUSDT' && k % 5 === 2) {
+      out.push({ symbol, id, orderId: id++, side: 'SELL', positionSide: 'SHORT', price: String(px), qty: '0.05',
+        realizedPnl: '0', commission: '0.2', commissionAsset: 'USDT', time: t + 2 * HOUR, maker: false });
+      out.push({ symbol, id, orderId: id++, side: 'BUY', positionSide: 'SHORT', price: String(px * 1.004), qty: '0.05',
+        realizedPnl: String(-px * 0.0002), commission: '0.2', commissionAsset: 'USDT', time: t + 4 * HOUR, maker: false });
+    }
   }
-  return out;
+  return out.sort((a, b) => a.id - b.id);
 }
 
 function json(body, { status = 200, headers = {} } = {}) {

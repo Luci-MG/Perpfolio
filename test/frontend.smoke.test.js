@@ -229,7 +229,23 @@ test('every Journal sub-tab renders, with and without equity snapshots', async (
   assert.doesNotMatch(overview, /account [+−$]/, 'no snapshots yet');
   assert.match(overview, /vs yesterday by now[\s\S]*vs last week by now[\s\S]*vs last month by now/);
   assert.match(overview, /class="ov-pair"[\s\S]*Next milestone[\s\S]*Recent trades/);
-  assert.match(renderAll()[2][1], /What your habits cost[\s\S]*Added while underwater/);
+  const [, [, performance], [, behaviour]] = renderAll();
+  assert.match(performance, /Return[\s\S]*Drawdown[\s\S]*Win rate[\s\S]*Expectancy[\s\S]*Payoff[\s\S]*Sharpe/);
+  assert.match(performance, /Sharpe[\s\S]*± [\d.]+[\s\S]*chance above 0: \d+%/);
+  assert.match(performance, /\d+ units \(\d+ legs\)/);
+  assert.match(performance, /Longest losing streak[\s\S]*reshuffling the same results/);
+  assert.match(behaviour, /Added to a losing position[\s\S]*Set a rule[\s\S]*Position size at open/);
+  assert.doesNotMatch(performance + behaviour, /BOTH|both|\$—/);
+
+  run(`perfData.account = { ...perfData.account, ratios: { n: 12, needs: 48 } }`);
+  assert.match(renderAll()[1][1], /needs 48 more days of returns \(12 of 60\)/);
+  run(`perfData.units = { ...perfData.units, units: 0 }`);
+  const [, [, emptyPerformance], [, emptyBehaviour]] = renderAll();
+  assert.match(emptyPerformance, /No trips in this window/);
+  assert.match(emptyBehaviour, /No trips in this window/);
+  assert.deepEqual(strayValues(emptyPerformance + emptyBehaviour), []);
+  run(`fetchPerformance()`);
+  await settle('perfData && !perfLoading && perfData.units.units', 'the journal again');
 
   run(`perfData.accountCurve = [0, 1, 2].map(i => ({ t: Date.now() - (3 - i) * 9e5, accountValue: 1000 + i * 10 }));
        perfData.periods.today.account = { change: 20, since: Date.now() - 27e5, partial: true }`);
@@ -582,6 +598,16 @@ test('a failed load keeps each tab\'s controls with Retry, escapes the message, 
     failed(view('journal'), /jr-subtab/, retry, tab);
     working();
   }
+
+  failing();
+  await run('fetchPerformance()');
+  for (const [tab, kept] of [['performance', /Win rate/], ['behaviour', /Added to a losing position/]]) {
+    run(`jrTab = '${tab}'`);
+    const html = view('journal');
+    assert.match(html, /Couldn’t refresh<\/span> · &lt;b&gt;down&lt;\/b&gt;[\s\S]*showing the last good data/, tab);
+    assert.match(html, kept, `${tab}: the last good data is kept`);
+  }
+  working();
 
   failing();
   await run('fetchRiskBook(true)');
