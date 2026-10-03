@@ -777,3 +777,11 @@ tr:last-child td { border-bottom: none; }
 .cf-v-tf { font-size: 10px; color: var(--text3); margin-right: 4px; }
 .cf-detail-toggle { margin: 4px 0 12px; }
 @media (max-width: 720px) { .cf-v-row { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* Position tiles: the stop mark */
+.stop-mark { display: inline-flex; flex-shrink: 0; margin-left: auto; width: 14px; height: 14px; cursor: help; }
+.stop-mark svg { width: 14px; height: 14px; }
+.stop-mark.safe { color: var(--success); }
+.stop-mark.caution { color: var(--warning); }
+td .stop-mark { margin-left: 4px; vertical-align: -2px; }
+.stop-mark.risk { color: var(--text3); }

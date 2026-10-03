@@ -52,9 +52,74 @@ function toggleExch(exch) {
   rerenderStress();
 }
 
+const STOP_MARK_TEXT = {
+  set: 'Stop set · still risks a loss', ok: 'Stop set · still risks a loss', breakeven: 'Safe · stop at entry',
+  trailing: 'Trailing stop · may still risk a loss', partial: 'Stop covers only part of the leg',
+  tight: 'Stop too tight', wide: 'Stop too wide'
+};
+const STOP_MARK_TONE = { breakeven: 'safe', locks: 'safe', partial: 'caution', tight: 'caution', wide: 'caution' };
+const SHIELD = '<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/>';
+const STOP_MARK_ICON = {
+  safe:    `${SHIELD}<path d="M9 12l2 2 4-4"/>`,
+  caution: `${SHIELD}<path d="M12 8v5M12 16v.5"/>`,
+  risk:    SHIELD
+};
+
+function lossIfHit(p) {
+  const s = p.stop;
+  if (s.price == null || !p.sizeRaw) return null;
+  return (p.side === 'Long' ? s.price - p.entry : p.entry - s.price) * Math.abs(p.sizeRaw);
+}
+
+function hedgedPairKeys(positions) {
+  const sides = {};
+  for (const p of positions) (sides[normalizePairKey(p.pair)] ||= new Set()).add(p.side);
+  return new Set(Object.keys(sides).filter(k => sides[k].size > 1));
+}
+
+function widthJudgement(p) {
+  const judged = (volStopData?.positions || []).find(v => v.exchange === p.exchange && v.pair === p.pair && v.side === p.side);
+  const fresh = judged && ['tight', 'wide'].includes(judged.verdict) && judged.yourStop?.price === p.stop?.price;
+  return fresh ? judged : null;
+}
+
+function stopMarkTitle(p, verdict, judged) {
+  const s = p.stop;
+  const parts = [verdict === 'locks' ? `Safe · locks +${fmt(s.lockedPct, 2)}%` : STOP_MARK_TEXT[verdict] || 'Stop set'];
+  if (s.price != null) parts.push(`stop ${fmtPrice(s.price)}, ${fmt(s.distancePct, 2)}% from mark`);
+  const loss = STOP_MARK_TONE[verdict] === 'safe' ? null : lossIfHit(p);
+  if (loss != null && loss < 0) {
+    const side = p.side === 'Long' ? 'below' : 'above';
+    parts.push(`${fmt(Math.abs(s.price - p.entry) / p.entry * 100, 2)}% ${side} entry, about ${fmtSignedUsd(loss)} if hit`);
+  }
+  if (s.trailing) parts.push(`trails ${s.trailing.callbackRate != null ? `${fmt(s.trailing.callbackRate, 2)}%` : ''}${s.trailing.activatePrice ? ` from ${fmtPrice(s.trailing.activatePrice)}` : ''}`);
+  if (s.coverage != null && s.coverage < 1) parts.push(`covers ${fmt(s.coverage * 100, 0)}% of the leg`);
+  if (judged) {
+    const age = volStopData?.lastUpdated ? Math.round((Date.now() - new Date(volStopData.lastUpdated)) / 60000) : null;
+    parts.push(`${fmt(judged.ratio, 2)}× suggested${judged.yourStop?.hit ? `, hit within 24h in ${fmt(judged.yourStop.hit.rate * 100, 0)}% of windows` : ''}`);
+    if (age != null) parts.push(`judged on the Stops tab ${age} min ago`);
+  } else if (verdict === 'set') {
+    parts.push('open Stops to judge its width');
+  }
+  if (s.takeProfit) parts.push(`take-profit ${fmtPrice(s.takeProfit)}`);
+  return parts.join(' · ');
+}
+
+function stopMarkHtml(p, hedged) {
+  if (!p.stop) {
+    return hedged ? '' : `<span class="sl-alert" title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`;
+  }
+  const judged = widthJudgement(p);
+  const verdict = judged?.verdict ?? p.stop.verdict;
+  const tone = STOP_MARK_TONE[verdict] ?? 'risk';
+  return `<span class="stop-mark ${tone}" title="${esc(stopMarkTitle(p, verdict, judged))}" aria-label="${esc(STOP_MARK_TEXT[verdict] || 'Stop set')}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${STOP_MARK_ICON[tone]}</svg></span>`;
+}
+
 function renderPositions(positions) {
   if (!positions.length) return '<p style="font-size:12px;color:var(--text3);padding:8px 0">No open positions</p>';
   if (posView === 'tiles') return renderPositionTiles(positions);
+  const hedged = hedgedPairKeys(positions);
   return `<div class="tbl-wrap"><table>
     <tr>
       <th>Pair</th><th>Side</th><th>Lev.</th><th>Size</th>
@@ -67,7 +132,7 @@ function renderPositions(positions) {
       const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
       const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
       return `<tr>
-        <td><span class="pair">${p.pair}</span><div class="pair-sub" style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span><span>${p.type}</span></div></td>
+        <td><span class="pair">${p.pair}</span> ${stopMarkHtml(p, hedged.has(normalizePairKey(p.pair)))}<div class="pair-sub" style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span><span>${p.type}</span></div></td>
         <td>${sideBadge(p.side)}</td>
         <td>${p.leverage}</td>
         <td>${p.size}<div class="pair-sub">${fmtUsd(p.sizeUsd)}</div></td>
@@ -124,9 +189,7 @@ function renderPositionTiles(positions) {
     const threadDot = tc ? `<span style="width:5px;height:5px;border-radius:50%;background:${tc};flex-shrink:0;opacity:0.9;box-shadow:0 0 4px ${tc}88"></span>` : '';
 
     const isHedged = !!tc;
-    const noSlBadge = (!isHedged && !p.hasStop)
-      ? `<span class="sl-alert" title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`
-      : '';
+    const stopMark = stopMarkHtml(p, isHedged);
 
     return `<div class="pos-tile" draggable="true" data-pos-id="${posId(p)}"${threadAttrs} data-focus-color="${focusColor}" style="${outlineStyle}" data-pos='${JSON.stringify({pair:p.pair,side:p.side,entry:p.entry,mark:p.mark,sizeUsd:p.sizeUsd,leverage:p.leverage,exchange:p.exchange})}'>
       <div class="ptile-head">
@@ -135,7 +198,7 @@ function renderPositionTiles(positions) {
         <span style="font-size:9px;font-weight:600;color:${exchColor};border:0.5px solid ${exchColor};border-radius:3px;padding:1px 4px;flex-shrink:0">${exchLabel}</span>
         ${sideBadge(p.side)}
         <span style="font-size:10px;color:var(--text3)">${p.leverage}</span>
-        ${noSlBadge}
+        ${stopMark}
       </div>
       <div class="ptile-mark">${fmtPrice(p.mark)}</div>
       <div class="ptile-mark-sub">current price</div>

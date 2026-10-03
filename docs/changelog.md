@@ -1,5 +1,16 @@
 # Changelog
 
+## Protected tiles read as safe (2026-10-03)
+
+- Every tile and List row now says whether the leg needs attention: a green shield only when
+  the stop cannot lose (at entry or locking profit), a grey shield when a stop is set but still
+  risks a loss (the tooltip gives the loss if hit), an amber shield when only part of the leg
+  is covered or the Stops tab judged the stop too tight or wide, the red ring when nothing
+  protects it.
+- What counts as a stop: stop-market, stop-limit and trailing stops on the closing side;
+  reduce-only limits are take-profits. Trailing stops were silently ignored before, and a
+  stop for part of a leg passed as full protection.
+
 ## Confluence: verdict and honest calibration (2026-10-03)
 
 - A verdict card leads: lean and strength, the three signals carrying it with their records in

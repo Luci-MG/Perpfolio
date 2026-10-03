@@ -76,6 +76,9 @@ test('each leg\'s real stop is judged against the suggestion, and the tiles agre
   const dash = (await get('/api/dashboard')).body;
   const withStop = [...dash.binance.positions, ...dash.hyperliquid.positions].filter(p => p.hasStop).map(p => p.pair);
   assert.deepEqual(withStop, ['BTC/USDT']);
+  const tileLeg = dash.binance.positions.find(p => p.symbol === 'BTCUSDT' && p.side === 'Long');
+  assert.deepEqual([tileLeg.stop.verdict, tileLeg.stop.coverage, tileLeg.stop.price], ['set', 1, 90000]);
+  assert.equal(dash.binance.positions.find(p => p.symbol === 'ETHUSDT').stop, null, 'a take-profit alone is no stop');
 });
 
 test('riskbook reproduces the exchange\'s own margin figures exactly', async () => {
@@ -244,7 +247,8 @@ test('an increasing fill on the stream captures its entry context once, joined t
   assert.ok(joined.account.equity > 0 && joined.account.leverage === 10);
   assert.ok(Number.isFinite(joined.confluence.score) && '1h' in joined.confluence.byTf);
   assert.ok(joined.suggestedStop.price < trip.avgEntry && joined.suggestedStop.distancePct > 0);
-  assert.deepEqual(joined.yourStop, { price: 90000, distancePct: +((trip.avgEntry - 90000) / trip.avgEntry * 100).toFixed(3) });
+  assert.deepEqual([joined.yourStop.price, joined.yourStop.distancePct, joined.yourStop.coverage],
+    [90000, +((trip.avgEntry - 90000) / trip.avgEntry * 100).toFixed(3), null], 'coverage is not judged against one fill');
   assert.equal(joined.stopLooked, true);
 });
 

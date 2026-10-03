@@ -18,7 +18,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P3 | [Confluence: verdict and honest calibration](#p3--confluence-verdict-and-honest-calibration) | done (2026-10-03) |
 | P3 | [Calculators: live and account-aware](#p3--calculators-live-and-account-aware) | done (2026-10-03) |
 | P3 | [Sessions across the dashboard](#p3--sessions-across-the-dashboard) | planned |
-| P3 | [Protected tiles read as safe](#p3--protected-tiles-read-as-safe) | planned |
+| P3 | [Protected tiles read as safe](#p3--protected-tiles-read-as-safe) | done (2026-10-03) |
 | P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | idea |
 | P4 | [Goals: design spike](#p4--goals-design-spike) | idea |
 | — | [Carried over](#carried-over) | planned |
@@ -226,6 +226,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Done when:** a glance at the tiles separates "covered, ignore" from "needs a look", and the
   tile and the Stops tab never disagree about a leg.
 - **Depends on:** Stops: real vs suggested (done) — the verdict needs to reach `/api/dashboard`.
+- **Status:** done (2026-10-03) — see `docs/stops.md`, *On the position tiles*. Breakeven and
+  locks are judged on every poll from orders; width comes from the Stops tab once loaded.
 
 ## P4 — What correlates with outcome
 

@@ -270,6 +270,42 @@ test('the Confluence verdict leads, reads for every lean, and the matrix opens o
   run(`toggleCfDetail()`);
 });
 
+test('only a stop that cannot lose reads safe; a risking stop is grey, width turns it amber, a moved stop drops it', async () => {
+  const { markup, run, settle } = await bootPage();
+  const marks = () => [...markup.get('content').matchAll(/class="(stop-mark (?:safe|caution|risk)|sl-alert)"[^>]*title="([^"]*)"/g)]
+    .map(m => [m[1], m[2]]);
+  const btcLong = `lastData.binance.positions.find(p => p.symbol === 'BTCUSDT' && p.side === 'Long')`;
+
+  run(`setView('tiles')`);
+  let tiles = marks();
+  assert.equal(tiles.filter(([c]) => c === 'stop-mark risk').length, 1, 'the BTC long: stop below entry');
+  assert.equal(tiles.filter(([c]) => c === 'stop-mark safe').length, 0);
+  assert.equal(tiles.filter(([c]) => c === 'sl-alert').length, 3, 'ETH, ENA, SOL; the hedged BTC short shows nothing');
+  assert.match(tiles.find(([c]) => c === 'stop-mark risk')[1], /still risks a loss[\s\S]*about −\$[\d,.]+ if hit/);
+
+  run(`Object.assign(${btcLong}.stop, { price: ${btcLong}.entry, verdict: 'breakeven' }); render(lastData)`);
+  tiles = marks();
+  assert.equal(tiles.filter(([c]) => c === 'stop-mark safe').length, 1, 'a stop at entry reads safe');
+  assert.match(tiles.find(([c]) => c === 'stop-mark safe')[1], /Safe · stop at entry/);
+
+  run(`Object.assign(${btcLong}.stop, { price: 90000, verdict: 'set' }); setView('stops')`);
+  await settle('volStopData && !volLoading', 'the stops');
+  run(`const v = volStopData.positions.find(p => p.pair === 'BTC/USDT' && p.side === 'Long');
+       v.verdict = 'tight'; v.ratio = 0.4; setView('tiles')`);
+  tiles = marks();
+  assert.equal(tiles.filter(([c]) => c === 'stop-mark caution').length, 1);
+  assert.match(tiles.find(([c]) => c === 'stop-mark caution')[1], /Stop too tight[\s\S]*0\.40× suggested[\s\S]*judged on the Stops tab/);
+
+  run(`${btcLong}.stop.price = 91000; render(lastData)`);
+  assert.equal(marks().filter(([c]) => c === 'stop-mark caution').length, 0, 'judged against a stop that has since moved');
+
+  run(`setView('list')`);
+  const list = markup.get('content');
+  assert.equal((list.match(/class="stop-mark risk"/g) || []).length, 1);
+  assert.equal((list.match(/class="sl-alert"/g) || []).length, 3);
+  assert.deepEqual(strayValues(list), []);
+});
+
 test('the tool widgets open each tool and toggle back to the last positions view', async () => {
   const { markup, run } = await bootPage();
   assert.equal(run('TOOLS.every(t => VIEWS.includes(t.view))'), true);

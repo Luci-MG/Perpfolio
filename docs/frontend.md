@@ -112,6 +112,12 @@ complement and painted the fill out of the viewBox for every utilisation between
 100% — exactly the range worth looking at. A `conic-gradient` survives elsewhere, for the
 small long/short split donut only.
 
+### Stop mark on tiles and List
+One mark per leg from `stopMarkHtml(p)` in `positions.js` — green shield ✓ safe (stop at or
+past entry), grey shield stop set but still risking a loss, amber shield ! needs a look, red
+ring unprotected, nothing for a hedged leg without a stop. States and
+sources: `docs/stops.md`, *On the position tiles*.
+
 ### Calculators
 One modal, five tabs (P&L, Avg down/up, Liq price, Size, Break-even), and a **position picker** at the top:
 *Manual* or any open position. Picking one fills every tab — side, entry, mark, actual

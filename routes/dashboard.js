@@ -1,7 +1,7 @@
 import { getBinanceData } from '../lib/binance-account.js';
 import { getHyperliquidData } from '../lib/hyperliquid.js';
 import { isEnabled } from '../lib/venues.js';
-import { legOf, legStop, stopOrders } from '../stop-check.js';
+import { legProtection, stopOrders } from '../stop-check.js';
 
 function buildSummary(hlData, bnData) {
   const allPositions = [...hlData.openPositions, ...bnData.openPositions];
@@ -32,7 +32,10 @@ export function register(app) {
 
       const summary = buildSummary(hlData, bnData);
       const orders = stopOrders(bnData.openOrders, hlData.openOrders);
-      const withStop = positions => positions.map(p => ({ ...p, hasStop: !!legStop(orders, legOf(p), p.mark) }));
+      const withStop = positions => positions.map(p => {
+        const stop = legProtection(p, orders);
+        return { ...p, stop, hasStop: !!stop };
+      });
 
       res.json({
         ok: true,
