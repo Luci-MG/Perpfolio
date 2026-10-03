@@ -32,6 +32,7 @@ expected to say so rather than assert correctness.
 | Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
 | Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |
 | Goals: rules you set, scored from the day you set them | [`docs/goals.md`](docs/goals.md) | `goals.js`, `milestones.js`, `lib/goals-store.js`, `routes/goals.js`, `public/js/goals-view.js` |
+| Funding: cost of holding the book, rates, caps, settlements | [`docs/frontend.md`](docs/frontend.md) *Funding*, [`docs/research/funding.md`](docs/research/funding.md) | `funding.js`, `routes/funding.js`, `public/js/funding-view.js` |
 | Statistical method behind Factors, with sources | [`docs/research/outcome-factors.md`](docs/research/outcome-factors.md) | `outcome-factors.js` |
 | What changed | [`docs/changelog.md`](docs/changelog.md) | — |
 | What is next | [`docs/roadmap.md`](docs/roadmap.md) | — |
@@ -54,6 +55,7 @@ crypto-dashboard/
 ├── habits.js              # trading habits and their estimated cost
 ├── goals.js               # goal types and their scoring
 ├── outcome-factors.js     # what at entry goes with better or worse trips
+├── funding.js             # what holding the book costs in funding, hedges netted
 ├── milestones.js          # account-value targets and the monthly drawdown limit
 ├── history-store.js       # append-only NDJSON cache
 ├── *.test.js              # engine unit tests
@@ -65,7 +67,7 @@ crypto-dashboard/
 └── public/
     ├── index.html         # markup only
     ├── css/app.css
-    └── js/                # 19 classic scripts, loaded in a fixed order (docs/frontend.md)
+    └── js/                # 20 classic scripts, loaded in a fixed order (docs/frontend.md)
 ```
 
 ## Running and verifying

@@ -1,5 +1,18 @@
 # Changelog
 
+## Funding section (2026-10-03)
+
+- The funding drawer answers what holding the book costs: estimated net a day, realised 24h /
+  7d / 30d from the ledger with a note when the two disagree, share of equity, and one table
+  worst first with each hedged pair netted into one row.
+- Rates are labelled as estimates and shown per each symbol's own interval with an annualised
+  column, a 7-day sparkline against the symbol's average and the rate charged at the last
+  settlement; a leg at half its cap or more is flagged, since it can switch to 1h settlements.
+- The old "Avg rate/8h" averaged 4h and 8h rates unweighted; the book-wide figure is now the
+  rate on gross notional. The bubble grid, heatmap, exchange cards and burn-down chart are gone.
+- The sidebar widget adds the next settlement with a countdown and its amount, above a row
+  per venue — zero with no positions, *off* when switched off.
+
 ## Notes and tags on trips (2026-10-03)
 
 - A note and up to five tags on any closed trip, edited inline in Trades, with a Notes column,

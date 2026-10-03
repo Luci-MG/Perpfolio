@@ -93,7 +93,6 @@ test('every view and drawer renders against live payloads without errors or NaN'
     for (const hit of strayValues(markup.get('content') + markup.get('sidebar'))) bad.push(`${v}: …${hit}…`);
   }
   assert.equal(run('JSON.stringify(loadErrors)'), '{}', 'every tab loaded');
-  for (const fn of ['buildFundingDrawerContent(lastData)']) run(fn);
   assert.deepEqual(bad, []);
 });
 
@@ -630,4 +629,40 @@ test('notes and tags: the inline editor saves and cancels, chips and the tag fil
   await run(`saveTripNote('${key}')`);
   run(`filterTrades('tag', 'all')`);
   assert.deepEqual(strayValues(show()), []);
+});
+
+test('funding: the widget counts down to the next settlement, the drawer nets hedges and flags a leg near its cap', async () => {
+  const { markup, run } = await bootPage();
+  run(`lastData.binance.positions.forEach(p => { p.nextFundingTime = Date.now() + 36e5; }); riskForceRender = true; render(lastData)`);
+  assert.match(markup.get('sidebar'), /Daily funding[\s\S]*\/day est\.[\s\S]*next in <span data-until="\d+">1h 00m/);
+  assert.match(markup.get('sidebar'), /fw-row"><span>HL[\s\S]*fw-row"><span>BN/, 'both venue rows');
+  run(`const hlLegs = lastData.hyperliquid.positions; lastData.hyperliquid.positions = []; riskForceRender = true; render(lastData); lastData.hyperliquid.positions = hlLegs`);
+  assert.match(markup.get('sidebar'), /fw-row"><span>HL<\/span><span class="sb-num ">\$0\.00/, 'a venue with no positions still shows, at zero');
+
+  await run('openFundDrawer()');
+  const body = () => markup.get('fundDrawerBody');
+  assert.match(body(), /Est\. net \/ day[\s\S]*Realised 7d[\s\S]*Of equity[\s\S]*On gross/);
+  assert.match(body(), /BTC hedge[\s\S]*long [−+]\$[\d,.]+ · short [−+]\$[\d,.]+ a day/);
+  assert.match(body(), /ETH <span class="gl-n">long<\/span>[\s\S]*\/4h/);
+  run(`fundData.rows[0].usual = { avgPct: 0.004, points: [0.002, 0.004, 0.006], lastCharged: { at: Date.now() - 36e5, ratePct: 0.006 } }; renderFundBody()`);
+  assert.match(body(), /class="fd-spark"[\s\S]*its 7d avg[\s\S]*title="charged at the last settlement">\+0\.0060%/);
+  assert.match(body(), /Funding by symbol over time ›/);
+  assert.deepEqual(strayValues(body()), []);
+
+  run(`fundData.rows[0].nearCap = { share: 0.62, receiving: false }; renderFundBody()`);
+  assert.match(body(), /class="fd-flag dn">⚠ 62% of its cap — may switch to 1h settlements</);
+
+  run(`realFetch = fetch; fetch = () => Promise.reject(new Error('down'))`);
+  await run('fetchFunding()');
+  assert.match(body(), /Couldn’t refresh<\/span> · down[\s\S]*showing the last good data[\s\S]*BTC hedge/);
+  run(`fetch = realFetch; fundData = null`);
+  run(`fetch = () => Promise.reject(new Error('down'))`);
+  await run('fetchFunding()');
+  assert.match(body(), /Couldn’t load<\/span> · down[\s\S]*onclick="fetchFunding\(\)">Retry/);
+  run('fetch = realFetch');
+
+  run(`closeFundDrawerForce(); openFundingHistory()`);
+  assert.equal(run('jrTab'), 'costs');
+  const source = fs.readFileSync(path.join(ROOT, 'public', 'js', 'funding-view.js'), 'utf8');
+  assert.doesNotMatch(source, /rgba\(|#[0-9a-f]{6}/i, 'funding uses theme tokens only');
 });

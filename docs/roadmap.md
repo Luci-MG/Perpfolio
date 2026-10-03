@@ -25,7 +25,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P4 | [Goals: milestones](#p4--goals-milestones) | done (2026-10-03) |
 | P5 | [Error states keep their controls](#p5--error-states-keep-their-controls) | done (2026-10-03) |
 | P5 | [Per-trip notes and tags](#p5--per-trip-notes-and-tags) | done (2026-10-03) |
-| P5 | [Funding section](#p5--funding-section) | idea |
+| P5 | [Funding section](#p5--funding-section) | done (2026-10-03) |
 | P5 | [Journal Overview remodel](#p5--journal-overview-remodel) | idea |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
 | — | [Parked](#parked) | parked |
@@ -306,6 +306,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 
 ## P5 — Funding section
 
+- **Status:** done (2026-10-03).
 - **Problem:** the funding metric and its drawer are the oldest part of the dashboard and read
   as a list of rates rather than an answer to "what is holding this book costing me".
 - **Scope:** to be planned — likely cost per day and per position, what the hedges pay

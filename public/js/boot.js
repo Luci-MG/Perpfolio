@@ -17,6 +17,7 @@ document.addEventListener('keydown', e => {
 });
 
 startSessionClock();
+setInterval(tickCountdowns, 30_000);
 
 const VIEWS = ['tiles', 'list', 'orders', 'stops', 'stress', 'unwind', 'journal', 'confluence'];
 const savedView = loadPref('posView', 'tiles');
