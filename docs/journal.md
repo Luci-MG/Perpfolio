@@ -137,6 +137,36 @@ centre line, and **every bucket shows its trip count**, with fewer than 10 dimme
 `jrSym()` keeps the quote on non-USDT pairs: stripping both collapsed `BTCUSDT` and
 `BTCUSDC` into a single label that then appeared twice in the costs list.
 
+### Overview: periods and the two curves
+- **Today / This week / This month** use the reader's clock (`?tz=` minutes ahead of UTC, from
+  the browser; weeks start Monday). *Realised* is net of fees and funding from the Binance
+  ledger — exact; Hyperliquid has no history. *Account* is the change in account value across
+  both venues, net of transfers, from equity snapshots; when snapshots began after the
+  period started it says *since …*.
+- **Wallet** is rebuilt backwards from today's `walletBalance` through every dollar
+  income row — exact as far back as the ledger reaches (three months). **Account value** is
+  the snapshots (`lib/equity-snapshots.js`, every 15 minutes while the server runs, one row
+  per interval). The gap between the lines is the open positions. One dollar axis, the
+  account line solid and the wallet dashed, both labelled.
+- **Fixed:** Overview read `bn.equity` as the wallet and added unrealised PnL to it — but
+  equity has been the margin balance (wallet + unrealised) since 2026-09-29, so account value
+  counted open positions twice. `/api/dashboard` now sends `walletBalance`; a route test pins
+  wallet + unrealised = margin balance.
+
+### Behaviour: what each habit cost
+`habits.js` holds one `HABITS` table; each habit is a trip predicate and a comparison group:
+
+| Habit | Against |
+|---|---|
+| Added while underwater | trips that never added at a worse price than their own average |
+| Bigger after a loss (opened > 1.5× median size right after a losing trip) | other trips opened right after a loss |
+| Winner turned loser (MFE ≥ 1%, closed at a loss) | other losing trips with a price path |
+| Held losers longer (past the median winner's hold) | losers closed within it |
+
+The cost is an **estimate** — (average net with the habit − average net of the comparison)
+× trips with the habit — using net after funding where known. Either side under 10 trips is
+dimmed and marked ⚠.
+
 ### Trades: every round trip with its context
 One row per closed trip, built in three layers so each can be tested alone:
 

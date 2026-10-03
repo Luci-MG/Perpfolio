@@ -211,6 +211,35 @@ test('the calculators fill from a picked position, and its liquidation matches S
   }
 });
 
+test('every Journal sub-tab renders, with and without equity snapshots', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading && perfData.periods', 'the journal');
+
+  const tabs = ['overview', 'performance', 'behaviour', 'timing', 'symbols', 'costs'];
+  const renderAll = () => tabs.map(tab => {
+    run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`);
+    return [tab, markup.get('content')];
+  });
+  for (const [tab, html] of renderAll()) assert.deepEqual(strayValues(html), [], tab);
+
+  const overview = renderAll()[0][1];
+  assert.match(overview, /Today[\s\S]*This week[\s\S]*This month/);
+  assert.match(overview, /account —/, 'no snapshots yet');
+  assert.match(renderAll()[2][1], /What your habits cost[\s\S]*Added while underwater/);
+
+  run(`perfData.accountCurve = [0, 1, 2].map(i => ({ t: Date.now() - (3 - i) * 9e5, accountValue: 1000 + i * 10 }));
+       perfData.periods.today.account = { change: 20, since: Date.now() - 27e5, partial: true }`);
+  const withSnaps = renderAll()[0][1];
+  assert.match(withSnaps, /class="ov-account"/);
+  assert.match(withSnaps, /account \$20\.00 since/);
+  assert.deepEqual(strayValues(withSnaps), []);
+});
+
 test('the tool widgets open each tool and toggle back to the last positions view', async () => {
   const { markup, run } = await bootPage();
   assert.equal(run('TOOLS.every(t => VIEWS.includes(t.view))'), true);

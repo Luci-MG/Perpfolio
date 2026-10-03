@@ -12,7 +12,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P1 | [Venue on/off](#p1--venue-onoff) | done (2026-10-03) |
 | P2 | [Tools in the sidebar](#p2--tools-in-the-sidebar) | done (2026-10-03) |
 | P3 | [Stops: real vs suggested](#p3--stops-real-vs-suggested) | done (2026-10-03) |
-| P3 | [Journal: Overview and Behaviour](#p3--journal-overview-and-behaviour) | planned |
+| P3 | [Journal: Overview and Behaviour](#p3--journal-overview-and-behaviour) | done (2026-10-03) |
 | P3 | [Journal: richer Trades](#p3--journal-richer-trades) | done (2026-10-03) |
 | P3 | [Journal: context at entry](#p3--journal-context-at-entry) | done (2026-10-03) |
 | P3 | [Confluence: verdict and honest calibration](#p3--confluence-verdict-and-honest-calibration) | planned |
@@ -132,6 +132,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Done when:** Overview answers "how am I doing" without arithmetic, and every Behaviour
   finding carries a cost and a sample size.
 - **Depends on:** —
+- **Status:** done (2026-10-03) — see `docs/journal.md`, *Overview* and *Behaviour*. Account
+  value history starts with the snapshots; Hyperliquid has no realised history.
 
 ## P3 — Journal: richer Trades
 

@@ -51,6 +51,7 @@ export function register(app) {
         },
         binance: {
           equity:      bnData.equity.toFixed(2),
+          walletBalance: bnData.walletBalance.toFixed(2),
           marginPct:   bnData.marginPct,
           marginUsed:  bnData.marginUsed.toFixed(2),
           freeMargin:  bnData.freeMargin.toFixed(2),

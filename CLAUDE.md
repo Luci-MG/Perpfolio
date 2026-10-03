@@ -27,7 +27,7 @@ expected to say so rather than assert correctness.
 | Volatility-adjusted stops, your real stops | [`docs/stops.md`](docs/stops.md) | `vol-estimator.js`, `stop-check.js`, `lib/stop-suggestion.js`, `routes/volstops.js` |
 | Stress / liquidation maths, calibration | [`docs/stress-engine.md`](docs/stress-engine.md) | `risk-engine.js`, `lib/pools.js` |
 | Unwind planner and drawers | [`docs/unwind.md`](docs/unwind.md) | `risk-engine.js`, `routes/deleverage.js` |
-| Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `trip-context.js`, `lib/history-sync.js`, `lib/trip-enrichment.js`, `lib/entry-context.js` |
+| Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `trip-context.js`, `habits.js`, `lib/history-sync.js`, `lib/trip-enrichment.js`, `lib/entry-context.js`, `lib/equity-snapshots.js` |
 | Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
 | Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |
 | What changed | [`docs/changelog.md`](docs/changelog.md) | — |
@@ -47,6 +47,7 @@ crypto-dashboard/
 ├── confluence.js          # market signals, regime gating, self-calibration
 ├── trade-analytics.js     # round trips and statistics
 ├── trip-context.js        # per-trip funding, price path, market at entry
+├── habits.js              # trading habits and their estimated cost
 ├── history-store.js       # append-only NDJSON cache
 ├── *.test.js              # engine unit tests
 ├── test/                  # fake exchange, route contract tests, golden snapshot, page smoke test

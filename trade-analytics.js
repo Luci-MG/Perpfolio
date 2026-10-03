@@ -474,3 +474,74 @@ export function inferFundingInterval(income, symbol) {
     medianGapHours: +median.toFixed(2)
   };
 }
+
+// ─── OVERVIEW: PERIODS AND CURVES ───────────────────────────────────────────
+
+const DAY_MS = 86_400_000;
+const NET_TYPES = ['REALIZED_PNL', 'COMMISSION', 'FUNDING_FEE'];
+const USD_ASSETS = new Set(['USDT', 'USDC', 'BUSD', 'FDUSD']);
+
+/** Start of today, this week (Monday) and this month for a clock `tzOffsetMin` minutes ahead of UTC. */
+export function periodStarts(now, tzOffsetMin = 0) {
+  const shift = tzOffsetMin * 60_000;
+  const local = new Date(now + shift);
+  const today = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()) - shift;
+  return {
+    today,
+    week: today - ((local.getUTCDay() + 6) % 7) * DAY_MS,
+    month: Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), 1) - shift
+  };
+}
+
+const sumIncome = (rows, type) => rows.filter(r => r.incomeType === type).reduce((s, r) => s + parseFloat(r.income), 0);
+
+/** Realised, fees, funding, net, transfers and closed trips since each start in `starts`. */
+export function periodNet(income, trips, starts) {
+  return Object.fromEntries(Object.entries(starts).map(([period, from]) => {
+    const rows = (income || []).filter(r => r.time >= from);
+    const closed = (trips || []).filter(t => t.closeTime >= from);
+    const [realized, fees, funding] = NET_TYPES.map(type => sumIncome(rows, type));
+    return [period, { from, realized: +realized.toFixed(2), fees: +fees.toFixed(2), funding: +funding.toFixed(2),
+                      net: +(realized + fees + funding).toFixed(2), transfers: +sumIncome(rows, 'TRANSFER').toFixed(2),
+                      trips: closed.length, wins: closed.filter(t => t.win).length }];
+  }));
+}
+
+/**
+ * Wallet at the close of each day, rebuilt backwards from `walletNow` through every
+ * dollar-denominated income row — exact as far back as the ledger reaches.
+ */
+export function walletCurve(income, walletNow, now = Date.now()) {
+  const rows = (income || []).filter(r => USD_ASSETS.has((r.asset || 'USDT').toUpperCase()))
+    .sort((a, b) => b.time - a.time);
+  const points = [{ t: now, wallet: +walletNow.toFixed(2) }];
+  let wallet = walletNow;
+  let day = Math.floor(now / DAY_MS);
+  for (const r of rows) {
+    const rowDay = Math.floor(r.time / DAY_MS);
+    if (rowDay < day) {
+      points.push({ t: (rowDay + 1) * DAY_MS - 1, wallet: +wallet.toFixed(2) });
+      day = rowDay;
+    }
+    wallet -= parseFloat(r.income);
+  }
+  if (rows.length) points.push({ t: rows.at(-1).time - 1, wallet: +wallet.toFixed(2) });
+  return points.reverse();
+}
+
+/**
+ * Account value change since each start, from equity snapshots, with transfers removed so a
+ * deposit is not a gain. When snapshots begin after a start, the change runs from the first
+ * snapshot and `since` says so.
+ */
+export function accountChange(snapshots, income, starts) {
+  const sorted = [...(snapshots || [])].sort((a, b) => a.t - b.t);
+  const last = sorted.at(-1);
+  return Object.fromEntries(Object.entries(starts).map(([period, from]) => {
+    const first = sorted.find(s => s.t >= from);
+    if (!first || !last || first === last) return [period, null];
+    const transfers = sumIncome((income || []).filter(r => r.time >= first.t), 'TRANSFER');
+    return [period, { change: +(last.accountValue - first.accountValue - transfers).toFixed(2),
+                      since: first.t, partial: first.t - from > DAY_MS / 24 }];
+  }));
+}

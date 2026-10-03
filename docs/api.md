@@ -27,7 +27,7 @@
 | `GET /api/volstops?risk=&k=` | volatility-adjusted stops, hedge health, regime | *Dynamic Stop Width* |
 | `GET /api/riskbook` | cross pools, calibration, stress inputs, depth, ADL | *Cross-Pool Stress Simulator* |
 | `GET /api/deleverage?objective=&target=&maxLoss=&fee=&breakHedges=` | unwind plan | *Unwind planner* |
-| `GET /api/performance?days=N` | journal: round trips, breakdowns, equity curve | *Account history* |
+| `GET /api/performance?days=N&tz=M` | journal: round trips, breakdowns, equity curve, periods in the reader's timezone, wallet and account curves, habit costs | *Account history* |
 | `GET /api/trips?days=N` | every closed round trip with size, costs, funding, price path and market at entry, plus context coverage | *Trades* in `journal.md` |
 | `GET /api/hedgeledger` | locked hedge PnL, carry, margin inflation | *Hedge ledger* |
 | `GET /api/history/sync?start=true&full=true` | starts a history sync, returns progress | *history-store* |
@@ -108,7 +108,8 @@ Each position object (both exchanges, normalised — no realizedPnl):
 Binance positions additionally carry the fields the stress engine needs:
 `asset`, `quote`, `symbol`, `positionSide`, `sizeRaw` (signed float — `size` is a display
 string), `isolated`, `isolatedWallet`, `reportedMm`, `reportedLiqPrice`.
-On `/api/dashboard` every position also carries `hasStop` — whether a closing `Stop…` order
+`binance.walletBalance` on `/api/dashboard` is the wallet without unrealised PnL; `equity` is
+the margin balance. On `/api/dashboard` every position also carries `hasStop` — whether a closing `Stop…` order
 protects the leg (the rule in `docs/stops.md`).
 
 ## Order data shape

@@ -1,5 +1,15 @@
 # Changelog
 
+## Journal: Overview and Behaviour (2026-10-03)
+
+- **Fixed:** Overview counted unrealised PnL twice — it read the margin balance as the wallet
+  and added open positions on top. `walletBalance` is now sent and the identity is tested.
+- Overview leads with Today / This week / This month in the reader's timezone — realised net
+  from the ledger, account change from snapshots — and a chart of wallet (rebuilt exactly
+  from the ledger) against account value (snapshots every 15 minutes from now on).
+- Behaviour leads with what each habit cost: adding while underwater, sizing up after a loss,
+  winners turned losers, holding losers — each against a comparison group, with n.
+
 ## Calculators, part 2: ladder, Size and Break-even (2026-10-03)
 
 - The P&L tab shows P&L and return at ±2/5/10% around the exit price.

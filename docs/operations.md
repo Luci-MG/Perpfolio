@@ -130,6 +130,12 @@ rates only for symbols with hedged settlements. Every request passes `throttleWe
 first run on a few hundred trips took a few minutes and stayed far below the limit. Results are
 cached per trip, so later syncs fetch only new trips.
 
+### Equity snapshots
+`startEquitySnapshots()` (from `server.js`) records account value across both venues every 15
+minutes into `data/equity-snapshots.ndjson`, keyed by interval so a restart cannot double a
+row. It reads the shared snapshot when it is under a minute old — free while a tab is open —
+and otherwise costs one account read per venue. Nothing is recorded with both venues off.
+
 ### Entry capture: `onFill`
 `lib/orders-stream.js` exposes `onFill(listener)`; `server.js` registers
 `captureEntryContext`, so the stream never imports the journal. Each increasing order costs

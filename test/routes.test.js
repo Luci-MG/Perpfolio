@@ -116,7 +116,9 @@ test('history sync fills the store and the journal reconciles every fill', async
   const { status, body } = await get('/api/performance');
   assert.equal(status, 200);
   assert.ok(body.overall.trips > 0);
-  record('performance', body);
+  const clockFree = { ...body, walletCurve: body.walletCurve.slice(0, -1),
+    periods: Object.fromEntries(Object.entries(body.periods).map(([k, { from, ...rest }]) => [k, rest])) };
+  record('performance', clockFree);
 });
 
 test('trips carry context from the sync, funding from the ledger, and a re-sync fetches nothing', async () => {
@@ -233,6 +235,30 @@ test('an increasing fill on the stream captures its entry context once, joined t
   assert.ok(joined.suggestedStop.price < trip.avgEntry && joined.suggestedStop.distancePct > 0);
   assert.deepEqual(joined.yourStop, { price: 90000, distancePct: +((trip.avgEntry - 90000) / trip.avgEntry * 100).toFixed(3) });
   assert.equal(joined.stopLooked, true);
+});
+
+test('the wallet plus open positions is the margin balance, never counted twice', async () => {
+  const bn = (await get('/api/dashboard')).body.binance;
+  const upnl = bn.positions.reduce((a, p) => a + p.upnl, 0);
+  assert.ok(Math.abs(parseFloat(bn.walletBalance) + upnl - parseFloat(bn.equity)) < 0.01,
+    `${bn.walletBalance} + ${upnl} vs ${bn.equity}`);
+});
+
+test('equity snapshots record once per interval and feed the account curve and period change', async () => {
+  const { recordEquitySnapshot } = await import('../lib/equity-snapshots.js');
+  const interval = 15 * 60_000;
+  const t0 = Math.floor(Date.now() / interval) * interval;
+  await recordEquitySnapshot(t0 - interval + 1000, interval);
+  await recordEquitySnapshot(t0 + 1000, interval);
+  await recordEquitySnapshot(t0 + 2000, interval);
+  const { body } = await get('/api/performance?tz=120');
+  assert.deepEqual(body.accountCurve.map(p => p.t), [t0 - interval, t0]);
+  const dash = (await get('/api/dashboard')).body;
+  const total = parseFloat(dash.binance.equity) + parseFloat(dash.hyperliquid.equity);
+  assert.ok(body.accountCurve.every(p => Math.abs(p.accountValue - total) < 0.01));
+  assert.equal(body.periods.today.account?.change ?? 0, 0, 'no move between the two snapshots');
+  assert.equal(body.walletCurve.at(-1).wallet, +parseFloat(dash.binance.walletBalance).toFixed(2));
+  assert.equal(body.habits.length, 4);
 });
 
 const setVenue = (venue, enabled) => get('/api/venues', {

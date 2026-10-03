@@ -752,3 +752,15 @@ tr:last-child td { border-bottom: none; }
 .calc-ladder th { font-size: 9px; font-weight: 400; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; text-align: right; padding: 3px 0; }
 .calc-ladder td { text-align: right; padding: 3px 0; border-top: 0.5px solid var(--border); }
 .calc-ladder th:first-child, .calc-ladder td:first-child { text-align: left; }
+
+/* Journal overview: wallet and account value */
+.ov-chart { width: 100%; height: auto; display: block; overflow: visible; }
+.ov-account { stroke: var(--text); }
+.ov-wallet { stroke: var(--text3); stroke-dasharray: 5 4; }
+.ov-label { font-size: 11px; fill: var(--text2); }
+.ov-legend { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+.ov-key { display: inline-flex; align-items: center; gap: 6px; }
+.ov-range { margin-left: auto; color: var(--text3); font-variant-numeric: tabular-nums; }
+.jr-habits { table-layout: auto; }
+.jr-habits td:first-child { white-space: normal; }
+.jr-thin td { opacity: .55; }

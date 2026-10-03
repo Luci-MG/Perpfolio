@@ -6,7 +6,7 @@
 server.js                      wiring: static files, routes in order, services when run directly
 routes/*.js                    one register(app) per area — request parsing and response shaping only
 lib/*.js                       exchange access, caches, snapshots, the history store sync
-risk-engine.js calc-engine.js vol-estimator.js stop-check.js confluence.js trade-analytics.js trip-context.js history-store.js
+risk-engine.js calc-engine.js vol-estimator.js stop-check.js confluence.js trade-analytics.js trip-context.js habits.js history-store.js
                                pure engines at the root: no network, fully unit-tested
 public/index.html              markup only
 public/css/app.css             every style; theme tokens on :root
@@ -34,6 +34,7 @@ them from `/risk-engine.js` and `/calc-engine.js` — the stress panel and the A
 | `lib/analytics.js` | memoised round trips and statistics | keyed on the sync cursors |
 | `lib/confluence-reading.js` | `readConfluence(symbol, tfs)` — one symbol's full reading | used by the Confluence route and the entry capture |
 | `lib/stop-suggestion.js` | `suggestStop(position, …)` — vol layers, regime, stop and size | used by the Stops route and the entry capture |
+| `lib/equity-snapshots.js` | account value every 15 minutes, both venues | started from `server.js` |
 | `lib/entry-context.js` | context captured on each increasing fill, `entryContextByOrder()` | wired to the stream's `onFill` in `server.js` |
 | `lib/trip-enrichment.js` | per-trip candles and funding rates during a sync, `enrichedTrips()` | caches computed values only, versioned |
 | `lib/confluence-data.js` | klines on any timeframe, positioning series | |

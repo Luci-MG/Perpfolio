@@ -207,7 +207,8 @@
      "type": "futures",
      "upnl": -160.00000000000014
     }
-   ]
+   ],
+   "walletBalance": "21200.00"
   },
   "hyperliquid": {
    "accountLeverage": "1.33",
@@ -1856,6 +1857,7 @@
   ]
  },
  "performance": {
+  "accountCurve": [],
   "behaviour": {
    "addedWhileUnderwater": {
     "avgLoss": -105.2,
@@ -2595,6 +2597,52 @@
     "symbol": "ETHUSDT"
    }
   ],
+  "habits": [
+   {
+    "against": "trips that never added at a worse price",
+    "avgNet": 33.2,
+    "avgNetComparison": 16.27,
+    "comparisonTrips": 18,
+    "cost": 101.6,
+    "id": "underwaterAdds",
+    "label": "Added while underwater",
+    "thin": true,
+    "trips": 6
+   },
+   {
+    "against": "other trips opened right after a loss",
+    "avgNet": 124.1,
+    "avgNetComparison": 3.5,
+    "comparisonTrips": 4,
+    "cost": 482.4,
+    "id": "biggerAfterLoss",
+    "label": "Bigger after a loss",
+    "thin": true,
+    "trips": 4
+   },
+   {
+    "against": "other losing trips",
+    "avgNet": null,
+    "avgNetComparison": -66.1,
+    "comparisonTrips": 8,
+    "cost": null,
+    "id": "winnerToLoser",
+    "label": "Winner turned loser",
+    "thin": true,
+    "trips": 0
+   },
+   {
+    "against": "losers closed within the median winner's hold",
+    "avgNet": null,
+    "avgNetComparison": -66.1,
+    "comparisonTrips": 8,
+    "cost": null,
+    "id": "heldLosers",
+    "label": "Held losers longer",
+    "thin": true,
+    "trips": 0
+   }
+  ],
   "holdTime": [
    {
     "avgLoss": null,
@@ -3238,6 +3286,38 @@
    "winRate": 66.67,
    "wins": 16
   },
+  "periods": {
+   "month": {
+    "account": null,
+    "fees": 0,
+    "funding": 0,
+    "net": 0,
+    "realized": 0,
+    "transfers": 0,
+    "trips": 0,
+    "wins": 0
+   },
+   "today": {
+    "account": null,
+    "fees": 0,
+    "funding": 0,
+    "net": 0,
+    "realized": 0,
+    "transfers": 0,
+    "trips": 0,
+    "wins": 0
+   },
+   "week": {
+    "account": null,
+    "fees": 0,
+    "funding": 0,
+    "net": 0,
+    "realized": 0,
+    "transfers": 0,
+    "trips": 0,
+    "wins": 0
+   }
+  },
   "records": {
    "bestDay": {
     "cumulative": 3.4,
@@ -3370,6 +3450,132 @@
    "FUNDING_FEE": -24,
    "REALIZED_PNL": 120
   },
+  "walletCurve": [
+   {
+    "t": 1785628799999,
+    "wallet": 21149
+   },
+   {
+    "t": 1785715199999,
+    "wallet": 21126.7
+   },
+   {
+    "t": 1785801599999,
+    "wallet": 21152.4
+   },
+   {
+    "t": 1785887999999,
+    "wallet": 21166.1
+   },
+   {
+    "t": 1785974399999,
+    "wallet": 21167.8
+   },
+   {
+    "t": 1786060799999,
+    "wallet": 21157.5
+   },
+   {
+    "t": 1786147199999,
+    "wallet": 21135.2
+   },
+   {
+    "t": 1786233599999,
+    "wallet": 21160.9
+   },
+   {
+    "t": 1786319999999,
+    "wallet": 21174.6
+   },
+   {
+    "t": 1786406399999,
+    "wallet": 21176.3
+   },
+   {
+    "t": 1786492799999,
+    "wallet": 21166
+   },
+   {
+    "t": 1786579199999,
+    "wallet": 21143.7
+   },
+   {
+    "t": 1786665599999,
+    "wallet": 21169.4
+   },
+   {
+    "t": 1786751999999,
+    "wallet": 21183.1
+   },
+   {
+    "t": 1786838399999,
+    "wallet": 21184.8
+   },
+   {
+    "t": 1786924799999,
+    "wallet": 21174.5
+   },
+   {
+    "t": 1787011199999,
+    "wallet": 21152.2
+   },
+   {
+    "t": 1787097599999,
+    "wallet": 21177.9
+   },
+   {
+    "t": 1787183999999,
+    "wallet": 21191.6
+   },
+   {
+    "t": 1787270399999,
+    "wallet": 21193.3
+   },
+   {
+    "t": 1787356799999,
+    "wallet": 21183
+   },
+   {
+    "t": 1787443199999,
+    "wallet": 21160.7
+   },
+   {
+    "t": 1787529599999,
+    "wallet": 21186.4
+   },
+   {
+    "t": 1787615999999,
+    "wallet": 21200.1
+   },
+   {
+    "t": 1787702399999,
+    "wallet": 21201.8
+   },
+   {
+    "t": 1787788799999,
+    "wallet": 21191.5
+   },
+   {
+    "t": 1787875199999,
+    "wallet": 21169.2
+   },
+   {
+    "t": 1787961599999,
+    "wallet": 21194.9
+   },
+   {
+    "t": 1788047999999,
+    "wallet": 21208.6
+   },
+   {
+    "t": 1788134399999,
+    "wallet": 21210.3
+   },
+   {
+    "t": 1788220799999,
+    "wallet": 21200
+   }
+  ],
   "window": {
    "days": null,
    "from": "2026-08-02T00:00:00.000Z",

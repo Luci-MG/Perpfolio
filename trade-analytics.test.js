@@ -346,3 +346,42 @@ test('a one-way flip closes at the old size and opens the new side at the remain
   assert.equal(trips[0].partialCloses, 0);
   assert.equal(stillOpen[0].side, 'Short');
 });
+
+test('periods start at local midnight, Monday and the 1st, for the reader\'s timezone', () => {
+  const now = Date.UTC(2026, 9, 1, 23, 30);
+  const berlin = ta.periodStarts(now, 120);
+  assert.equal(berlin.today, Date.UTC(2026, 9, 1, 22, 0), 'already 2 October in Berlin');
+  assert.equal(berlin.week, Date.UTC(2026, 8, 27, 22, 0), 'Monday 28 September, local');
+  assert.equal(berlin.month, Date.UTC(2026, 8, 30, 22, 0));
+  assert.equal(ta.periodStarts(now, 0).today, Date.UTC(2026, 9, 1));
+});
+
+test('period net sums realised, fees and funding, and counts closed trips', () => {
+  const income = [
+    { incomeType: 'REALIZED_PNL', income: '50', time: 200 }, { incomeType: 'COMMISSION', income: '-2', time: 210 },
+    { incomeType: 'FUNDING_FEE', income: '-1', time: 220 }, { incomeType: 'TRANSFER', income: '1000', time: 230 },
+    { incomeType: 'REALIZED_PNL', income: '-30', time: 50 }];
+  const trips = [{ closeTime: 205, win: true }, { closeTime: 40, win: false }];
+  assert.deepEqual(ta.periodNet(income, trips, { today: 100 }).today,
+    { from: 100, realized: 50, fees: -2, funding: -1, net: 47, transfers: 1000, trips: 1, wins: 1 });
+});
+
+test('the wallet curve walks back from today exactly, one point per day closed', () => {
+  const day = 86_400_000;
+  const income = [
+    { incomeType: 'TRANSFER', income: '1000', time: 0.5 * day, asset: 'USDT' },
+    { incomeType: 'REALIZED_PNL', income: '200', time: 1.5 * day, asset: 'USDT' },
+    { incomeType: 'COMMISSION', income: '-0.01', time: 1.6 * day, asset: 'BNB' },
+    { incomeType: 'FUNDING_FEE', income: '-50', time: 2.5 * day, asset: 'USDC' }];
+  const curve = ta.walletCurve(income, 1150, 3 * day);
+  assert.deepEqual(curve.map(p => p.wallet), [0, 1000, 1200, 1150, 1150], 'start, the close of days 0–2, now');
+  assert.equal(curve.at(-1).t, 3 * day);
+});
+
+test('account change removes transfers and says when snapshots began after the period', () => {
+  const snaps = [{ t: 300, accountValue: 1000 }, { t: 400, accountValue: 2100 }, { t: 500, accountValue: 2050 }];
+  const income = [{ incomeType: 'TRANSFER', income: '1000', time: 350 }];
+  assert.deepEqual(ta.accountChange(snaps, income, { a: 250 }).a, { change: 50, since: 300, partial: false });
+  assert.equal(ta.accountChange(snaps, income, { b: 600 }).b, null);
+  assert.equal(ta.accountChange(snaps, income, { c: -1e7 }).c.partial, true);
+});
