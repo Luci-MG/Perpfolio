@@ -1,0 +1,77 @@
+import express from 'express';
+import { GOAL_TYPES, equityLookup, previewGoal, scoreGoal, suggestGoals, validateGoal } from '../goals.js';
+import { walletCurve } from '../trade-analytics.js';
+import { analytics } from '../lib/analytics.js';
+import { getBinanceData } from '../lib/binance-account.js';
+import { readEquitySnapshots } from '../lib/equity-snapshots.js';
+import { changeGoals, readGoals } from '../lib/goals-store.js';
+import { enrichedTrips } from '../lib/trip-enrichment.js';
+
+const jsonBody = express.json({ limit: '2kb' });
+const parseJson = (req, res, next) =>
+  jsonBody(req, res, err => (err ? res.status(400).json({ ok: false, error: 'malformed JSON' }) : next()));
+
+const TYPES = GOAL_TYPES.map(({ id, label, unit, forwardOnly = false, scoped = true, params }) =>
+  ({ id, label, unit, forwardOnly, scoped, params }));
+
+const STATUS_ORDER = ['broken', 'progress', 'kept', 'idle', 'paused'];
+
+async function scoringContext(tz) {
+  const now = Date.now();
+  const bn = await getBinanceData();
+  const wallet = bn.disabled ? [] : walletCurve(analytics().income, bn.walletBalance, now);
+  return { now, tzOffsetMin: parseInt(tz, 10) || 0, equityAt: equityLookup(readEquitySnapshots(), wallet) };
+}
+
+function scoreboard(goals, trips, ctx) {
+  const scored = goals.map(g => scoreGoal(g, trips, ctx));
+  const order = g => STATUS_ORDER.indexOf(g.status);
+  const sorted = scored.map((g, i) => ({ g, i })).sort((a, b) => order(a.g) - order(b.g) || a.i - b.i).map(x => x.g);
+  const active = scored.filter(g => g.status !== 'paused' && g.today.trips > 0);
+  return { goals: sorted,
+           today: { scored: active.length, kept: active.filter(g => g.status !== 'broken').length,
+                    broken: active.filter(g => g.status === 'broken').map(g => g.label) },
+           suggestions: suggestGoals(trips, ctx, goals.map(g => g.type)) };
+}
+
+function parsePreview(query) {
+  let params;
+  try { params = query.params ? JSON.parse(query.params) : {}; } catch { throw new Error('params must be JSON'); }
+  return validateGoal({ type: query.type, params, session: query.session || null });
+}
+
+// POST accepts application/json only, so a cross-site page cannot change goals: that content
+// type needs a CORS preflight, which this server never grants.
+export function register(app) {
+  app.get('/api/goals', async (req, res) => {
+    try {
+      const { trips, coverage } = enrichedTrips();
+      const ctx = await scoringContext(req.query.tz);
+      res.json({ ok: true, types: TYPES, ...scoreboard(readGoals(), trips, ctx), entryCapturedSince: coverage.entryCapturedSince });
+    } catch (err) {
+      console.error('[goals]', err);
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  app.get('/api/goals/preview', async (req, res) => {
+    let goal;
+    try { goal = parsePreview(req.query); } catch (err) { return res.status(400).json({ ok: false, error: err.message }); }
+    try {
+      const ctx = await scoringContext(req.query.tz);
+      res.json({ ok: true, preview: previewGoal(goal, enrichedTrips().trips, ctx) });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  app.post('/api/goals', parseJson, (req, res) => {
+    if (!req.is('application/json')) return res.status(415).json({ ok: false, error: 'send application/json' });
+    try {
+      changeGoals(req.body);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+}

@@ -6,7 +6,7 @@ export const THIN_TRIPS = 10;
 export const REVENGE_SIZE_MULTIPLE = 1.5;
 export const WINNER_MFE_PCT = 1;
 
-const netOf = t => t.netAfterFunding ?? t.net;
+export const netOf = t => t.netAfterFunding ?? t.net;
 const lost = t => netOf(t) < 0;
 
 function median(xs) {

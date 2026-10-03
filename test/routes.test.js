@@ -219,6 +219,52 @@ test('health reports a verdict without calling any exchange', async () => {
   assert.equal(fake.calls.length, before);
 });
 
+const postGoal = (body, type = 'application/json') =>
+  get('/api/goals', { method: 'POST', headers: { 'Content-Type': type }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+
+test('goals: add, edit, pause, resume and delete persist, scored from the day each was set', async () => {
+  const empty = (await get('/api/goals?tz=0')).body;
+  assert.deepEqual([empty.ok, empty.goals, empty.today.scored], [true, [], 0]);
+  record('goals', { ...empty, suggestions: empty.suggestions.map(({ preview: { strip, ...rest }, ...s }) => ({ ...s, preview: rest })) });
+
+  assert.equal((await postGoal({ action: 'add', type: 'maxTradesPerDay', params: { max: 3 } })).status, 200);
+  assert.equal((await postGoal({ action: 'add', type: 'noSessions', params: { sessions: ['Weekend'] } })).status, 200);
+  let { goals } = (await get('/api/goals')).body;
+  assert.equal(goals.length, 2);
+  const cap = goals.find(g => g.type === 'maxTradesPerDay');
+  assert.ok(cap.before.n > 0, 'synced history reported apart');
+  assert.equal(cap.n, 0, 'nothing scored before the goal was set');
+
+  await postGoal({ action: 'edit', id: cap.id, params: { max: 5 } });
+  await postGoal({ action: 'pause', id: cap.id });
+  goals = (await get('/api/goals')).body.goals;
+  const edited = goals.find(g => g.id === cap.id);
+  assert.deepEqual([edited.params.max, edited.setAt, edited.status], [5, cap.setAt, 'paused']);
+  assert.equal(goals.at(-1).id, cap.id, 'paused goals sort last');
+
+  await postGoal({ action: 'resume', id: cap.id });
+  await postGoal({ action: 'delete', id: goals[0].id });
+  const saved = JSON.parse(fs.readFileSync(path.join(process.env.DASHBOARD_DATA_DIR, 'goals.json'), 'utf8'));
+  assert.deepEqual(saved.map(g => [g.id, g.pauses.every(p => p.to != null), g.history.length]), [[cap.id, true, 1]]);
+  await postGoal({ action: 'delete', id: cap.id });
+});
+
+test('goals accept only well-formed JSON changes, and preview without saving', async () => {
+  assert.equal((await postGoal('action=add&type=maxLeverage', 'application/x-www-form-urlencoded')).status, 415);
+  assert.equal((await postGoal('{"action":"add"')).status, 400);
+  assert.equal((await postGoal({ action: 'add', type: 'maxLeverage', params: { max: 500 } })).status, 400);
+  assert.equal((await postGoal({ action: 'drop', id: 'x' })).status, 400);
+  assert.equal((await postGoal({ action: 'pause', id: 'missing' })).status, 400);
+
+  const params = encodeURIComponent(JSON.stringify({ max: 2 }));
+  const { status, body } = await get(`/api/goals/preview?type=maxTradesPerDay&params=${params}&tz=0`);
+  assert.equal(status, 200);
+  assert.ok(body.preview.n > 0);
+  assert.equal(body.preview.strip.length, 14);
+  assert.equal((await get('/api/goals/preview?type=maxTradesPerDay&params={bad')).status, 400);
+  assert.deepEqual((await get('/api/goals')).body.goals, []);
+});
+
 test('route output matches the golden snapshot', () => {
   if (!fs.existsSync(GOLDEN) || process.env.UPDATE_GOLDEN) {
     fs.mkdirSync(path.dirname(GOLDEN), { recursive: true });

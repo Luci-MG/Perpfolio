@@ -7955,5 +7955,176 @@
     "tf": "4h"
    }
   }
+ },
+ "goals": {
+  "entryCapturedSince": null,
+  "goals": [],
+  "ok": true,
+  "suggestions": [
+   {
+    "params": {
+     "limit": 0.5,
+     "of": "pct"
+    },
+    "preview": {
+     "adherence": 0.9583,
+     "avgBroken": -201.2,
+     "avgKept": 30.14,
+     "brokenTrips": 1,
+     "cost": -231.34,
+     "keptTrips": 23,
+     "label": "Max loss 0.5% a trade",
+     "n": 24,
+     "thin": true,
+     "unit": "trip"
+    },
+    "session": null,
+    "type": "maxLossPct"
+   }
+  ],
+  "today": {
+   "broken": [],
+   "kept": 0,
+   "scored": 0
+  },
+  "types": [
+   {
+    "forwardOnly": true,
+    "id": "maxLeverage",
+    "label": "Max leverage",
+    "params": [
+     {
+      "default": 10,
+      "key": "max",
+      "label": "Max",
+      "max": 125,
+      "min": 1,
+      "step": 1,
+      "suffix": "×"
+     }
+    ],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": true,
+    "id": "stopWithin5m",
+    "label": "Stop within 5 minutes",
+    "params": [],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "maxLossPct",
+    "label": "Max loss per trade",
+    "params": [
+     {
+      "default": 1,
+      "key": "limit",
+      "label": "Limit",
+      "max": 1000000,
+      "min": 0.01,
+      "step": 0.01
+     },
+     {
+      "default": "pct",
+      "key": "of",
+      "label": "Of",
+      "options": [
+       [
+        "pct",
+        "% of equity at entry"
+       ],
+       [
+        "usd",
+        "$"
+       ]
+      ]
+     }
+    ],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "noUnderwaterAdds",
+    "label": "No adding while underwater",
+    "params": [],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "maxSize",
+    "label": "Max size",
+    "params": [
+     {
+      "default": 2,
+      "key": "multiple",
+      "label": "Max",
+      "max": 50,
+      "min": 1,
+      "step": 0.1,
+      "suffix": "× median size"
+     }
+    ],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "maxTradesPerDay",
+    "label": "Max trades a day",
+    "params": [
+     {
+      "default": 6,
+      "key": "max",
+      "label": "Max",
+      "max": 100,
+      "min": 1,
+      "step": 1,
+      "suffix": "trades a day"
+     }
+    ],
+    "scoped": true,
+    "unit": "day"
+   },
+   {
+    "forwardOnly": false,
+    "id": "lossStreakStop",
+    "label": "Stop after losses in a row",
+    "params": [
+     {
+      "default": 3,
+      "key": "losses",
+      "label": "After",
+      "max": 20,
+      "min": 1,
+      "step": 1,
+      "suffix": "losses in a row"
+     }
+    ],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "noSessions",
+    "label": "No trading in sessions",
+    "params": [
+     {
+      "default": [
+       "Weekend"
+      ],
+      "key": "sessions",
+      "label": "Sessions",
+      "sessions": true
+     }
+    ],
+    "scoped": false,
+    "unit": "trip"
+   }
+  ]
  }
 }
