@@ -1,0 +1,58 @@
+docs/known-gaps.md
+  s_ce0783ce808ef4::t_f5a1fe24d5e668 35,57,60-62
+scripts/check.mjs
+  s_ce0783ce808ef4::t_74f925d666a70f 55-56,58,63
+  s_ce0783ce808ef4::t_e13202f2d76222 57
+public/js/confluence-view.js
+  s_ce0783ce808ef4::t_7d96d598a32154 9,23,25,33-34,37-38,201-205
+  s_ce0783ce808ef4::t_1f414bcea86d71 292
+public/js/hedge-ledger.js
+  s_ce0783ce808ef4::t_7d96d598a32154 20-23,122
+  s_ce0783ce808ef4::t_1f414bcea86d71 170
+public/js/positions.js
+  s_ce0783ce808ef4::t_7d96d598a32154 17,20,24,29-30,33-34
+public/js/core.js
+  s_ce0783ce808ef4::t_7d96d598a32154 35-46
+public/css/app.css
+  s_ce0783ce808ef4::t_dc19f215f693b5 881-882
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_cd0c4b5aa249f5 534-591
+  s_ce0783ce808ef4::t_dc19f215f693b5 95
+public/js/stress.js
+  s_ce0783ce808ef4::t_7d96d598a32154 35,54,538-542,544,549
+docs/frontend.md
+  s_ce0783ce808ef4::t_1df10841c201cd 154-164
+public/js/goals-view.js
+  s_ce0783ce808ef4::t_d18b866aeee451 24,26,159,169
+docs/changelog.md
+  s_ce0783ce808ef4::t_1df10841c201cd 3-12
+public/js/factors-view.js
+  s_ce0783ce808ef4::t_d18b866aeee451 17,19,84,95-96,99
+public/js/journal-trades.js
+  s_ce0783ce808ef4::t_d18b866aeee451 114,116,211,223
+public/js/unwind.js
+  s_ce0783ce808ef4::t_7d96d598a32154 73-74,332-333,473-474,476,487,492-493,495-496,610-614,616,618
+docs/roadmap.md
+  s_ce0783ce808ef4::t_f5a1fe24d5e668 27-31,282,285-340,342-343,346-347
+  s_ce0783ce808ef4::t_1df10841c201cd 26,284
+public/js/stops.js
+  s_ce0783ce808ef4::t_7d96d598a32154 77-78,86
+public/js/journal.js
+  s_ce0783ce808ef4::t_d18b866aeee451 6,18,24-25,29-30,299-303,305-307,315-323
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "745dbe3f65b7317707ffc0b857c0b0ac73f59e86",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
