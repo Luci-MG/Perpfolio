@@ -1,4 +1,4 @@
-# Changelog and roadmap
+# Changelog
 
 ## Maintainability restructure (2026-09-29, after the review)
 
@@ -56,23 +56,5 @@ status, remembered view, 900px breakpoint.
 ### Deliberately not applied
 - **Loopback binding and a POST-only sync start** — proposed, declined for now (see *Known gaps*).
 
-### Next, ranked by value for effort
-1. ~~**`/api/health` + a small status chip**~~ — done, see *Maintainability restructure* below.
-2. **Funding-adjusted PnL per trip** — attach `FUNDING_FEE` rows to the open trip by symbol and
-   time. On a hedged book held for days, carry is part of the result. Low effort.
-3. **Per-trip notes and tags** — `data/annotations.ndjson` keyed `symbol:positionSide:openTime`,
-   one POST route, one input. Makes the Behaviour tab actionable. Low effort.
-4. **Server-side alerts** — kill distance, free margin → 0, ADL quantile ≥ 3, order-feed drift,
-   evaluated on the shared snapshot and pushed by webhook.
-5. **`!markPrice@arr@1s` market stream** for marks and funding — replaces the premiumIndex
-   poll and gives the Stress tab live marks.
-6. **Piecewise-analytic kill prices** — exact by construction and ~100× fewer evaluations per
-   slider frame; keep the scan as the cross-check.
-7. **Regime-conditional and walk-forward confluence calibration** — split records by regime,
-   fit on the first 70% of bars and report on the last 30%.
-8. **MAE/MFE per trip from 1h klines** — whether losers were ever winners, whether stops were
-   too tight. Medium effort.
-9. **Keep controls visible on every tab's error state** — Stress, Journal and Unwind still
-   replace their controls with the error, so the input that caused it is gone.
-10. **Keyboard access** — `role="button"`/`tabindex` on tiles and calc tiles, focus trap and
-    focus return in drawers.
+### Next
+Moved to [`roadmap.md`](roadmap.md).

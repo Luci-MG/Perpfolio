@@ -30,7 +30,8 @@ expected to say so rather than assert correctness.
 | Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `lib/history-sync.js` |
 | Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
 | Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |
-| What changed and what is next | [`docs/changelog.md`](docs/changelog.md) | — |
+| What changed | [`docs/changelog.md`](docs/changelog.md) | — |
+| What is next | [`docs/roadmap.md`](docs/roadmap.md) | — |
 | What is deliberately not done | [`docs/known-gaps.md`](docs/known-gaps.md) | — |
 
 ## Project structure
