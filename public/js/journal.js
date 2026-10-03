@@ -44,7 +44,8 @@ function syncProgressText(state) {
 }
 
 async function startSync(full = false) {
-  const started = await (await fetch(`/api/history/sync?start=true${full ? '&full=true' : ''}`)).json();
+  const started = await (await fetch('/api/history/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ full }) })).json();
   if (!started.ok) {
     const el = document.getElementById('jr-sync-state');
     if (el) el.textContent = started.disabled ? 'Binance is switched off — switch it on to sync' : `Failed: ${esc(started.error)}`;
@@ -158,6 +159,13 @@ function journalSyncBar() {
   </div>`;
 }
 
+function openLegNote(check) {
+  if (!check?.mismatches.length) return '';
+  const legs = check.mismatches.map(m => `${esc(jrSym(m.symbol))} ${esc(m.positionSide.toLowerCase())}: rebuilt ${fmt(m.rebuilt, 4)}, Binance ${fmt(m.live, 4)}`).join(' · ');
+  return `<p class="st-note jr-warn">${check.mismatches.length} open leg${check.mismatches.length > 1 ? 's' : ''} differ from Binance at the last sync,
+    so their trips are missing fills or misread: ${legs}. A full sync usually repairs it.</p>`;
+}
+
 function renderJournal() {
   if (perfLoading && !perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Loading history…</p>`;
   if (!perfData) {
@@ -187,7 +195,7 @@ function renderJournal() {
   if (jrTab === 'goals') body = renderGoalsTab();
   if (jrTab === 'factors') body = renderFactorsTab();
 
-  return `${syncBar}${tabs}${body}
+  return `${syncBar}${tabs}${body}${openLegNote(perfData.openLegCheck)}
     <p class="st-note">Round trips are rebuilt from fills, and every fill's realised PnL lands in exactly one place:
       a closed trip, a trip still open, or — for ${perfData.orphans?.fills ?? 0} fills that closed a position opened before
       the earliest reachable fill — an excluded bucket worth ${fmtSignedUsd(perfData.orphans?.realized ?? 0)}. Closed-trip

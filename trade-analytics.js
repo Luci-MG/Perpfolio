@@ -45,6 +45,10 @@ function blankTrip(symbol, positionSide, fill) {
   };
 }
 
+function closesMoreThanHistoryHolds(positionSide, size, after) {
+  return positionSide !== 'BOTH' && after !== 0 && Math.sign(after) !== Math.sign(size);
+}
+
 function sideOf(positionSide, delta) {
   if (positionSide === 'LONG') return 'Long';
   if (positionSide === 'SHORT') return 'Short';
@@ -97,6 +101,7 @@ export function buildRoundTrips(fills) {
   const trips = [];
   let nonQuoteFees = 0;
   const orphans = { fills: 0, realized: 0, commission: 0 };
+  const preHistoryUntil = {};
   const sizeSteps = new Map();
   const close = (trip, fill) => {
     const done = finishTrip(trip, fill);
@@ -117,21 +122,18 @@ export function buildRoundTrips(fills) {
     if (!fee && parseFloat(fill.commission)) nonQuoteFees += Math.abs(parseFloat(fill.commission));
 
     const adding = isIncrease(fill.side, positionSide, trip.size);
-
-    // A hedge-mode fill that reduces a side with nothing open closes a position opened before
-    // the earliest reachable fill. It has no entry to measure against, so it is kept out of
-    // the trips and accounted for separately.
-    if (!adding && positionSide !== 'BOTH' && trip.fills === 0) {
-      orphans.fills++;
-      orphans.realized += parseFloat(fill.realizedPnl) || 0;
-      orphans.commission += fee;
-      open.delete(key);
-      continue;
-    }
-
     const delta  = signedDelta(fill.side, positionSide, qty);
     const tol    = closedTolerance(trip, qty);
     const after  = Math.abs(trip.size + delta) <= tol ? 0 : trip.size + delta;
+
+    if (!adding && closesMoreThanHistoryHolds(positionSide, trip.size, after)) {
+      orphans.fills += trip.fills + 1;
+      orphans.realized += trip.realized + (parseFloat(fill.realizedPnl) || 0);
+      orphans.commission += trip.commission + fee;
+      preHistoryUntil[fill.symbol] = Math.max(preHistoryUntil[fill.symbol] ?? 0, fill.time);
+      open.delete(key);
+      continue;
+    }
 
     if (adding) {
       if (Math.abs(trip.size) > CLOSED) {
@@ -202,9 +204,19 @@ export function buildRoundTrips(fills) {
     });
 
   return {
-    trips, stillOpen, sizeSteps, nonQuoteFees: +nonQuoteFees.toFixed(8),
+    trips, stillOpen, sizeSteps, nonQuoteFees: +nonQuoteFees.toFixed(8), preHistoryUntil,
     orphans: { fills: orphans.fills, realized: +orphans.realized.toFixed(8), commission: +orphans.commission.toFixed(8) }
   };
+}
+
+/** Legs whose rebuilt open size differs from the size Binance reported at the last sync, which means fills are missing or misread. */
+export function openLegMismatches(stillOpen, liveLegs) {
+  const keyOf = l => `${l.symbol}:${l.positionSide}`;
+  const rebuilt = new Map(stillOpen.map(l => [keyOf(l), l.size]));
+  const live = new Map(liveLegs.map(l => [keyOf(l), l.size]));
+  return [...new Set([...rebuilt.keys(), ...live.keys()])].sort()
+    .map(key => ({ symbol: key.split(':')[0], positionSide: key.split(':')[1], rebuilt: rebuilt.get(key) ?? 0, live: live.get(key) ?? 0 }))
+    .filter(m => Math.abs(m.rebuilt - m.live) > Math.max(1e-9, Math.abs(m.live) * 1e-6));
 }
 
 // ─── STATISTICS ──────────────────────────────────────────────────────────────

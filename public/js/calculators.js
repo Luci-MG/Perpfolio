@@ -54,8 +54,10 @@ function poolLegFor(p) {
   return P ? { P, pos: P.pool.positions.find(x => x.key === key) } : null;
 }
 
+const inputNum = (n, decimals) => String(+n.toFixed(decimals));
+
 function fillSize(fieldId, mode, p, lev) {
-  setCalc(fieldId, mode === 'usdt' ? fmt(p.sizeUsd / lev, 2) : fmt(p.sizeUsd / p.entry, 6));
+  setCalc(fieldId, mode === 'usdt' ? inputNum(p.sizeUsd / lev, 2) : inputNum(p.sizeUsd / p.entry, 6));
 }
 
 function clearCalcInputs() {
@@ -187,7 +189,7 @@ function switchSizeMode(prefix, mode) {
   const toQty = mode === 'qty';
   calcEl(`${prefix}SizeLbl`).innerHTML = toQty ? 'Position size (units)' : `Amount invested (<span class="calc-quote">${calcQuote()}</span>)`;
   document.querySelector(`[onclick="toggle${prefix === 'pnl' ? 'Pnl' : 'Avg'}SizeMode()"]`).textContent = toQty ? 'Switch to USD' : 'Switch to qty';
-  if (value && entry) setCalc(`${prefix}Invested`, toQty ? fmt(value / entry, 6) : fmt(value * entry, 2));
+  if (value && entry) setCalc(`${prefix}Invested`, toQty ? inputNum(value / entry, 6) : inputNum(value * entry, 2));
 }
 
 function togglePnlSizeMode() {

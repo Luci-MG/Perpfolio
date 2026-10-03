@@ -1,16 +1,14 @@
-import express from 'express';
 import { GOAL_TYPES, equityLookup, previewGoal, scoreGoal, suggestGoals, validateGoal } from '../goals.js';
 import { walletCurve } from '../trade-analytics.js';
 import { analytics } from '../lib/analytics.js';
 import { getBinanceData } from '../lib/binance-account.js';
 import { readEquitySnapshots } from '../lib/equity-snapshots.js';
 import { changeGoals, readGoals } from '../lib/goals-store.js';
+import { jsonOnly } from '../lib/http.js';
 import { enrichedTrips } from '../lib/trip-enrichment.js';
 import { readerClock } from '../lib/util.js';
 
-const jsonBody = express.json({ limit: '2kb' });
-const parseJson = (req, res, next) =>
-  jsonBody(req, res, err => (err ? res.status(400).json({ ok: false, error: 'malformed JSON' }) : next()));
+const parseJson = jsonOnly('2kb');
 
 const TYPES = GOAL_TYPES.map(({ id, label, unit, forwardOnly = false, scoped = true, params }) =>
   ({ id, label, unit, forwardOnly, scoped, params }));
@@ -54,8 +52,6 @@ function parsePreview(query) {
   return validateGoal({ type: query.type, params, session: query.session || null });
 }
 
-// POST accepts application/json only, so a cross-site page cannot change goals: that content
-// type needs a CORS preflight, which this server never grants.
 export function register(app) {
   app.get('/api/goals', async (req, res) => {
     try {
@@ -80,12 +76,11 @@ export function register(app) {
   });
 
   app.post('/api/goals', parseJson, (req, res) => {
-    if (!req.is('application/json')) return res.status(415).json({ ok: false, error: 'send application/json' });
     try {
       changeGoals(req.body);
       res.json({ ok: true });
     } catch (err) {
-      res.status(400).json({ ok: false, error: err.message });
+      res.status(err.status ?? 400).json({ ok: false, error: err.message });
     }
   });
 }

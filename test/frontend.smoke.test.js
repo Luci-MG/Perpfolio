@@ -62,6 +62,13 @@ function browserContext(base, markup) {
 const { base, stop } = await startTestServer();
 test.after(stop);
 
+async function syncHistory() {
+  await fetch(`${base}/api/history/sync`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+}
+
 async function bootPage() {
   const markup = new Map();
   const ctx = browserContext(base, markup);
@@ -98,11 +105,7 @@ test('every view and drawer renders against live payloads without errors or NaN'
 
 test('the Trades table sorts, filters, pages and exports what it shows', async () => {
   const { markup, run, settle } = await bootPage();
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200; i++) {
-    if (!(await (await fetch(`${base}/api/history/sync`)).json()).state.running) break;
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('journal')`);
   await settle('perfData && !perfLoading', 'the journal');
   run(`setJrTab('trades')`);
@@ -143,20 +146,36 @@ test('every stop verdict renders on the Stops tab, and the tile badge follows ha
   run(`setView('stops')`);
   await settle('volStopData && !volLoading', 'the stops');
   run(`const base = volStopData.positions[0];
-    volStopData.positions = ['none', 'hedged', 'tight', 'wide', 'breakeven', 'locks', 'ok'].map(verdict => ({ ...base, verdict,
+    volStopData.positions = ['none', 'hedged', 'unknown', 'tight', 'wide', 'breakeven', 'locks', 'ok'].map(verdict => ({ ...base, verdict,
       ratio: verdict === 'locks' ? null : 0.8, lockedPct: verdict === 'locks' ? 1.5 : null,
-      yourStop: ['none', 'hedged'].includes(verdict) ? null
+      yourStop: ['none', 'hedged', 'unknown'].includes(verdict) ? null
         : { price: 95, distancePct: 1.2, atrMultiple: 1.4, hit: { rate: 0.41, windows: 176, independent: 7, days: 8.3 } } }));
     riskForceRender = true; render(lastData)`);
   const html = markup.get('content');
   for (const label of ['No stop', 'Hedged', 'Too tight', 'Too wide', 'Breakeven', 'Locks profit', 'OK']) assert.match(html, new RegExp(label));
   assert.match(html, /hit within 24h in 41% of windows/);
-  assert.match(html, /1 without a stop · 1 too tight · 1 too wide/);
+  assert.match(html, /1 stop unknown · 1 without a stop · 1 too tight · 1 too wide/);
+  assert.match(html, /stop orders could not be read/);
   assert.deepEqual(strayValues(html), []);
 
   run(`setView('tiles')`);
   assert.equal((markup.get('content').match(/class="sl-alert"/g) || []).length, 3,
     'ETH, ENA and SOL have no stop and no hedge; the BTC legs are a hedge and the long has a stop');
+
+  run(`lastData = { ...lastData, binance: { ...lastData.binance,
+    positions: lastData.binance.positions.map(p => ({ ...p, stop: null, hasStop: null, stopKnown: false })) } }; render(lastData)`);
+  const unknown = markup.get('content');
+  assert.equal((unknown.match(/class="stop-mark unknown"/g) || []).length, 4, 'every Binance leg reads unknown');
+  assert.equal((unknown.match(/class="sl-alert"/g) || []).length, 1, 'only the Hyperliquid leg, whose orders were read, says no stop');
+});
+
+test('a venue that failed to read shows as unavailable, and a banner says the totals leave it out', async () => {
+  const { markup, run } = await bootPage();
+  run(`const data = { ...lastData, summary: { ...lastData.summary, partial: ['hyperliquid'] },
+    hyperliquid: { ...lastData.hyperliquid, error: 'HL → 500', equity: '0.00', positions: [] } };
+  render(data); showPartialBanner(document.getElementById('errBanner'), data)`);
+  assert.match(markup.get('content'), /Hyperliquid[\s\S]*unavailable/);
+  assert.equal(run(`document.getElementById('errBanner').textContent`), 'Hyperliquid unavailable (HL → 500) — totals exclude it');
 });
 
 test('the calculators fill from a picked position, and its liquidation matches Stress and Binance', async () => {
@@ -175,6 +194,12 @@ test('the calculators fill from a picked position, and its liquidation matches S
   assert.equal(value('liqEntry'), 0.27);
   assert.equal(value('pnlLev'), 3);
   assert.ok(value('liqMmr') > 0, 'the maintenance rate comes from the tier');
+
+  run(`ctxPosition = lastData.binance.positions.find(p => p.symbol === 'BTCUSDT' && p.side === 'Long'); openCalc('pnl')`);
+  await settle('document.getElementById("pnlInvested").value', 'the sized field');
+  assert.match(String(value('pnlInvested')), /^\d{4,}(\.\d+)?$/, 'a number input takes no thousands separator');
+  run(`ctxPosition = lastData.binance.positions.find(p => p.symbol === 'ENAUSDC'); openCalc('liq')`);
+  await settle('document.getElementById("liqAccPrice").textContent', 'the account-aware liq');
 
   run(`document.getElementById('liqAddUsd').value = 500; calcLiq()`);
   const after = parseFloat(text('liqAddPrice2').replace(/[$,]/g, ''));
@@ -210,10 +235,7 @@ test('the calculators fill from a picked position, and its liquidation matches S
 
 test('every Journal sub-tab renders, with and without equity snapshots', async () => {
   const { markup, run, settle } = await bootPage();
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('journal')`);
   await settle('perfData && !perfLoading && perfData.periods', 'the journal');
 
@@ -332,10 +354,7 @@ test('the session clock reads, and a chosen session narrows Journal, Trades and 
   assert.match(clock, /next: .+ in \d+(h \d{2})?m/);
   assert.deepEqual(strayValues(clock), []);
 
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('journal'); setJrTab('trades')`);
   await settle('perfData && !perfLoading && tripsData && !tripsLoading', 'the journal');
   const session = run('tripsData.trips[0].session');
@@ -367,10 +386,7 @@ test('the session clock reads, and a chosen session narrows Journal, Trades and 
 
 test('Timing, Symbols and Costs: calendar days and symbols open their trades, averages wait for enough trades, costs read in basis points', async () => {
   const { markup, run, settle } = await bootPage();
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('journal')`);
   await settle('perfData && !perfLoading && perfData.timing', 'the journal');
   const show = tab => { run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
@@ -452,10 +468,7 @@ test('switched-off venues render as off, and the popover lists both switches', a
 
 test('Goals: empty state suggests, rows order and render every state, the drawer previews and saves', async () => {
   const { markup, run, settle } = await bootPage();
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('journal')`);
   await settle('perfData && !perfLoading && goalsData && !goalsLoading', 'the journal and goals');
   const show = tab => { run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
@@ -507,10 +520,7 @@ test('Goals: empty state suggests, rows order and render every state, the drawer
 
 test('Milestones: a block under the rules, every state renders, the chart projects, the drawer takes a date', async () => {
   const { markup, run, settle } = await bootPage();
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('journal')`);
   await settle('perfData && !perfLoading && goalsData && !goalsLoading', 'the journal and goals');
   const show = tab => { run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
@@ -557,10 +567,7 @@ test('Milestones: a block under the rules, every state renders, the chart projec
 
 test('Factors: verdict first, the board on demand, waiting factors named, a goal from a losing factor', async () => {
   const { markup, run, settle } = await bootPage();
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('journal')`);
   await settle('perfData && !perfLoading && goalsData && !goalsLoading', 'the journal');
   run(`setJrTab('factors')`);
@@ -596,10 +603,7 @@ test('Factors: verdict first, the board on demand, waiting factors named, a goal
 
 test('a failed load keeps each tab\'s controls with Retry, escapes the message, and a failed refresh keeps the last good data', async () => {
   const { markup, run, settle } = await bootPage();
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('stress')`);
   await settle('riskBook && !riskLoading', 'the risk book');
   const view = v => { run(`posView = '${v}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
@@ -664,10 +668,7 @@ test('a failed load keeps each tab\'s controls with Retry, escapes the message, 
 
 test('notes and tags: the inline editor saves and cancels, chips and the tag filter work, and a note renders escaped', async () => {
   const { markup, run, settle } = await bootPage();
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('journal')`);
   await settle('perfData && !perfLoading', 'the journal');
   run(`setJrTab('trades')`);
@@ -742,10 +743,7 @@ test('funding: the widget counts down to the next settlement, the drawer nets he
 
 test('Overview: attention is ranked and capped, calm says so, recent trades open Trades, the reconciliation sits under Costs', async () => {
   const { markup, run, settle } = await bootPage();
-  await fetch(`${base}/api/history/sync?start=true`);
-  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
-    await new Promise(r => setTimeout(r, 25));
-  }
+  await syncHistory();
   run(`setView('journal')`);
   await settle('perfData && !perfLoading && goalsData && !goalsLoading', 'the journal');
   const show = tab => { run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };

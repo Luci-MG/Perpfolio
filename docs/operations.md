@@ -27,6 +27,11 @@ exchange. Five things allowed it, all now fixed:
 6. **A failed seed wiped the cache and never started the reconcile timer** (fixed
    2026-09-29). The timer now starts on every connect whether or not the seed succeeded, and a
    failed seed keeps the previous cache until the next reconcile replaces it.
+   That still needed the socket to open: when the listenKey or the socket itself kept failing,
+   the timer never started and no regular order was ever read, while health said "orders
+   refresh every 60s by REST" (fixed 2026-10). The reconcile now starts with the first stream
+   attempt, before the listenKey, and health warns when the last successful read is more than
+   3 minutes old.
 7. **A quiet account looked like a dead stream.** Only data frames stamped `lastWsMessage`,
    so an idle account was torn down every ~20 minutes. Server pings now stamp it too, and a
    `listenKeyExpired` event forces a reconnect immediately instead of waiting for the watchdog.
@@ -115,6 +120,7 @@ unit-tested) applies the thresholds:
 | Binance paused after a 418/429 (with seconds left) | bad |
 | request weight ≥ 1,800 of 2,400 (the sync throttle's ceiling) | bad |
 | request weight ≥ 1,200 | warn |
+| open orders not read yet, or not refreshed for 3 min (Binance on) | warn |
 | order stream not connected, or quiet > 10 min (Binance on) | warn |
 | last reconcile found drift | warn |
 | an account snapshot older than 2 min (exchange on) | warn |
@@ -175,8 +181,14 @@ was the single largest cost.
 
 ## Deployment notes
 
-- **Local**: `npm start` → `http://localhost:3000`
-- **Railway / Render**: push to GitHub, add env vars in dashboard, deploy
+- **Local**: `npm start` → `http://localhost:3000`. The server listens on `127.0.0.1` and
+  answers only requests addressed to `localhost`, `127.0.0.1` or `[::1]`, so a page on another
+  site cannot read it through DNS rebinding
+- **Another device or a host**: set `HOST=0.0.0.0` and list the names it is reached by in
+  `ALLOWED_HOSTS` (comma-separated, e.g. `my-mac.local,perpfolio.up.railway.app`). There is no
+  login (`docs/known-gaps.md`), so do this only behind authentication or on a network you trust
+- **Railway / Render**: push to GitHub, add env vars in dashboard (including `HOST` and
+  `ALLOWED_HOSTS` above), deploy
 - **VPS**: use `pm2 start server.js --name dashboard`
 - **Keep it running to capture context at entry**: it is recorded from the live order stream,
   so trades placed while the server is stopped have none (`docs/journal.md`). Locally,

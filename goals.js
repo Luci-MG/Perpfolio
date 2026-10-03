@@ -314,6 +314,18 @@ function candidates(trips, ctx) {
   ].filter(Boolean);
 }
 
+function withinRange({ type, params }) {
+  const specs = typeOf(type).params;
+  return { type, params: Object.fromEntries(Object.entries(params).map(([key, v]) => {
+    const spec = specs.find(sp => sp.key === key);
+    return [key, typeof v === 'number' && spec?.max != null ? Math.min(spec.max, Math.max(spec.min, v)) : v];
+  })) };
+}
+
+function validSuggestion(candidate) {
+  try { return validateGoal(withinRange(candidate)); } catch { return null; }
+}
+
 /**
  * Up to three goals worth setting, costliest first: only those whose breaches lost money on
  * `trips`, thresholds from the reader's own distribution. Types in `exclude` are skipped.
@@ -321,7 +333,8 @@ function candidates(trips, ctx) {
 export function suggestGoals(trips, ctx, exclude = []) {
   return candidates(trips || [], ctx)
     .filter(c => !exclude.includes(c.type))
-    .map(c => ({ ...validateGoal(c), preview: previewGoal(validateGoal(c), trips, ctx) }))
+    .map(validSuggestion).filter(Boolean)
+    .map(g => ({ ...g, preview: previewGoal(g, trips, ctx) }))
     .filter(s => s.preview.cost < 0)
     .sort((a, b) => a.preview.cost - b.preview.cost)
     .slice(0, SUGGESTIONS);

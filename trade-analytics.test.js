@@ -199,6 +199,21 @@ test('a hedge-mode close with nothing open is an orphan, not a negative trip', (
   assert.equal(r.stillOpen.length, 0);
 });
 
+test('a leg opened before history, added to and then closed past zero is an orphan, and later trips survive', () => {
+  for (const [positionSide, open, shut] of [['LONG', 'BUY', 'SELL'], ['SHORT', 'SELL', 'BUY']]) {
+    const f = (id, side, qty, pnl) => ({ symbol: 'X', id, side, positionSide, price: '10', qty: String(qty),
+      realizedPnl: String(pnl), commission: '0.1', commissionAsset: 'USDT', time: id * 1000 });
+    const r = ta.buildRoundTrips([f(1, open, 5, 0), f(2, shut, 15, -30), f(3, open, 1, 0), f(4, shut, 1, 2),
+                                  f(5, open, 1, 0), f(6, shut, 1, 4)]);
+    assert.deepEqual([r.orphans.fills, r.orphans.realized, r.orphans.commission], [2, -30, 0.2], positionSide);
+    assert.deepEqual(r.preHistoryUntil, { X: 2000 }, 'the pre-history position was open until its last close');
+    assert.deepEqual(r.trips.map(t => t.realized), [2, 4]);
+    assert.equal(r.stillOpen.length, 0);
+    const realised = r.trips.reduce((s, t) => s + t.realized, 0) + r.orphans.realized;
+    assert.equal(realised, -24, 'every fill\'s realised PnL lands in exactly one bucket');
+  }
+});
+
 test('a trip records its side, opening lot, quantity entered, adds, partial closes and average exit', () => {
   const { trips, sizeSteps } = ta.buildRoundTrips([
     fill({ side: 'SELL', positionSide: 'SHORT', qty: '2', price: '100', time: 1000 }),
@@ -283,4 +298,11 @@ test('a bounded period counts net income and trips closed inside it only', () =>
                   { incomeType: 'TRANSFER', income: '500', time: 6 }, { incomeType: 'REALIZED_PNL', income: '99', time: 20 }];
   const trips = [{ closeTime: 5, win: true }, { closeTime: 9, win: false }, { closeTime: 10, win: true }];
   assert.deepEqual(ta.periodNetBetween(income, trips, 0, 10), { from: 0, to: 10, net: 9, trips: 2, wins: 1 });
+});
+
+test('open legs are checked against Binance: a size, a missing leg or an extra leg is a mismatch; float dust is not', () => {
+  const leg = (symbol, positionSide, size) => ({ symbol, positionSide, size });
+  const m = ta.openLegMismatches([leg('A', 'LONG', 3.0000000001), leg('B', 'SHORT', -2), leg('C', 'LONG', 1)],
+                                 [leg('A', 'LONG', 3), leg('B', 'SHORT', -5), leg('D', 'SHORT', -1)]);
+  assert.deepEqual(m.map(x => [x.symbol, x.rebuilt, x.live]), [['B', -2, -5], ['C', 1, 0], ['D', 0, -1]]);
 });

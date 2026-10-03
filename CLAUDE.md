@@ -93,7 +93,7 @@ checks in `scripts/check.mjs`. `UPDATE_GOLDEN=1 npm test` rewrites the route sna
 when a response is meant to change.
 
 First run of the Journal needs a history build: open the **Journal** tab and press **Sync
-recent**, or `curl "localhost:3000/api/history/sync?start=true&full=true"`. The full build is
+recent**, or `curl -X POST -H 'Content-Type: application/json' -d '{"full":true}' localhost:3000/api/history/sync`. The full build is
 about a minute for a book with a few months of activity; afterwards a routine sync is
 ~10s.
 
@@ -107,6 +107,8 @@ Server runs on `http://localhost:3000` (or `$PORT`).
 | `BINANCE_API_SECRET` | Binance API secret (HMAC signing) |
 | `HL_WALLET_ADDRESS` | Hyperliquid public wallet address (`0x...`); without it Hyperliquid stays off |
 | `PORT` | Optional, defaults to 3000 |
+| `HOST` | Optional, defaults to `127.0.0.1`; `0.0.0.0` exposes it (no login — `docs/operations.md`) |
+| `ALLOWED_HOSTS` | Optional, comma-separated names besides localhost the server answers to |
 | `DASHBOARD_DATA_DIR` | Optional, where history is cached (defaults to `data/`; the tests use a temp dir) |
 
 Never log or expose these. Never commit `.env`.

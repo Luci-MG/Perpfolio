@@ -29,6 +29,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Journal Overview remodel](#p5--journal-overview-remodel) | done (2026-10-03) |
 | P5 | [Journal Performance and Behaviour remodel](#p5--journal-performance-and-behaviour-remodel) | done (2026-10-03) |
 | P5 | [Journal Timing, Symbols and Costs remodel](#p5--journal-timing-symbols-and-costs-remodel) | done (2026-10-03) |
+| P5 | [Review fixes, batch 1: correctness](#p5--review-fixes-batch-1-correctness) | done (2026-10-03) |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
 | — | [Parked](#parked) | parked |
 
@@ -343,6 +344,16 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   green; a wallet reconciliation nothing checked; every timestamp shifted an hour across a clock change.
 - **Done when:** averages are shrunk with a range and a minimum, totals carry their count, costs
   read in basis points against the window before, and the ledger says whether it reconciles.
+
+## P5 — Review fixes, batch 1: correctness
+
+- **Status:** done (2026-10-03). The first of five batches from the 2026-10-03 whole-dashboard
+  review; the rest (risk maths, funding/journal/goals, frontend, guardrails and docs) follow.
+- **Problem:** trades lost from the Journal on legs opened before history; one venue failing
+  blanked the other; unread stops shown as missing; orders never read when the stream could not
+  open; a goals file anyone on the LAN could wipe; calculators blank from $1,000.
+- **Done when:** each has a regression test that fails without its fix, and rebuilt open legs
+  agree with Binance on the real book.
 
 ## P6 — Server-side alerts
 

@@ -50,3 +50,11 @@ test('with Binance off or no API key the order stream is not expected', () => {
   s.feed.connected = false;
   assert.equal(assessHealth({ ...s, streamExpected: false }).level, 'ok');
 });
+
+test('open orders unread, or not refreshed for three minutes, warn whatever the stream says', () => {
+  const s = healthy();
+  s.feed.lastReconcile = { at: null, added: 0, removed: 0 };
+  assert.deepEqual(assessHealth(s).reasons.map(r => r.text), ['open orders not read yet']);
+  s.feed.lastReconcile.at = NOW - 4 * 60_000;
+  assert.deepEqual(assessHealth(s).reasons.map(r => r.text), ['open orders not refreshed for 4m']);
+});

@@ -19,12 +19,11 @@
   HL rates to `getFundingAdjustment` as if 8h, so the L3 layer is inert on HL
 - **`hedgeWarnings` in `/api/volstops`** is fixed, but `checkHedgePairHealth`'s old
   same-asset pairing is the pattern to avoid if that code is ever revisited
-- **Authentication, and the server listens on every interface** — `app.listen(PORT)` binds
-  `0.0.0.0` with no login and no Host check, so anyone on the same network (or a public
-  Railway/Render deploy) can read positions, orders and the whole trade history, and any web
-  page can start a history sync with a GET. A loopback default (`HOST` env to override) and a
-  POST for sync start were proposed in the 2026-09-29 review and deliberately not applied;
-  revisit before any deployment beyond this machine
+- **No login** — the server listens on loopback and refuses any other `Host` (`lib/http.js`),
+  so nothing off this machine reaches it by default. Setting `HOST=0.0.0.0` for a phone on the
+  LAN or a Railway/Render deploy exposes positions, orders and the whole trade history to
+  anyone who can reach the address and is listed in `ALLOWED_HOSTS`; put it behind
+  authentication before doing that
 - **Reconcile can race a websocket event** — a CANCELED arriving while the 60s snapshot is in
   flight is overwritten by the pre-cancel snapshot; a phantom order can show for up to a
   minute and a false drift is logged. Self-heals on the next reconcile

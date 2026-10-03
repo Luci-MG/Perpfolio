@@ -38,10 +38,25 @@ Two things `buildRoundTrips` has to get right, both found in the 2026-09-29 revi
   an absolute `1e-12` kept finished trips open, merged each into the next and counted its
   adds-down against a stale average. The tolerance is `max(1e-12, size × 1e-9)` and a closed
   size is snapped to exactly 0.
-- **Orphan fills are excluded, and counted.** A hedge-mode fill that reduces a side with
-  nothing open closes a position opened before the earliest reachable fill. It used to push
-  size negative and later "close" as a fabricated trip. It now goes to `orphans`, and the Journal footer states
-  how large that bucket is.
+- **Orphan fills are excluded, and counted.** A hedge-mode leg never changes sign, so a fill
+  that takes one past zero closes a position opened before the earliest reachable fill. With
+  nothing visible open it is a lone orphan fill; after visible adds to a position opened before
+  history, the whole in-flight trip goes with it, since its entry, size and open time are
+  unknowable. Either way it lands in `orphans`, the leg restarts at zero, and the Journal footer
+  states how large that bucket is. Until 2026-10 only the first case was caught: the second
+  left the leg negative for good, and every later trade on it merged into one trip that never
+  closed.
+- **Rebuilt open legs are checked against Binance.** Each sync records the open legs Binance
+  reports (`meta.openLegsAtSync`); `openLegMismatches` compares them with the legs the fills
+  leave open, and the Journal names any that differ. Both sides are as of the sync, so a trade
+  since then is not a false alarm. A mismatch means fills are missing or misread.
+- **A lone visible leg of a hedged settlement takes its own row.** When the other leg is
+  outside the history, the settlement still books two rows; the visible leg takes the one
+  nearest its modelled amount (rate × size × mark), or its funding is unknown without a rate.
+- **Funding on a position opened before history is placed, not lost.** Every orphan fill
+  proves a position opened before history was still open at that moment, so funding on that
+  symbol up to its last orphan fill (`preHistoryUntil`) belongs to it; the ledger's funding
+  check does not count it as unmatched.
 
 Statistics over those trips: `summarise(trips)` (wins, losses, net, payoff, expectancy, fees,
 funding, median hold — on net after fees and funding) and `bySymbol(trips)`, which is
@@ -84,8 +99,9 @@ the account's **real** commission rate — taker 0.05% / maker 0.02% at fee tier
 0.045% guess. The Unwind and Liquidation drawers now price a close at the live book.
 
 ### Endpoints
-- `GET /api/history/sync[?start=true][&full=true]` — starts a sync when idle, returns
-  progress, the store's file/byte counts and the cursors
+- `POST /api/history/sync` with `{ "full": true }` or `{}` — starts a sync when idle; JSON only,
+  so no other site can start one
+- `GET /api/history/sync` — progress, the store's file/byte counts and the cursors
 - `GET /api/performance[?days=N&tz=M&session=S]` — trip and unit statistics, the window before,
   the account series with return, drawdown and ratios, streaks, records, habits, sizing,
   breakdowns, calendar, costs, periods and curves (`api.md`)

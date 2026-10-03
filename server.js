@@ -6,9 +6,10 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { fundingMeta, getBinanceLeverageBrackets, refreshFundingMeta, refreshSymbolFilters, symbolFilters } from './lib/binance-meta.js';
-import { BINANCE_API_KEY, PORT } from './lib/config.js';
+import { ALLOWED_HOSTS, BINANCE_API_KEY, HOST, PORT } from './lib/config.js';
 import { captureEntryContext } from './lib/entry-context.js';
 import { startEquitySnapshots } from './lib/equity-snapshots.js';
+import { allowedHostsOnly } from './lib/http.js';
 import { onFill, reconcileOrders, startBinanceUserDataStream, startStreamWatchdog } from './lib/orders-stream.js';
 import { isEnabled } from './lib/venues.js';
 import { register as registerDashboard } from './routes/dashboard.js';
@@ -31,6 +32,7 @@ import { register as registerFunding } from './routes/funding.js';
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+app.use(allowedHostsOnly(ALLOWED_HOSTS));
 app.use(express.static(path.join(__dirname, 'public')));
 registerDashboard(app);
 registerVolstops(app);
@@ -82,7 +84,7 @@ function startServices() {
     console.warn('[bnWS] No BINANCE_API_KEY — skipping User Data Stream');
   }
 
-  const server = app.listen(PORT, () => console.log(`Dashboard running → http://localhost:${PORT}`));
+  const server = app.listen(PORT, HOST, () => console.log(`Dashboard running → http://${HOST === '127.0.0.1' ? 'localhost' : HOST}:${PORT}`));
 
   // Exit at once on a restart signal: `npm run dev` starts the new process straight away, and
   // one still holding the port made it fail with EADDRINUSE whenever several files were saved
