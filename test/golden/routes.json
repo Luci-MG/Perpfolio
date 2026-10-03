@@ -243,6 +243,10 @@
    "totalEquity": "25940.00",
    "totalExposure": "108000.00",
    "totalUpnl": "1940.00"
+  },
+  "venues": {
+   "binance": true,
+   "hyperliquid": true
   }
  },
  "volstops": {

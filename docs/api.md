@@ -33,6 +33,8 @@
 | `GET /api/confluence?symbol=&tfs=` | signals, regime, scores and track records per timeframe | *Confluence* |
 | `GET /api/symbols` | trading USDM perpetuals, for the confluence picker | *Confluence* |
 | `GET /api/health` | ban state, request weight, order-stream age and drift, snapshot ages, sync — one `ok`/`warn`/`bad` verdict with reasons; no exchange calls | *Operations* |
+| `GET /api/venues` | per venue: enabled, configured, snapshot age | *Venue switch* |
+| `POST /api/venues` | `{ venue, enabled }` — switch a venue on or off; JSON only | *Venue switch* |
 | `GET /risk-engine.js` | the engine module, served to the browser | *Cross-Pool Stress Simulator* |
 
 Everything except `/api/dashboard` and `/api/volstops` is Binance-only. `/api/confluence` uses public
@@ -47,6 +49,7 @@ Returns unified JSON:
 {
   "ok": true,
   "lastUpdated": "ISO timestamp",
+  "venues": { "binance": true, "hyperliquid": false },
   "summary": {
     "totalEquity", "totalUpnl",
     "positionCount", "orderCount",
@@ -67,6 +70,9 @@ Returns unified JSON:
   }
 }
 ```
+
+`venues` says which exchanges are switched on; an exchange that is off returns an empty
+book (zero equity, no positions or orders) — see *Venue switch* in `operations.md`.
 
 **Binance totals are summed across collateral assets.** In single-asset mode Binance's
 `total*` fields and `availableBalance` cover USDT only, so a USDC pool would be missing

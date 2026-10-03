@@ -54,7 +54,7 @@ crypto-dashboard/
 └── public/
     ├── index.html         # markup only
     ├── css/app.css
-    └── js/                # 13 classic scripts, loaded in a fixed order (docs/frontend.md)
+    └── js/                # 14 classic scripts, loaded in a fixed order (docs/frontend.md)
 ```
 
 ## Running and verifying
@@ -85,7 +85,7 @@ Server runs on `http://localhost:3000` (or `$PORT`).
 |---|---|
 | `BINANCE_API_KEY` | Read-only Binance API key |
 | `BINANCE_API_SECRET` | Binance API secret (HMAC signing) |
-| `HL_WALLET_ADDRESS` | Hyperliquid public wallet address (`0x...`) |
+| `HL_WALLET_ADDRESS` | Hyperliquid public wallet address (`0x...`); without it Hyperliquid stays off |
 | `PORT` | Optional, defaults to 3000 |
 | `DASHBOARD_DATA_DIR` | Optional, where history is cached (defaults to `data/`; the tests use a temp dir) |
 

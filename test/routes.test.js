@@ -161,3 +161,63 @@ test('a 418 pauses every Binance call until Retry-After passes', async () => {
   await new Promise(r => setTimeout(r, 1100));
   assert.equal((await get('/api/riskbook?fresh=1')).status, 200);
 });
+
+const setVenue = (venue, enabled) => get('/api/venues', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ venue, enabled })
+});
+const savedVenues = () =>
+  JSON.parse(fs.readFileSync(path.join(process.env.DASHBOARD_DATA_DIR, 'settings.json'), 'utf8')).venues;
+
+test('Hyperliquid off: no Hyperliquid request from any route, and the choice is saved', async () => {
+  const off = await setVenue('hyperliquid', false);
+  assert.equal(off.status, 200);
+  assert.equal(off.body.venues.hyperliquid.enabled, false);
+  assert.equal(savedVenues().hyperliquid, false);
+
+  const mark = fake.calls.length;
+  const dash = await get('/api/dashboard');
+  await get('/api/volstops?risk=0.01&k=1.5');
+  const health = await get('/api/health');
+  assert.deepEqual(fake.calls.slice(mark).filter(c => c.startsWith('hl:')), []);
+  assert.equal(dash.body.venues.hyperliquid, false);
+  assert.equal(dash.body.hyperliquid.positions.length, 0);
+  assert.equal(parseFloat(dash.body.summary.totalEquity), parseFloat(dash.body.binance.equity));
+  assert.ok(!health.body.reasons.some(r => /hyperliquid/.test(r.text)));
+
+  assert.equal((await setVenue('hyperliquid', true)).body.venues.hyperliquid.enabled, true);
+  assert.ok((await get('/api/dashboard')).body.hyperliquid.positions.length > 0);
+});
+
+test('Binance off: no signed request, account tools refuse, the journal still reads its cache', async () => {
+  assert.equal((await setVenue('binance', false)).status, 200);
+  const mark = fake.signedCalls.length;
+
+  const dash = await get('/api/dashboard');
+  assert.equal(dash.body.binance.positions.length, 0);
+  assert.equal(dash.body.binance.orders.length, 0);
+  assert.equal((await get('/api/volstops?risk=0.01&k=1.5')).status, 200);
+  for (const route of ['/api/riskbook', '/api/deleverage', '/api/hedgeledger', '/api/history/sync?start=true']) {
+    const { status, body } = await get(route);
+    assert.equal(status, 409, route);
+    assert.equal(body.disabled, true, route);
+  }
+  assert.equal((await get('/api/performance')).status, 200);
+  assert.deepEqual(fake.signedCalls.slice(mark), []);
+
+  assert.equal((await setVenue('binance', true)).status, 200);
+  const back = await get('/api/dashboard');
+  assert.ok(back.body.binance.positions.length > 0);
+  assert.ok(back.body.binance.orders.some(o => o.reduceOnly), 'order cache reseeded on resume');
+});
+
+test('the venue switch accepts only a well-formed JSON body', async () => {
+  const post = (body, type = 'application/json') =>
+    get('/api/venues', { method: 'POST', headers: { 'Content-Type': type }, body });
+  assert.equal((await post('venue=binance&enabled=false', 'application/x-www-form-urlencoded')).status, 415);
+  assert.equal((await post('{"venue":"binance","enabled":fal')).status, 400);
+  assert.equal((await post(JSON.stringify({ venue: 'kraken', enabled: false }))).status, 400);
+  assert.equal((await post(JSON.stringify({ venue: 'binance', enabled: 'false' }))).status, 400);
+  const state = await get('/api/venues');
+  assert.equal(state.body.venues.binance.enabled, true);
+  assert.equal(state.body.venues.hyperliquid.enabled, true);
+});

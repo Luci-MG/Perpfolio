@@ -60,7 +60,7 @@ function browserContext(base, markup) {
 const { base, stop } = await startTestServer();
 test.after(stop);
 
-test('every view and drawer renders against live payloads without errors or NaN', async () => {
+async function bootPage() {
   const markup = new Map();
   const ctx = browserContext(base, markup);
   for (const { name, code } of pageScripts()) {
@@ -74,20 +74,55 @@ test('every view and drawer renders against live payloads without errors or NaN'
     }
     assert.fail(`timed out waiting for ${what}`);
   };
-
   await settle('lastData != null', 'the dashboard poll');
+  return { markup, run, settle };
+}
+
+const strayValues = html => [...html.matchAll(/(.{0,60}\b(?:undefined|NaN)\b.{0,20})/g)].map(([, hit]) => hit);
+
+test('every view and drawer renders against live payloads without errors or NaN', async () => {
+  const { markup, run, settle } = await bootPage();
   for (const v of VIEWS) run(`setView('${v}')`);
   await settle('volStopData && riskBook && unwindData && perfData && cfData && !cfLoading', 'every tab fetch');
 
   const bad = [];
   for (const v of VIEWS) {
     run(`posView = '${v}'; riskForceRender = true; render(lastData)`);
-    const html = markup.get('content') + markup.get('sidebar');
-    for (const [, hit] of html.matchAll(/(.{0,60}\b(?:undefined|NaN)\b.{0,20})/g)) bad.push(`${v}: …${hit}…`);
+    for (const hit of strayValues(markup.get('content') + markup.get('sidebar'))) bad.push(`${v}: …${hit}…`);
   }
   for (const data of ['volStopData', 'riskBook', 'unwindData', 'perfData', 'cfData']) {
     assert.equal(run(`${data}?.error ?? null`), null, `${data} failed to load`);
   }
   for (const fn of ['buildFundingDrawerContent(lastData)']) run(fn);
   assert.deepEqual(bad, []);
+});
+
+test('switched-off venues render as off, and the popover lists both switches', async () => {
+  const { markup, run } = await bootPage();
+  const setVenue = (venue, enabled) => fetch(`${base}/api/venues`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ venue, enabled })
+  });
+
+  await setVenue('hyperliquid', false);
+  await run('fetchData()');
+  assert.match(run('bulbClass()'), /^status-dot partial\b/);
+  for (const v of VIEWS) {
+    run(`posView = '${v}'; riskForceRender = true; render(lastData)`);
+    assert.deepEqual(strayValues(markup.get('content') + markup.get('sidebar')), [], v);
+  }
+  assert.match(markup.get('sidebar'), /<span class="b-label">HL<\/span><span class="b-val nu">off<\/span>/);
+  await run('loadVenues()');
+  assert.match(markup.get('venuePopover'), /Hyperliquid[\s\S]*off/);
+  assert.match(markup.get('venuePopover'), /checked/);
+
+  await setVenue('binance', false);
+  await run('fetchData()');
+  assert.match(run('bulbClass()'), /^status-dot off\b/);
+  run(`posView = 'tiles'; render(lastData)`);
+  assert.match(markup.get('content'), /Every exchange is switched off/);
+  run(`posView = 'stress'; riskForceRender = true; render(lastData)`);
+  assert.match(markup.get('content'), /Binance is switched off/);
+
+  await setVenue('binance', true);
+  await setVenue('hyperliquid', true);
 });

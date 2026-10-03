@@ -18,7 +18,9 @@
       <div class="sidebar-header">
         <h1>Perpfolio</h1>
         <div class="sidebar-meta">
-          <span class="status-dot loading" id="statusDot"></span>
+          <button class="venue-bulb" id="venueBulb" onclick="toggleVenuePopover(event)" title="Exchanges — switch on or off" aria-haspopup="true" aria-expanded="false">
+            <span class="status-dot loading" id="statusDot"></span>
+          </button>
           <span id="statusText">Connecting…</span>
           <span class="health-chip" id="healthChip" hidden></span>
           <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
@@ -30,6 +32,7 @@
             </button>
           </div>
         </div>
+        <div class="venue-popover" id="venuePopover" hidden></div>
       </div>
       <div id="sidebar"></div>
     </div>
@@ -273,6 +276,7 @@
 <!-- Classic scripts, in this order: they share one global scope (inline onclick handlers need
      globals), and later files rely on earlier ones at load time. Never async. -->
 <script src="/js/core.js"></script>
+<script src="/js/venues.js"></script>
 <script src="/js/positions.js"></script>
 <script src="/js/tiles-threads.js"></script>
 <script src="/js/stops.js"></script>

@@ -3,11 +3,12 @@
 ## Files
 
 `public/index.html` holds markup only, `public/css/app.css` every style, and `public/js/` the
-behaviour as thirteen **classic** scripts loaded in this order — no build step, no framework:
+behaviour as fourteen **classic** scripts loaded in this order — no build step, no framework:
 
 | # | File | Holds |
 |---|---|---|
 | 1 | `core.js` | preferences, shared view state, `fmt*` / `esc` / badges — load-time code in later files calls these |
+| 1b | `venues.js` | status bulb, exchange switches, `venueOn()` / `offOr()` / `venueOffHtml()` |
 | 2 | `positions.js` | `setView`, HL/BN filter, positions list and tiles, orders table |
 | 3 | `tiles-threads.js` | hedge popups, tile drag and focus, the hedge-thread SVG |
 | 4 | `stops.js` | Stops tab |
@@ -69,6 +70,24 @@ column — destroying a slider mid-drag or an input mid-edit. `render()` therefo
 panel alone whenever its mount marker (`#st-mounted`, `#uw-mounted`, `#cf-mounted`,
 `#vs-mounted`) is present, unless
 `rerenderStress()` set `riskForceRender`. Every deliberate rebuild goes through that helper.
+
+### Status bulb and exchange switches
+The dot beside *Last updated* is a button. It opens a popover with one row per exchange: a
+switch, `synced Ns ago` or `off`, and that exchange's health reasons. Switching calls
+`POST /api/venues` and re-polls at once; switching Binance off asks first, because it also
+closes the order stream. A venue without credentials in `.env` shows a disabled switch.
+
+| Bulb | Means |
+|---|---|
+| pulsing amber | fetching |
+| solid | idle, every exchange on |
+| ring | one exchange off |
+| grey ring | every exchange off |
+| amber / red | the health verdict is `warn` / `bad` |
+
+With an exchange off its sidebar rows read `off`, its HL/BN filter chip disappears, and
+Stress, Unwind and the hedge ledger (Binance-only) show a *Switch Binance on* panel instead
+of fetching. Journal still reads its local cache; *Sync* says Binance is off.
 
 ### Sidebar
 Top to bottom: `metric-stack` (total equity, uPnL, exposure — each with HL/BN breakdown and a

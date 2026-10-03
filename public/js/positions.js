@@ -7,8 +7,8 @@ function setView(v) {
   document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
   if (lastData) render(lastData);
   if (v === 'stops')  fetchVolStops();
-  if (v === 'stress') fetchRiskBook();
-  if (v === 'unwind') fetchUnwind();
+  if (v === 'stress' && venueOn('binance')) fetchRiskBook();
+  if (v === 'unwind' && venueOn('binance')) fetchUnwind();
   if (v === 'journal' && !perfData) fetchPerformance();
   if (v === 'confluence' && (!cfData || cfData.symbol !== cfSymbol)) fetchConfluence();
 }

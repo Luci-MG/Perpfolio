@@ -3,6 +3,7 @@ import * as risk from '../risk-engine.js';
 import { getBinanceData } from '../lib/binance-account.js';
 import { getHyperliquidData } from '../lib/hyperliquid.js';
 import { getBinanceKlines, getHlCandles } from '../lib/market-data.js';
+import { isEnabled } from '../lib/venues.js';
 
 // ── Dynamic Stop Width endpoint ───────────────────────────────────────────
 // Computes a composite-volatility-based stop + position size for every open
@@ -51,7 +52,7 @@ export function register(app) {
         ...positions.map(p => candlesForPosition(p).catch(() => null))
       ]);
       let btcCandles = bnBtc;
-      if (!btcCandles || btcCandles.length < 21) btcCandles = await getHlCandles('BTC');
+      if ((!btcCandles || btcCandles.length < 21) && isEnabled('hyperliquid')) btcCandles = await getHlCandles('BTC');
       const btcAtrHistory = btcCandles ? vol.buildAtrSeries(btcCandles) : [];
 
       const totalEquity = (hlData.equity + bnData.equity) || 0;

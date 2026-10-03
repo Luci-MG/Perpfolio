@@ -10,6 +10,7 @@ let hlData = null, hlLoading = false;
 async function openHlDrawer() {
   document.getElementById('hlOverlay').classList.add('open');
   document.getElementById('hlDrawer').classList.add('open');
+  if (!venueOn('binance')) { document.getElementById('hlDrawerBody').innerHTML = venueOffHtml('binance'); return; }
   document.getElementById('hlDrawerBody').innerHTML =
     `<p style="font-size:12px;color:var(--text3)">Reading the book…</p>`;
   hlLoading = true;

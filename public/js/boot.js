@@ -4,6 +4,8 @@
 // script, and only now that every drawer they close has been defined.
 document.addEventListener('click', e => {
   hideCtxMenu();
+  const venuePop = document.getElementById('venuePopover');
+  if (venuePop && !venuePop.contains(e.target)) closeVenuePopover();
   // Close pinned hedge popup if click is outside it
   const popup = document.getElementById('hedgePopup');
   if (hedgePinned && popup && !popup.contains(e.target)) {
@@ -11,7 +13,7 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); closeUpnlDrawerForce(); closeExpDrawerForce(); closeFundDrawerForce(); closeLiqDrawerForce(); closeSimDrawerForce(); closeHlDrawerForce(); }
+  if (e.key === 'Escape') { closeVenuePopover(); hideCtxMenu(); closeCalc('calcOverlay'); hideHedgePopup(true); closeUpnlDrawerForce(); closeExpDrawerForce(); closeFundDrawerForce(); closeLiqDrawerForce(); closeSimDrawerForce(); closeHlDrawerForce(); }
 });
 
 const VIEWS = ['tiles', 'list', 'orders', 'stops', 'stress', 'unwind', 'journal', 'confluence'];

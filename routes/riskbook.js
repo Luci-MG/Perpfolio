@@ -1,8 +1,10 @@
 import { lastReconcile, lastWsMessage } from '../lib/orders-stream.js';
 import { describePool, reportedLiq, resolvePools } from '../lib/pools.js';
+import { isEnabled, venueOffBody } from '../lib/venues.js';
 
 export function register(app) {
   app.get('/api/riskbook', async (req, res) => {
+    if (!isEnabled('binance')) return res.status(409).json(venueOffBody('binance'));
     try {
       const { bn, pools: groups } = await resolvePools(req.query.fresh === '1' ? { maxAgeMs: 0 } : undefined);
       const pools = await Promise.all(groups.map(describePool));

@@ -115,13 +115,30 @@ unit-tested) applies the thresholds:
 | Binance paused after a 418/429 (with seconds left) | bad |
 | request weight ≥ 1,800 of 2,400 (the sync throttle's ceiling) | bad |
 | request weight ≥ 1,200 | warn |
-| order stream not connected, or quiet > 10 min (key present) | warn |
+| order stream not connected, or quiet > 10 min (Binance on) | warn |
 | last reconcile found drift | warn |
-| an account snapshot older than 2 min | warn |
+| an account snapshot older than 2 min (exchange on) | warn |
 | last history sync failed | warn |
 
 The header chip beside *Last updated* is hidden while the verdict is `ok`; otherwise it shows
 ⚠ or ⛔ with the issue count, and every reason in its tooltip.
+
+### Venue switch: an exchange that is off costs nothing
+`lib/venues.js` holds one switch per exchange, saved in `data/settings.json`; without a
+saved choice an exchange is on when its credentials are in `.env`, so Hyperliquid stays off
+with no `HL_WALLET_ADDRESS`. Switched from the status bulb or `POST /api/venues`.
+
+| Off | Effect |
+|---|---|
+| Hyperliquid | `getHyperliquidData()` returns an empty book; no account read, no candles — before this, an empty wallet still sent four calls per poll with `user: ''` |
+| Binance | empty book; user-data stream closed and its listenKey released; reconcile, keepalive and watchdog idle; boot warm-up skipped; riskbook, deleverage, hedge ledger and sync start answer `409 { disabled: true }` |
+
+`hlFetch` and the signed `binanceFetch` refuse a venue that is off, so a call path the
+gate misses fails loudly instead of spending quota; the route tests assert zero requests per
+switched-off venue across every route. Public Binance market data (`bnPublic`) stays
+available, so Confluence works with Binance off. Switching Binance on reconciles the order
+cache at once and reopens the stream. `POST /api/venues` takes `application/json` only: a
+cross-site page cannot send that without a CORS preflight, which the server never answers.
 
 ### Restarts under `npm run dev`
 `node --watch` starts the new process at once. When several files were saved in the same

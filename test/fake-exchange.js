@@ -109,8 +109,8 @@ function marksFor(quote) {
     .map(p => [p.symbol.replace(quote, ''), mark(p.symbol)]));
 }
 
-// Single-asset mode: Binance's account totals cover USDT only; other collateral appears
-// only in its own assets[] row.
+const inSingleAssetTotals = quote => quote === 'USDT';
+
 function accountState() {
   const assets = [];
   const positions = [];
@@ -131,7 +131,7 @@ function accountState() {
       positions.push({ symbol: d.symbol, positionSide: d.positionSide, maintMargin: String(d.mm),
         positionInitialMargin: String(d.im) });
     }
-    if (quote !== 'USDT') continue;
+    if (!inSingleAssetTotals(quote)) continue;
     tWallet += WALLETS[quote]; tMargin += state.equity; tIm += state.im + OPEN_ORDER_IM[quote];
     tMm += state.mm; tAvail += available; tUpnl += upnl;
   }
@@ -300,12 +300,14 @@ function hyperliquid(body) {
 export function installFakeExchange() {
   const realFetch = globalThis.fetch;
   const calls = [];
+  const signedCalls = [];
   let bannedUntil = 0;
 
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
     if (url.hostname === 'fapi.binance.com') {
       calls.push(url.pathname);
+      if (url.searchParams.has('signature')) signedCalls.push(url.pathname);
       if (Date.now() < bannedUntil) return json({ code: -1003, msg: 'banned' }, { status: 418, headers: { 'Retry-After': '1' } });
       const out = binance(url);
       return out?.status ? json(out.body, { status: out.status }) : json(out);
@@ -319,6 +321,7 @@ export function installFakeExchange() {
 
   return {
     calls,
+    signedCalls,
     ban(seconds) { bannedUntil = Date.now() + seconds * 1000; },
     restore() { globalThis.fetch = realFetch; }
   };

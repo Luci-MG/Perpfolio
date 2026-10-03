@@ -20,7 +20,8 @@ public/js/*.js                 classic scripts, one global scope, loaded in a fi
 
 | Module | Owns | Notes |
 |---|---|---|
-| `lib/config.js` | `.env`, base URLs, `FETCH_TIMEOUT_MS`, `ROOT_DIR` | loads `dotenv/config` first, so every importer sees the environment |
+| `lib/config.js` | `.env`, base URLs, `FETCH_TIMEOUT_MS`, `ROOT_DIR`, `DATA_DIR` | loads `dotenv/config` first, so every importer sees the environment |
+| `lib/venues.js` | which exchanges may be called, saved in `data/settings.json` | the request functions refuse a venue that is off |
 | `lib/util.js` | `sleep`, `jitter`, `sharedSnapshot`, `once` | `once` holds the single in-flight Map every fetcher shares |
 | `lib/binance-client.js` | signing, `binanceFetch`, `bnPublic`, the ban guard, `throttleWeight` | **every** Binance call goes through here |
 | `lib/hyperliquid.js` | `hlFetch`, the HL account view | read-only |
@@ -39,7 +40,7 @@ the watchdog share `lib/orders-stream.js`.
 
 ## Frontend scripts — load order is part of the contract
 
-`core → positions → tiles-threads → stops → stress → hedge-ledger → confluence-view →
+`core → venues → positions → tiles-threads → stops → stress → hedge-ledger → confluence-view →
 journal → unwind → render → calculators → drawers → boot`
 
 - Classic scripts, not modules: inline `onclick="fn()"` handlers need globals, and classic

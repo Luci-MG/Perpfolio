@@ -1,5 +1,15 @@
 # Changelog
 
+## Venue switch (2026-10-03)
+
+- **Each exchange can be switched off from the status bulb**, and an exchange that is off is
+  never called: no account read, no candles, and for Binance no order stream, reconcile or
+  warm-up. Saved in `data/settings.json`; Hyperliquid defaults to off without a wallet — it
+  used to send four calls per poll with an empty `user`.
+- `GET`/`POST /api/venues` (JSON only); Binance-only routes answer `409 { disabled: true }`.
+- Health ignores an exchange that is off. The bulb shows a ring when one is off.
+- The route tests count requests per venue: zero for one that is off, on every route.
+
 ## USDC collateral (2026-10-03)
 
 - **Binance equity left out the USDC pool.** In single-asset mode every account total covers

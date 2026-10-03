@@ -1,5 +1,6 @@
 import { getBinanceData } from '../lib/binance-account.js';
 import { getHyperliquidData } from '../lib/hyperliquid.js';
+import { isEnabled } from '../lib/venues.js';
 
 function buildSummary(hlData, bnData) {
   const allPositions = [...hlData.openPositions, ...bnData.openPositions];
@@ -33,6 +34,7 @@ export function register(app) {
       res.json({
         ok: true,
         lastUpdated: new Date().toISOString(),
+        venues: { binance: isEnabled('binance'), hyperliquid: isEnabled('hyperliquid') },
         summary,
         hyperliquid: {
           equity:          hlData.equity.toFixed(2),

@@ -25,7 +25,12 @@ async function fetchPerformance() {
 function setPerfDays(d) { perfDays = d; fetchPerformance(); }
 
 async function startSync(full = false) {
-  await fetch(`/api/history/sync?start=true${full ? '&full=true' : ''}`);
+  const started = await (await fetch(`/api/history/sync?start=true${full ? '&full=true' : ''}`)).json();
+  if (!started.ok) {
+    const el = document.getElementById('jr-sync-state');
+    if (el) el.textContent = started.disabled ? 'Binance is switched off — switch it on to sync' : `Failed: ${esc(started.error)}`;
+    return;
+  }
   if (syncPoll) clearInterval(syncPoll);
   syncPoll = setInterval(async () => {
     const s = await (await fetch('/api/history/sync')).json();

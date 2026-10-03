@@ -596,6 +596,7 @@ function renderUnwindPlan(p) {
 }
 
 function renderUnwind() {
+  if (!venueOn('binance')) return venueOffHtml('binance');
   if (unwindLoading && !unwindData) {
     return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Planning…</p>`;
   }
