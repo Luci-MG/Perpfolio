@@ -35,9 +35,11 @@ function fakeElement(store, id) {
 }
 
 function browserContext(base, markup) {
+  const elements = new Map();
+  const element = id => elements.get(id) || elements.set(id, fakeElement(markup, id)).get(id);
   const document = {
     hidden: false, body: fakeElement(markup, 'body'), documentElement: fakeElement(markup, 'html'),
-    getElementById: id => /-mounted$/.test(id) ? null : fakeElement(markup, id),
+    getElementById: id => /-mounted$/.test(id) ? null : element(id),
     querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, removeEventListener() {},
     createElement: tag => fakeElement(markup, `new:${tag}`), createElementNS: (_, tag) => fakeElement(markup, `new:${tag}`)
   };
@@ -50,7 +52,7 @@ function browserContext(base, markup) {
     requestAnimationFrame: () => 0, cancelAnimationFrame() {},
     getComputedStyle: () => ({ getPropertyValue: () => '' }),
     fetch: (url, opts) => fetch(base + url, opts),
-    __importEngine: () => import(path.join(ROOT, 'risk-engine.js'))
+    __importEngine: file => import(path.join(ROOT, file))
   };
   ctx.window.document = document;
   ctx.globalThis = ctx;
@@ -64,7 +66,7 @@ async function bootPage() {
   const markup = new Map();
   const ctx = browserContext(base, markup);
   for (const { name, code } of pageScripts()) {
-    vm.runInContext(code.replaceAll("import('/risk-engine.js')", '__importEngine()'), ctx, { filename: name });
+    vm.runInContext(code.replace(/import\('\/([\w-]+\.js)'\)/g, "__importEngine('$1')"), ctx, { filename: name });
   }
   const run = js => vm.runInContext(js, ctx);
   const settle = async (check, what) => {
@@ -158,6 +160,39 @@ test('every stop verdict renders on the Stops tab, and the tile badge follows ha
   run(`setView('tiles')`);
   assert.equal((markup.get('content').match(/class="sl-alert"/g) || []).length, 3,
     'ETH, ENA and SOL have no stop and no hedge; the BTC legs are a hedge and the long has a stop');
+});
+
+test('the calculators fill from a picked position, and its liquidation matches Stress and Binance', async () => {
+  const { markup, run, settle } = await bootPage();
+  const value = id => run(`document.getElementById('${id}').value`);
+  const text = id => run(`document.getElementById('${id}').textContent`);
+
+  run(`ctxPosition = lastData.binance.positions.find(p => p.symbol === 'ENAUSDC'); openCalc('liq')`);
+  await settle('calcEngine && riskBook?.pools && document.getElementById("liqAccPrice").textContent', 'the account-aware liq');
+  const P = 'riskBook.pools.find(P => P.marginAsset === "USDC")';
+  const stress = run(`riskEngine.liquidationDetail(${P}.pool, 'ENA', ${P}.marks, ${P}.opts).price`);
+  const reported = run(`${P}.liqCheck.find(x => x.key === 'ENAUSDC:LONG').reportedLiqPrice`);
+  assert.equal(text('liqAccPrice'), run(`fmtPrice(${stress})`));
+  assert.equal(text('liqAccReported'), run(`fmtPrice(${reported})`));
+  assert.ok(Math.abs(stress - reported) / reported < 1e-6, `${stress} vs ${reported}`);
+  assert.equal(value('liqEntry'), 0.27);
+  assert.equal(value('pnlLev'), 3);
+  assert.ok(value('liqMmr') > 0, 'the maintenance rate comes from the tier');
+
+  run(`document.getElementById('liqAddUsd').value = 500; calcLiq()`);
+  const after = parseFloat(text('liqAddPrice2').replace(/[$,]/g, ''));
+  assert.ok(after > stress, 'adding to the long moves its liquidation up');
+
+  run(`document.getElementById('avgTarget').value = 0.26; switchCalcTab('avg')`);
+  assert.match(text('avgLiq'), /^\$[\d.]+ \(−[\d.]+%\)$/);
+
+  run(`pickCalcPosition(''); switchCalcTab('liq'); document.getElementById('liqEntry').value = 100;
+       document.getElementById('liqLev').value = 10; calcLiq()`);
+  assert.equal(run(`document.getElementById('liqManual').style.display`), '');
+  assert.match(run(`document.getElementById('liqPrice').innerHTML`), /\$90\.50/);
+  for (const id of ['liqAccPrice', 'liqAccDist', 'liqAddPrice2', 'avgLiq', 'pnlPnl', 'liqPrice']) {
+    assert.doesNotMatch(String(text(id) ?? '') + run(`document.getElementById('${id}').innerHTML`), /undefined|NaN/, id);
+  }
 });
 
 test('the tool widgets open each tool and toggle back to the last positions view', async () => {

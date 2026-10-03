@@ -20,7 +20,7 @@ behaviour as sixteen **classic** scripts loaded in this order — no build step,
 | 8b | `journal-trades.js` | Journal's Trades table: `TRADE_COLUMNS`, sort, filters, CSV |
 | 9 | `unwind.js` | liquidation-after-close and unwind-simulator drawers, Unwind tab |
 | 10 | `render.js` | sidebar widgets, `render()`, `fetchData()` and the poll guard |
-| 11 | `calculators.js` | context menu and calculators |
+| 11 | `calculators.js` | context menu and the calculator modal — page code only; the arithmetic is `/calc-engine.js` |
 | 12 | `drawers.js` | exposure, uPnL and funding drawers |
 | 13 | `boot.js` | global listeners, first poll, refresh timer — must stay last |
 
@@ -111,6 +111,29 @@ arc's `large-arc-flag` must always be `0`; it was `pct > 50 ? 1 : 0`, which drew
 complement and painted the fill out of the viewBox for every utilisation between 50% and
 100% — exactly the range worth looking at. A `conic-gradient` survives elsewhere, for the
 small long/short split donut only.
+
+### Calculators
+One modal, three tabs (P&L, Avg down/up, Liq price), and a **position picker** at the top:
+*Manual* or any open position. Picking one fills every tab — side, entry, mark, actual
+leverage and size, and Binance's maintenance rate for that size tier — through one
+`fillFromPosition(p)`. Opening from a tile's context menu pre-picks that position; from the
+sidebar it starts on Manual.
+
+- **Arithmetic lives in `calc-engine.js`** at the root, served at `/calc-engine.js` and
+  unit-tested in Node; `calculators.js` only reads inputs and writes results.
+- **Liq price is account-aware for a Binance position**: `riskEngine.liquidationDetail` on
+  the position's own cross pool (found by key, so a USDC leg uses the USDC pool), with every
+  other leg, hedge and tier — the Stress tab's solve, number for number — beside Binance's
+  reported figure, and the ill-conditioned note when a near-flat book makes it a region rather
+  than a price. *What if I add* re-solves after `addToPosition`. Manual and Hyperliquid use the
+  isolated estimate, labelled as such.
+- **Avg** adds *liq after this add* for a Binance position.
+- The book is the Stress tab's `riskBook`, loaded on first use like the liquidation drawer;
+  no new route or poll.
+
+The flat formula it replaced (entry ± 1/leverage with a fixed 0.5% rate) was 54–98% away
+from Binance's reported price on every leg of the live book that has one, and showed a
+price on eight legs where Binance reports none.
 
 ### Drawers
 All at body level, outside `#sidebar`, so the poll's sidebar rebuild cannot wipe them:

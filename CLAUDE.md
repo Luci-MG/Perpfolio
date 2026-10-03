@@ -41,6 +41,7 @@ crypto-dashboard/
 ├── lib/                   # exchange clients, caches, shared snapshot, history sync (see docs/architecture.md)
 ├── routes/                # one register(app) per area
 ├── risk-engine.js         # stress / liquidation / unwind maths — also served to the browser
+├── calc-engine.js         # the calculators' arithmetic — also served to the browser
 ├── vol-estimator.js       # composite volatility for dynamic stops
 ├── stop-check.js          # your real stop against the suggestion
 ├── confluence.js          # market signals, regime gating, self-calibration

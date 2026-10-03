@@ -870,3 +870,16 @@ test('a hedge crossing a bracket floor cannot hide a breach just below it', () =
   const k = re.killPrices(pool, 'A', { A: 100 });
   assert.ok(Math.abs(k.up - 104.15) < 0.01, `up ${k.up}`);
 });
+
+test('adding to a position averages its entry and grows it in its own direction', () => {
+  const pool = { collateral: 1000, positions: [
+    { key: 'X:LONG', q: 2, entry: 100 }, { key: 'X:SHORT', q: -1, entry: 120 }] };
+  const long = re.addToPosition(pool, 'X:LONG', 2, 80).positions[0];
+  assert.equal(long.q, 4);
+  assert.equal(long.entry, 90);
+  const short = re.addToPosition(pool, 'X:SHORT', 1, 100).positions[1];
+  assert.equal(short.q, -2);
+  assert.equal(short.entry, 110);
+  assert.deepEqual(re.addToPosition(pool, 'Y:LONG', 1, 1), pool);
+  assert.equal(pool.positions[0].q, 2, 'the input pool is not mutated');
+});

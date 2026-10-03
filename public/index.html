@@ -67,6 +67,7 @@
         </div>
         <button class="calc-close" onclick="closeCalc('calcOverlay')">&#x2715;</button>
       </div>
+      <select class="calc-pick" id="calcPick" onchange="pickCalcPosition(this.value)" aria-label="Position"></select>
     </div>
     <div class="calc-tabs">
       <button class="calc-tab" id="tab-pnl" onclick="switchCalcTab('pnl')">P&amp;L</button>
@@ -99,7 +100,7 @@
       </div>
       <div class="calc-field">
         <label>
-          <span id="pnlSizeLbl">Amount invested (USD)</span>
+          <span id="pnlSizeLbl">Amount invested (<span class="calc-quote">USD</span>)</span>
           <span class="lbl-toggle" onclick="togglePnlSizeMode()">Switch to qty</span>
         </label>
         <input id="pnlInvested" type="number" placeholder="0.00" oninput="calcPnl()">
@@ -135,7 +136,7 @@
       </div>
       <div class="calc-field">
         <label>
-          <span id="avgSizeLbl">Amount invested (USD)</span>
+          <span id="avgSizeLbl">Amount invested (<span class="calc-quote">USD</span>)</span>
           <span class="lbl-toggle" onclick="toggleAvgSizeMode()">Switch to qty</span>
         </label>
         <input id="avgInvested" type="number" placeholder="0.00" oninput="calcAvg()">
@@ -154,12 +155,38 @@
         <div class="calc-res-row"><span class="calc-res-label">New position size</span><span class="calc-res-val" id="avgNewSize">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">Achieved average</span><span class="calc-res-val" id="avgAchieved">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">Total notional</span><span class="calc-res-val" id="avgTotal">—</span></div>
+        <div class="calc-res-row" id="avgLiqRow" style="display:none"><span class="calc-res-label">Liq after this add</span><span class="calc-res-val" id="avgLiq">—</span></div>
         <div id="avgWarnWrap"></div>
       </div>
     </div>
 
     <!-- ── Liquidation Price tab ── -->
     <div class="calc-body" id="calcBody-liq" style="display:none">
+      <div id="liqAccount" style="display:none">
+        <p class="calc-method">Account-aware: the whole cross pool, hedge legs and margin tiers — the Stress tab's solve</p>
+        <div class="calc-result show">
+          <div class="calc-res-row"><span class="calc-res-label">Liquidation price</span><span class="calc-res-val" id="liqAccPrice">—</span></div>
+          <div class="calc-res-row"><span class="calc-res-label">Distance from mark</span><span class="calc-res-val" id="liqAccDist">—</span></div>
+          <div class="calc-res-row"><span class="calc-res-label">Binance reports</span><span class="calc-res-val" id="liqAccReported">—</span></div>
+          <p class="calc-method" id="liqAccNote"></p>
+        </div>
+        <div class="calc-field-row" style="margin-top:12px">
+          <div class="calc-field">
+            <label>What if I add (<span class="calc-quote">USD</span>)</label>
+            <input id="liqAddUsd" type="number" placeholder="0.00" oninput="calcLiq()">
+          </div>
+          <div class="calc-field">
+            <label>At price</label>
+            <input id="liqAddPrice" type="number" placeholder="mark" oninput="calcLiq()">
+          </div>
+        </div>
+        <div class="calc-result" id="liqAddResult">
+          <div class="calc-res-row"><span class="calc-res-label">Liquidation after the add</span><span class="calc-res-val" id="liqAddPrice2">—</span></div>
+          <div class="calc-res-row"><span class="calc-res-label">Distance from mark</span><span class="calc-res-val" id="liqAddDist">—</span></div>
+        </div>
+      </div>
+      <div id="liqManual">
+      <p class="calc-method">Isolated estimate: entry moved by 1/leverage less the maintenance rate</p>
       <div class="calc-field-row">
         <div class="calc-field">
           <label>Side</label>
@@ -178,13 +205,14 @@
         <input id="liqEntry" type="number" placeholder="0.00" oninput="calcLiq()">
       </div>
       <div class="calc-field">
-        <label>Maintenance margin rate (%) <span style="color:var(--text3);font-size:9px;text-transform:none;letter-spacing:0">default 0.5%</span></label>
+        <label>Maintenance margin rate (%) <span id="liqMmrHint" style="color:var(--text3);font-size:9px;text-transform:none;letter-spacing:0">default 0.5%</span></label>
         <input id="liqMmr" type="number" placeholder="0.5" step="0.1" oninput="calcLiq()">
       </div>
       <div class="calc-result" id="liqResult">
         <div class="calc-res-row"><span class="calc-res-label">Liquidation price</span><span class="calc-res-val" id="liqPrice">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">Distance to liq</span><span class="calc-res-val" id="liqDist">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">Max adverse move</span><span class="calc-res-val" id="liqMove">—</span></div>
+      </div>
       </div>
     </div>
   </div>

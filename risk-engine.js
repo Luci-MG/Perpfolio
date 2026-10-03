@@ -244,6 +244,18 @@ export function closePositions(pool, prices = {}, closes = [], feeRate = 0) {
   };
 }
 
+/** The pool after adding `qty` (unsigned) to position `key` at `price`, its entry averaged; an unknown key changes nothing. */
+export function addToPosition(pool, key, qty, price) {
+  return {
+    ...pool,
+    positions: (pool.positions || []).map(pos => {
+      if (pos.key !== key || !(qty > 0) || !(price > 0)) return pos;
+      const held = Math.abs(pos.q);
+      return { ...pos, q: pos.q + Math.sign(pos.q) * qty, entry: (held * pos.entry + qty * price) / (held + qty) };
+    })
+  };
+}
+
 // Gross directional exposure: the sum of per-asset net deltas in absolute terms. Closing a
 // naked leg lowers it; closing one leg of a hedge raises it.
 export function grossNetDelta(pool, prices = {}) {

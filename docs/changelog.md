@@ -1,5 +1,15 @@
 # Changelog
 
+## Calculators, part 1: live and account-aware (2026-10-03)
+
+- A position picker fills every calculator tab from a live position, including the
+  maintenance rate for its size tier.
+- The Liq tab is account-aware for Binance positions — the Stress tab's cross-pool solve,
+  with Binance's reported price beside it and a *what if I add* re-solve — and the Avg tab
+  shows liquidation after the add. The old flat formula was 54–98% off on every live leg.
+- The arithmetic moved into `calc-engine.js`, served at `/calc-engine.js` and unit-tested;
+  `addToPosition` joins the risk engine.
+
 ## Stops: real vs suggested (2026-10-03)
 
 - Every Stops tile shows your real stop beside the suggestion: distance from mark, in ATRs,

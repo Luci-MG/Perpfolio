@@ -1,16 +1,24 @@
-// calculators.js — the context menu and the P&L / average / liquidation calculators.
+// calculators.js — the context menu and the calculator modal: a position picker that fills
+// every tab, and the tabs' inputs and results. The arithmetic is calc-engine.js; Binance
+// liquidation comes from the Stress tab's pool and risk-engine.js.
 
-// ── Context menu & calculators ────────────────────────────────────────────
 let ctxPosition = null;
+let calcEngine = null;
+let calcPick = null;
 let activeCalcTab = 'pnl';
-let pnlMode = 'std';        // 'std' | 'rev'
-let pnlSizeMode = 'usdt';  // 'usdt' | 'qty'
-let avgSizeMode = 'usdt';  // 'usdt' | 'qty'
+let pnlMode = 'std';
+let pnlSizeMode = 'usdt';
+let avgSizeMode = 'usdt';
+
+const CALC_TITLES = { pnl: 'P&L Calculator', avg: 'Average Down / Up', liq: 'Liquidation Price' };
+const calcEl = id => document.getElementById(id);
+const calcNum = id => parseFloat(calcEl(id).value);
+const setCalc = (id, value) => { calcEl(id).value = value ?? ''; };
 
 function showCtxMenu(e, posData) {
   e.preventDefault();
   ctxPosition = posData;
-  const menu = document.getElementById('ctxMenu');
+  const menu = calcEl('ctxMenu');
   menu.classList.add('open');
   const x = Math.min(e.clientX, window.innerWidth - menu.offsetWidth - 8);
   const y = Math.min(e.clientY, window.innerHeight - menu.offsetHeight - 8);
@@ -19,77 +27,101 @@ function showCtxMenu(e, posData) {
 }
 
 function hideCtxMenu() {
-  document.getElementById('ctxMenu').classList.remove('open');
+  calcEl('ctxMenu').classList.remove('open');
 }
 
+function calcPositions() {
+  return lastData ? [...lastData.binance.positions, ...lastData.hyperliquid.positions] : [];
+}
+
+const calcKeyOf = p => `${p.exchange}:${p.symbol || p.pair}:${p.positionSide || 'BOTH'}:${p.side}`;
+const leverageOf = p => parseFloat(String(p.leverage || '1').replace(/[×x]/, '')) || 1;
+const calcQuote = () => calcPick?.quote || 'USD';
+
+function renderCalcPicker() {
+  const options = calcPositions().map(p =>
+    `<option value="${esc(calcKeyOf(p))}"${calcPick && calcKeyOf(p) === calcKeyOf(calcPick) ? ' selected' : ''}>${esc(p.pair)} ${p.side} ${esc(p.leverage)}</option>`);
+  calcEl('calcPick').innerHTML = `<option value="">Manual</option>${options.join('')}`;
+}
+
+function poolLegFor(p) {
+  if (p?.exchange !== 'binance' || !riskBook?.pools || !riskEngine) return null;
+  const key = `${p.symbol}:${p.positionSide}`;
+  const P = riskBook.pools.find(pool => pool.pool.positions.some(x => x.key === key));
+  return P ? { P, pos: P.pool.positions.find(x => x.key === key) } : null;
+}
+
+function fillSize(fieldId, mode, p, lev) {
+  setCalc(fieldId, mode === 'usdt' ? fmt(p.sizeUsd / lev, 2) : fmt(p.sizeUsd / p.entry, 6));
+}
+
+function clearCalcInputs() {
+  ['pnlEntry', 'pnlInvested', 'pnlCurrent', 'pnlLev', 'pnlTargetRoi',
+   'avgEntry', 'avgInvested', 'avgNewEntry', 'avgTarget', 'avgLev', 'liqEntry', 'liqLev', 'liqMmr'].forEach(id => setCalc(id, ''));
+}
+
+function fillFromPosition(p) {
+  document.querySelectorAll('.calc-quote').forEach(el => { el.textContent = calcQuote(); });
+  calcEl('calcSub').textContent = p ? `${p.pair} · ${p.side}` : '';
+  if (!p) { clearCalcInputs(); return; }
+  const lev = leverageOf(p);
+  setCalc('pnlSide', p.side);
+  setCalc('pnlEntry', p.entry);
+  setCalc('pnlCurrent', p.mark);
+  setCalc('pnlLev', lev);
+  fillSize('pnlInvested', pnlSizeMode, p, lev);
+  setCalc('avgEntry', p.entry);
+  setCalc('avgNewEntry', p.mark);
+  setCalc('avgLev', lev);
+  fillSize('avgInvested', avgSizeMode, p, lev);
+  setCalc('liqSide', p.side);
+  setCalc('liqEntry', p.entry);
+  setCalc('liqLev', lev);
+  setCalc('liqAddPrice', p.mark);
+  const leg = poolLegFor(p);
+  const mmr = leg && calcEngine.maintRatePct(leg.pos.brackets, Math.abs(leg.pos.q) * leg.pos.mark * (leg.pos.notionalCoef || 1));
+  setCalc('liqMmr', mmr != null ? +mmr.toFixed(3) : '');
+  calcEl('liqMmrHint').textContent = mmr != null ? `tier rate for this size` : 'default 0.5%';
+}
+
+function recalcActiveTab() {
+  ({ pnl: calcPnl, avg: calcAvg, liq: calcLiq })[activeCalcTab]();
+}
 
 function switchCalcTab(tab) {
   activeCalcTab = tab;
-  ['pnl','avg','liq'].forEach(t => {
-    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
-    document.getElementById(`calcBody-${t}`).style.display = t === tab ? '' : 'none';
+  ['pnl', 'avg', 'liq'].forEach(t => {
+    calcEl(`tab-${t}`).classList.toggle('active', t === tab);
+    calcEl(`calcBody-${t}`).style.display = t === tab ? '' : 'none';
   });
-  const titles = { pnl: 'P&L Calculator', avg: 'Average Down / Up', liq: 'Liquidation Price' };
-  document.getElementById('calcTitle').textContent = titles[tab];
-  if (tab === 'pnl') calcPnl();
-  if (tab === 'avg') calcAvg();
-  if (tab === 'liq') calcLiq();
+  calcEl('calcTitle').textContent = CALC_TITLES[tab];
+  recalcActiveTab();
 }
 
-function openCalc(type) {
+async function loadBookForPick() {
+  if (calcPick?.exchange !== 'binance' || riskBook?.pools) return;
+  await fetchRiskBook();
+  fillFromPosition(calcPick);
+  recalcActiveTab();
+}
+
+function pickCalcPosition(key) {
+  calcPick = calcPositions().find(p => calcKeyOf(p) === key) || null;
+  fillFromPosition(calcPick);
+  recalcActiveTab();
+  loadBookForPick();
+}
+
+async function openCalc(type) {
   hideCtxMenu();
-  const p = ctxPosition;
-  const lev = p ? (parseFloat((p.leverage || '1').replace('×','').replace('x','')) || 1) : null;
-
-  // Pre-fill P&L tab
-  if (p) {
-    document.getElementById('pnlSide').value    = p.side === 'Short' ? 'Short' : 'Long';
-    document.getElementById('pnlEntry').value   = p.entry || '';
-    document.getElementById('pnlCurrent').value = p.mark  || '';
-    document.getElementById('pnlLev').value     = lev || '';
-    // size mode: invested = notional / lev
-    if (pnlSizeMode === 'usdt') {
-      document.getElementById('pnlInvested').value = p.sizeUsd ? fmt(p.sizeUsd / lev, 2) : '';
-    } else {
-      const qty = p.sizeUsd && p.entry ? fmt(p.sizeUsd / p.entry, 6) : '';
-      document.getElementById('pnlInvested').value = qty;
-    }
-  } else {
-    ['pnlEntry','pnlInvested','pnlCurrent','pnlLev','pnlTargetRoi'].forEach(id => document.getElementById(id).value = '');
-  }
-  document.getElementById('pnlResult').classList.remove('show');
-
-  // Pre-fill Avg tab
-  if (p) {
-    document.getElementById('avgEntry').value   = p.entry || '';
-    document.getElementById('avgNewEntry').value = p.mark || '';
-    document.getElementById('avgLev').value     = lev || '';
-    if (avgSizeMode === 'usdt') {
-      document.getElementById('avgInvested').value = p.sizeUsd ? fmt(p.sizeUsd / lev, 2) : '';
-    } else {
-      document.getElementById('avgInvested').value = p.sizeUsd && p.entry ? fmt(p.sizeUsd / p.entry, 6) : '';
-    }
-  } else {
-    ['avgEntry','avgInvested','avgNewEntry','avgTarget','avgLev'].forEach(id => document.getElementById(id).value = '');
-  }
-  document.getElementById('avgResult').classList.remove('show');
-
-  // Pre-fill Liq tab
-  if (p) {
-    document.getElementById('liqSide').value  = p.side === 'Short' ? 'Short' : 'Long';
-    document.getElementById('liqEntry').value = p.entry || '';
-    document.getElementById('liqLev').value   = lev || '';
-  } else {
-    ['liqEntry','liqLev'].forEach(id => document.getElementById(id).value = '');
-  }
-  document.getElementById('liqResult').classList.remove('show');
-
-  // Set subtitle
-  document.getElementById('calcSub').textContent = p ? `${p.pair} · ${p.side}` : '';
-
-  // Open the right tab
+  if (!calcEngine) calcEngine = await import('/calc-engine.js');
+  calcPick = ctxPosition;
+  renderCalcPicker();
+  fillFromPosition(calcPick);
+  ['pnlResult', 'avgResult', 'liqResult'].forEach(id => calcEl(id).classList.remove('show'));
   switchCalcTab(type);
-  document.getElementById('calcOverlay').classList.add('open');
+  calcEl('calcOverlay').classList.add('open');
+  loadBookForPick();
 }
 
 function openCalcFromSidebar(tab) {
@@ -97,201 +129,147 @@ function openCalcFromSidebar(tab) {
   openCalc(tab);
 }
 
-function closeCalc(id) { document.getElementById(id).classList.remove('open'); }
-function closeCalcOnBg(e, id) { if (e.target === document.getElementById(id)) closeCalc(id); }
+function closeCalc(id) { calcEl(id).classList.remove('open'); }
+function closeCalcOnBg(e, id) { if (e.target === calcEl(id)) closeCalc(id); }
 
-// ── P&L mode helpers ──────────────────────────────────────────────────────
 function setPnlMode(mode) {
   pnlMode = mode;
-  document.getElementById('pnlMode-std').classList.toggle('active', mode === 'std');
-  document.getElementById('pnlMode-rev').classList.toggle('active', mode === 'rev');
-  document.getElementById('pnlExitWrap').style.display   = mode === 'std' ? '' : 'none';
-  document.getElementById('pnlTargetWrap').style.display = mode === 'rev' ? '' : 'none';
-  document.getElementById('pnlPnlRow').style.display    = mode === 'std' ? '' : 'none';
-  document.getElementById('pnlRoiRow').style.display    = mode === 'std' ? '' : 'none';
-  document.getElementById('pnlExitRow').style.display   = mode === 'rev' ? '' : 'none';
-  document.getElementById('pnlResult').classList.remove('show');
+  calcEl('pnlMode-std').classList.toggle('active', mode === 'std');
+  calcEl('pnlMode-rev').classList.toggle('active', mode === 'rev');
+  calcEl('pnlExitWrap').style.display   = mode === 'std' ? '' : 'none';
+  calcEl('pnlTargetWrap').style.display = mode === 'rev' ? '' : 'none';
+  calcEl('pnlPnlRow').style.display     = mode === 'std' ? '' : 'none';
+  calcEl('pnlRoiRow').style.display     = mode === 'std' ? '' : 'none';
+  calcEl('pnlExitRow').style.display    = mode === 'rev' ? '' : 'none';
+  calcEl('pnlResult').classList.remove('show');
   calcPnl();
 }
 
+function switchSizeMode(prefix, mode) {
+  const entry = calcNum(`${prefix}Entry`);
+  const value = calcNum(`${prefix}Invested`);
+  const toQty = mode === 'qty';
+  calcEl(`${prefix}SizeLbl`).innerHTML = toQty ? 'Position size (units)' : `Amount invested (<span class="calc-quote">${calcQuote()}</span>)`;
+  document.querySelector(`[onclick="toggle${prefix === 'pnl' ? 'Pnl' : 'Avg'}SizeMode()"]`).textContent = toQty ? 'Switch to USD' : 'Switch to qty';
+  if (value && entry) setCalc(`${prefix}Invested`, toQty ? fmt(value / entry, 6) : fmt(value * entry, 2));
+}
+
 function togglePnlSizeMode() {
-  const entry = parseFloat(document.getElementById('pnlEntry').value);
-  const cur   = parseFloat(document.getElementById('pnlInvested').value);
-  if (pnlSizeMode === 'usdt') {
-    pnlSizeMode = 'qty';
-    document.getElementById('pnlSizeLbl').textContent = 'Position size (units)';
-    document.querySelector('[onclick="togglePnlSizeMode()"]').textContent = 'Switch to USD';
-    // convert USDT → qty using entry price
-    if (cur && entry) document.getElementById('pnlInvested').value = fmt(cur / entry, 6);
-  } else {
-    pnlSizeMode = 'usdt';
-    document.getElementById('pnlSizeLbl').textContent = 'Amount invested (USD)';
-    document.querySelector('[onclick="togglePnlSizeMode()"]').textContent = 'Switch to qty';
-    // convert qty → USDT using entry price
-    if (cur && entry) document.getElementById('pnlInvested').value = fmt(cur * entry, 2);
-  }
+  pnlSizeMode = pnlSizeMode === 'usdt' ? 'qty' : 'usdt';
+  switchSizeMode('pnl', pnlSizeMode);
   calcPnl();
 }
 
 function toggleAvgSizeMode() {
-  const entry = parseFloat(document.getElementById('avgEntry').value);
-  const cur   = parseFloat(document.getElementById('avgInvested').value);
-  if (avgSizeMode === 'usdt') {
-    avgSizeMode = 'qty';
-    document.getElementById('avgSizeLbl').textContent = 'Position size (units)';
-    document.querySelector('[onclick="toggleAvgSizeMode()"]').textContent = 'Switch to USD';
-    if (cur && entry) document.getElementById('avgInvested').value = fmt(cur / entry, 6);
-  } else {
-    avgSizeMode = 'usdt';
-    document.getElementById('avgSizeLbl').textContent = 'Amount invested (USD)';
-    document.querySelector('[onclick="toggleAvgSizeMode()"]').textContent = 'Switch to qty';
-    if (cur && entry) document.getElementById('avgInvested').value = fmt(cur * entry, 2);
-  }
+  avgSizeMode = avgSizeMode === 'usdt' ? 'qty' : 'usdt';
+  switchSizeMode('avg', avgSizeMode);
   calcAvg();
 }
 
-// ── Calculator logic ───────────────────────────────────────────────────────
+const signedHtml = (v, text) => `<span style="color:${v >= 0 ? 'var(--success)' : 'var(--danger)'}">${text}</span>`;
+
 function calcPnl() {
-  const entry   = parseFloat(document.getElementById('pnlEntry').value);
-  const rawSize = parseFloat(document.getElementById('pnlInvested').value);
-  const side    = document.getElementById('pnlSide').value;
-  const lev     = parseFloat(document.getElementById('pnlLev').value) || 1;
-  const res     = document.getElementById('pnlResult');
-
-  if (!entry || !rawSize) { res.classList.remove('show'); return; }
-
-  // Resolve qty and margin
-  let qty, margin;
-  if (pnlSizeMode === 'qty') {
-    qty    = rawSize;
-    margin = (qty * entry) / lev;
-  } else {
-    // rawSize = margin (USDT invested)
-    margin = rawSize;
-    qty    = (margin * lev) / entry;
-  }
-  const notional = qty * entry;
-
-  document.getElementById('pnlSize').textContent   = fmt(qty, 6) + ' units';
-  document.getElementById('pnlMargin').textContent = '$' + fmt(margin);
+  const res = calcEl('pnlResult');
+  const side = calcEl('pnlSide').value;
+  const entry = calcNum('pnlEntry');
+  const size = calcEngine.sizeFrom({ mode: pnlSizeMode === 'qty' ? 'qty' : 'usd', value: calcNum('pnlInvested'),
+                                     entry, lev: calcNum('pnlLev') || 1 });
+  if (!size) { res.classList.remove('show'); return; }
+  calcEl('pnlSize').textContent = fmt(size.qty, 6) + ' units';
+  calcEl('pnlMargin').textContent = '$' + fmt(size.margin);
 
   if (pnlMode === 'std') {
-    const current = parseFloat(document.getElementById('pnlCurrent').value);
-    if (!current) { res.classList.remove('show'); return; }
-    const pnl    = side === 'Long' ? (current - entry) * qty : (entry - current) * qty;
-    const roi    = (pnl / margin) * 100;
-    const pnlCol = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
-    const sign   = pnl >= 0 ? '+' : '';
-    document.getElementById('pnlPnl').innerHTML = `<span style="color:${pnlCol}">${sign}$${fmt(Math.abs(pnl))}</span>`;
-    document.getElementById('pnlRoi').innerHTML = `<span style="color:${pnlCol}">${sign}${fmt(roi, 2)}%</span>`;
+    const exit = calcNum('pnlCurrent');
+    if (!exit) { res.classList.remove('show'); return; }
+    const { pnl, roiPct } = calcEngine.pnlAt({ side, entry, qty: size.qty, exit, margin: size.margin });
+    calcEl('pnlPnl').innerHTML = signedHtml(pnl, fmtSignedUsd(pnl));
+    calcEl('pnlRoi').innerHTML = signedHtml(pnl, `${roiPct < 0 ? '−' : '+'}${fmt(Math.abs(roiPct), 2)}%`);
   } else {
-    // Reverse: solve for exit price given target ROI %
-    const targetRoi = parseFloat(document.getElementById('pnlTargetRoi').value);
-    if (isNaN(targetRoi)) { res.classList.remove('show'); return; }
-    const targetPnl  = margin * targetRoi / 100;
-    // pnl = (exit - entry) * qty   (Long)   →  exit = entry + pnl/qty
-    // pnl = (entry - exit) * qty   (Short)  →  exit = entry - pnl/qty
-    const exitPrice = side === 'Long' ? entry + targetPnl / qty : entry - targetPnl / qty;
-    const col = targetRoi >= 0 ? 'var(--success)' : 'var(--danger)';
-    document.getElementById('pnlExitPrice').innerHTML = `<span style="color:${col}">$${fmt(exitPrice)}</span>`;
+    const targetPct = calcNum('pnlTargetRoi');
+    if (isNaN(targetPct)) { res.classList.remove('show'); return; }
+    const exit = calcEngine.exitForReturn({ side, entry, qty: size.qty, margin: size.margin, targetPct });
+    calcEl('pnlExitPrice').innerHTML = signedHtml(targetPct, fmtPrice(exit));
   }
-
   res.classList.add('show');
 }
 
+function liqText(detail, mark) {
+  if (!detail?.price) return { price: 'none in range', dist: '—' };
+  const dist = (detail.price - mark) / mark * 100;
+  return { price: fmtPrice(detail.price), dist: `${dist < 0 ? '−' : '+'}${fmt(Math.abs(dist), 2)}%` };
+}
+
 function calcAvg() {
-  const entry    = parseFloat(document.getElementById('avgEntry').value);
-  const rawSize  = parseFloat(document.getElementById('avgInvested').value);
-  const newEntry = parseFloat(document.getElementById('avgNewEntry').value);
-  const target   = parseFloat(document.getElementById('avgTarget').value);
-  const lev      = parseFloat(document.getElementById('avgLev').value) || 1;
-  const res      = document.getElementById('avgResult');
-  const warnEl   = document.getElementById('avgWarnWrap');
-  warnEl.innerHTML = '';
+  const res = calcEl('avgResult');
+  const warn = calcEl('avgWarnWrap');
+  warn.innerHTML = '';
+  const entry = calcNum('avgEntry'), newEntry = calcNum('avgNewEntry'), target = calcNum('avgTarget');
+  const lev = calcNum('avgLev') || 1;
+  const size = calcEngine.sizeFrom({ mode: avgSizeMode === 'qty' ? 'qty' : 'usd', value: calcNum('avgInvested'), entry, lev });
+  if (!size || !newEntry || !target) { res.classList.remove('show'); return; }
 
-  if (!entry || !rawSize || !newEntry || !target) { res.classList.remove('show'); return; }
-
-  // Resolve current qty (notional units)
-  let qtyOld, marginOld;
-  if (avgSizeMode === 'qty') {
-    qtyOld    = rawSize;
-    marginOld = (qtyOld * entry) / lev;
-  } else {
-    // rawSize = margin (USDT)
-    marginOld = rawSize;
-    qtyOld    = (marginOld * lev) / entry;
-  }
-  const notionalOld = qtyOld * entry;   // total position notional
-
-  // Solve: (notionalOld + X_notional) / (qtyOld + X_notional/newEntry) = target
-  // where X_notional is additional notional to add
-  // Rearranges to: X_notional = (target * qtyOld - notionalOld) / (1 - target/newEntry)
-  const numerator   = target * qtyOld - notionalOld;
-  const denominator = 1 - target / newEntry;
-
-  if (Math.abs(denominator) < 1e-10) { res.classList.remove('show'); return; }
-  const addNotional = numerator / denominator;
-  const addMargin   = addNotional / lev;
-  const isAvgUp     = newEntry > entry;
-
-  if (addNotional < 0) {
-    // Target is not reachable by adding at this price — inform user
+  const r = calcEngine.averageAdd({ entry, qtyOld: size.qty, newEntry, target });
+  if (r.unreachable) {
     res.classList.remove('show');
-    const warn = document.createElement('p');
-    warn.className = 'calc-result-warn';
-    warn.style.cssText = 'display:block;margin-top:10px;padding:8px 10px;background:var(--amber-bg);color:var(--amber);border-radius:var(--radius);font-size:11px';
-    warn.textContent = `Target average $${fmt(target)} is not reachable by adding at $${fmt(newEntry)}. Try a different new entry or target.`;
-    warnEl.appendChild(warn);
+    warn.innerHTML = `<p class="calc-warn">Target average $${fmt(target)} is not reachable by adding at $${fmt(newEntry)}. Try a different new entry or target.</p>`;
     return;
   }
+  calcEl('avgAdd').textContent       = '$' + fmt(r.addNotional);
+  calcEl('avgAddMargin').textContent = '$' + fmt(r.addNotional / lev) + ` (${lev}× lev)`;
+  calcEl('avgNewSize').textContent   = fmt(r.newQty, 6) + ' units';
+  calcEl('avgAchieved').textContent  = '$' + fmt(r.achieved);
+  calcEl('avgTotal').textContent     = '$' + fmt(r.totalNotional);
 
-  const addQty      = addNotional / newEntry;
-  const newQty      = qtyOld + addQty;
-  const totalNotional = notionalOld + addNotional;
-  const achieved    = totalNotional / newQty;
-
-  document.getElementById('avgAdd').textContent      = '$' + fmt(addNotional);
-  document.getElementById('avgAddMargin').textContent = '$' + fmt(addMargin) + ` (${lev}× lev)`;
-  document.getElementById('avgNewSize').textContent  = fmt(newQty, 6) + ' units';
-  document.getElementById('avgAchieved').textContent = '$' + fmt(achieved);
-  document.getElementById('avgTotal').textContent    = '$' + fmt(totalNotional);
-
-  if (isAvgUp) {
-    warnEl.innerHTML = '<p style="margin-top:6px;padding:6px 8px;background:var(--amber-bg);color:var(--amber);border-radius:var(--radius);font-size:11px">Averaging up — adding at a higher price than current entry.</p>';
+  const leg = poolLegFor(calcPick);
+  calcEl('avgLiqRow').style.display = leg ? '' : 'none';
+  if (leg) {
+    const { P, pos } = leg;
+    const after = riskEngine.liquidationDetail(riskEngine.addToPosition(P.pool, pos.key, r.addQty, newEntry), pos.asset, P.marks, P.opts);
+    const t = liqText(after, P.marks[pos.asset]);
+    calcEl('avgLiq').textContent = `${t.price} (${t.dist})`;
   }
-
+  if (newEntry > entry) warn.innerHTML = '<p class="calc-warn">Averaging up — adding at a higher price than current entry.</p>';
   res.classList.add('show');
 }
 
 function calcLiq() {
-  const entry = parseFloat(document.getElementById('liqEntry').value);
-  const lev   = parseFloat(document.getElementById('liqLev').value);
-  const side  = document.getElementById('liqSide').value;
-  const mmrRaw = parseFloat(document.getElementById('liqMmr').value);
-  const mmr   = isNaN(mmrRaw) ? 0.5 : mmrRaw;   // default 0.5%
-  const res   = document.getElementById('liqResult');
-  if (!entry || !lev) { res.classList.remove('show'); return; }
+  const leg = poolLegFor(calcPick);
+  calcEl('liqAccount').style.display = leg ? '' : 'none';
+  calcEl('liqManual').style.display = leg ? 'none' : '';
+  if (leg) { calcLiqAccount(leg); return; }
 
-  // Cross-margin liq price estimate (simplified, linear):
-  // For Long:  liqPrice = entry * (1 - 1/lev + mmr/100)
-  // For Short: liqPrice = entry * (1 + 1/lev - mmr/100)
-  // This matches most perp exchange formulas for cross-margin without funding.
-  const mmrFrac = mmr / 100;
-  let liqPrice;
-  if (side === 'Long') {
-    liqPrice = entry * (1 - 1 / lev + mmrFrac);
-  } else {
-    liqPrice = entry * (1 + 1 / lev - mmrFrac);
-  }
-  liqPrice = Math.max(0, liqPrice);
-
-  const dist = Math.abs(entry - liqPrice) / entry * 100;
-  const move = Math.abs(entry - liqPrice);
-  const col  = dist < 10 ? 'var(--danger)' : dist < 30 ? 'var(--warning)' : 'var(--success)';
-
-  document.getElementById('liqPrice').innerHTML = `<span style="color:${col}">$${fmt(liqPrice)}</span>`;
-  document.getElementById('liqDist').innerHTML  = `<span style="color:${col}">${fmt(dist, 2)}%</span>`;
-  document.getElementById('liqMove').textContent = '$' + fmt(move) + ' per unit';
-
+  const res = calcEl('liqResult');
+  const entry = calcNum('liqEntry');
+  const mmrRaw = calcNum('liqMmr');
+  const r = calcEngine.isolatedLiq({ side: calcEl('liqSide').value, entry, lev: calcNum('liqLev'),
+                                     mmrPct: isNaN(mmrRaw) ? 0.5 : mmrRaw });
+  if (!r) { res.classList.remove('show'); return; }
+  const col = r.distPct < 10 ? 'var(--danger)' : r.distPct < 30 ? 'var(--warning)' : 'var(--success)';
+  calcEl('liqPrice').innerHTML = `<span style="color:${col}">${fmtPrice(r.price)}</span>`;
+  calcEl('liqDist').innerHTML  = `<span style="color:${col}">${fmt(r.distPct, 2)}%</span>`;
+  calcEl('liqMove').textContent = '$' + fmt(Math.abs(entry - r.price)) + ' per unit';
   res.classList.add('show');
+}
+
+function calcLiqAccount({ P, pos }) {
+  const mark = P.marks[pos.asset];
+  const detail = riskEngine.liquidationDetail(P.pool, pos.asset, P.marks, P.opts);
+  const now = liqText(detail, mark);
+  const reported = P.liqCheck?.find(x => x.key === pos.key)?.reportedLiqPrice;
+  calcEl('liqAccPrice').textContent = now.price;
+  calcEl('liqAccDist').textContent = now.dist;
+  calcEl('liqAccReported').textContent = reported ? fmtPrice(reported) : 'none';
+  calcEl('liqAccNote').textContent = detail.illConditioned
+    ? `A near-flat book: each 1% of equity moves this by about $${fmt(detail.movePerOnePctEquity)} — read it as a region, not a price.`
+    : '';
+
+  const addRes = calcEl('liqAddResult');
+  const addUsd = calcNum('liqAddUsd');
+  const addPrice = calcNum('liqAddPrice') || mark;
+  if (!(addUsd > 0)) { addRes.classList.remove('show'); return; }
+  const after = liqText(riskEngine.liquidationDetail(
+    riskEngine.addToPosition(P.pool, pos.key, addUsd / addPrice, addPrice), pos.asset, P.marks, P.opts), mark);
+  calcEl('liqAddPrice2').textContent = after.price;
+  calcEl('liqAddDist').textContent = after.dist;
+  addRes.classList.add('show');
 }

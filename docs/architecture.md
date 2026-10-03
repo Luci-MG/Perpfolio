@@ -6,15 +6,15 @@
 server.js                      wiring: static files, routes in order, services when run directly
 routes/*.js                    one register(app) per area — request parsing and response shaping only
 lib/*.js                       exchange access, caches, snapshots, the history store sync
-risk-engine.js vol-estimator.js stop-check.js confluence.js trade-analytics.js trip-context.js history-store.js
+risk-engine.js calc-engine.js vol-estimator.js stop-check.js confluence.js trade-analytics.js trip-context.js history-store.js
                                pure engines at the root: no network, fully unit-tested
 public/index.html              markup only
 public/css/app.css             every style; theme tokens on :root
 public/js/*.js                 classic scripts, one global scope, loaded in a fixed order
 ```
 
-`risk-engine.js` stays at the project root because the browser imports it from
-`/risk-engine.js` — the stress panel and the API run the same file, so they cannot disagree.
+`risk-engine.js` and `calc-engine.js` stay at the project root because the browser imports
+them from `/risk-engine.js` and `/calc-engine.js` — the stress panel and the API run the same file, so they cannot disagree.
 
 ## Server modules — imports only point down this list
 
