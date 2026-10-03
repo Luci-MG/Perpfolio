@@ -113,7 +113,7 @@ complement and painted the fill out of the viewBox for every utilisation between
 small long/short split donut only.
 
 ### Calculators
-One modal, three tabs (P&L, Avg down/up, Liq price), and a **position picker** at the top:
+One modal, five tabs (P&L, Avg down/up, Liq price, Size, Break-even), and a **position picker** at the top:
 *Manual* or any open position. Picking one fills every tab — side, entry, mark, actual
 leverage and size, and Binance's maintenance rate for that size tier — through one
 `fillFromPosition(p)`. Opening from a tile's context menu pre-picks that position; from the
@@ -128,6 +128,13 @@ sidebar it starts on Manual.
   than a price. *What if I add* re-solves after `addToPosition`. Manual and Hyperliquid use the
   isolated estimate, labelled as such.
 - **Avg** adds *liq after this add* for a Binance position.
+- **P&L** adds a ladder: P&L and return at the exit price moved −10/−5/−2/+2/+5/+10%.
+- **Size** sizes a trade from risk: equity (the position's venue, or the total), risk %,
+  entry and stop give quantity, notional and margin; a picked position pre-fills the Stops
+  tab's suggested stop when that tab has loaded. A stop on the wrong side says so.
+- **Break-even** is the exit that pays back both fees and the funding for the hours held:
+  fees default to the account's taker rate, funding to the position's own rate and cadence;
+  positive funding means longs pay, so it can lower a short's break-even.
 - The book is the Stress tab's `riskBook`, loaded on first use like the liquidation drawer;
   no new route or poll.
 

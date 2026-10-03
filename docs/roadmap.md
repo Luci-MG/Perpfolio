@@ -16,7 +16,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P3 | [Journal: richer Trades](#p3--journal-richer-trades) | done (2026-10-03) |
 | P3 | [Journal: context at entry](#p3--journal-context-at-entry) | done (2026-10-03) |
 | P3 | [Confluence: verdict and honest calibration](#p3--confluence-verdict-and-honest-calibration) | planned |
-| P3 | [Calculators: live and account-aware](#p3--calculators-live-and-account-aware) | in progress |
+| P3 | [Calculators: live and account-aware](#p3--calculators-live-and-account-aware) | done (2026-10-03) |
 | P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | idea |
 | P4 | [Goals: design spike](#p4--goals-design-spike) | idea |
 | — | [Carried over](#carried-over) | planned |
@@ -187,8 +187,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   4. **New:** size from risk %, break-even including fees and funding.
 - **Done when:** the Liq calculator agrees with Stress for the same position and price.
 - **Depends on:** P0 (asset).
-- **Status:** steps 1–2 done (2026-10-03): picker, account-aware Liq, liq after an add. Steps
-  3–4 — the sensitivity ladder and the Size and Break-even tabs — are next.
+- **Status:** done (2026-10-03) — see `docs/frontend.md`, *Calculators*. Account-aware for
+  Binance only; Hyperliquid stays on the isolated estimate.
 
 ## P4 — What correlates with outcome
 

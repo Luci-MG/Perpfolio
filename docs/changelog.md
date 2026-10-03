@@ -1,5 +1,13 @@
 # Changelog
 
+## Calculators, part 2: ladder, Size and Break-even (2026-10-03)
+
+- The P&L tab shows P&L and return at ±2/5/10% around the exit price.
+- **Size**: quantity, notional and margin that risk a chosen % of equity at a stop,
+  pre-filled with the Stops tab's suggestion. **Break-even**: the exit that covers both fees
+  and the funding for the hold, from the account's taker rate and the position's funding.
+- `pnlLadder`, `sizeFromRisk` and `breakEven` in `calc-engine.js`, unit-tested.
+
 ## Calculators, part 1: live and account-aware (2026-10-03)
 
 - A position picker fills every calculator tab from a live position, including the

@@ -50,3 +50,41 @@ export function maintRatePct(brackets, notional) {
   const tier = pickTier(brackets, notional);
   return tier ? tier.maintMarginRatio * 100 : null;
 }
+
+export const LADDER_STEPS = [-10, -5, -2, 2, 5, 10];
+
+/** P&L and return on margin with price moved by each of `steps` percent from `base`. */
+export function pnlLadder({ side, entry, qty, margin, base, steps = LADDER_STEPS }) {
+  return steps.map(movePct => {
+    const price = base * (1 + movePct / 100);
+    return { movePct, price, ...pnlAt({ side, entry, qty, exit: price, margin }) };
+  });
+}
+
+/**
+ * Size that loses `riskPct` of `equity` if `stop` is hit from `entry`, and the margin it needs
+ * at `lev`. A stop on the wrong side of entry returns `{ wrongSide: true }`.
+ */
+export function sizeFromRisk({ side, equity, riskPct, entry, stop, lev = 1 }) {
+  if (!(equity > 0) || !(riskPct > 0) || !(entry > 0) || !(stop > 0)) return null;
+  const perUnit = side === 'Long' ? entry - stop : stop - entry;
+  if (!(perUnit > 0)) return { wrongSide: true };
+  const riskUsd = equity * riskPct / 100;
+  const qty = riskUsd / perUnit;
+  return { riskUsd, qty, notional: qty * entry, margin: qty * entry / lev, stopPct: perUnit / entry * 100 };
+}
+
+/**
+ * The exit that pays back the entry and exit fees and the funding for `hours` held. Fees are
+ * fractions of notional; `fundingRatePct` is per settlement, positive meaning longs pay, and
+ * its notional is taken at entry.
+ */
+export function breakEven({ side, entry, qty, feeIn, feeOut, fundingRatePct, intervalHours, hours }) {
+  if (!(entry > 0) || !(qty > 0) || !(intervalHours > 0)) return null;
+  const notional = entry * qty;
+  const funding = (side === 'Long' ? 1 : -1) * (fundingRatePct / 100) * notional * (hours / intervalHours);
+  const exit = side === 'Long'
+    ? (entry * (1 + feeIn) + funding / qty) / (1 - feeOut)
+    : (entry * (1 - feeIn) - funding / qty) / (1 + feeOut);
+  return { exit, movePct: (exit - entry) / entry * 100, fees: notional * feeIn + exit * qty * feeOut, funding };
+}

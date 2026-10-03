@@ -186,11 +186,27 @@ test('the calculators fill from a picked position, and its liquidation matches S
   run(`document.getElementById('avgTarget').value = 0.26; switchCalcTab('avg')`);
   assert.match(text('avgLiq'), /^\$[\d.]+ \(−[\d.]+%\)$/);
 
+  run(`switchCalcTab('pnl')`);
+  assert.equal((run(`document.getElementById('pnlLadder').innerHTML`).match(/<tr>/g) || []).length, 7, 'header + six steps');
+
+  run(`switchCalcTab('size')`);
+  assert.ok(value('sizeEquity') > 0 && value('sizeLev') === 3);
+  run(`document.getElementById('sizeRisk').value = 1; document.getElementById('sizeStop').value = 0.24; calcSize()`);
+  assert.match(text('sizeRiskUsd'), /^\$[\d,.]+$/);
+  run(`document.getElementById('sizeStop').value = 0.3; calcSize()`);
+  assert.match(run(`document.getElementById('sizeWarn').innerHTML`), /wrong side/);
+
+  run(`switchCalcTab('be')`);
+  assert.equal(value('beInterval'), 4, 'ENA settles every 4h');
+  assert.equal(value('beFeeIn'), 0.05, "the account's taker rate");
+  assert.match(text('beExit'), /^\$0\.27\d*$/);
+
   run(`pickCalcPosition(''); switchCalcTab('liq'); document.getElementById('liqEntry').value = 100;
        document.getElementById('liqLev').value = 10; calcLiq()`);
   assert.equal(run(`document.getElementById('liqManual').style.display`), '');
   assert.match(run(`document.getElementById('liqPrice').innerHTML`), /\$90\.50/);
-  for (const id of ['liqAccPrice', 'liqAccDist', 'liqAddPrice2', 'avgLiq', 'pnlPnl', 'liqPrice']) {
+  for (const id of ['liqAccPrice', 'liqAccDist', 'liqAddPrice2', 'avgLiq', 'pnlPnl', 'liqPrice', 'pnlLadder',
+                    'sizeQty', 'sizeMargin', 'beExit', 'beMove', 'beFees', 'beFundingUsd']) {
     assert.doesNotMatch(String(text(id) ?? '') + run(`document.getElementById('${id}').innerHTML`), /undefined|NaN/, id);
   }
 });
