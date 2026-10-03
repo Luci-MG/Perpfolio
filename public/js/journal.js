@@ -8,6 +8,7 @@ function setJrTab(t) {
   jrTab = t;
   if (t === 'trades' && !tripsData && !tripsLoading) fetchTrips();
   if (t === 'goals' && !goalsLoading) fetchGoals();
+  if (t === 'factors' && !factorsData && !factorsLoading) fetchFactors();
   rerenderStress();
 }
 
@@ -22,6 +23,7 @@ async function fetchPerformance() {
     if (!data.ok) throw new Error(data.error || 'performance failed');
     perfData = data;
     fetchGoals();
+    reloadFactors();
   } catch (err) {
     perfData = { error: err.message };
   } finally {
@@ -318,7 +320,7 @@ function renderJournal() {
     trades can show a five-figure number and mean nothing.</p>`;
 
   const tabs = `<div class="jr-subtabs">${
-    [['overview','Overview'],['goals','Goals'],['performance','Performance'],['behaviour','Behaviour'],
+    [['overview','Overview'],['goals','Goals'],['performance','Performance'],['behaviour','Behaviour'],['factors','Factors'],
      ['timing','Timing'],['symbols','Symbols'],['costs','Costs'],['trades','Trades']]
       .map(([k, l]) => `<button class="jr-subtab${jrTab === k ? ' on' : ''}" onclick="setJrTab('${k}')">${l}</button>`)
       .join('')}</div>`;
@@ -512,6 +514,7 @@ function renderJournal() {
 
   if (jrTab === 'trades') body = renderTradesTab();
   if (jrTab === 'goals') body = renderGoalsTab();
+  if (jrTab === 'factors') body = renderFactorsTab();
 
   if (jrTab === 'performance') requestAnimationFrame(initEquityHover);
 

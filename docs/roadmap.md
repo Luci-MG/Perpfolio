@@ -19,7 +19,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P3 | [Calculators: live and account-aware](#p3--calculators-live-and-account-aware) | done (2026-10-03) |
 | P3 | [Sessions across the dashboard](#p3--sessions-across-the-dashboard) | done (2026-10-03) |
 | P3 | [Protected tiles read as safe](#p3--protected-tiles-read-as-safe) | done (2026-10-03) |
-| P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | idea |
+| P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | done (2026-10-03) |
 | P4 | [Goals: design spike](#p4--goals-design-spike) | done (2026-10-03) |
 | P4 | [Goals: rules](#p4--goals-rules) | done (2026-10-03) |
 | P4 | [Goals: milestones](#p4--goals-milestones) | done (2026-10-03) |
@@ -235,6 +235,9 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 
 ## P4 — What correlates with outcome
 
+- **Status:** done (2026-10-03) — the Journal's **Factors** tab; method in
+  [`research/outcome-factors.md`](research/outcome-factors.md). Multivariable regression is
+  deferred until about 500 trips.
 - **Idea:** rank factors (session, ATR regime, against the confluence bias, adds, margin % at
   entry …) by their effect on PnL and win rate, with n and a confidence interval, the same
   honesty rules as confluence calibration. A factor below a minimum n is not shown.
