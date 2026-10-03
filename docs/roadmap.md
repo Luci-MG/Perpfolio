@@ -20,7 +20,9 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P3 | [Sessions across the dashboard](#p3--sessions-across-the-dashboard) | done (2026-10-03) |
 | P3 | [Protected tiles read as safe](#p3--protected-tiles-read-as-safe) | done (2026-10-03) |
 | P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | idea |
-| P4 | [Goals: design spike](#p4--goals-design-spike) | idea |
+| P4 | [Goals: design spike](#p4--goals-design-spike) | done (2026-10-03) |
+| P4 | [Goals: rules](#p4--goals-rules) | done (2026-10-03) |
+| P4 | [Goals: milestones](#p4--goals-milestones) | done (2026-10-03) |
 | — | [Carried over](#carried-over) | planned |
 
 ---
@@ -240,12 +242,32 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 
 ## P4 — Goals: design spike
 
-- **Idea:** process goals checked automatically against fills (max leverage, max loss per
-  trade, stop after N losses, trades per day) plus milestones with deadlines and a progress
-  line over time. Outcome-only targets are left out — they encourage forcing trades.
-- **Spike output:** a short design note — goal types, storage, how each is checked, how
-  progress is shown. Behaviour flags are the first candidate goals. No build before the note.
-- **Depends on:** Journal: Overview and Behaviour.
+- **Status:** done (2026-10-03) — the agreed design is [`goals.md`](goals.md): goal types,
+  scoring from the set date, honest suggestions, the scoreboard UI, engine, storage and API.
+  A dry run on the live book showed that several textbook rules would have cost money there,
+  so suggestions are limited to goals whose breaches lost money.
+
+## P4 — Goals: rules
+
+- **Status:** done (2026-10-03).
+- **Problem:** the journal measures habits but nothing holds you to a rule you set.
+- **Scope:** `goals.js` with the eight rule types, `data/goals.json`, `GET`/`POST /api/goals`
+  and the preview route; the Journal **Goals** tab — scoreboard rows, expanded calendar and
+  breaches, the add/edit drawer with live preview, the empty state's suggestions — and the
+  Overview line. All as in `goals.md`.
+- **Done when:** a goal set today scores only from today, every row shows adherence with n,
+  and the drawer preview matches what the row scores once added.
+- **Depends on:** Goals: design spike (done).
+
+## P4 — Goals: milestones
+
+- **Status:** done (2026-10-03).
+- **Scope:** account-value-by-date and monthly-drawdown milestones — progress bar with the
+  pace marker in the row, mini chart with a dashed projection when expanded, labelled an
+  extrapolation.
+- **Done when:** a milestone reads correctly from snapshots and says "not enough history" in
+  its first week.
+- **Depends on:** Goals: rules; equity snapshots accumulating.
 
 ---
 

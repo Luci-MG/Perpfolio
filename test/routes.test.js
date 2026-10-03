@@ -152,7 +152,7 @@ test('trips carry context from the sync, funding from the ledger, and a re-sync 
   for (const t of body.trips) {
     assert.ok(t.mae <= 0 && t.mfe >= 0, `${t.key} mae ${t.mae} mfe ${t.mfe}`);
     assert.ok(Number.isFinite(t.atrPct) && ['up', 'down', 'flat'].includes(t.btcTrend), t.key);
-    assert.ok(['Asia', 'Europe', 'Europe + US', 'US', 'Off-hours'].includes(t.session));
+    assert.ok(['Asia', 'Europe', 'Europe + US', 'US', 'Off-hours', 'Weekend'].includes(t.session));
     assert.ok(t.openNotional > 0 && t.side === 'Long');
   }
   const covered = body.trips.filter(t => t.funding != null);
@@ -217,6 +217,69 @@ test('health reports a verdict without calling any exchange', async () => {
   assert.equal(body.rate.weightLimit, 2400);
   assert.ok(body.snapshotAgeMs.binance != null);
   assert.equal(fake.calls.length, before);
+});
+
+const postGoal = (body, type = 'application/json') =>
+  get('/api/goals', { method: 'POST', headers: { 'Content-Type': type }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+
+test('goals: add, edit, pause, resume and delete persist, scored from the day each was set', async () => {
+  const empty = (await get('/api/goals?tz=0')).body;
+  assert.deepEqual([empty.ok, empty.goals, empty.today.scored], [true, [], 0]);
+  record('goals', { ...empty, suggestions: empty.suggestions.map(({ preview: { strip, ...rest }, ...s }) => ({ ...s, preview: rest })) });
+
+  assert.equal((await postGoal({ action: 'add', type: 'maxTradesPerDay', params: { max: 3 } })).status, 200);
+  assert.equal((await postGoal({ action: 'add', type: 'noSessions', params: { sessions: ['Weekend'] } })).status, 200);
+  let { goals } = (await get('/api/goals')).body;
+  assert.equal(goals.length, 2);
+  const cap = goals.find(g => g.type === 'maxTradesPerDay');
+  assert.ok(cap.before.n > 0, 'synced history reported apart');
+  assert.equal(cap.n, 0, 'nothing scored before the goal was set');
+
+  await postGoal({ action: 'edit', id: cap.id, params: { max: 5 } });
+  await postGoal({ action: 'pause', id: cap.id });
+  goals = (await get('/api/goals')).body.goals;
+  const edited = goals.find(g => g.id === cap.id);
+  assert.deepEqual([edited.params.max, edited.setAt, edited.status], [5, cap.setAt, 'paused']);
+  assert.equal(goals.at(-1).id, cap.id, 'paused goals sort last');
+
+  await postGoal({ action: 'resume', id: cap.id });
+  await postGoal({ action: 'delete', id: goals[0].id });
+  const saved = JSON.parse(fs.readFileSync(path.join(process.env.DASHBOARD_DATA_DIR, 'goals.json'), 'utf8'));
+  assert.deepEqual(saved.map(g => [g.id, g.pauses.every(p => p.to != null), g.history.length]), [[cap.id, true, 1]]);
+  await postGoal({ action: 'delete', id: cap.id });
+});
+
+test('goals accept only well-formed JSON changes, and preview without saving', async () => {
+  assert.equal((await postGoal('action=add&type=maxLeverage', 'application/x-www-form-urlencoded')).status, 415);
+  assert.equal((await postGoal('{"action":"add"')).status, 400);
+  assert.equal((await postGoal({ action: 'add', type: 'maxLeverage', params: { max: 500 } })).status, 400);
+  assert.equal((await postGoal({ action: 'drop', id: 'x' })).status, 400);
+  assert.equal((await postGoal({ action: 'pause', id: 'missing' })).status, 400);
+
+  const params = encodeURIComponent(JSON.stringify({ max: 2 }));
+  const { status, body } = await get(`/api/goals/preview?type=maxTradesPerDay&params=${params}&tz=0`);
+  assert.equal(status, 200);
+  assert.ok(body.preview.n > 0);
+  assert.equal(body.preview.strip.length, 14);
+  assert.equal((await get('/api/goals/preview?type=maxTradesPerDay&params={bad')).status, 400);
+  assert.deepEqual((await get('/api/goals')).body.goals, []);
+});
+
+test('milestones sit after rules, by target, and are scored from snapshots without counting transfers', async () => {
+  for (const target of [60000, 20000]) await postGoal({ action: 'add', type: 'accountTarget', params: { target } });
+  await postGoal({ action: 'add', type: 'monthlyDrawdown', params: { maxPct: 10 } });
+  await postGoal({ action: 'add', type: 'noUnderwaterAdds' });
+  assert.equal((await postGoal({ action: 'add', type: 'accountTarget', params: { target: 5, by: '2020-01-01' } })).status, 400);
+  const { goals, today } = (await get('/api/goals?tz=0')).body;
+  assert.deepEqual(goals.map(g => g.label), ['No adding while underwater', 'Monthly drawdown under 10%', 'Account ≥ $20k', 'Account ≥ $60k']);
+  const target = goals[2];
+  assert.ok(['early', 'reached'].includes(target.status), target.status);
+  assert.ok(Array.isArray(today.offTrack));
+  const params = encodeURIComponent(JSON.stringify({ target: 2e6 }));
+  const preview = (await get(`/api/goals/preview?type=accountTarget&params=${params}`)).body.preview;
+  assert.equal(preview.unit, 'milestone');
+  assert.ok(preview.current > 0 && preview.needed > 0);
+  for (const g of goals) await postGoal({ action: 'delete', id: g.id });
 });
 
 test('route output matches the golden snapshot', () => {

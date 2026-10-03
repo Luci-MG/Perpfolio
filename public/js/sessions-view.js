@@ -1,7 +1,7 @@
 // sessions-view.js — the session clock in the sidebar header and the dashboard-wide session
 // filter that Journal and Confluence honour. Session definitions are /sessions.js.
 
-const SESSION_CHOICES = ['All', 'Asia', 'Europe', 'Europe + US', 'US', 'Off-hours'];
+const SESSION_CHOICES = ['All', 'Asia', 'Europe', 'Europe + US', 'US', 'Off-hours', 'Weekend'];
 let sessionsModule = null;
 let sessionFilter = (s => (SESSION_CHOICES.includes(s) ? s : 'All'))(loadPref('session', 'All'));
 
@@ -30,7 +30,7 @@ function sessionClockInner() {
   const c = sessionsModule.clockAt(now);
   const title = c.markets.map(m => (m.open ? `${m.name}: open, closes ${localTime(m.closesAt)}`
     : `${m.name}: opens ${localTime(m.opensAt)}`)).join('\n');
-  return `<span class="session-dot ${c.session === 'Off-hours' ? 'off' : ''}"></span><span title="${esc(title)}">${esc(sessionClockText(c, now))}</span>`;
+  return `<span class="session-dot ${['Off-hours', 'Weekend'].includes(c.session) ? 'off' : ''}"></span><span title="${esc(title)}">${esc(sessionClockText(c, now))}</span>`;
 }
 
 function renderSessionClock() {

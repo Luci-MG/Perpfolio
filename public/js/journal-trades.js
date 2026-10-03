@@ -3,7 +3,7 @@
 
 let tripsData = null, tripsLoading = false;
 let tradesSort = { id: 'closed', dir: -1 };
-let tradesFilter = { symbol: '', side: 'all', result: 'all', hedged: 'all' };
+let tradesFilter = { symbol: '', side: 'all', result: 'all', hedged: 'all', day: null };
 let tradesMore = loadPref('tradesMore', false);
 let tradesShowAll = false;
 const TRADES_PAGE = 50;
@@ -127,7 +127,8 @@ function filteredTrips() {
     && (sessionFilter === 'All' || t.session === sessionFilter)
     && (f.side === 'all' || t.side === f.side)
     && (f.result === 'all' || (f.result === 'win') === (tripNet(t) > 0))
-    && (f.hedged === 'all' || (f.hedged === 'yes') === t.hedged));
+    && (f.hedged === 'all' || (f.hedged === 'yes') === t.hedged)
+    && (!f.day || (t.openTime >= f.day && t.openTime < f.day + 86_400_000)));
 }
 
 function sortedTrips(trips) {
@@ -214,6 +215,7 @@ function renderTradesTab() {
     ${tradesSelect('side', [['all', 'Long + short'], ['Long', 'Long'], ['Short', 'Short']])}
     ${tradesSelect('result', [['all', 'Wins + losses'], ['win', 'Wins'], ['loss', 'Losses']])}
     ${tradesSelect('hedged', [['all', 'Hedged or not'], ['yes', 'Hedged at entry'], ['no', 'Not hedged']])}
+    ${tradesFilter.day ? `<button class="st-btn on" onclick="filterTrades('day', null)" title="Show every day">${new Date(tradesFilter.day).toLocaleDateString([], { month: 'short', day: 'numeric' })} ✕</button>` : ''}
     <button class="st-btn" onclick="toggleTradeColumns()">${tradesMore ? 'Fewer columns' : 'More columns'}</button>
     <button class="st-btn" onclick="exportTradesCsv()">Export CSV</button>
   </div>`;

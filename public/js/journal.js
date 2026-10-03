@@ -7,6 +7,7 @@ let jrTab = 'overview';
 function setJrTab(t) {
   jrTab = t;
   if (t === 'trades' && !tripsData && !tripsLoading) fetchTrips();
+  if (t === 'goals' && !goalsLoading) fetchGoals();
   rerenderStress();
 }
 
@@ -20,6 +21,7 @@ async function fetchPerformance() {
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'performance failed');
     perfData = data;
+    fetchGoals();
   } catch (err) {
     perfData = { error: err.message };
   } finally {
@@ -316,7 +318,7 @@ function renderJournal() {
     trades can show a five-figure number and mean nothing.</p>`;
 
   const tabs = `<div class="jr-subtabs">${
-    [['overview','Overview'],['performance','Performance'],['behaviour','Behaviour'],
+    [['overview','Overview'],['goals','Goals'],['performance','Performance'],['behaviour','Behaviour'],
      ['timing','Timing'],['symbols','Symbols'],['costs','Costs'],['trades','Trades']]
       .map(([k, l]) => `<button class="jr-subtab${jrTab === k ? ' on' : ''}" onclick="setJrTab('${k}')">${l}</button>`)
       .join('')}</div>`;
@@ -383,7 +385,7 @@ function renderJournal() {
 
     const sessionNote = perfData.session
       ? `<p class="jr-session-note">Overview is the whole account, so the ${esc(perfData.session)} filter does not apply here — it narrows the trip-based tabs.</p>` : '';
-    body = `${sessionNote}
+    body = `${goalsOverviewLine()}${sessionNote}
       ${jrSection('How it is going', jrPeriodStrip(perfData.periods),
         'Realised is net of fees and funding, from the Binance ledger — exact. Account value includes open positions on both venues, net of deposits and withdrawals, from snapshots the server records every 15 minutes while it runs.')}
       ${jrSection('Wallet and account value', renderOverviewChart(perfData.walletCurve, perfData.accountCurve),
@@ -509,6 +511,7 @@ function renderJournal() {
   }
 
   if (jrTab === 'trades') body = renderTradesTab();
+  if (jrTab === 'goals') body = renderGoalsTab();
 
   if (jrTab === 'performance') requestAnimationFrame(initEquityHover);
 

@@ -1,5 +1,40 @@
 # Changelog
 
+## Goals: milestones (2026-10-03)
+
+- Account-value targets, with an optional date, and a monthly drawdown limit, in their own
+  block under the rules. Progress leaves deposits and withdrawals out; the pace is a
+  least-squares line through daily closes, shown only after a week of snapshots, and drawn
+  dashed as an extrapolation in the expanded chart.
+- States: on pace, late, reached, missed and *not enough history*; the Overview line names a
+  milestone only when it is late or missed.
+
+## Goals: rules (2026-10-03)
+
+- Eight process rules — max leverage, a stop within 5 minutes, a max loss per trade, no adding
+  underwater, max size, max trades a day, a losing-streak stop, no trading in chosen sessions —
+  each optionally scoped to a session, in `goals.js`'s `GOAL_TYPES`.
+- Scored from the day each is set: adherence with n, streak, a 7-day strip and an 8-week
+  calendar, breaches with their estimated cost; history before the set date is one line apart.
+  Editing re-scores from the same date; pausing stops scoring.
+- The Journal **Goals** tab, an add / edit drawer whose preview re-scores as you type, an empty
+  state that suggests only goals whose breaches lost money, and a goals line on Overview.
+  *open ›* on a breach filters Trades to that symbol and day.
+
+## Goals: design agreed (2026-10-03)
+
+- `docs/goals.md` records the goals design — process rules and milestones, scored from the
+  day each is set, with honest suggestions drawn from the reader's own history — and the
+  scoreboard, expanded row, drawer and empty-state designs. The build is two roadmap cards.
+
+## Weekend session (2026-10-03)
+
+- *Weekend* — New York's Friday close to Tokyo's Monday open — is its own session, split from
+  *Off-hours*, which is now only the weekday gap after New York closes. On the live book most
+  former off-hours trips were weekend and net negative; the weeknight gap was net positive.
+- The clock, the session filter, Trades, habits and Confluence pick it up from `SESSIONS`; a
+  smoke test keeps the browser's menu equal to that list.
+
 ## Sessions across the dashboard (2026-10-03)
 
 - Sessions follow each market's own clock with daylight saving — Tokyo, London and New York

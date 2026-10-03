@@ -20,10 +20,15 @@ test('daylight saving moves the sessions: London on 25 Oct, New York a week late
   assert.equal(s.sessionOf(utc(11, 3, 21, 30)), 'US', 'and closes at 22:00 UTC');
 });
 
-test('weekends have no market open', () => {
-  assert.equal(s.sessionOf(utc(10, 3, 10)), 'Off-hours', 'a Saturday');
-  assert.equal(s.sessionOf(utc(10, 4, 23, 30)), 'Off-hours', 'Sunday night UTC is not yet Monday in Tokyo');
+test('the weekend runs from New York\'s Friday close to Tokyo\'s Monday open', () => {
+  assert.equal(s.sessionOf(utc(10, 2, 20, 59)), 'US', 'Friday 16:59 in New York (summer time)');
+  assert.equal(s.sessionOf(utc(10, 2, 21, 0)), 'Weekend', 'Friday 17:00 in New York');
+  assert.equal(s.sessionOf(utc(11, 6, 21, 30)), 'US', 'winter time: New York still open at 21:30 UTC');
+  assert.equal(s.sessionOf(utc(11, 6, 22, 0)), 'Weekend', 'and closes for the weekend at 22:00 UTC');
+  assert.equal(s.sessionOf(utc(10, 3, 10)), 'Weekend', 'a Saturday');
+  assert.equal(s.sessionOf(utc(10, 4, 23, 30)), 'Weekend', 'Sunday night UTC is not yet Monday in Tokyo');
   assert.equal(s.sessionOf(utc(10, 5, 0, 30)), 'Asia', 'Monday 09:30 in Tokyo');
+  assert.equal(s.sessionOf(utc(10, 6, 23)), 'Off-hours', 'a weeknight gap stays off-hours');
 });
 
 test('the clock names the next change and each market\'s next open or close', () => {
@@ -33,5 +38,7 @@ test('the clock names the next change and each market\'s next open or close', ()
   const london = c.markets.find(m => m.name === 'London');
   assert.deepEqual([london.open, london.closesAt], [true, utc(7, 15, 16)]);
   assert.equal(c.markets.find(m => m.name === 'New York').opensAt, utc(7, 15, 12));
-  assert.equal(s.clockAt(utc(7, 17, 22)).next.at, utc(7, 20, 0), 'Friday night waits for Monday in Tokyo');
+  const friday = s.clockAt(utc(7, 17, 22));
+  assert.deepEqual([friday.session, friday.next.at, friday.next.session], ['Weekend', utc(7, 20, 0), 'Asia'],
+    'Friday night waits for Monday in Tokyo');
 });

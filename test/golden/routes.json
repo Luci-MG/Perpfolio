@@ -3683,7 +3683,7 @@
     "peakNotional": 19600,
     "positionSide": "LONG",
     "realized": 200,
-    "session": "Off-hours",
+    "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": true
@@ -3755,7 +3755,7 @@
     "peakNotional": 10000,
     "positionSide": "LONG",
     "realized": -100,
-    "session": "Off-hours",
+    "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": false
@@ -3935,7 +3935,7 @@
     "peakNotional": 10000,
     "positionSide": "LONG",
     "realized": 100,
-    "session": "Off-hours",
+    "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": true
@@ -4007,7 +4007,7 @@
     "peakNotional": 10000,
     "positionSide": "LONG",
     "realized": 100,
-    "session": "Off-hours",
+    "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
     "win": true
@@ -4115,7 +4115,7 @@
     "peakNotional": 784,
     "positionSide": "LONG",
     "realized": 8,
-    "session": "Off-hours",
+    "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": true
@@ -4187,7 +4187,7 @@
     "peakNotional": 400,
     "positionSide": "LONG",
     "realized": -4,
-    "session": "Off-hours",
+    "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": false
@@ -4367,7 +4367,7 @@
     "peakNotional": 400,
     "positionSide": "LONG",
     "realized": 4,
-    "session": "Off-hours",
+    "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": true
@@ -4439,7 +4439,7 @@
     "peakNotional": 400,
     "positionSide": "LONG",
     "realized": 4,
-    "session": "Off-hours",
+    "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
     "win": true
@@ -5086,16 +5086,16 @@
        },
        "Off-hours": {
         "ci": [
-         0.23191747760218445,
-         0.5412812171716976
+         0.10031131856758091,
+         0.7454590890920776
         ],
-        "edge": -0.15239311871912792,
-        "expected": 0.5261795264861182,
-        "hitRate": 0.3737864077669903,
-        "n": 206,
-        "nEff": 34,
+        "edge": -0.21359223300970875,
+        "expected": 0.5772285966460724,
+        "hitRate": 0.36363636363636365,
+        "n": 33,
+        "nEff": 5,
         "significant": false,
-        "thin": false
+        "thin": true
        },
        "US": {
         "ci": [
@@ -5107,6 +5107,19 @@
         "hitRate": 0.2571428571428571,
         "n": 70,
         "nEff": 11,
+        "significant": false,
+        "thin": true
+       },
+       "Weekend": {
+        "ci": [
+         0.221828052179164,
+         0.559604489770539
+        ],
+        "edge": -0.1416370635343046,
+        "expected": 0.5173596068869057,
+        "hitRate": 0.37572254335260113,
+        "n": 173,
+        "nEff": 28,
         "significant": false,
         "thin": true
        }
@@ -5788,7 +5801,7 @@
         "significant": false,
         "thin": false
        },
-       "Off-hours": {
+       "Weekend": {
         "ci": [
          0.38037517438890633,
          0.6605735250803986
@@ -6510,16 +6523,16 @@
        },
        "Off-hours": {
         "ci": [
-         0.34964269936764697,
-         0.630033497586926
+         0.20356191522617978,
+         0.7287074755956906
         ],
-        "edge": -0.01654411764705882,
-        "expected": 0.5055147058823529,
-        "hitRate": 0.4889705882352941,
-        "n": 272,
-        "nEff": 45,
+        "edge": -0.03273809523809523,
+        "expected": 0.48586309523809523,
+        "hitRate": 0.453125,
+        "n": 64,
+        "nEff": 10,
         "significant": false,
-        "thin": false
+        "thin": true
        },
        "US": {
         "ci": [
@@ -6533,6 +6546,19 @@
         "nEff": 21,
         "significant": false,
         "thin": true
+       },
+       "Weekend": {
+        "ci": [
+         0.34069062628048985,
+         0.6593093737195102
+        ],
+        "edge": -0.01099798893916537,
+        "expected": 0.5109979889391654,
+        "hitRate": 0.5,
+        "n": 208,
+        "nEff": 34,
+        "significant": false,
+        "thin": false
        }
       },
       "ci": [
@@ -7238,19 +7264,6 @@
         "significant": false,
         "thin": true
        },
-       "Off-hours": {
-        "ci": [
-         0.38543448189358664,
-         0.6774950823543024
-        ],
-        "edge": 0.02878992352676568,
-        "expected": 0.5056230319388214,
-        "hitRate": 0.5344129554655871,
-        "n": 247,
-        "nEff": 41,
-        "significant": false,
-        "thin": false
-       },
        "US": {
         "ci": [
          0.3868443127183109,
@@ -7263,6 +7276,19 @@
         "nEff": 27,
         "significant": false,
         "thin": true
+       },
+       "Weekend": {
+        "ci": [
+         0.38543448189358664,
+         0.6774950823543024
+        ],
+        "edge": 0.02878992352676568,
+        "expected": 0.5056230319388214,
+        "hitRate": 0.5344129554655871,
+        "n": 247,
+        "nEff": 41,
+        "significant": false,
+        "thin": false
        }
       },
       "ci": [
@@ -7929,5 +7955,220 @@
     "tf": "4h"
    }
   }
+ },
+ "goals": {
+  "entryCapturedSince": null,
+  "goals": [],
+  "ok": true,
+  "suggestions": [
+   {
+    "params": {
+     "limit": 0.5,
+     "of": "pct"
+    },
+    "preview": {
+     "adherence": 0.9583,
+     "avgBroken": -201.2,
+     "avgKept": 30.14,
+     "brokenTrips": 1,
+     "cost": -231.34,
+     "keptTrips": 23,
+     "label": "Max loss 0.5% a trade",
+     "n": 24,
+     "thin": true,
+     "unit": "trip"
+    },
+    "session": null,
+    "type": "maxLossPct"
+   }
+  ],
+  "today": {
+   "broken": [],
+   "kept": 0,
+   "offTrack": [],
+   "scored": 0
+  },
+  "types": [
+   {
+    "forwardOnly": true,
+    "id": "maxLeverage",
+    "label": "Max leverage",
+    "params": [
+     {
+      "default": 10,
+      "key": "max",
+      "label": "Max",
+      "max": 125,
+      "min": 1,
+      "step": 1,
+      "suffix": "×"
+     }
+    ],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": true,
+    "id": "stopWithin5m",
+    "label": "Stop within 5 minutes",
+    "params": [],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "maxLossPct",
+    "label": "Max loss per trade",
+    "params": [
+     {
+      "default": 1,
+      "key": "limit",
+      "label": "Limit",
+      "max": 1000000,
+      "min": 0.01,
+      "step": 0.01
+     },
+     {
+      "default": "pct",
+      "key": "of",
+      "label": "Of",
+      "options": [
+       [
+        "pct",
+        "% of equity at entry"
+       ],
+       [
+        "usd",
+        "$"
+       ]
+      ]
+     }
+    ],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "noUnderwaterAdds",
+    "label": "No adding while underwater",
+    "params": [],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "maxSize",
+    "label": "Max size",
+    "params": [
+     {
+      "default": 2,
+      "key": "multiple",
+      "label": "Max",
+      "max": 50,
+      "min": 1,
+      "step": 0.1,
+      "suffix": "× median size"
+     }
+    ],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "maxTradesPerDay",
+    "label": "Max trades a day",
+    "params": [
+     {
+      "default": 6,
+      "key": "max",
+      "label": "Max",
+      "max": 100,
+      "min": 1,
+      "step": 1,
+      "suffix": "trades a day"
+     }
+    ],
+    "scoped": true,
+    "unit": "day"
+   },
+   {
+    "forwardOnly": false,
+    "id": "lossStreakStop",
+    "label": "Stop after losses in a row",
+    "params": [
+     {
+      "default": 3,
+      "key": "losses",
+      "label": "After",
+      "max": 20,
+      "min": 1,
+      "step": 1,
+      "suffix": "losses in a row"
+     }
+    ],
+    "scoped": true,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "noSessions",
+    "label": "No trading in sessions",
+    "params": [
+     {
+      "default": [
+       "Weekend"
+      ],
+      "key": "sessions",
+      "label": "Sessions",
+      "sessions": true
+     }
+    ],
+    "scoped": false,
+    "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "accountTarget",
+    "label": "Account value target",
+    "params": [
+     {
+      "default": 10000,
+      "key": "target",
+      "label": "Target",
+      "max": 10000000000,
+      "min": 1,
+      "prefix": "$",
+      "step": 1
+     },
+     {
+      "date": true,
+      "default": null,
+      "key": "by",
+      "label": "By",
+      "optional": true
+     }
+    ],
+    "scoped": false,
+    "unit": "milestone"
+   },
+   {
+    "forwardOnly": false,
+    "id": "monthlyDrawdown",
+    "label": "Monthly drawdown limit",
+    "params": [
+     {
+      "default": 10,
+      "key": "maxPct",
+      "label": "Max",
+      "max": 100,
+      "min": 0.1,
+      "step": 0.1,
+      "suffix": "% fall in a month"
+     }
+    ],
+    "scoped": false,
+    "unit": "milestone"
+   }
+  ]
  }
 }
