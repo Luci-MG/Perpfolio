@@ -31,6 +31,7 @@ expected to say so rather than assert correctness.
 | Trading sessions, the clock and the session filter | [`docs/sessions.md`](docs/sessions.md) | `sessions.js`, `public/js/sessions-view.js` |
 | Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
 | Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |
+| Goals: agreed design, not yet built | [`docs/goals.md`](docs/goals.md) | — |
 | What changed | [`docs/changelog.md`](docs/changelog.md) | — |
 | What is next | [`docs/roadmap.md`](docs/roadmap.md) | — |
 | What is deliberately not done | [`docs/known-gaps.md`](docs/known-gaps.md) | — |

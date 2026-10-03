@@ -1,5 +1,11 @@
 # Changelog
 
+## Goals: design agreed (2026-10-03)
+
+- `docs/goals.md` records the goals design — process rules and milestones, scored from the
+  day each is set, with honest suggestions drawn from the reader's own history — and the
+  scoreboard, expanded row, drawer and empty-state designs. The build is two roadmap cards.
+
 ## Weekend session (2026-10-03)
 
 - *Weekend* — New York's Friday close to Tokyo's Monday open — is its own session, split from
