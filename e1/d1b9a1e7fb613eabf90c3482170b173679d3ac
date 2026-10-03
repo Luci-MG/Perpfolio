@@ -1,0 +1,53 @@
+docs/stress-engine.md
+  s_bc801fe6b1f892::t_5525eff64b7f12 38-39,204-225
+  s_bc801fe6b1f892::t_a5c2060a52887e 226
+risk-engine.test.js
+  s_bc801fe6b1f892::t_420bfbd5f587be 1001-1008,1010-1013,1015-1035,1037-1042
+  s_bc801fe6b1f892::t_604eb17f9581dd 1009,1014,1036
+risk-engine.js
+  s_bc801fe6b1f892::t_0854f2fdc4f029 624
+  s_bc801fe6b1f892::t_0cb6969d93d49f 604-623,625-647
+public/css/app.css
+  s_bc801fe6b1f892::t_3a40ae3b3b0847 591-601
+docs/changelog.md
+  s_bc801fe6b1f892::t_5525eff64b7f12 3-12
+CLAUDE.md
+  s_bc801fe6b1f892::t_1029967c04c45b 77
+test/frontend.smoke.test.js
+  s_bc801fe6b1f892::t_645f3320da8406 857-881,883-887
+  s_bc801fe6b1f892::t_0854f2fdc4f029 882
+docs/roadmap.md
+  s_bc801fe6b1f892::t_5525eff64b7f12 38,416-423
+  s_bc801fe6b1f892::t_ed2d8abbbeb0cb 424
+public/js/stress.js
+  s_bc801fe6b1f892::t_3a40ae3b3b0847 113
+  s_bc801fe6b1f892::t_3dd1e2c963ddc7 311,489,543
+public/js/stress-heatmap.js
+  s_bc801fe6b1f892::t_313c4ce941763f 1-5,7-41,43-80,82-96,98-99,101-102,105-109,111-143,145-146,148-166,169-193,197-225
+  s_bc801fe6b1f892::t_295ca382f3f856 6,100,147
+  s_bc801fe6b1f892::t_c73bede96e2c15 81,97,144
+  s_bc801fe6b1f892::t_3dd1e2c963ddc7 42,103-104,110,167-168
+  s_bc801fe6b1f892::t_1029967c04c45b 194-196
+public/index.html
+  s_bc801fe6b1f892::t_3a40ae3b3b0847 402
+docs/frontend.md
+  s_bc801fe6b1f892::t_1029967c04c45b 18
+docs/architecture.md
+  s_bc801fe6b1f892::t_1029967c04c45b 54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e1d1b9a1e7fb613eabf90c3482170b173679d3ac",
+  "prompts": {},
+  "sessions": {
+    "s_bc801fe6b1f892": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a437d9a6-a038-4659-865a-c44dff360498",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
