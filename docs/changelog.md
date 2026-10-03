@@ -1,5 +1,26 @@
 # Changelog
 
+## Journal Performance and Behaviour remodel (2026-10-03)
+
+- **Performance** leads with return, drawdown, win rate, expectancy, payoff and Sharpe, each
+  against the window before. Return is time-weighted with transfers taken out; drawdown is in
+  percent of the account, beside what a book with no edge would expect; Sharpe waits for 60
+  daily returns and carries its error. Win rate and expectancy count a hedged pair once and
+  carry intervals. Streaks are judged against chance. The chart is the account by day —
+  the wallet from the ledger before equity snapshots began, account value after.
+- **Behaviour** is one row per habit: how often, its 8-week trend, against the window before,
+  and a cost with an interval, or "can't tell yet". Adding to a loser and sizing up after a
+  loss are costed by replaying the trip; re-entering fast after a loss is compared with
+  re-entering fast after a win; busy days with quiet ones. Habits picked by their own result
+  are counted, not costed. Each row sets a rule in one click; a costly habit reaches Overview.
+- **One definition each** of net (after fees and funding), win, loss and flat, the trip before
+  (closed before this one opened), usual size (earlier trips only) and hedge unit, shared by
+  every tab. A session now narrows the curve, records, costs and calendar too, and says so.
+  Months, days and hours use the reader's timezone.
+- **Fixed:** one-way trips grouped as "BOTH"; an empty window read "Avg loss $0.00"; the
+  added-underwater split and the habit row could show different averages for the same trips;
+  bar labels were not escaped. `enrichedTrips()` is memoised per input change.
+
 ## Fixed: hedged funding receipts were dropped (2026-10-03)
 
 - Binance books both legs of a hedged funding settlement under one `tranId`; the income cache

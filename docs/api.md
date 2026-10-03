@@ -27,7 +27,7 @@
 | `GET /api/volstops?risk=&k=` | volatility-adjusted stops, hedge health, regime | *Dynamic Stop Width* |
 | `GET /api/riskbook` | cross pools, calibration, stress inputs, depth, ADL | *Cross-Pool Stress Simulator* |
 | `GET /api/deleverage?objective=&target=&maxLoss=&fee=&breakHedges=` | unwind plan | *Unwind planner* |
-| `GET /api/performance?days=N&tz=M` | journal: round trips, breakdowns, equity curve, periods in the reader's timezone, wallet and account curves, habit costs | *Account history* |
+| `GET /api/performance?days=N&tz=M&session=S` | journal: trip and hedge-unit statistics with intervals, the window before, the daily account series with return, drawdown, Sharpe and beta (a trip curve under a session), streaks against chance, records, habits, sizing, breakdowns and calendar in the reader's timezone, costs, periods, wallet and account curves | *Performance* and *Behaviour* in `journal.md` |
 | `GET /api/trips?days=N` | every closed round trip with size, costs, funding, price path and market at entry, plus context coverage | *Trades* in `journal.md` |
 | `GET /api/goals?tz=M` | goals scored from their set date, ordered broken → in progress → kept → paused; today's line; suggestions | *Goals* in `goals.md` |
 | `GET /api/goals/preview?type=&params=&session=&tz=M` | what a goal would have scored on all history — the add drawer's preview | *Goals* in `goals.md` |

@@ -2,6 +2,12 @@
 
 ## Known gaps / not yet implemented
 
+- **Drawdown before equity snapshots is a lower bound** — the wallet rebuilt from the ledger
+  leaves out open positions, so a fall that touches that segment reads "at least". It becomes
+  exact as snapshots accumulate (every 15 minutes while the server runs).
+- **Replayed habit costs are estimates** — trips keep their opening lot, quantity entered and
+  average exit, not every lot, so "without the adds" closes the opening lot at the trip's
+  average exit and scales fees and funding by quantity. Lot-by-lot replay would need each lot stored.
 - **Binance spot** — only USDM futures; spot endpoint is `/api/v3/openOrders`
 - **Hyperliquid is read-only and unmaintained** — it still renders, but none of the risk,
   unwind, journal or ledger tooling covers it, by decision

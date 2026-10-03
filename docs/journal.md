@@ -41,19 +41,22 @@ Two things `buildRoundTrips` has to get right, both found in the 2026-09-29 revi
   size negative and later "close" as a fabricated trip. It now goes to `orphans`, and the Journal footer states
   how large that bucket is.
 
-Statistics over those trips: `summarise(trips)` (win rate, payoff, expectancy, profit
-factor, median hold) and `bySymbol(trips)`, which is `summarise` grouped and sorted worst
-first. `behaviourSplit(trips)` returns the added-while-underwater partition as two
-`summarise` results. From the income ledger: `equityCurve(income)` (daily and cumulative PnL
-with running drawdown, green/red day counts, best and worst day) and `incomeTotals(income)`
-(per-type totals plus fee drag as a share of gross realised).
+Statistics over those trips: `summarise(trips)` (wins, losses, net, payoff, expectancy, fees,
+funding, median hold — on net after fees and funding) and `bySymbol(trips)`, which is
+`summarise` grouped and sorted worst first. From the income ledger: `dailyIncomeNet(income, tz)`
+(net per local day), `incomeTotals(income)` (per-type totals plus fee drag as a share of gross
+realised) and `costsBySymbol`.
 
 Breakdowns for the journal sections: `byDayOfWeek` / `byHourOfDay` / `byHoldTime` / `bySide`
-/ `byMonth`, each bucket carrying its trip count and a `thin` flag below 10 trips;
-`streaks`; `sequenceEffect` (size after a win against size after a loss — revenge trading
-shows up as a *bigger* position, not a worse one); `sizeDistribution`; `makerTaker`;
-`records`; and `calendar(income)`, which lays Monday-first weeks and leaves an untraded day
-`null` rather than zero so "no trading" never reads as "flat".
+/ `byMonth`, each bucket carrying its trip count and a `thin` flag below 10 trips, days and
+months in the reader's timezone; `makerTaker`; and `calendar(days)`, which lays Monday-first
+weeks and leaves an untraded day `null` rather than zero so "no trading" never reads as "flat".
+
+**One definition each** lives in `habits.js` and every tab uses it: `netOf` (net after fees and
+funding), `resultOf` (win, loss, or flat within a cent), `previousTrips` (the last trip closed
+*before* this one opened, judged on every trip before any session or window filter),
+`medianSizesBefore` (usual size from earlier trips only) and `hedgeUnits` (same-symbol legs
+that overlap in time count as one unit).
 
 **The cross-check that matters**: every fill's `realizedPnl` must land in exactly one bucket —
 a closed trip, a trip still open, or the orphan bucket. Verified 2026-09-29 across every
@@ -81,14 +84,14 @@ the account's **real** commission rate — taker 0.05% / maker 0.02% at fee tier
 ### Endpoints
 - `GET /api/history/sync[?start=true][&full=true]` — starts a sync when idle, returns
   progress, the store's file/byte counts and the cursors
-- `GET /api/performance[?days=N]` — 28 sections: round trips, behaviour split, equity curve,
-  calendar, per-symbol, per-hold-time/day/hour/side/month, streaks, sequence effect, size
-  distribution, execution, records, fees and funding per symbol
+- `GET /api/performance[?days=N&tz=M&session=S]` — trip and unit statistics, the window before,
+  the account series with return, drawdown and ratios, streaks, records, habits, sizing,
+  breakdowns, calendar, costs, periods and curves (`api.md`)
 - `GET /api/trips[?days=N]` — every closed round trip with its context and its `entry` capture (below), plus coverage
 - `GET /api/hedgeledger` — locked PnL per pair, residual exposure, carry per day, margin
   inflation under a pump
 
-### Journal tab (7th) — seven sections
+### Journal tab (7th) — nine sections
 Sub-tabs (`jrTab`): **Overview · Goals · Performance · Behaviour · Factors · Timing · Symbols · Costs · Trades**.
 
 **Overview answers "am I on track, and does anything need me?"** — the layout and its sources
@@ -139,8 +142,8 @@ strips path characters so a malformed symbol cannot escape `data/`, `ensureDir`,
 |---|---|
 | Overview | attention, the periods against the last ones by now, the account and its chart, the next milestone, recent trades |
 | Goals | rules you set, scored from the day you set them — see [`goals.md`](goals.md) |
-| Performance | hero stats, cumulative curve + underwater panel + daily bars, month by month, records |
-| Behaviour | added-while-underwater split, hold-time buckets, long vs short, streaks, size after a win vs a loss, size distribution |
+| Performance | return, drawdown, win rate, expectancy, payoff, Sharpe against the window before; the account by day with its underwater strip; months, hold time, side; records; streaks against chance — see *Performance* below |
+| Behaviour | each habit: how often, its 8-week trend, against the window before, its cost or why it cannot be told yet, a rule to set; position size at open — see *Behaviour* below |
 | Factors | which conditions at entry go with better or worse trips — see *Factors* below |
 | Timing | calendar heatmap, day of week, hour of day |
 | Symbols | full per-symbol table with concentration |
@@ -175,19 +178,51 @@ centre line, and **every bucket shows its trip count**, with fewer than 10 dimme
   counted open positions twice. `/api/dashboard` now sends `walletBalance`; a route test pins
   wallet + unrealised = margin balance.
 
-### Behaviour: what each habit cost
-`habits.js` holds one `HABITS` table; each habit is a trip predicate and a comparison group:
+### Performance: how the account did
+`performance.js`; the method and its sources are in
+[`research/performance-behaviour.md`](research/performance-behaviour.md).
 
-| Habit | Against |
+- **The daily series** is the wallet rebuilt from the ledger before the first equity snapshot,
+  and account value after it, one value per local day. Transfers are flows, never gains.
+- **Return** is time-weighted: daily Modified Dietz returns, each transfer weighted by the part
+  of the day it was held, chain-linked. A day with no value, and the day the series hands over
+  from wallet to account, has a null return rather than a zero.
+- **Drawdown** is the deepest fall from a peak of that return index, in percent, with when it
+  began, how long it lasted and whether it recovered. A fall that touches the wallet segment
+  leaves out open losses, so it reads *at least* that deep. Beside it: the fall a book with no
+  edge and the same daily volatility would expect over the window, √(π/2)·σ·√T.
+- **Sharpe and Sortino** wait for 60 daily returns. Sharpe carries its standard error and the
+  chance the true Sharpe is above zero, both corrected for skew and fat tails; Sortino a 90%
+  bootstrap interval. **Beta and correlation to BTC** wait for 60 paired days.
+- **Win rate, payoff and expectancy count hedge units**, so a long and short opened together are
+  one decision. Win rate carries a Wilson interval, expectancy a day-clustered bootstrap one;
+  profit factor waits for 30 units. R is shown only on trips that had a stop, as "k of n".
+- **Streaks** are judged against the same results shuffled 2,000 times: a run is flagged only
+  when chance reaches it under 5% of the time.
+- **With a session picked**, the curve is those trips' net by local day in dollars; return,
+  drawdown %, Sharpe and beta are the whole account's and wait.
+- 7d, 30d and 90d compare with the same span just before it; *all* has nothing to compare.
+
+### Behaviour: habits
+`habits.js` holds one `HABITS` table. A habit that changes how a trip ran is costed by
+**replaying** the trip without it; one that changes which trips happen is **compared** with its
+nearest alternative; one defined by the trip's own result is **counted only**, since costing it
+would be circular.
+
+| Habit | Measured as |
 |---|---|
-| Added while underwater | trips that never added at a worse price than their own average |
-| Bigger after a loss (opened > 1.5× median size right after a losing trip) | other trips opened right after a loss |
-| Winner turned loser (MFE ≥ 1%, closed at a loss) | other losing trips with a price path |
-| Held losers longer (past the median winner's hold) | losers closed within it |
+| Added to a losing position | replay: the opening lot closed at the trip's average exit, fees and funding scaled by its share of quantity entered (est.) |
+| Opened bigger right after a loss (> 1.5× the median of earlier trips) | replay at that median size |
+| Re-entered within 30 min of a loss | against re-entries within 30 min of a win — loss-chasing apart from simply re-entering fast |
+| Traded on your busiest days (top third by trips a day) | against trips on the quietest third |
+| Let a winner turn into a loss (up 1% or more, closed at a loss) | share of losers with a price path; trips awaiting context are counted |
+| Held losers longer than winners | median hold of losers ÷ winners |
 
-The cost is an **estimate** — (average net with the habit − average net of the comparison)
-× trips with the habit — using net after funding where known. Either side under 10 trips is
-dimmed and marked ⚠.
+Each cost carries a 90% day-clustered interval (the wider of bootstrap and Welch for a
+comparison). The verdict is *costs* or *helps* when the interval clears zero, *can't tell yet*
+when it spans it, and *thin* under 10 trips a side. Each habit also reports its share against
+the window before, its share week by week for 8 weeks, and the goal that rules it out. A habit
+that *costs* joins Overview's attention list after the factors.
 
 ### Factors: what goes with better or worse trips
 

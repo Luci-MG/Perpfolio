@@ -10,6 +10,9 @@
 // the lifecycle has to be rebuilt by tracking size per (symbol, positionSide) and cutting a
 // trip whenever size returns to zero.
 
+import { netOf, resultOf } from './habits.js';
+import { median } from './stats.js';
+
 const CLOSED = 1e-12;
 
 // Summing fill quantities leaves float dust (~1e-11) behind, so "closed" is judged relative
@@ -34,7 +37,7 @@ function blankTrip(symbol, positionSide, fill) {
   return {
     symbol, positionSide, side: null, openOrderId: null,
     openTime: fill.time, closeTime: null,
-    size: 0, avgEntry: 0, openNotional: 0, exitQty: 0, exitValue: 0,
+    size: 0, avgEntry: 0, openNotional: 0, openQty: 0, enteredQty: 0, exitQty: 0, exitValue: 0,
     realized: 0, commission: 0, fills: 0, adds: 0, partialCloses: 0,
     addsWhileUnderwater: 0, peakNotional: 0, maxSize: 0, makerFills: 0, steps: []
   };
@@ -58,6 +61,8 @@ function finishTrip(trip, fill) {
     openTime: trip.openTime, closeTime: fill.time,
     holdHours: (fill.time - trip.openTime) / 3_600_000,
     openNotional: +trip.openNotional.toFixed(2),
+    openQty: +trip.openQty.toFixed(8),
+    enteredQty: +trip.enteredQty.toFixed(8),
     avgEntry: trip.avgEntry,
     avgExit: trip.exitQty ? trip.exitValue / trip.exitQty : null,
     adds: trip.adds,
@@ -133,7 +138,9 @@ export function buildRoundTrips(fills) {
         trip.side = sideOf(positionSide, delta);
         trip.openOrderId = fill.orderId ?? null;
         trip.openNotional = qty * price;
+        trip.openQty = qty;
       }
+      trip.enteredQty += qty;
       const held = Math.abs(trip.size);
       trip.avgEntry = held <= CLOSED ? price : (trip.avgEntry * held + price * qty) / (held + qty);
     }
@@ -167,6 +174,8 @@ export function buildRoundTrips(fills) {
       next.openOrderId = fill.orderId ?? null;
       next.avgEntry = price;
       next.openNotional = Math.abs(after) * price;
+      next.openQty = Math.abs(after);
+      next.enteredQty = Math.abs(after);
       next.fills = 1;
       next.maxSize = Math.abs(after);
       next.peakNotional = Math.abs(after) * price;
@@ -194,35 +203,30 @@ export function buildRoundTrips(fills) {
 
 const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
 
+/** Count, wins, losses, net, averages, payoff, expectancy, fees, funding and median hold, on net after fees and funding. */
 export function summarise(trips) {
   const n = trips.length;
-  if (!n) return { trips: 0, wins: 0, losses: 0, winRate: null, net: 0, grossWin: 0,
-                   grossLoss: 0, avgWin: null, avgLoss: null, payoff: null, expectancy: null,
-                   profitFactor: null, fees: 0, medianHoldHours: null };
-
-  const wins = trips.filter(t => t.win);
-  const losses = trips.filter(t => !t.win);
-  const grossWin = sum(wins, t => t.net);
-  const grossLoss = Math.abs(sum(losses, t => t.net));
+  if (!n) return { trips: 0, wins: 0, losses: 0, winRate: null, net: 0, avgWin: null, avgLoss: null,
+                   payoff: null, expectancy: null, fees: 0, funding: 0, medianHoldHours: null };
+  const wins = trips.filter(t => resultOf(netOf(t)) === 'win');
+  const losses = trips.filter(t => resultOf(netOf(t)) === 'loss');
+  const grossWin = sum(wins, netOf);
+  const grossLoss = Math.abs(sum(losses, netOf));
   const avgWin = wins.length ? grossWin / wins.length : null;
   const avgLoss = losses.length ? grossLoss / losses.length : null;
-  const holds = trips.map(t => t.holdHours).sort((a, b) => a - b);
-
   return {
     trips: n,
     wins: wins.length,
     losses: losses.length,
     winRate: +(wins.length / n * 100).toFixed(2),
-    net: +sum(trips, t => t.net).toFixed(2),
-    grossWin: +grossWin.toFixed(2),
-    grossLoss: +grossLoss.toFixed(2),
+    net: +sum(trips, netOf).toFixed(2),
     avgWin: avgWin == null ? null : +avgWin.toFixed(2),
     avgLoss: avgLoss == null ? null : +(-avgLoss).toFixed(2),
-    payoff: (avgWin != null && avgLoss) ? +(avgWin / avgLoss).toFixed(3) : null,
-    expectancy: +(sum(trips, t => t.net) / n).toFixed(2),
-    profitFactor: grossLoss ? +(grossWin / grossLoss).toFixed(3) : null,
+    payoff: (avgWin != null && avgLoss) ? +(avgWin / avgLoss).toFixed(2) : null,
+    expectancy: +(sum(trips, netOf) / n).toFixed(2),
     fees: +sum(trips, t => t.commission).toFixed(2),
-    medianHoldHours: +holds[Math.floor(n / 2)].toFixed(3)
+    funding: +sum(trips, t => t.funding ?? 0).toFixed(2),
+    medianHoldHours: +median(trips.map(t => t.holdHours)).toFixed(3)
   };
 }
 
@@ -234,17 +238,6 @@ export function bySymbol(trips) {
     .sort((a, b) => a.net - b.net);
 }
 
-// The split that matters: trips where size was increased at a price worse than the running
-// average entry, against trips where it never was.
-export function behaviourSplit(trips) {
-  const added = trips.filter(t => t.addsWhileUnderwater > 0);
-  const clean = trips.filter(t => t.addsWhileUnderwater === 0);
-  return {
-    addedWhileUnderwater: { ...summarise(added), label: 'added while underwater' },
-    clean:                { ...summarise(clean), label: 'never added while underwater' }
-  };
-}
-
 // ─── BREAKDOWNS ──────────────────────────────────────────────────────────────
 //
 // Every bucket carries its trip count and a `thin` flag. A slice with three trades in it
@@ -253,21 +246,23 @@ export function behaviourSplit(trips) {
 
 const THIN = 10;
 
-function bucketStats(trips, label, extra = {}) {
-  return { label, ...summarise(trips), thin: trips.length < THIN, ...extra };
+function bucketStats(trips, label) {
+  return { label, ...summarise(trips), thin: trips.length < THIN };
 }
 
 const DOW = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export function byDayOfWeek(trips, stamp = 'closeTime') {
+const local = (ts, tz) => new Date(ts + tz * 60_000);
+
+export function byDayOfWeek(trips, stamp = 'closeTime', tzOffsetMin = 0) {
   return DOW.map((label, day) =>
-    bucketStats((trips || []).filter(t => new Date(t[stamp]).getUTCDay() === day), label, { day }));
+    bucketStats((trips || []).filter(t => local(t[stamp], tzOffsetMin).getUTCDay() === day), label));
 }
 
-export function byHourOfDay(trips, stamp = 'openTime') {
+export function byHourOfDay(trips, stamp = 'openTime', tzOffsetMin = 0) {
   return Array.from({ length: 24 }, (_, hour) =>
-    bucketStats((trips || []).filter(t => new Date(t[stamp]).getUTCHours() === hour),
-                `${String(hour).padStart(2, '0')}:00`, { hour }));
+    bucketStats((trips || []).filter(t => local(t[stamp], tzOffsetMin).getUTCHours() === hour),
+                `${String(hour).padStart(2, '0')}:00`));
 }
 
 const HOLD_BUCKETS = [
@@ -277,68 +272,22 @@ const HOLD_BUCKETS = [
 
 export function byHoldTime(trips) {
   return HOLD_BUCKETS.map(([lo, hi, label]) =>
-    bucketStats((trips || []).filter(t => t.holdHours >= lo && t.holdHours < hi), label,
-                { fromHours: lo, toHours: hi === Infinity ? null : hi }));
+    bucketStats((trips || []).filter(t => t.holdHours >= lo && t.holdHours < hi), label));
 }
 
 export function bySide(trips) {
-  return ['LONG', 'SHORT', 'BOTH']
-    .map(side => bucketStats((trips || []).filter(t => t.positionSide === side), side, { side }))
+  return ['Long', 'Short']
+    .map(side => bucketStats((trips || []).filter(t => t.side === side), side))
     .filter(b => b.trips > 0);
 }
 
-export function byMonth(trips) {
+export function byMonth(trips, tzOffsetMin = 0) {
   const groups = {};
   for (const t of trips || []) {
-    const m = new Date(t.closeTime).toISOString().slice(0, 7);
+    const m = local(t.closeTime, tzOffsetMin).toISOString().slice(0, 7);
     (groups[m] = groups[m] || []).push(t);
   }
-  return Object.entries(groups).sort().map(([month, list]) => bucketStats(list, month, { month }));
-}
-
-export function streaks(trips) {
-  const ordered = [...(trips || [])].sort((a, b) => a.closeTime - b.closeTime);
-  let run = 0, bestWin = 0, worstLoss = 0;
-  let winPnl = 0, lossPnl = 0, bestWinPnl = 0, worstLossPnl = 0;
-
-  for (const t of ordered) {
-    if (t.win) {
-      run = run > 0 ? run + 1 : 1;
-      winPnl = run === 1 ? t.net : winPnl + t.net;
-      if (run > bestWin) { bestWin = run; bestWinPnl = winPnl; }
-    } else {
-      run = run < 0 ? run - 1 : -1;
-      lossPnl = run === -1 ? t.net : lossPnl + t.net;
-      if (run < worstLoss) { worstLoss = run; worstLossPnl = lossPnl; }
-    }
-  }
-  return {
-    longestWin: bestWin, longestWinPnl: +bestWinPnl.toFixed(2),
-    longestLoss: Math.abs(worstLoss), longestLossPnl: +worstLossPnl.toFixed(2),
-    current: run, currentIsWin: run > 0
-  };
-}
-
-// Whether the previous result changes the next trade. Size is the tell: revenge trading
-// shows up as a bigger position after a loss, not as a worse one.
-export function sequenceEffect(trips) {
-  const ordered = [...(trips || [])].sort((a, b) => a.closeTime - b.closeTime);
-  const afterWin = [], afterLoss = [];
-  for (let i = 1; i < ordered.length; i++) (ordered[i - 1].win ? afterWin : afterLoss).push(ordered[i]);
-
-  const avgSize = a => a.length ? +(a.reduce((s, t) => s + t.peakNotional, 0) / a.length).toFixed(2) : null;
-  return {
-    afterWin:  { ...bucketStats(afterWin, 'after a win'),   avgSize: avgSize(afterWin) },
-    afterLoss: { ...bucketStats(afterLoss, 'after a loss'), avgSize: avgSize(afterLoss) }
-  };
-}
-
-export function sizeDistribution(trips) {
-  const sizes = (trips || []).map(t => t.peakNotional).sort((a, b) => a - b);
-  if (!sizes.length) return null;
-  const q = p => sizes[Math.min(sizes.length - 1, Math.floor(sizes.length * p))];
-  return { p10: +q(0.1).toFixed(2), median: +q(0.5).toFixed(2), p90: +q(0.9).toFixed(2),
-           max: +sizes[sizes.length - 1].toFixed(2), count: sizes.length };
+  return Object.entries(groups).sort().map(([month, list]) => bucketStats(list, month));
 }
 
 export function makerTaker(fills) {
@@ -356,35 +305,20 @@ export function makerTaker(fills) {
   };
 }
 
-export function records(trips, equity) {
-  const ordered = [...(trips || [])].sort((a, b) => b.net - a.net);
-  const pick = t => t && { symbol: t.symbol, positionSide: t.positionSide, net: t.net,
-                           closeTime: t.closeTime, fills: t.fills, holdHours: +t.holdHours.toFixed(2),
-                           addsWhileUnderwater: t.addsWhileUnderwater };
-  const longest = [...(trips || [])].sort((a, b) => b.holdHours - a.holdHours)[0];
-  const busiest = [...(trips || [])].sort((a, b) => b.fills - a.fills)[0];
-  return {
-    bestTrip: pick(ordered[0]),
-    worstTrip: pick(ordered[ordered.length - 1]),
-    longestHeld: pick(longest),
-    mostFills: pick(busiest),
-    bestDay: equity?.bestDay || null,
-    worstDay: equity?.worstDay || null
-  };
-}
-
-// Daily PnL keyed by date, for a calendar view. Weeks start Monday.
-export function calendar(income, types = ['REALIZED_PNL', 'COMMISSION', 'FUNDING_FEE']) {
-  const wanted = new Set(types);
+/** Net per local date from the ledger's realised, fees and funding rows. */
+export function dailyIncomeNet(income, tzOffsetMin = 0) {
   const byDay = new Map();
   for (const r of income || []) {
-    if (!wanted.has(r.incomeType)) continue;
-    const d = new Date(r.time).toISOString().slice(0, 10);
+    if (!NET_TYPES.includes(r.incomeType)) continue;
+    const d = local(r.time, tzOffsetMin).toISOString().slice(0, 10);
     byDay.set(d, (byDay.get(d) || 0) + parseFloat(r.income));
   }
-  const days = [...byDay.entries()].sort().map(([date, pnl]) => ({ date, pnl: +pnl.toFixed(2) }));
-  if (!days.length) return { days: [], weeks: [], maxAbs: 0 };
+  return [...byDay.entries()].sort().map(([date, pnl]) => ({ date, pnl: +pnl.toFixed(2) }));
+}
 
+/** `{ date, pnl }` days laid out in Monday-first weeks for a calendar, with the largest magnitude. */
+export function calendar(days) {
+  if (!days.length) return { weeks: [], maxAbs: 0 };
   const maxAbs = Math.max(...days.map(d => Math.abs(d.pnl)));
   const first = new Date(days[0].date + 'T00:00:00Z');
   const startMonday = new Date(first);
@@ -402,42 +336,23 @@ export function calendar(income, types = ['REALIZED_PNL', 'COMMISSION', 'FUNDING
     }
     weeks.push(week);
   }
-  return { days, weeks, maxAbs: +maxAbs.toFixed(2) };
+  return { weeks, maxAbs: +maxAbs.toFixed(2) };
 }
 
 // ─── INCOME-BASED SERIES ─────────────────────────────────────────────────────
 
-const dayOf = t => new Date(t).toISOString().slice(0, 10);
-
-export function equityCurve(income, types = ['REALIZED_PNL', 'COMMISSION', 'FUNDING_FEE']) {
-  const wanted = new Set(types);
-  const byDay = new Map();
-  for (const r of income || []) {
-    if (!wanted.has(r.incomeType)) continue;
-    const d = dayOf(r.time);
-    byDay.set(d, (byDay.get(d) || 0) + parseFloat(r.income));
+/** Fees and funding per symbol, worst first, from `{ symbol, fees, funding }` items. */
+export function costsBySymbol(items) {
+  const by = new Map();
+  for (const { symbol, fees = 0, funding = 0 } of items) {
+    if (!symbol) continue;
+    const c = by.get(symbol) || { symbol, fees: 0, funding: 0 };
+    c.fees += fees; c.funding += funding;
+    by.set(symbol, c);
   }
-
-  let cum = 0, peak = 0, maxDrawdown = 0;
-  const points = [...byDay.entries()].sort().map(([date, pnl]) => {
-    cum += pnl;
-    peak = Math.max(peak, cum);
-    maxDrawdown = Math.min(maxDrawdown, cum - peak);
-    return { date, pnl: +pnl.toFixed(2), cumulative: +cum.toFixed(2),
-             drawdown: +(cum - peak).toFixed(2) };
-  });
-
-  const green = points.filter(p => p.pnl > 0).length;
-  return {
-    points,
-    days: points.length,
-    greenDays: green,
-    redDays: points.filter(p => p.pnl < 0).length,
-    net: +cum.toFixed(2),
-    maxDrawdown: +maxDrawdown.toFixed(2),
-    bestDay: points.reduce((b, p) => !b || p.pnl > b.pnl ? p : b, null),
-    worstDay: points.reduce((w, p) => !w || p.pnl < w.pnl ? p : w, null)
-  };
+  const rows = [...by.values()].map(c => ({ symbol: c.symbol, fees: +c.fees.toFixed(2), funding: +c.funding.toFixed(2) }));
+  return { fees: rows.filter(r => r.fees).sort((a, b) => b.fees - a.fees),
+           funding: rows.filter(r => r.funding).sort((a, b) => a.funding - b.funding) };
 }
 
 export function incomeTotals(income) {

@@ -19,7 +19,9 @@ const ATTENTION_SOURCES = [
     ? [{ html: `⚠ Funding paid ${ovUsd(fundData.realised.perDay7d)}/day this week against ${ovUsd(fundData.totals.perDay)} estimated`,
          cls: 'gl-late', go: 'openFundDrawer()' }] : []),
   () => (factorsData?.worse || [])
-    .map(b => ({ html: `✗ ${esc(b.bucket)} trips run ${ovUsd(b.diff)}/trip against the rest`, cls: 'dn', go: "setJrTab('factors')" }))
+    .map(b => ({ html: `✗ ${esc(b.bucket)} trips run ${ovUsd(b.diff)}/trip against the rest`, cls: 'dn', go: "setJrTab('factors')" })),
+  () => (perfData?.habits || []).filter(h => h.verdict === 'costs')
+    .map(h => ({ html: `✗ ${esc(h.label)}: ${ovUsd(h.cost)} over ${h.trips} trips`, cls: 'dn', go: "setJrTab('behaviour')" }))
 ];
 
 function ovGoalsToday() {
@@ -113,7 +115,7 @@ function ovRecentTrades() {
 function ovFooter() {
   const since = (perfData.window.tripsFrom || perfData.window.from || '').slice(0, 10);
   const synced = perfData.syncedAt ? ` · as of last sync ${new Date(perfData.syncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '';
-  return `<p class="ov-footer">${perfData.overall.trips} trips · ${perfData.equity.days} trading days${since ? ` · since ${since}` : ''}${synced}</p>`;
+  return `<p class="ov-footer">${perfData.overall.trips} trips · ${perfData.account.days} days${since ? ` · since ${since}` : ''}${synced}</p>`;
 }
 
 function renderOverview() {

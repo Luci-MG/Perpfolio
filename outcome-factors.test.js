@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MIN_TRIPS, benjaminiHochberg, clusterBootstrap, outcomeFactors, welch, wilson } from './outcome-factors.js';
+import { MIN_TRIPS, clusterBootstrap, outcomeFactors } from './outcome-factors.js';
+import { benjaminiHochberg, welch, wilson } from './stats.js';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;

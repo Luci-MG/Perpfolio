@@ -4,16 +4,13 @@
 // one draw. Exploratory: association, not cause. Method and thresholds:
 // docs/research/outcome-factors.md. Pure, over trips enriched with context.
 
-import { medianSizesBefore, netOf } from './habits.js';
+import { medianSizesBefore, netOf, previousTrips } from './habits.js';
+import { BOOTSTRAP_DRAWS, benjaminiHochberg, dayBootstrap, groupByDay, mean, median as medianOf, quantile, welch, wilson } from './stats.js';
 import { periodStarts } from './trade-analytics.js';
 
 export const MIN_TRIPS = 20;
 export const MIN_DAYS = 8;
 export const THIN_BELOW = 40;
-const BOOTSTRAP_DRAWS = 2000;
-const SEED = 20261003;
-const Z90 = 1.6448536;
-const FDR_Q = 0.10;
 const RECENT_SHARE = 0.3;
 const STABILITY_MIN_TRIPS = 10;
 const STRATUM_MIN_TRIPS = 5;
@@ -84,107 +81,20 @@ function goalFor(factor, bucket) {
   return GOAL_FOR[`${factor}:${bucket}`] ?? null;
 }
 
-function seededRandom(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const mean = xs => xs.reduce((s, x) => s + x, 0) / xs.length;
-function variance(xs) {
-  const m = mean(xs);
-  return xs.reduce((s, x) => s + (x - m) ** 2, 0) / (xs.length - 1);
-}
-
-function medianOf(xs) {
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
-
-function quantile(sorted, q) {
-  const i = (sorted.length - 1) * q;
-  const lo = Math.floor(i);
-  return sorted[lo] + (sorted[Math.ceil(i)] - sorted[lo]) * (i - lo);
-}
-
-function normalCdfAbramowitzStegun(z) {
-  const t = 1 / (1 + 0.2316419 * Math.abs(z));
-  const d = 0.3989423 * Math.exp(-z * z / 2);
-  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-  return z > 0 ? 1 - p : p;
-}
-
-function tQuantileCornishFisher(z, df) {
-  return z + (z ** 3 + z) / (4 * df) + (5 * z ** 5 + 16 * z ** 3 + 3 * z) / (96 * df ** 2);
-}
-
-/** Welch interval (90%) and two-sided p for mean(a) − mean(b); null when either side has under two values. */
-export function welch(a, b) {
-  if (a.length < 2 || b.length < 2) return null;
-  const va = variance(a) / a.length, vb = variance(b) / b.length;
-  const se = Math.sqrt(va + vb);
-  const diff = mean(a) - mean(b);
-  if (!se) return { lo: diff, hi: diff, p: diff ? 0 : 1 };
-  const df = (va + vb) ** 2 / (va ** 2 / (a.length - 1) + vb ** 2 / (b.length - 1));
-  const half = tQuantileCornishFisher(Z90, df) * se;
-  const z = Math.abs(diff / se) * (1 - 1 / (4 * df)) / Math.sqrt(1 + (diff / se) ** 2 / (2 * df));
-  return { lo: diff - half, hi: diff + half, p: 2 * (1 - normalCdfAbramowitzStegun(z)) };
-}
-
-/** Wilson score interval (90%) for k wins in n. */
-export function wilson(k, n) {
-  if (!n) return null;
-  const p = k / n, z2 = Z90 ** 2;
-  const centre = (p + z2 / (2 * n)) / (1 + z2 / n);
-  const half = Z90 * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / (1 + z2 / n);
-  return { lo: centre - half, hi: centre + half };
-}
-
-/** Which of `pValues` pass Benjamini–Hochberg at false-discovery rate `q`. */
-export function benjaminiHochberg(pValues, q = FDR_Q) {
-  const order = pValues.map((p, i) => ({ p, i })).sort((x, y) => x.p - y.p);
-  let cutoff = -1;
-  order.forEach(({ p }, rank) => { if (p <= (rank + 1) / order.length * q) cutoff = rank; });
-  const pass = new Array(pValues.length).fill(false);
-  for (let r = 0; r <= cutoff; r++) pass[order[r].i] = true;
-  return pass;
-}
-
 /**
  * Interval (90%) and two-sided p for the difference in average net, `inBucket` trips against
  * the rest, resampling whole days so a day's trips move together. Seeded: same input, same answer.
  */
 export function clusterBootstrap(days, inBucket, draws = BOOTSTRAP_DRAWS) {
-  const random = seededRandom(SEED);
-  const diffs = [];
-  for (let b = 0; b < draws; b++) {
-    let sumIn = 0, nIn = 0, sumOut = 0, nOut = 0;
-    for (let d = 0; d < days.length; d++) {
-      for (const t of days[Math.floor(random() * days.length)]) {
-        if (inBucket(t)) { sumIn += netOf(t); nIn++; } else { sumOut += netOf(t); nOut++; }
-      }
-    }
-    if (nIn && nOut) diffs.push(sumIn / nIn - sumOut / nOut);
-  }
-  if (!diffs.length) return null;
-  diffs.sort((x, y) => x - y);
-  const below = diffs.filter(x => x <= 0).length, above = diffs.length - below;
-  return { lo: quantile(diffs, 0.05), hi: quantile(diffs, 0.95),
-           p: Math.min(1, 2 * (Math.min(below, above) + 1) / (diffs.length + 1)) };
+  return dayBootstrap(days, sample => diffOf(sample.filter(inBucket), sample.filter(t => !inBucket(t))), draws);
 }
 
 function contextOf(trips, tz) {
-  const byClose = [...trips].sort((a, b) => a.closeTime - b.closeTime);
   const localDay = ts => periodStarts(ts, tz).today;
+  const before = previousTrips(trips);
   const previous = new Map(trips.map(t => {
-    const before = byClose.filter(x => x.closeTime <= t.openTime && x.closeTime >= localDay(t.openTime)).at(-1);
-    return [t, before ?? null];
+    const prev = before.get(t);
+    return [t, prev && prev.closeTime >= localDay(t.openTime) ? prev : null];
   }));
   return { medians: medianSizesBefore(trips), previous, localHour: ts => new Date(ts + tz * 60_000).getUTCHours() };
 }
@@ -204,12 +114,6 @@ function bucketerFor(def, early, facts) {
 }
 
 const dayKey = t => Math.floor(t.openTime / DAY_MS);
-
-function groupByDay(trips) {
-  const days = new Map();
-  for (const t of trips) days.set(dayKey(t), [...(days.get(dayKey(t)) || []), t]);
-  return [...days.values()];
-}
 
 const diffOf = (a, b) => (a.length && b.length ? mean(a.map(netOf)) - mean(b.map(netOf)) : null);
 

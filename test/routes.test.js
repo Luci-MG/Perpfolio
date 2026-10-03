@@ -119,9 +119,29 @@ test('history sync fills the store and the journal reconciles every fill', async
   const { status, body } = await get('/api/performance');
   assert.equal(status, 200);
   assert.ok(body.overall.trips > 0);
-  const clockFree = { ...body, walletCurve: body.walletCurve.slice(0, -1),
+  const clockFree = { ...body, walletCurve: body.walletCurve.slice(0, -1), account: { curve: body.account.curve },
+    habits: body.habits.map(({ weekly, ...h }) => h),
     periods: Object.fromEntries(Object.entries(body.periods).map(([k, { from, previous, ...rest }]) => [k, rest])) };
   record('performance', clockFree);
+});
+
+test('performance counts a hedged pair once, compares with the window before, and buckets months by local time', async () => {
+  const all = (await get('/api/performance')).body;
+  assert.ok(all.units.units < all.units.legs, 'overlapping BTC legs are one unit');
+  assert.equal(all.units.legs, all.overall.trips);
+  assert.ok(all.account.series.every(r => ['wallet', 'account'].includes(r.source)));
+  assert.equal(all.previous, null, 'all time has no window before it');
+  assert.ok(all.side.every(b => ['Long', 'Short'].includes(b.label)));
+
+  const recent = (await get('/api/performance?days=30')).body;
+  assert.ok(recent.previous && recent.window.previous);
+  assert.deepEqual(Object.keys(recent.previous).sort(), ['expectancy', 'legs', 'net', 'twr', 'units', 'winRate']);
+  assert.ok(recent.habits.every(h => h.previous && h.weekly.length === 8));
+
+  const trips = (await get('/api/trips')).body.trips;
+  const ahead = (await get('/api/performance?tz=840')).body;
+  const months = [...new Set(trips.map(t => new Date(t.closeTime + 840 * 60_000).toISOString().slice(0, 7)))].sort();
+  assert.deepEqual(ahead.month.map(m => m.label), months);
 });
 
 test('a session narrows trip statistics and habits, never the account overview', async () => {
@@ -137,8 +157,10 @@ test('a session narrows trip statistics and habits, never the account overview',
   const clockFree = periods => Object.fromEntries(Object.entries(periods).map(([k, { previous: { to, ...prev }, ...rest }]) => [k, { ...rest, prev }]));
   assert.deepEqual(clockFree(one.periods), clockFree(all.periods), 'the overview is the whole account');
   assert.deepEqual(one.recentTrips, all.recentTrips, 'recent trades are the whole account too');
-  assert.deepEqual(one.equity, all.equity);
-  assert.ok(one.habits.every((h, i) => h.trips <= all.habits[i].trips));
+  assert.deepEqual([all.account.curve, one.account.curve], ['account', 'trips'], 'a session curve is its trips, not the account');
+  assert.equal(one.account.series.reduce((s, d) => s + d.pnl, 0).toFixed(2), one.overall.net.toFixed(2));
+  assert.ok(one.records.units <= all.records.units && one.costs.fees <= all.costs.fees);
+  assert.ok(one.habits.every((h, i) => h.outOf <= all.habits[i].outOf));
   assert.equal((await get('/api/performance?session=Mars')).body.session, null);
 
   const cf = (await get(`/api/confluence?symbol=BTCUSDT&session=${encodeURIComponent(session)}`)).body;
@@ -155,8 +177,9 @@ test('trips carry context from the sync, funding from the ledger, and a re-sync 
     assert.ok(t.mae <= 0 && t.mfe >= 0, `${t.key} mae ${t.mae} mfe ${t.mfe}`);
     assert.ok(Number.isFinite(t.atrPct) && ['up', 'down', 'flat'].includes(t.btcTrend), t.key);
     assert.ok(['Asia', 'Europe', 'Europe + US', 'US', 'Off-hours', 'Weekend'].includes(t.session));
-    assert.ok(t.openNotional > 0 && t.side === 'Long');
+    assert.ok(t.openNotional > 0 && ['Long', 'Short'].includes(t.side));
   }
+  assert.ok(body.trips.some(t => t.side === 'Short'), 'the fake book hedges BTC inside some long trips');
   const covered = body.trips.filter(t => t.funding != null);
   assert.ok(covered.every(t => t.openTime >= body.coverage.incomeFrom));
   assert.ok(body.trips.some(t => t.funding == null), 'trips before the ledger starts have unknown funding');
@@ -391,7 +414,7 @@ test('equity snapshots record once per interval and feed the account curve and p
   assert.ok(body.accountCurve.every(p => Math.abs(p.accountValue - total) < 0.01));
   assert.equal(body.periods.today.account?.change ?? 0, 0, 'no move between the two snapshots');
   assert.equal(body.walletCurve.at(-1).wallet, +parseFloat(dash.binance.walletBalance).toFixed(2));
-  assert.equal(body.habits.length, 4);
+  assert.equal(body.habits.length, 6);
 });
 
 const setVenue = (venue, enabled) => get('/api/venues', {

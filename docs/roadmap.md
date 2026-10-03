@@ -27,6 +27,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Per-trip notes and tags](#p5--per-trip-notes-and-tags) | done (2026-10-03) |
 | P5 | [Funding section](#p5--funding-section) | done (2026-10-03) |
 | P5 | [Journal Overview remodel](#p5--journal-overview-remodel) | done (2026-10-03) |
+| P5 | [Journal Performance and Behaviour remodel](#p5--journal-performance-and-behaviour-remodel) | done (2026-10-03) |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
 | — | [Parked](#parked) | parked |
 
@@ -321,6 +322,16 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Scope:** to be planned — one layout with a clear first read, the rest in order of use,
   nothing repeated from other tabs.
 - **Done when:** set in the plan.
+
+## P5 — Journal Performance and Behaviour remodel
+
+- **Status:** done (2026-10-03) — method and sources in
+  [`research/performance-behaviour.md`](research/performance-behaviour.md).
+- **Problem:** both tabs mixed net with and without funding, defined "after a loss" and "size"
+  three ways, judged trips against later ones, costed habits picked by their own result,
+  counted hedge legs apart, ignored the session filter in places and bucketed in UTC.
+- **Done when:** one definition of each, every number with its n and interval or a "needs N
+  more" line, the window before beside it, and every habit leading to a rule.
 
 ## P6 — Server-side alerts
 
