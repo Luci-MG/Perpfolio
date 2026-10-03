@@ -1,5 +1,15 @@
 # Changelog
 
+## Journal: richer Trades (2026-10-03)
+
+- The Trades sub-tab is one table of every round trip: opened and peak size, adds, held,
+  net after fees and funding, MAE / MFE, session, hedged at entry; *More columns* adds ATR,
+  BTC trend, entry → exit, fees, funding, fills and maker %. Sort, filter, CSV export.
+- `GET /api/trips`. Context is fetched by a new last phase of the history sync and cached
+  per trip, versioned; funding for hedged legs is split from Binance's net row and sums to it
+  exactly. `/api/performance` drops its three trip lists.
+- New pure engine `trip-context.js`; `buildRoundTrips` also returns each trip's size steps.
+
 ## Tools in the sidebar (2026-10-03)
 
 - Stops, Stress, Unwind, Journal and Confluence moved from the tab strip to **tool widgets**

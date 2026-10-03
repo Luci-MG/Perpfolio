@@ -57,10 +57,6 @@ export function register(app) {
             .reduce((acc, r) => { acc[r.symbol] = (acc[r.symbol] || 0) + Math.abs(parseFloat(r.income)); return acc; }, {}))
           .map(([symbol, v]) => ({ symbol, fees: +v.toFixed(2) }))
           .sort((a, b) => b.fees - a.fees),
-
-        worstTrips: [...inWindow].sort((a, b) => a.net - b.net).slice(0, 10),
-        bestTrips: [...inWindow].sort((a, b) => b.net - a.net).slice(0, 10),
-        recentTrips: [...inWindow].sort((a, b) => b.closeTime - a.closeTime).slice(0, 25),
         syncedAt: syncState.finishedAt
       });
     } catch (err) {

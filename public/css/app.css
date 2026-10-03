@@ -724,3 +724,15 @@ tr:last-child td { border-bottom: none; }
   .tool-chip .tool-ico { width: 13px; height: 13px; }
   .tool-chip.active { background: var(--surface2); color: var(--text); font-weight: 500; }
 }
+
+/* Journal: Trades table */
+.jt-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 10px; }
+.jt-count { font-size: 11px; color: var(--text3); margin: 0 0 8px; }
+.jt-wrap { max-height: 70vh; overflow: auto; min-width: 0; margin-bottom: 10px; }
+.jt-tbl { table-layout: auto; white-space: nowrap; }
+.jt-tbl thead th { position: sticky; top: 0; z-index: 1; background: var(--surface); }
+.jt-tbl td { font-weight: 400; }
+.jt-sort { all: unset; cursor: pointer; }
+.jt-sort:hover { color: var(--text2); }
+.jt-sort:focus-visible { outline: 2px solid var(--border2); }
+.jt-gap { color: var(--text3); cursor: help; }

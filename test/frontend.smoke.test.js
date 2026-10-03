@@ -97,6 +97,41 @@ test('every view and drawer renders against live payloads without errors or NaN'
   assert.deepEqual(bad, []);
 });
 
+test('the Trades table sorts, filters, pages and exports what it shows', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200; i++) {
+    if (!(await (await fetch(`${base}/api/history/sync`)).json()).state.running) break;
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading', 'the journal');
+  run(`setJrTab('trades')`);
+  await settle('tripsData && !tripsLoading', 'the trips');
+  run(`riskForceRender = true; render(lastData)`);
+
+  const table = () => markup.get('jt-table') ?? markup.get('content');
+  const total = run('tripsData.trips.length');
+  assert.match(markup.get('content'), new RegExp(`${total} trips · ${total} match`));
+  assert.deepEqual(strayValues(markup.get('content')), []);
+
+  run(`sortTrades('net')`);
+  const nets = JSON.parse(run('JSON.stringify(sortedTrips(filteredTrips()).map(tripNet))'));
+  assert.deepEqual(nets, [...nets].sort((a, b) => b - a));
+  run(`filterTrades('symbol', 'eth')`);
+  assert.equal(run('filteredTrips().every(t => t.symbol === "ETHUSDT")'), true);
+  assert.match(table(), /trips · \d+ match/);
+
+  run(`toggleTradeColumns()`);
+  assert.match(markup.get('content'), /Entry → exit/);
+  assert.deepEqual(strayValues(markup.get('content')), []);
+
+  const csv = run('tradesCsv()').split('\n');
+  assert.equal(csv.length, run('filteredTrips().length') + 1);
+  assert.match(csv[0], /^symbol,side,opened_utc,.*mae_pct,mfe_pct/);
+  assert.ok(csv.slice(1).every(line => line.startsWith('ETHUSDT,Long,')));
+});
+
 test('the tool widgets open each tool and toggle back to the last positions view', async () => {
   const { markup, run } = await bootPage();
   assert.equal(run('TOOLS.every(t => VIEWS.includes(t.view))'), true);

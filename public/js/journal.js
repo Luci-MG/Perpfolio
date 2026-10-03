@@ -4,7 +4,11 @@
 // What already happened, rebuilt from the cached fill and income history.
 let perfData = null, perfLoading = false, perfDays = 0, syncPoll = null;
 let jrTab = 'overview';
-function setJrTab(t) { jrTab = t; rerenderStress(); }
+function setJrTab(t) {
+  jrTab = t;
+  if (t === 'trades' && !tripsData && !tripsLoading) fetchTrips();
+  rerenderStress();
+}
 
 async function fetchPerformance() {
   perfLoading = true;
@@ -22,7 +26,13 @@ async function fetchPerformance() {
   }
 }
 
-function setPerfDays(d) { perfDays = d; fetchPerformance(); }
+function setPerfDays(d) { perfDays = d; fetchPerformance(); reloadTrips(); }
+
+function syncProgressText(state) {
+  if (!state.running) return `sync ${state.phase}`;
+  if (state.phase === 'context') return `syncing trip context — ${state.contextDone}/${state.contextTotal} trips`;
+  return `syncing ${state.phase} — ${state.symbolsDone}/${state.symbolsTotal} symbols, +${state.tradesAdded} fills`;
+}
 
 async function startSync(full = false) {
   const started = await (await fetch(`/api/history/sync?start=true${full ? '&full=true' : ''}`)).json();
@@ -35,10 +45,8 @@ async function startSync(full = false) {
   syncPoll = setInterval(async () => {
     const s = await (await fetch('/api/history/sync')).json();
     const el = document.getElementById('jr-sync-state');
-    if (el) el.textContent = s.state.running
-      ? `syncing ${s.state.phase} — ${s.state.symbolsDone}/${s.state.symbolsTotal} symbols, +${s.state.tradesAdded} fills`
-      : `sync ${s.state.phase}`;
-    if (!s.state.running) { clearInterval(syncPoll); syncPoll = null; fetchPerformance(); }
+    if (el) el.textContent = syncProgressText(s.state);
+    if (!s.state.running) { clearInterval(syncPoll); syncPoll = null; fetchPerformance(); reloadTrips(); }
   }, 2000);
 }
 
@@ -198,21 +206,6 @@ function jrCalendar(cal) {
     </div>`;
 }
 
-function jrTripRows(trips, limit) {
-  const held = h => h >= 48 ? `${fmt(h / 24, 1)}d` : h >= 1 ? `${fmt(h, 1)}h` : `${fmt(h * 60, 0)}m`;
-  return trips.slice(0, limit).map(t => `<tr>
-    <td>${jrSym(t.symbol)}
-      <span style="font-weight:400;color:var(--text3)">${t.positionSide.toLowerCase()}</span></td>
-    <td class="${t.net >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(t.net)}</td>
-    <td>${t.fills}</td>
-    <td class="${t.addsWhileUnderwater ? 'dn' : ''}">${t.addsWhileUnderwater || '—'}</td>
-    <td>${held(t.holdHours)}</td>
-    <td style="color:var(--text3)">${new Date(t.closeTime).toISOString().slice(0, 10)}</td>
-  </tr>`).join('');
-}
-
-const JR_TRIP_HEAD = `<tr><th>position</th><th>net</th><th>fills</th><th>adds&nbsp;down</th><th>held</th><th>closed</th></tr>`;
-
 // Locked PnL of the open same-symbol hedges, from the dashboard poll — no extra request.
 // A matched pair pins its PnL at (shortEntry − longEntry) × matchedQty.
 function jrLockedFromPositions(positions) {
@@ -235,7 +228,7 @@ function renderJournal() {
   if (!perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No history loaded.</p>`;
   if (perfData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(perfData.error)}</p>`;
 
-  const syncBar = `<div class="jr-sync">
+  const syncBar = `<div class="jr-sync" id="jr-mounted">
     <span id="jr-sync-state">${perfData.empty ? 'no cached history' : `${perfData.overall.trips} round trips · ${perfData.equity.days} days`}</span>
     <button class="st-btn" onclick="startSync(false)">Sync recent</button>
     <button class="st-btn" onclick="startSync(true)">Full rebuild</button>
@@ -438,13 +431,7 @@ function renderJournal() {
         'Negative is funding you paid to hold the position.') : ''}`;
   }
 
-  if (jrTab === 'trades') {
-    body = `${jrSection('Most recent', `<table class="jr-tbl">${JR_TRIP_HEAD}${jrTripRows(perfData.recentTrips, 25)}</table>`)}
-      <div class="jr-two">
-        <div>${jrSection('Worst', `<table class="jr-tbl">${JR_TRIP_HEAD}${jrTripRows(perfData.worstTrips, 10)}</table>`)}</div>
-        <div>${jrSection('Best', `<table class="jr-tbl">${JR_TRIP_HEAD}${jrTripRows(perfData.bestTrips, 10)}</table>`)}</div>
-      </div>`;
-  }
+  if (jrTab === 'trades') body = renderTradesTab();
 
   if (jrTab === 'performance') requestAnimationFrame(initEquityHover);
 

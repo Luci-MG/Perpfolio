@@ -3,7 +3,7 @@
 ## Files
 
 `public/index.html` holds markup only, `public/css/app.css` every style, and `public/js/` the
-behaviour as fifteen **classic** scripts loaded in this order — no build step, no framework:
+behaviour as sixteen **classic** scripts loaded in this order — no build step, no framework:
 
 | # | File | Holds |
 |---|---|---|
@@ -17,6 +17,7 @@ behaviour as fifteen **classic** scripts loaded in this order — no build step,
 | 6 | `hedge-ledger.js` | hedge-ledger drawer |
 | 7 | `confluence-view.js` | Confluence tab (the engine is the server's `confluence.js`) |
 | 8 | `journal.js` | Journal tab |
+| 8b | `journal-trades.js` | Journal's Trades table: `TRADE_COLUMNS`, sort, filters, CSV |
 | 9 | `unwind.js` | liquidation-after-close and unwind-simulator drawers, Unwind tab |
 | 10 | `render.js` | sidebar widgets, `render()`, `fetchData()` and the poll guard |
 | 11 | `calculators.js` | context menu and calculators |
@@ -79,7 +80,7 @@ the content, so the same buttons render as a strip above it.
 **The mounted-panel rule.** The 15s poll calls `render()`, which would rebuild the whole main
 column — destroying a slider mid-drag or an input mid-edit. `render()` therefore leaves the
 panel alone whenever its mount marker (`#st-mounted`, `#uw-mounted`, `#cf-mounted`,
-`#vs-mounted`) is present, unless
+`#vs-mounted`, `#jr-mounted`) is present, unless
 `rerenderStress()` set `riskForceRender`. Every deliberate rebuild goes through that helper.
 
 ### Status bulb and exchange switches

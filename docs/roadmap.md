@@ -13,7 +13,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P2 | [Tools in the sidebar](#p2--tools-in-the-sidebar) | done (2026-10-03) |
 | P3 | [Stops: real vs suggested](#p3--stops-real-vs-suggested) | planned |
 | P3 | [Journal: Overview and Behaviour](#p3--journal-overview-and-behaviour) | planned |
-| P3 | [Journal: richer Trades](#p3--journal-richer-trades) | planned |
+| P3 | [Journal: richer Trades](#p3--journal-richer-trades) | done (2026-10-03) |
 | P3 | [Journal: context at entry](#p3--journal-context-at-entry) | planned |
 | P3 | [Confluence: verdict and honest calibration](#p3--confluence-verdict-and-honest-calibration) | planned |
 | P3 | [Calculators: live and account-aware](#p3--calculators-live-and-account-aware) | planned |
@@ -147,6 +147,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Done when:** every trip carries every column (or `—` with a reason), and the export
   round-trips.
 - **Depends on:** —
+- **Status:** done (2026-10-03) — see `docs/journal.md`, *Trades*. Funding for hedged legs is
+  split from Binance's single net row per symbol.
 
 ## P3 — Journal: context at entry
 

@@ -32,20 +32,36 @@ function signedDelta(side, positionSide, qty) {
 
 function blankTrip(symbol, positionSide, fill) {
   return {
-    symbol, positionSide,
+    symbol, positionSide, side: null,
     openTime: fill.time, closeTime: null,
-    size: 0, avgEntry: 0,
-    realized: 0, commission: 0, fills: 0,
-    addsWhileUnderwater: 0, peakNotional: 0, maxSize: 0, makerFills: 0
+    size: 0, avgEntry: 0, openNotional: 0, exitQty: 0, exitValue: 0,
+    realized: 0, commission: 0, fills: 0, adds: 0, partialCloses: 0,
+    addsWhileUnderwater: 0, peakNotional: 0, maxSize: 0, makerFills: 0, steps: []
   };
+}
+
+function sideOf(positionSide, delta) {
+  if (positionSide === 'LONG') return 'Long';
+  if (positionSide === 'SHORT') return 'Short';
+  return delta > 0 ? 'Long' : 'Short';
+}
+
+/** Identifies one round trip across the journal, the context cache and the funding split. */
+export function tripKey(trip) {
+  return `${trip.symbol}:${trip.positionSide}:${trip.openTime}`;
 }
 
 function finishTrip(trip, fill) {
   const net = trip.realized - Math.abs(trip.commission);
   return {
-    symbol: trip.symbol, positionSide: trip.positionSide,
+    symbol: trip.symbol, positionSide: trip.positionSide, side: trip.side,
     openTime: trip.openTime, closeTime: fill.time,
     holdHours: (fill.time - trip.openTime) / 3_600_000,
+    openNotional: +trip.openNotional.toFixed(2),
+    avgEntry: trip.avgEntry,
+    avgExit: trip.exitQty ? trip.exitValue / trip.exitQty : null,
+    adds: trip.adds,
+    partialCloses: trip.partialCloses,
     realized: +trip.realized.toFixed(8),
     commission: +Math.abs(trip.commission).toFixed(8),
     net: +net.toFixed(8),
@@ -72,6 +88,12 @@ export function buildRoundTrips(fills) {
   const trips = [];
   let nonQuoteFees = 0;
   const orphans = { fills: 0, realized: 0, commission: 0 };
+  const sizeSteps = new Map();
+  const close = (trip, fill) => {
+    const done = finishTrip(trip, fill);
+    trips.push(done);
+    sizeSteps.set(tripKey(done), trip.steps);
+  };
 
   for (const fill of sorted) {
     const positionSide = fill.positionSide || 'BOTH';
@@ -105,14 +127,25 @@ export function buildRoundTrips(fills) {
       if (Math.abs(trip.size) > CLOSED) {
         const worse = trip.size > 0 ? price < trip.avgEntry : price > trip.avgEntry;
         if (worse) trip.addsWhileUnderwater++;
+        trip.adds++;
       } else {
         trip.openTime = fill.time;
+        trip.side = sideOf(positionSide, delta);
+        trip.openNotional = qty * price;
       }
       const held = Math.abs(trip.size);
       trip.avgEntry = held <= CLOSED ? price : (trip.avgEntry * held + price * qty) / (held + qty);
     }
 
+    if (!adding) {
+      const closingQty = Math.min(qty, Math.abs(trip.size));
+      trip.exitQty += closingQty;
+      trip.exitValue += closingQty * price;
+      if (after !== 0 && Math.sign(after) === Math.sign(trip.size)) trip.partialCloses++;
+    }
+
     trip.size = after;
+    trip.steps.push([fill.time, Math.abs(after)]);
     trip.realized += parseFloat(fill.realizedPnl) || 0;
     trip.commission += fee;
     trip.fills++;
@@ -122,29 +155,35 @@ export function buildRoundTrips(fills) {
 
     // A one-way fill can cross zero, closing one position and opening the opposite one.
     if (after === 0) {
-      trips.push(finishTrip(trip, fill));
+      close(trip, fill);
       open.delete(key);
     } else if (positionSide === 'BOTH' && trip.size !== 0 && Math.sign(after) !== Math.sign(trip.size - delta)
                && Math.abs(trip.size - delta) > CLOSED) {
-      trips.push(finishTrip(trip, fill));
+      close(trip, fill);
       const next = blankTrip(fill.symbol, positionSide, fill);
       next.size = after;
+      next.side = sideOf(positionSide, after);
       next.avgEntry = price;
+      next.openNotional = Math.abs(after) * price;
       next.fills = 1;
       next.maxSize = Math.abs(after);
       next.peakNotional = Math.abs(after) * price;
+      next.steps = [[fill.time, Math.abs(after)]];
       open.set(key, next);
     }
   }
 
   const stillOpen = [...open.values()]
     .filter(t => t.size !== 0)
-    .map(t => ({ symbol: t.symbol, positionSide: t.positionSide, size: t.size,
-                 avgEntry: t.avgEntry, realized: t.realized, fills: t.fills,
-                 addsWhileUnderwater: t.addsWhileUnderwater, openTime: t.openTime }));
+    .map(t => {
+      sizeSteps.set(tripKey(t), t.steps);
+      return { symbol: t.symbol, positionSide: t.positionSide, side: t.side, size: t.size,
+               avgEntry: t.avgEntry, realized: t.realized, fills: t.fills,
+               addsWhileUnderwater: t.addsWhileUnderwater, openTime: t.openTime };
+    });
 
   return {
-    trips, stillOpen, nonQuoteFees: +nonQuoteFees.toFixed(8),
+    trips, stillOpen, sizeSteps, nonQuoteFees: +nonQuoteFees.toFixed(8),
     orphans: { fills: orphans.fills, realized: +orphans.realized.toFixed(8), commission: +orphans.commission.toFixed(8) }
   };
 }

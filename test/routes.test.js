@@ -101,6 +101,33 @@ test('history sync fills the store and the journal reconciles every fill', async
   record('performance', body);
 });
 
+test('trips carry context from the sync, funding from the ledger, and a re-sync fetches nothing', async () => {
+  const { status, body } = await get('/api/trips');
+  assert.equal(status, 200);
+  assert.ok(body.trips.length > 0);
+  assert.equal(body.coverage.pending, 0);
+  assert.equal(body.coverage.ready, body.trips.length);
+  for (const t of body.trips) {
+    assert.ok(t.mae <= 0 && t.mfe >= 0, `${t.key} mae ${t.mae} mfe ${t.mfe}`);
+    assert.ok(Number.isFinite(t.atrPct) && ['up', 'down', 'flat'].includes(t.btcTrend), t.key);
+    assert.ok(['Asia', 'Europe', 'US'].includes(t.session));
+    assert.ok(t.openNotional > 0 && t.side === 'Long');
+  }
+  const covered = body.trips.filter(t => t.funding != null);
+  assert.ok(covered.every(t => t.openTime >= body.coverage.incomeFrom));
+  assert.ok(body.trips.some(t => t.funding == null), 'trips before the ledger starts have unknown funding');
+  const eth = covered.filter(t => t.symbol === 'ETHUSDT' && t.funding !== 0);
+  assert.ok(eth.length > 0 && eth.every(t => Math.abs(t.funding - -0.8) < 1e-9 && !t.fundingSplit));
+  record('trips', body);
+
+  const mark = fake.calls.length;
+  await get('/api/history/sync?start=true');
+  for (let i = 0; i < 100 && (await get('/api/history/sync')).body.state.running; i++) {
+    await new Promise(r => setTimeout(r, 20));
+  }
+  assert.deepEqual(fake.calls.slice(mark).filter(c => c === '/fapi/v1/klines'), []);
+});
+
 test('hedge ledger locks the matched BTC pair', async () => {
   const { status, body } = await get('/api/hedgeledger');
   assert.equal(status, 200);

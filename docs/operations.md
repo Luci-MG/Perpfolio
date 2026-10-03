@@ -123,6 +123,13 @@ unit-tested) applies the thresholds:
 The header chip beside *Last updated* is hidden while the verdict is `ok`; otherwise it shows
 ⚠ or ⛔ with the issue count, and every reason in its tooltip.
 
+### Trip context sync
+The history sync's last phase fetches candles per closed trip: one path request (≤1,500 bars,
+weight 10) and one 20-bar ATR request (weight 1) per trip, BTC 1h history once, and funding
+rates only for symbols with hedged settlements. Every request passes `throttleWeight()`; the
+first run on a few hundred trips took a few minutes and stayed far below the limit. Results are
+cached per trip, so later syncs fetch only new trips.
+
 ### Venue switch: an exchange that is off costs nothing
 `lib/venues.js` holds one switch per exchange, saved in `data/settings.json`; without a
 saved choice an exchange is on when its credentials are in `.env`, so Hyperliquid stays off

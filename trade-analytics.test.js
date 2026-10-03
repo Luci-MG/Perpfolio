@@ -319,3 +319,30 @@ test('a hedge-mode close with nothing open is an orphan, not a negative trip', (
   assert.equal(r.trips[0].realized, 3);
   assert.equal(r.stillOpen.length, 0);
 });
+
+test('a trip records its side, opening notional, adds, partial closes and average exit', () => {
+  const { trips, sizeSteps } = ta.buildRoundTrips([
+    fill({ side: 'SELL', positionSide: 'SHORT', qty: '2', price: '100', time: 1000 }),
+    fill({ side: 'SELL', positionSide: 'SHORT', qty: '1', price: '106', time: 2000 }),
+    fill({ side: 'BUY',  positionSide: 'SHORT', qty: '1', price: '95', time: 3000 }),
+    fill({ side: 'BUY',  positionSide: 'SHORT', qty: '2', price: '92', time: 4000 })
+  ]);
+  const [t] = trips;
+  assert.equal(t.side, 'Short');
+  assert.equal(t.openNotional, 200);
+  assert.equal(t.adds, 1);
+  assert.equal(t.partialCloses, 1);
+  assert.ok(Math.abs(t.avgExit - (95 + 2 * 92) / 3) < 1e-12);
+  assert.deepEqual(sizeSteps.get(ta.tripKey(t)), [[1000, 2], [2000, 3], [3000, 2], [4000, 0]]);
+});
+
+test('a one-way flip closes at the old size and opens the new side at the remainder', () => {
+  const { trips, stillOpen } = ta.buildRoundTrips([
+    fill({ positionSide: 'BOTH', side: 'BUY', qty: '1', price: '100', time: 1000 }),
+    fill({ positionSide: 'BOTH', side: 'SELL', qty: '3', price: '110', time: 2000 })
+  ]);
+  assert.equal(trips[0].side, 'Long');
+  assert.equal(trips[0].avgExit, 110);
+  assert.equal(trips[0].partialCloses, 0);
+  assert.equal(stillOpen[0].side, 'Short');
+});

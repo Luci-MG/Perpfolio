@@ -370,7 +370,7 @@ function render(data) {
     ${renderSidebarBottomRow(data)}
   `;
 
-  const mountId = { stress: 'st-mounted', unwind: 'uw-mounted', confluence: 'cf-mounted', stops: 'vs-mounted' }[posView] || null;
+  const mountId = { stress: 'st-mounted', unwind: 'uw-mounted', confluence: 'cf-mounted', stops: 'vs-mounted', journal: 'jr-mounted' }[posView] || null;
   const keepPanel = mountId && !riskForceRender && document.getElementById(mountId);
   riskForceRender = false;
   if (keepPanel) {

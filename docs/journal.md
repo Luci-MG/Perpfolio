@@ -83,7 +83,8 @@ the account's **real** commission rate — taker 0.05% / maker 0.02% at fee tier
   progress, the store's file/byte counts and the cursors
 - `GET /api/performance[?days=N]` — 28 sections: round trips, behaviour split, equity curve,
   calendar, per-symbol, per-hold-time/day/hour/side/month, streaks, sequence effect, size
-  distribution, execution, records, fees and funding per symbol, trip lists
+  distribution, execution, records, fees and funding per symbol
+- `GET /api/trips[?days=N]` — every closed round trip with its context (below), plus coverage
 - `GET /api/hedgeledger` — locked PnL per pair, residual exposure, carry per day, margin
   inflation under a pump
 
@@ -124,7 +125,7 @@ strips path characters so a malformed symbol cannot escape `data/`, `ensureDir`,
 | Timing | calendar heatmap, day of week, hour of day |
 | Symbols | full per-symbol table with concentration |
 | Costs | maker/taker split, fees by symbol, funding by symbol |
-| Trades | recent 25, worst 10, best 10 |
+| Trades | one sortable, filterable table of every round trip, with CSV export — see *Trades* below |
 
 **Two stacked panels, never two y-axes.** Daily results are bars whose *direction* encodes
 sign: the project's green/red pair measures ΔE 3.2 under deuteranopia, far below the ΔE 8 at
@@ -135,6 +136,48 @@ centre line, and **every bucket shows its trip count**, with fewer than 10 dimme
 
 `jrSym()` keeps the quote on non-USDT pairs: stripping both collapsed `BTCUSDT` and
 `BTCUSDC` into a single label that then appeared twice in the costs list.
+
+### Trades: every round trip with its context
+One row per closed trip, built in three layers so each can be tested alone:
+
+| Layer | Fields | Where |
+|---|---|---|
+| From fills, exact | side, opened and peak notional, adds (and adds while underwater), partial closes, avg entry and exit, realised, fees, hold time | `buildRoundTrips` in `trade-analytics.js` |
+| From the ledger and other trips | funding, net after funding, session, hedged at entry | `trip-context.js` (pure) |
+| From candles, cached | MAE / MFE, ATR % at entry, BTC trend at entry | `trip-context.js` maths, fetched by `lib/trip-enrichment.js` |
+
+- **Sessions** are UTC: Asia 22–08, Europe 08–14, US 14–22.
+- **Hedged at entry** means the same symbol's opposite hedge-mode leg was already open at the
+  trip's first fill; the leg opened second is the hedge.
+- **MAE / MFE** are the worst and best move against the *average* entry while held, in
+  percent, from the finest kline interval that covers the trip in one request of 1,500 bars
+  (1m up to 25h, then 5m, 15m, 1h, 4h). Most trips are short — the median is about 3h — so a
+  fixed 1h bar would have read nothing for a third of them. The first bar can include a few
+  minutes before the entry fill.
+- **ATR %** is ATR(14) of the 20 1h bars before entry; **BTC trend** is BTC's 1h EMA50 against
+  EMA200 on bars closed before entry, `flat` within 0.5%.
+
+**Funding: a hedged pair settles as one net row.** Binance books a settlement against the
+symbol, not the leg: only a handful of thousands of funding rows came as two rows. With one leg open the row
+is that trip's exactly. With both open it is split by each leg's size at that moment × the
+historical funding rate × that settlement's mark, and the residual is shared equally, so
+the parts always sum to the row (verified on the live ledger: attributed − ledger =
+2.7e-12). Split trips show `≈`. A trip that opened before the income ledger starts — Binance
+keeps three months — has unknown funding, and its Net is shown before funding with `*`.
+
+**Fetched during a sync, never on a request.** After fills, the sync's `context` phase fetches
+candles for each trip without a cached row and funding-rate history for symbols with hedged
+settlements, through the weight throttle. Only the computed values are kept, one row per
+trip in `data/trip-context.ndjson` tagged with `CONTEXT_VERSION`; bumping it recomputes every
+row, so a formula fix never leaves old numbers on screen. A symbol Binance no longer lists is
+recorded as unavailable instead of retried. The first run on a few hundred trips took a few
+minutes; a routine sync fetches only new trips.
+
+**The table** (`public/js/journal-trades.js`) is driven by one `TRADE_COLUMNS` list — label,
+sort value, cell and CSV fields per column. Default columns stay compact; *More columns*
+adds ATR, BTC, entry → exit, realised, fees, funding, fills and maker %. Every `—` says why
+on hover. *Export CSV* writes every column for the rows the filters match. Journal
+registers `#jr-mounted`, so the 15s poll no longer rebuilds it under a filter being typed.
 
 ### Hedge ledger drawer
 Last slot in the sidebar icon block. Leads with the number that reframes the book: a matched

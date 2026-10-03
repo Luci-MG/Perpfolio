@@ -6,7 +6,7 @@
 server.js                      wiring: static files, routes in order, services when run directly
 routes/*.js                    one register(app) per area — request parsing and response shaping only
 lib/*.js                       exchange access, caches, snapshots, the history store sync
-risk-engine.js vol-estimator.js confluence.js trade-analytics.js history-store.js
+risk-engine.js vol-estimator.js confluence.js trade-analytics.js trip-context.js history-store.js
                                pure engines at the root: no network, fully unit-tested
 public/index.html              markup only
 public/css/app.css             every style; theme tokens on :root
@@ -32,6 +32,7 @@ public/js/*.js                 classic scripts, one global scope, loaded in a fi
 | `lib/pools.js` | cross pools, calibration against reported figures | used by riskbook, deleverage, hedge ledger |
 | `lib/history-sync.js` | income + fill sync into `data/` | `DASHBOARD_DATA_DIR` overrides the folder (tests) |
 | `lib/analytics.js` | memoised round trips and statistics | keyed on the sync cursors |
+| `lib/trip-enrichment.js` | per-trip candles and funding rates during a sync, `enrichedTrips()` | caches computed values only, versioned |
 | `lib/confluence-data.js` | klines on any timeframe, positioning series | |
 
 A module that imports a `let` gets a live, read-only binding: reading another module's
@@ -41,7 +42,7 @@ the watchdog share `lib/orders-stream.js`.
 ## Frontend scripts — load order is part of the contract
 
 `core → venues → tools-nav → positions → tiles-threads → stops → stress → hedge-ledger → confluence-view →
-journal → unwind → render → calculators → drawers → boot`
+journal → journal-trades → unwind → render → calculators → drawers → boot`
 
 - Classic scripts, not modules: inline `onclick="fn()"` handlers need globals, and classic
   scripts share one global lexical scope for `let`/`const` across files.

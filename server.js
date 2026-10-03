@@ -20,6 +20,7 @@ import { register as registerConfluence } from './routes/confluence.js';
 import { register as registerAssets } from './routes/assets.js';
 import { register as registerHealth } from './routes/health.js';
 import { register as registerVenues } from './routes/venues.js';
+import { register as registerTrips } from './routes/trips.js';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -30,6 +31,7 @@ registerVolstops(app);
 registerRiskbook(app);
 registerHistory(app);
 registerPerformance(app);
+registerTrips(app);
 registerHedgeledger(app);
 registerDeleverage(app);
 registerConfluence(app);

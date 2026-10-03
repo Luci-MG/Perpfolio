@@ -28,6 +28,7 @@
 | `GET /api/riskbook` | cross pools, calibration, stress inputs, depth, ADL | *Cross-Pool Stress Simulator* |
 | `GET /api/deleverage?objective=&target=&maxLoss=&fee=&breakHedges=` | unwind plan | *Unwind planner* |
 | `GET /api/performance?days=N` | journal: round trips, breakdowns, equity curve | *Account history* |
+| `GET /api/trips?days=N` | every closed round trip with size, costs, funding, price path and market at entry, plus context coverage | *Trades* in `journal.md` |
 | `GET /api/hedgeledger` | locked hedge PnL, carry, margin inflation | *Hedge ledger* |
 | `GET /api/history/sync?start=true&full=true` | starts a history sync, returns progress | *history-store* |
 | `GET /api/confluence?symbol=&tfs=` | signals, regime, scores and track records per timeframe | *Confluence* |
