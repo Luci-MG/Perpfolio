@@ -1,0 +1,41 @@
+docs/journal.md
+  s_ce0783ce808ef4::t_488688b1cb878e 92,126,172-196
+  s_ce0783ce808ef4::t_fe003bba53efb1 197
+CLAUDE.md
+  s_ce0783ce808ef4::t_488688b1cb878e 30,35,56,68
+public/js/goals-view.js
+  s_ce0783ce808ef4::t_42234d277377ae 262-265
+public/js/factors-view.js
+  s_ce0783ce808ef4::t_42234d277377ae 1-103
+docs/roadmap.md
+  s_ce0783ce808ef4::t_51d0b2958d376d 22,238-240
+public/js/journal.js
+  s_ce0783ce808ef4::t_42234d277377ae 11,26,323,517
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_819497eb57ea1b 497-535
+docs/frontend.md
+  s_ce0783ce808ef4::t_488688b1cb878e 23
+public/css/app.css
+  s_ce0783ce808ef4::t_42234d277377ae 867-880
+public/index.html
+  s_ce0783ce808ef4::t_42234d277377ae 433
+docs/changelog.md
+  s_ce0783ce808ef4::t_488688b1cb878e 4-14
+  s_ce0783ce808ef4::t_51d0b2958d376d 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b19fa031952c033fd8fe4eef12e69a30477a84c2",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
