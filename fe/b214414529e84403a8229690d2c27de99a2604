@@ -1,0 +1,35 @@
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_932a36d2e643d9 312-313,316
+test/routes.test.js
+  s_ce0783ce808ef4::t_932a36d2e643d9 155
+docs/changelog.md
+  s_ce0783ce808ef4::t_ece512b5aee74f 3-10
+sessions.js
+  s_ce0783ce808ef4::t_932a36d2e643d9 10,16-17,38-47,54
+docs/journal.md
+  s_ce0783ce808ef4::t_ece512b5aee74f 180
+test/golden/routes.json
+  s_ce0783ce808ef4::t_932a36d2e643d9 3686,3758,3938,4010,4118,4190,4370,4442,5089-5090,5092-5096,5098,5112-5124,5804,6526-6527,6529-6533,6535,6549-6561,7279-7291
+public/js/sessions-view.js
+  s_ce0783ce808ef4::t_932a36d2e643d9 4,33
+sessions.test.js
+  s_ce0783ce808ef4::t_932a36d2e643d9 23-29,31,41-43
+docs/sessions.md
+  s_ce0783ce808ef4::t_ece512b5aee74f 16-20,32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "feb214414529e84403a8229690d2c27de99a2604",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
