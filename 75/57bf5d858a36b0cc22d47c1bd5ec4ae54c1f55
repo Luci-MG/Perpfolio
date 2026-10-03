@@ -1,0 +1,63 @@
+test/golden/routes.json
+  s_bc801fe6b1f892::t_38c6dd3a196438 1702,1729,1732,1736-1739,1788-1790,1807,1810,1814-1818,1826,1829,1836-1837,1840-1841
+  s_bc801fe6b1f892::t_8cd09e74353c89 715,743,1388
+test/routes.test.js
+  s_bc801fe6b1f892::t_d907179620b51f 152-161
+  s_bc801fe6b1f892::t_38c6dd3a196438 144-151,162-168
+public/js/unwind.js
+  s_bc801fe6b1f892::t_6a33e5247b0388 133-150,180,206-215
+  s_bc801fe6b1f892::t_450d6ebc25103b 36,38-39,129-130,242-273,326,329-332,413-414,420-421
+  s_bc801fe6b1f892::t_3a68861760affb 79,288-289,373,517,521-531,535,541,549,555,559-562,570-573,593-594,624-625
+  s_bc801fe6b1f892::t_2f82765143abbc 197,298-307,481
+public/js/stress.js
+  s_bc801fe6b1f892::t_e1c5d629fade15 119-123,128-129,134,270,272-273,279-280,282,456-463,467-471,474,482,508
+risk-engine.test.js
+  s_bc801fe6b1f892::t_fd119590055ece 349-366,369-378
+  s_bc801fe6b1f892::t_0dca1028a0e67d 367-368
+  s_bc801fe6b1f892::t_99aa0977618bbf 579,584-585,792-796
+public/js/hedge-ledger.js
+  s_bc801fe6b1f892::t_dae95008889c9e 123-124,126
+  s_bc801fe6b1f892::t_76361c81839dda 129,172
+docs/api.md
+  s_bc801fe6b1f892::t_b9fe589d4b24de 28-29
+lib/pools.js
+  s_bc801fe6b1f892::t_868af334a04d14 7,147-148,153,160,174,237-292,299,303-309,331
+test/frontend.smoke.test.js
+  s_bc801fe6b1f892::t_19ab2a20a5151c 786-795,798,801-803,805-833
+  s_bc801fe6b1f892::t_f0fc5e7bea9947 796-797,799-800
+  s_bc801fe6b1f892::t_1b291686292a79 804
+docs/changelog.md
+  s_bc801fe6b1f892::t_b9fe589d4b24de 3-24
+routes/deleverage.js
+  s_bc801fe6b1f892::t_709dd8dfd1fe7b 2,6-10,21-22,29,31-32,51,79
+test/fake-exchange.js
+  s_bc801fe6b1f892::t_d907179620b51f 115-116,173,381-382
+docs/roadmap.md
+  s_bc801fe6b1f892::t_b9fe589d4b24de 33,359-367
+  s_bc801fe6b1f892::t_c7474574cbf708 368
+docs/unwind.md
+  s_bc801fe6b1f892::t_5a2aba61275293 37-41,44-46,56-67,124-126
+routes/volstops.js
+  s_bc801fe6b1f892::t_709dd8dfd1fe7b 40-41
+docs/stress-engine.md
+  s_bc801fe6b1f892::t_698189681499db 25-32,121-125,172-181
+risk-engine.js
+  s_bc801fe6b1f892::t_9fed93a4632634 930-931,937,942
+  s_bc801fe6b1f892::t_ec88fb03c16de5 51-52,55-59,89-91,93-94,99,109,464-465,469,477-480,482-484,585-590,593,743-744
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7557bf5d858a36b0cc22d47c1bd5ec4ae54c1f55",
+  "prompts": {},
+  "sessions": {
+    "s_bc801fe6b1f892": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a437d9a6-a038-4659-865a-c44dff360498",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
