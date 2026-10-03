@@ -1,5 +1,26 @@
 # Changelog
 
+## Journal Timing, Symbols and Costs remodel (2026-10-03)
+
+- **Timing** opens with a calendar you can read without colour vision: blue gains, orange losses,
+  flat and untraded days apart, every day a button that opens its trades, with week and month
+  totals. Weekday and hour are by the time a position opened, each average shrunk toward the
+  book's with its range from 8 units, under a line saying how many would stand out by chance.
+  A weekday × hour grid shows when you trade.
+- **Symbols** shows the best and worst five by total net with the rest folded, a shrunk average,
+  fees in basis points and funding per hour held, sortable, each symbol opening its trades.
+  Concentration reads as the top three's share and "effectively N symbols".
+- **Costs** leads with fees and funding in basis points of notional against the window before,
+  funding paid and received apart, and maker share by notional with its trend. The fee rate paid
+  is checked against your own rates, BNB fees are priced apart, costs run by week and by symbol
+  with receipts kept, and the wallet ledger lists every income type with four checks.
+- **Every Journal tab follows daylight saving**: the browser sends its time zone and each
+  timestamp converts at the offset in force then.
+- **Fixed:** a routine sync skipped symbols closed out more than a week before it, leaving their
+  fills missing; it now pulls any symbol the ledger shows trading since its last pull. Execution
+  figures ignored the window and session. A BNB fee could be added to dollar fees. Funding by
+  symbol showed payers only. The "0.05% against 0.02%" note was hard-coded.
+
 ## Journal Performance and Behaviour remodel (2026-10-03)
 
 - **Performance** leads with return, drawdown, win rate, expectancy, payoff and Sharpe, each

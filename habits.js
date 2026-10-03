@@ -4,6 +4,7 @@
 // nearest alternative; one defined by the trip's own outcome is only counted, since a cost
 // there would be circular. Method: docs/research/performance-behaviour.md. Pure.
 
+import { localDayStart } from './local-time.js';
 import { dayBootstrap, groupByDay, mean, median, quantile, welch } from './stats.js';
 
 export const THIN_TRIPS = 10;
@@ -132,17 +133,13 @@ export const HABITS = [
     goal: () => ({ type: 'maxLossPct', params: {} }) }
 ];
 
-function localDayOf(ts, tz) {
-  return Math.floor((ts + tz * 60_000) / DAY_MS);
-}
-
 function factsOf(all, tz) {
   const perDay = new Map();
-  for (const t of all) perDay.set(localDayOf(t.openTime, tz), (perDay.get(localDayOf(t.openTime, tz)) || 0) + 1);
+  for (const t of all) perDay.set(localDayStart(t.openTime, tz), (perDay.get(localDayStart(t.openTime, tz)) || 0) + 1);
   const counts = [...perDay.values()].sort((a, b) => a - b);
   return {
     previous: previousTrips(all), medians: medianSizesBefore(all),
-    dayCount: new Map(all.map(t => [t, perDay.get(localDayOf(t.openTime, tz))])),
+    dayCount: new Map(all.map(t => [t, perDay.get(localDayStart(t.openTime, tz))])),
     busyCut: counts.length ? quantile(counts, 2 / 3) : Infinity,
     quietCut: counts.length ? quantile(counts, 1 / 3) : -Infinity
   };
@@ -212,8 +209,8 @@ function weeklyShares(def, all, f, { inSession, now }) {
  * The trip before, usual size and busy days are always judged on `all`.
  */
 export function habitReport(all, { inScope = () => true, inPrevious = null, inSession = () => true,
-                                   now = Date.now(), tzOffsetMin = 0 } = {}) {
-  const f = factsOf(all, tzOffsetMin);
+                                   now = Date.now(), tz = 0 } = {}) {
+  const f = factsOf(all, tz);
   const scope = all.filter(inScope);
   const previousScope = inPrevious ? all.filter(inPrevious) : null;
   return HABITS.map(def => {

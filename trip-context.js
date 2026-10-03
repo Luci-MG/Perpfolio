@@ -136,6 +136,15 @@ export function attributeFunding({ trips, stillOpen = [], sizeSteps, income, rat
   return out;
 }
 
+/** Funding rows from `from` on for which no rebuilt position leg was open, and their total. */
+export function unmatchedFunding({ trips, stillOpen = [], income, from = 0 }) {
+  const legsBySymbol = new Map();
+  for (const leg of [...trips, ...stillOpen]) legsBySymbol.set(leg.symbol, [...(legsBySymbol.get(leg.symbol) || []), leg]);
+  const rows = income.filter(r => r.incomeType === 'FUNDING_FEE' && r.symbol && r.time >= from
+    && !(legsBySymbol.get(r.symbol) || []).some(l => openDuring(l, r.time)));
+  return { rows: rows.length, amount: +rows.reduce((s, r) => s + parseFloat(r.income), 0).toFixed(2) };
+}
+
 function settlementsOf(income) {
   const groups = new Map();
   for (const row of income) {

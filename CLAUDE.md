@@ -35,6 +35,7 @@ expected to say so rather than assert correctness.
 | Funding: cost of holding the book, rates, caps, settlements | [`docs/frontend.md`](docs/frontend.md) *Funding*, [`docs/research/funding.md`](docs/research/funding.md) | `funding.js`, `routes/funding.js`, `public/js/funding-view.js` |
 | Statistical method behind Factors, with sources | [`docs/research/outcome-factors.md`](docs/research/outcome-factors.md) | `outcome-factors.js`, `stats.js` |
 | Performance and Behaviour: returns, drawdown, ratios, habits, with sources | [`docs/research/performance-behaviour.md`](docs/research/performance-behaviour.md) | `performance.js`, `habits.js`, `public/js/journal-performance.js`, `public/js/journal-behaviour.js` |
+| Timing, Symbols and Costs: shrunk averages, concentration, costs in bp, the wallet ledger, with sources | [`docs/research/timing-symbols-costs.md`](docs/research/timing-symbols-costs.md) | `breakdowns.js`, `costs.js`, `local-time.js`, `public/js/journal-timing.js`, `public/js/journal-symbols.js`, `public/js/journal-costs.js` |
 | What changed | [`docs/changelog.md`](docs/changelog.md) | — |
 | What is next | [`docs/roadmap.md`](docs/roadmap.md) | — |
 | What is deliberately not done | [`docs/known-gaps.md`](docs/known-gaps.md) | — |
@@ -55,7 +56,10 @@ crypto-dashboard/
 ├── trip-context.js        # per-trip funding, price path, market at entry
 ├── habits.js              # shared trip definitions, and habits with their cost
 ├── performance.js         # return, drawdown, ratios and unit statistics
-├── stats.js               # intervals: Wilson, Welch, day-clustered bootstrap, BH
+├── stats.js               # intervals: Wilson, Welch, day-clustered bootstrap, BH, shrinkage
+├── breakdowns.js          # weekday, hour, symbol and calendar breakdowns
+├── costs.js               # costs in bp, fee check, the wallet ledger and its checks
+├── local-time.js          # the reader's days, weeks and hours through daylight saving
 ├── goals.js               # goal types and their scoring
 ├── outcome-factors.js     # what at entry goes with better or worse trips
 ├── funding.js             # what holding the book costs in funding, hedges netted
@@ -70,7 +74,7 @@ crypto-dashboard/
 └── public/
     ├── index.html         # markup only
     ├── css/app.css
-    └── js/                # 23 classic scripts, loaded in a fixed order (docs/frontend.md)
+    └── js/                # 26 classic scripts, loaded in a fixed order (docs/frontend.md)
 ```
 
 ## Running and verifying

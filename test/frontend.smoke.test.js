@@ -347,6 +347,11 @@ test('the session clock reads, and a chosen session narrows Journal, Trades and 
   assert.match(markup.get('content'), new RegExp(`${session.replace('+', '\\+')} · \\d+ trips · ${inIt} match`));
   run(`jrTab = 'overview'; riskForceRender = true; render(lastData)`);
   assert.match(markup.get('content'), /Overview is the whole account/);
+  for (const [tab, note] of [['timing', /trips only: the calendar is their net/], ['symbols', /trips only\./], ['costs', /trips only, except the wallet ledger/]]) {
+    run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`);
+    assert.match(markup.get('content'), note, tab);
+    assert.deepEqual(strayValues(markup.get('content')), [], tab);
+  }
 
   run(`setView('stops')`);
   await settle('volStopData && !volLoading', 'the stops');
@@ -358,6 +363,44 @@ test('the session clock reads, and a chosen session narrows Journal, Trades and 
   assert.match(markup.get('content'), new RegExp(`In ${session.replace('+', '\\+')}`));
   assert.deepEqual(strayValues(markup.get('content')), []);
   run(`setSession('All')`);
+});
+
+test('Timing, Symbols and Costs: calendar days and symbols open their trades, averages wait for enough trades, costs read in basis points', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading && perfData.timing', 'the journal');
+  const show = tab => { run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+
+  const timing = show('timing');
+  assert.match(timing, /<button class="jr-cal-cell cal-(gain|loss)-\d"[^>]*aria-label="[^"]+: [+−]\$[\d,.]+, \d+ trades? closed"/);
+  assert.match(timing, /orange is a loss, blue a gain/);
+  assert.match(timing, /Day of the week opened[\s\S]*average after \d+ more[\s\S]*Hour opened[\s\S]*When you open positions/);
+  assert.ok(timing.split('<div class="sb-row').filter(r => r.startsWith(' needs')).every(r => !r.split('</div>')[0].includes('sb-dot')), 'no estimate is drawn below the minimum');
+  const day = run('perfData.timing.calendar.weeks.flatMap(w => w.days).find(d => d.trips).date');
+  run(`openTradesFor({ closeDay: '${day}' })`);
+  await settle('tripsData && !tripsLoading', 'the trips');
+  assert.equal(run('jrTab'), 'trades');
+  assert.ok(run('filteredTrips().length') > 0 && run(`filteredTrips().every(t => browserDate(t.closeTime) === '${day}')`));
+  assert.match(markup.get('content'), new RegExp(`closed ${day} ✕`));
+
+  const symbols = show('symbols');
+  assert.match(symbols, /carry \d+% of the book's gross profit and loss ·\s+by notional you trade like [\d.]+ equal-sized symbols/);
+  assert.match(symbols, /<td><span class="(up|dn)">[+−]\$[\d.]+<\/span> <span class="gl-n" title="90% interval">/);
+  run(`sortSymbols('symbol')`);
+  assert.equal(run('sortedSymbolRows(perfData.symbols.rows)[0].symbol'), 'BTCUSDT');
+  run(`openTradesFor({ symbol: 'BTCUSDT', exact: true })`);
+  assert.ok(run(`filteredTrips().every(t => t.symbol === 'BTCUSDT')`));
+
+  const costs = show('costs');
+  assert.match(costs, /Fees<\/div><div class="v ">[\d.]+ bp/);
+  assert.match(costs, /your rates \(maker 2\.0 bp, taker 5\.0 bp\)[\s\S]*BNB fee discount on[\s\S]*BNB of fees ≈ \$/);
+  assert.match(costs, /Slippage: not measured/);
+  assert.match(costs, /Costs by week[\s\S]*Funding paid by symbol[\s\S]*Funding received by symbol/);
+  for (const html of [timing, symbols, costs]) assert.deepEqual(strayValues(html), []);
 });
 
 test('the tool widgets open each tool and toggle back to the last positions view', async () => {
@@ -740,5 +783,5 @@ test('Overview: attention is ranked and capped, calm says so, recent trades open
   assert.equal(run('jrTab'), 'trades');
   assert.ok(run(`filteredTrips().some(t => t.key === '${first.key}')`));
 
-  assert.match(show('costs'), /How the wallet got here[\s\S]*wallet at the start of the window[\s\S]*account value[\s\S]*Execution/);
+  assert.match(show('costs'), /How the wallet got here[\s\S]*wallet on [\s\S]*commission rebate[\s\S]*wallet at the last sync[\s\S]*Checks: [\s\S]*Fees/);
 });

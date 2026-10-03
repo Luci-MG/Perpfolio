@@ -19,6 +19,9 @@
   --radius-lg: 12px;
   --hl: #7f77dd;
   --bn: #ef9f27;
+  --cal-gain-1: #9ecae1; --cal-gain-2: #6baed6; --cal-gain-3: #2171b5;
+  --cal-loss-1: #fdae6b; --cal-loss-2: #fd8d3c; --cal-loss-3: #d94801;
+  --cal-zero: #e6e5e1; --count-hue: #2171b5;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -31,6 +34,9 @@
     --purple: #afa9ec; --purple-bg: #26215c;
     --amber: #fac775; --amber-bg: #412402;
     --success: #5dcaa5; --danger: #f09595; --warning: #fac775;
+    --cal-gain-1: #24496e; --cal-gain-2: #2f6fa8; --cal-gain-3: #6baed6;
+    --cal-loss-1: #7a3d14; --cal-loss-2: #b35a1f; --cal-loss-3: #fd8d3c;
+    --cal-zero: #383835; --count-hue: #6baed6;
   }
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -381,9 +387,39 @@ tr:last-child td { border-bottom: none; }
 
 .jr-cal { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 4px; }
 .jr-cal-col { display: flex; flex-direction: column; gap: 2px; }
-.jr-cal-cell { width: 13px; height: 13px; border-radius: 2px; background: var(--surface2); }
-.jr-cal-key { display: flex; align-items: center; gap: 6px; font-size: 9px; color: var(--text3);
-              margin-top: 6px; }
+.jr-cal-cell { width: 13px; height: 13px; border-radius: 2px; background: transparent; border: 0.5px solid var(--border);
+               padding: 0; cursor: default; display: block; }
+button.jr-cal-cell { cursor: pointer; border: 0; }
+button.jr-cal-cell:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
+.cal-zero { background: var(--cal-zero); }
+.cal-gain-1 { background: var(--cal-gain-1); } .cal-gain-2 { background: var(--cal-gain-2); } .cal-gain-3 { background: var(--cal-gain-3); }
+.cal-loss-1 { background: var(--cal-loss-1); } .cal-loss-2 { background: var(--cal-loss-2); } .cal-loss-3 { background: var(--cal-loss-3); }
+.jr-cal-key { display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--text3); margin-top: 6px; flex-wrap: wrap; }
+.jr-cal-months { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.jr-grid { width: auto; min-width: 0; border-collapse: separate; border-spacing: 2px; font-size: 9px; color: var(--text3); }
+.jr-grid td { width: 13px; height: 13px; border-radius: 2px; padding: 0; border: 0; }
+.jr-grid th { font-weight: 400; text-align: left; padding: 0 6px 0 0; border: 0; width: 26px; }
+.sb-bars { max-width: 860px; }
+.sb-row { display: grid; grid-template-columns: 76px minmax(120px, 1fr) 210px 150px; gap: 12px; align-items: center; font-size: 11px;
+          min-height: 22px; font-variant-numeric: tabular-nums; }
+.sb-row.needs { color: var(--text3); }
+.sb-val, .sb-n { white-space: nowrap; }
+.sb-n { color: var(--text3); text-align: right; }
+.sb-track { position: relative; height: 14px; }
+.sb-zero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border2); }
+.sb-avg { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--text3); }
+.sb-whisker { position: absolute; top: 6.5px; height: 1px; background: var(--text2); }
+.sb-dot { position: absolute; top: 3px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--text); }
+.sb-dot.up { background: var(--success); } .sb-dot.dn { background: var(--danger); }
+@media (max-width: 700px) { .sb-row { grid-template-columns: 56px minmax(80px, 1fr) auto; } .sb-n { display: none; } }
+.sb-key { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 9px; color: var(--text3); margin-top: 6px; }
+.sb-key .sb-dot { position: static; margin: 0; }
+.sb-key-line { display: inline-block; width: 16px; height: 1px; background: var(--text2); }
+.sb-key-avg { display: inline-block; height: 10px; border-left: 1px dashed var(--text3); }
+.sb-key-zero { display: inline-block; width: 1px; height: 10px; background: var(--border2); }
+.sym-tbl button.gl-link { padding: 0; }
+.sym-tbl th button { background: none; border: 0; color: inherit; font: inherit; cursor: pointer; padding: 0; }
+.cost-weeks { display: block; width: 100%; height: auto; }
 
 .jr-flow { display: flex; flex-direction: column; gap: 0; font-size: 12px;
            font-variant-numeric: tabular-nums; max-width: 440px; }

@@ -120,15 +120,6 @@ test('summarise reads net after fees and funding, counts a flat trip as neither,
   assert.equal(ta.summarise([]).trips, 0);
 });
 
-test('incomeTotals reports fee drag against gross realised PnL', () => {
-  const t = ta.incomeTotals([
-    { incomeType: 'REALIZED_PNL', income: '1000', time: 1 },
-    { incomeType: 'COMMISSION',   income: '-150', time: 1 }
-  ]);
-  assert.equal(t.totals.REALIZED_PNL, 1000);
-  assert.equal(t.feeDragPct, 15);
-});
-
 test('funding interval is inferred from observed settlements', () => {
   const rows = (gapH, n) => Array.from({ length: n }, (_, i) => ({
     incomeType: 'FUNDING_FEE', symbol: 'AUSDT', income: '-1', time: i * gapH * 3_600_000
@@ -150,16 +141,10 @@ const trip = (o = {}) => ({
 });
 
 test('every bucket carries its count and flags a thin sample', () => {
-  const few = [trip({ net: -9000, win: false })];
-  const dow = ta.byDayOfWeek(few);
-  const monday = dow.find(d => d.label === 'Monday');
-  assert.equal(monday.trips, 1);
-  assert.equal(monday.thin, true, 'one trip showing a five-figure number must be flagged');
-  assert.equal(dow.find(d => d.label === 'Sunday').trips, 0);
-  assert.equal(dow.length, 7);
-
-  const many = Array.from({ length: 12 }, () => trip());
-  assert.equal(ta.byDayOfWeek(many).find(d => d.label === 'Monday').thin, false);
+  const [hold] = ta.byHoldTime([trip({ net: -9000, holdHours: 0.1 })]);
+  assert.equal(hold.trips, 1);
+  assert.equal(hold.thin, true, 'one trip showing a five-figure number must be flagged');
+  assert.equal(ta.byHoldTime(Array.from({ length: 12 }, () => trip({ holdHours: 0.1 })))[0].thin, false);
 });
 
 test('hold-time buckets partition every trip exactly once', () => {
@@ -170,43 +155,14 @@ test('hold-time buckets partition every trip exactly once', () => {
   assert.equal(buckets.find(b => b.label === 'over 7d').trips, 1);
 });
 
-test('hour buckets cover the whole clock', () => {
-  const hours = ta.byHourOfDay([trip({ openTime: Date.UTC(2026, 0, 5, 23) })]);
-  assert.equal(hours.length, 24);
-  assert.equal(hours[23].trips, 1);
-  assert.equal(hours[23].label, '23:00');
-});
-
-test('makerTaker splits fills and their fees', () => {
-  const m = ta.makerTaker([
-    { maker: true,  commission: '0.02' },
-    { maker: false, commission: '0.05' },
-    { maker: false, commission: '0.05' }
-  ]);
-  assert.equal(m.maker, 1);
-  assert.equal(m.taker, 2);
-  assert.ok(Math.abs(m.makerPct - 33.3) < 0.1);
-  assert.equal(m.makerFee, 0.02);
-  assert.equal(m.takerFee, 0.1);
-  assert.equal(m.totalFee, 0.12);
-});
-
-test('daily net is cut at local midnight, and the calendar lays days into Monday-first weeks with gaps preserved', () => {
+test('daily net is cut at local midnight, and transfers are not trading', () => {
   const days = ta.dailyIncomeNet([
     { incomeType: 'REALIZED_PNL', income: '100', time: Date.UTC(2026, 0, 7, 12) },
     { incomeType: 'COMMISSION', income: '-1', time: Date.UTC(2026, 0, 7, 23, 30) },
     { incomeType: 'TRANSFER', income: '500', time: Date.UTC(2026, 0, 8) },
     { incomeType: 'REALIZED_PNL', income: '-50', time: Date.UTC(2026, 0, 9, 12) }
   ], 60);
-  assert.deepEqual(days, [{ date: '2026-01-07', pnl: 100 }, { date: '2026-01-08', pnl: -1 }, { date: '2026-01-09', pnl: -50 }],
-    'a fee at 23:30 UTC is the next day at UTC+1, and transfers are not trading');
-  const cal = ta.calendar(days);
-  assert.equal(cal.maxAbs, 100);
-  assert.equal(cal.weeks[0][0].date, '2026-01-05', 'week starts on the Monday');
-  assert.equal(cal.weeks[0][2].pnl, 100);
-  assert.equal(cal.weeks[0][4].pnl, -50);
-  assert.equal(cal.weeks[0][5].pnl, null, 'a day with no trading is null, not zero');
-  assert.deepEqual(ta.calendar([]).weeks, []);
+  assert.deepEqual(days, [{ date: '2026-01-07', pnl: 100 }, { date: '2026-01-08', pnl: -1 }, { date: '2026-01-09', pnl: -50 }]);
 });
 
 test('bySide groups on the side held, one-way trips included, and byMonth on the local month', () => {
@@ -218,12 +174,6 @@ test('bySide groups on the side held, one-way trips included, and byMonth on the
   assert.deepEqual(ta.bySide(trips).map(b => [b.label, b.trips]), [['Long', 1], ['Short', 2]]);
   assert.deepEqual(ta.byMonth(trips).map(m => m.label), ['2026-01', '2026-02']);
   assert.deepEqual(ta.byMonth(trips, 60).map(m => [m.label, m.trips]), [['2026-02', 3]]);
-});
-
-test('costs by symbol sum fees and funding, worst first, leaving out zeros', () => {
-  const c = ta.costsBySymbol([{ symbol: 'A', fees: 1 }, { symbol: 'B', fees: 3, funding: -2 }, { symbol: 'A', funding: 1 }, { fees: 9 }]);
-  assert.deepEqual(c.fees.map(r => r.symbol), ['B', 'A']);
-  assert.deepEqual(c.funding.map(r => [r.symbol, r.funding]), [['B', -2], ['A', 1]]);
 });
 
 test('float dust left by summed fill sizes still closes the trip', () => {

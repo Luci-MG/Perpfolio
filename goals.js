@@ -4,6 +4,7 @@
 // context (lib/trip-enrichment.js).
 
 import { THIN_TRIPS, medianSizesBefore, netOf } from './habits.js';
+import { localDayStart, nextLocalDay } from './local-time.js';
 import { deadlineOf, previewMilestone, scoreMilestone } from './milestones.js';
 import { SESSIONS } from './sessions.js';
 import { periodStarts } from './trade-analytics.js';
@@ -144,7 +145,7 @@ function trailingLosses(scoped, trip, day) {
 }
 
 function evaluate(def, goal, trips, ctx) {
-  const tz = ctx.tzOffsetMin || 0;
+  const tz = ctx.tz ?? 0;
   const scoped = trips.filter(t => !goal.session || t.session === goal.session).sort((a, b) => a.openTime - b.openTime);
   const medians = def.id === 'maxSize' ? medianSizesBefore(trips) : null;
   const perDay = new Map();
@@ -191,11 +192,11 @@ function summary(def, rows) {
            ...costOf(rows) };
 }
 
-function dayCells(rows, today, count, isScored = () => true) {
+function dayCells(rows, today, count, tz, isScored = () => true) {
   return Array.from({ length: count }, (_, i) => {
-    const day = today - (count - 1 - i) * DAY_MS;
+    const day = localDayStart(today - (count - 1 - i) * DAY_MS + DAY_MS / 2, tz);
     const onDay = rows.filter(r => r.day === day);
-    const state = !isScored(day + DAY_MS - 1) ? 'unset'
+    const state = !isScored(nextLocalDay(day, tz) - 1) ? 'unset'
       : onDay.some(r => !r.kept) ? 'broken' : onDay.length ? 'kept' : 'none';
     return { day, state };
   });
@@ -219,12 +220,12 @@ const goalHeader = (goal, def) => ({
 /**
  * One goal's record from `setAt`: status today, adherence with n, streak, the day strip and
  * calendar, breaches with their estimated cost, and what history before `setAt` would have said.
- * `ctx` is `{ tzOffsetMin, now, equityAt, snapshots, transfers, wallet }`; time paused is never scored.
+ * `ctx` is `{ tz, now, equityAt, snapshots, transfers, wallet }`; time paused is never scored.
  */
 export function scoreGoal(goal, trips, ctx) {
   const def = typeOf(goal.type);
   if (def.unit === 'milestone') return { ...goalHeader(goal, def), ...scoreMilestone(goal, ctx, t => inPause(goal, t)) };
-  const tz = ctx.tzOffsetMin || 0;
+  const tz = ctx.tz ?? 0;
   const rows = evaluate(def, goal, trips || [], ctx);
   const scored = rows.filter(r => r.trip.openTime >= goal.setAt && !inPause(goal, r.trip.openTime));
   const before = rows.filter(r => r.trip.openTime < goal.setAt);
@@ -241,8 +242,8 @@ export function scoreGoal(goal, trips, ctx) {
              limit: def.unit === 'day' ? goal.params.max : null },
     streak: streakOf(periods),
     ...summary(def, scored),
-    strip: dayCells(scored, todayStart, STRIP_DAYS, scoredDay),
-    calendar: dayCells(scored, todayStart, CALENDAR_DAYS, scoredDay),
+    strip: dayCells(scored, todayStart, STRIP_DAYS, tz, scoredDay),
+    calendar: dayCells(scored, todayStart, CALENDAR_DAYS, tz, scoredDay),
     breachCount: breaches.length,
     breaches: breaches.slice(0, BREACHES_LISTED).map(({ trip, what }) => ({
       symbol: trip.symbol, side: trip.side, openTime: trip.openTime, closeTime: trip.closeTime,
@@ -257,7 +258,7 @@ export function previewGoal(goal, trips, ctx) {
   if (def.unit === 'milestone') return { label: describeGoal(goal), unit: def.unit, type: goal.type, ...previewMilestone(goal, ctx) };
   const rows = evaluate(def, goal, trips || [], ctx);
   return { label: describeGoal(goal), ...summary(def, rows),
-           strip: dayCells(rows, localDay(ctx.now, ctx.tzOffsetMin || 0), PREVIEW_DAYS) };
+           strip: dayCells(rows, localDay(ctx.now, ctx.tz ?? 0), PREVIEW_DAYS, ctx.tz ?? 0) };
 }
 
 /**
@@ -291,7 +292,7 @@ function worstSession(trips) {
 }
 
 function candidates(trips, ctx) {
-  const tz = ctx.tzOffsetMin || 0;
+  const tz = ctx.tz ?? 0;
   const lossPcts = trips.filter(lost).map(t => {
     const eq = ctx.equityAt?.(t.openTime);
     return eq?.value > 0 ? -netOf(t) / eq.value * 100 : null;

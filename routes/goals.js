@@ -6,6 +6,7 @@ import { getBinanceData } from '../lib/binance-account.js';
 import { readEquitySnapshots } from '../lib/equity-snapshots.js';
 import { changeGoals, readGoals } from '../lib/goals-store.js';
 import { enrichedTrips } from '../lib/trip-enrichment.js';
+import { readerClock } from '../lib/util.js';
 
 const jsonBody = express.json({ limit: '2kb' });
 const parseJson = (req, res, next) =>
@@ -17,14 +18,14 @@ const TYPES = GOAL_TYPES.map(({ id, label, unit, forwardOnly = false, scoped = t
 const STATUS_ORDER = ['broken', 'progress', 'kept', 'idle', 'paused'];
 const OFF_TRACK = ['missed', 'late'];
 
-async function scoringContext(tz) {
+async function scoringContext(query) {
   const now = Date.now();
   const bn = await getBinanceData();
   const { income } = analytics();
   const wallet = bn.disabled ? [] : walletCurve(income, bn.walletBalance, now);
   const snapshots = readEquitySnapshots();
   const transfers = income.filter(r => r.incomeType === 'TRANSFER').map(r => ({ t: r.time, amount: parseFloat(r.income) }));
-  return { now, tzOffsetMin: parseInt(tz, 10) || 0, equityAt: equityLookup(snapshots, wallet), snapshots, transfers, wallet };
+  return { now, tz: readerClock(query), equityAt: equityLookup(snapshots, wallet), snapshots, transfers, wallet };
 }
 
 const milestoneRank = g => [g.status === 'paused', g.type === 'accountTarget', g.params.target ?? 0];
@@ -59,7 +60,7 @@ export function register(app) {
   app.get('/api/goals', async (req, res) => {
     try {
       const { trips, coverage } = enrichedTrips();
-      const ctx = await scoringContext(req.query.tz);
+      const ctx = await scoringContext(req.query);
       res.json({ ok: true, types: TYPES, ...scoreboard(readGoals(), trips, ctx), entryCapturedSince: coverage.entryCapturedSince });
     } catch (err) {
       console.error('[goals]', err);
@@ -71,7 +72,7 @@ export function register(app) {
     let goal;
     try { goal = parsePreview(req.query); } catch (err) { return res.status(400).json({ ok: false, error: err.message }); }
     try {
-      const ctx = await scoringContext(req.query.tz);
+      const ctx = await scoringContext(req.query);
       res.json({ ok: true, preview: previewGoal(goal, enrichedTrips().trips, ctx) });
     } catch (err) {
       res.status(500).json({ ok: false, error: err.message });

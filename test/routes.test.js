@@ -120,6 +120,7 @@ test('history sync fills the store and the journal reconciles every fill', async
   assert.equal(status, 200);
   assert.ok(body.overall.trips > 0);
   const clockFree = { ...body, walletCurve: body.walletCurve.slice(0, -1), account: { curve: body.account.curve },
+    costs: { ...body.costs, makerTrend: null, ledger: { ...body.costs.ledger, at: null } },
     habits: body.habits.map(({ weekly, ...h }) => h),
     periods: Object.fromEntries(Object.entries(body.periods).map(([k, { from, previous, ...rest }]) => [k, rest])) };
   record('performance', clockFree);
@@ -144,6 +145,31 @@ test('performance counts a hedged pair once, compares with the window before, an
   assert.deepEqual(ahead.month.map(m => m.label), months);
 });
 
+test('costs follow the window and session, price BNB fees apart, and the ledger lists every income type with its checks', async () => {
+  const all = (await get('/api/performance')).body.costs;
+  const week = (await get('/api/performance?days=30')).body.costs;
+  assert.ok(week.summary.trips < all.summary.trips && week.summary.traded < all.summary.traded, 'execution follows the window');
+  assert.ok(week.previous, 'and is compared with the window before');
+  assert.ok(all.summary.bnb.fee > 0 && all.summary.bnb.usd > 0, 'a fee paid in BNB is priced at that day\'s close');
+  assert.ok(Math.abs(all.summary.bnb.usd - all.summary.bnb.fee * 600) / (all.summary.bnb.fee * 600) < 0.2);
+  assert.equal(all.feeBurn, true);
+  assert.deepEqual(all.feeCheck.rates.BTCUSDT, { makerBp: 2, takerBp: 5 });
+  assert.ok(all.feeCheck.expectedBp >= 2 && all.feeCheck.expectedBp <= 5);
+  assert.deepEqual(all.ledger.other, [{ type: 'COMMISSION_REBATE', amount: 0.3 }]);
+  assert.deepEqual(all.ledger.checks.map(c => c.id), ['start', 'realised', 'fees', 'funding']);
+  assert.ok(all.ledger.checks.find(c => c.id === 'funding').rows > 0, 'funding on symbols the fills never held is counted');
+  assert.ok(all.weekly.length > 0 && all.weekly.every(w => w.fees >= 0 && w.paid <= 0 && w.received >= 0));
+});
+
+test('timing buckets follow the reader\'s time zone through daylight saving, and an unknown zone falls back to the offset', async () => {
+  const hours = async q => (await get(`/api/performance?${q}`)).body.timing.hour.rows.map(r => r.units);
+  const fixed = await hours('tz=60');
+  const madrid = await hours('tz=60&zone=Europe%2FMadrid');
+  assert.notDeepEqual(madrid, fixed, 'the fake book trades in summer, when Madrid is two hours ahead');
+  assert.deepEqual(madrid, await hours('tz=120'));
+  assert.deepEqual(await hours('tz=60&zone=Mars%2FOlympus'), fixed);
+});
+
 test('a session narrows trip statistics and habits, never the account overview', async () => {
   const all = (await get('/api/performance')).body;
   const { sessionOf } = await import('../sessions.js');
@@ -159,7 +185,7 @@ test('a session narrows trip statistics and habits, never the account overview',
   assert.deepEqual(one.recentTrips, all.recentTrips, 'recent trades are the whole account too');
   assert.deepEqual([all.account.curve, one.account.curve], ['account', 'trips'], 'a session curve is its trips, not the account');
   assert.equal(one.account.series.reduce((s, d) => s + d.pnl, 0).toFixed(2), one.overall.net.toFixed(2));
-  assert.ok(one.records.units <= all.records.units && one.costs.fees <= all.costs.fees);
+  assert.ok(one.records.units <= all.records.units && one.costs.summary.fees <= all.costs.summary.fees);
   assert.ok(one.habits.every((h, i) => h.outOf <= all.habits[i].outOf));
   assert.equal((await get('/api/performance?session=Mars')).body.session, null);
 
@@ -193,6 +219,15 @@ test('trips carry context from the sync, funding from the ledger, and a re-sync 
     await new Promise(r => setTimeout(r, 20));
   }
   assert.deepEqual(fake.calls.slice(mark).filter(c => c === '/fapi/v1/klines'), []);
+});
+
+test('a routine sync pulls fills only for symbols the ledger shows trading since their last pull', async () => {
+  const { symbolsToSync } = await import('../lib/history-sync.js');
+  const meta = JSON.parse(fs.readFileSync(path.join(process.env.DASHBOARD_DATA_DIR, 'meta.json'), 'utf8'));
+  assert.ok(Object.values(meta.tradesSyncedAt).every(t => t > 0));
+  assert.deepEqual(symbolsToSync(meta).due, [], 'every trade in the ledger is older than its pull');
+  assert.deepEqual(symbolsToSync({ ...meta, tradesSyncedAt: { ...meta.tradesSyncedAt, BTCUSDT: 0 } }).due, ['BTCUSDT']);
+  assert.ok(symbolsToSync({ ...meta, tradesSyncedAt: {} }).due.includes('SOLUSDT'), 'a symbol never pulled is due, even with only funding in the ledger');
 });
 
 test('hedge ledger locks the matched BTC pair', async () => {
@@ -507,7 +542,7 @@ test('both legs of a hedged funding settlement are kept, though Binance books th
     .filter(r => r.symbol === 'SOLUSDT' && r.incomeType === 'FUNDING_FEE');
   assert.equal(solFunding().length, 60, 'a paying and a receiving row for each of 30 settlements');
   const perf = (await get('/api/performance')).body;
-  assert.ok(Math.abs(perf.totals.FUNDING_FEE - (30 * -0.8 + 30 * -0.1)) < 1e-6, `funding ${perf.totals.FUNDING_FEE}`);
+  assert.ok(Math.abs(perf.costs.ledger.funding - (30 * -0.8 + 30 * -0.1)) < 1e-6, `funding ${perf.costs.ledger.funding}`);
 
   const metaFile = path.join(dir, 'meta.json');
   const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));

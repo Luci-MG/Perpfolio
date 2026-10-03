@@ -34,10 +34,11 @@
 - **The unwind planner treats a cross-asset hedge as two naked legs** — `grossNetDelta` works
   per asset, so closing the BTC side of a BTC-long / ETH-short pair scores as de-risking.
   `/api/volstops` already restates legs in BTC-beta terms; the planner does not
-- **Journal: all timing buckets are UTC**, the "all" window mixes a four-month trip span with a
-  three-month income span, and the history sync's "recent" window is a fixed 7 days — a sync
-  after a two-week gap misses symbols traded 8–14 days ago that are now flat (Full rebuild
-  catches them)
+- **Journal: the "all" window mixes spans** — trips reach back as far as fills, the ledger only
+  three months, so the calendar, the wallet ledger and the account curve start later than trip statistics
+- **Slippage is not measured** — it needs the price at the moment each order was sent; fills carry
+  only the price they filled at
+- **Costs cover Binance only** — Hyperliquid has no fill history in the dashboard
 - **Alerts** — thresholds are visible in the Stress tab but there is no push or sound (roadmap P6)
 - **No streaming for market data** — positions and marks are a 15s REST poll. Only the
   Binance user-data stream is a websocket, and *that* is an accelerator over a 60s REST

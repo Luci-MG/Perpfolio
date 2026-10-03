@@ -28,6 +28,11 @@ function fmt(n, decimals=2) {
   if (isNaN(num)) return '—';
   return num.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
+function clockParam() {
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return `tz=${-new Date().getTimezoneOffset()}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`;
+}
+
 function esc(v) {
   return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }

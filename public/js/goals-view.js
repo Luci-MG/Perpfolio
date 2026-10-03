@@ -8,7 +8,6 @@ let goalDraft = null, goalPreview = null, goalPreviewTimer = null, goalPreviewSe
 const GOAL_MARK = { kept: '✓', broken: '✗', progress: '●', idle: '·', paused: '‖' };
 const GOAL_CELL = { kept: ['▮', 'kept'], broken: ['✕', 'broken'], none: ['·', 'no trades'], unset: ['', 'before the goal was set'] };
 const GOAL_SESSIONS = SESSION_CHOICES.filter(s => s !== 'All');
-const goalTz = () => -new Date().getTimezoneOffset();
 const goalDay = t => new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric' });
 const goalWhen = t => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 const goalPct = v => (v == null ? '—' : `${fmt(v * 100, 0)}%`);
@@ -18,7 +17,7 @@ const goalDefaults = id => Object.fromEntries(goalType(id).params.map(p => [p.ke
 async function fetchGoals() {
   goalsLoading = true;
   try {
-    const data = await (await fetch(`/api/goals?tz=${goalTz()}`)).json();
+    const data = await (await fetch(`/api/goals?${clockParam()}`)).json();
     if (!data.ok) throw new Error(data.error || 'goals failed');
     goalsData = data;
     clearLoadError('goals');
@@ -341,7 +340,7 @@ function requestGoalPreview(delay = 250) {
 async function loadGoalPreview() {
   if (!goalDraft) return;
   const seq = ++goalPreviewSeq;
-  const q = new URLSearchParams({ type: goalDraft.type, params: JSON.stringify(goalDraft.params), tz: goalTz() });
+  const q = new URLSearchParams(`${clockParam()}&type=${encodeURIComponent(goalDraft.type)}&params=${encodeURIComponent(JSON.stringify(goalDraft.params))}`);
   if (goalDraft.session) q.set('session', goalDraft.session);
   let preview;
   try {

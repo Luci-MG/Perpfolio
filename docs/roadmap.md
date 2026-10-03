@@ -28,6 +28,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Funding section](#p5--funding-section) | done (2026-10-03) |
 | P5 | [Journal Overview remodel](#p5--journal-overview-remodel) | done (2026-10-03) |
 | P5 | [Journal Performance and Behaviour remodel](#p5--journal-performance-and-behaviour-remodel) | done (2026-10-03) |
+| P5 | [Journal Timing, Symbols and Costs remodel](#p5--journal-timing-symbols-and-costs-remodel) | done (2026-10-03) |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
 | — | [Parked](#parked) | parked |
 
@@ -333,6 +334,16 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Done when:** one definition of each, every number with its n and interval or a "needs N
   more" line, the window before beside it, and every habit leading to a rule.
 
+## P5 — Journal Timing, Symbols and Costs remodel
+
+- **Status:** done (2026-10-03) — method and sources in
+  [`research/timing-symbols-costs.md`](research/timing-symbols-costs.md).
+- **Problem:** raw totals over thin hour, weekday and symbol buckets; execution figures that
+  ignored the window and session; funding receipts never shown; a calendar coloured only red and
+  green; a wallet reconciliation nothing checked; every timestamp shifted an hour across a clock change.
+- **Done when:** averages are shrunk with a range and a minimum, totals carry their count, costs
+  read in basis points against the window before, and the ledger says whether it reconciles.
+
 ## P6 — Server-side alerts
 
 - **Problem:** danger is only visible while a tab is open.
@@ -353,6 +364,8 @@ Not planned; revisit when the reason changes.
 - **Keyboard access** — `role`/`tabindex` on tiles and calculator tiles, focus trap and focus
   return in the drawers. Esc already closes every drawer; revisit if the dashboard is driven
   from the keyboard.
+- **Slippage capture** — record the mark when an order is sent (the order feed already sees
+  it) so Costs can measure slippage against it. Fill history alone cannot.
 
 Dropped: **piecewise-analytic kill prices** — the scan already matches Binance's figures
 exactly and the slider does not lag, so a faster exact method buys nothing (`known-gaps.md`).
