@@ -33,7 +33,9 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Review fixes, batch 2: risk maths](#p5--review-fixes-batch-2-risk-maths) | done (2026-10-03) |
 | P5 | [Review fixes, batch 3: funding, journal, goals](#p5--review-fixes-batch-3-funding-journal-goals) | done (2026-10-03) |
 | P5 | [Review fixes, batch 4: frontend](#p5--review-fixes-batch-4-frontend) | done (2026-10-03) |
+| P5 | [Review fixes, batch 5: guardrails and docs](#p5--review-fixes-batch-5-guardrails-and-docs) | done (2026-10-03) |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
+| P7 | [Leaner account read](#p7--leaner-account-read) | parked |
 | — | [Parked](#parked) | parked |
 
 ---
@@ -385,6 +387,24 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   out of order; rebuilds that wiped a note being typed; dead CSS and code.
 - **Done when:** a symbol with a quote and a tag renders as text in every view, no view shows
   a hyphen before a figure, and each fix has a smoke assertion.
+
+## P5 — Review fixes, batch 5: guardrails and docs
+
+- **Status:** done (2026-10-03). Closes the 2026-10-03 whole-dashboard review: correctness,
+  risk maths, funding/journal/goals, frontend, and now the checks that keep them fixed.
+- **Problem:** rules in CLAUDE.md that nothing enforced; exchange calls that could slip the ban
+  guard or fail on a drifting clock; docs that had drifted from the code; dead exports.
+- **Done when:** each new check fires on a broken sample, verify stays green, and the live
+  server still signs, streams and reconciles.
+
+## P7 — Leaner account read
+
+- **Status:** parked.
+- **Idea:** read positions from `/fapi/v3/positionRisk`, which returns only open positions (v2
+  returns every symbol), and send raw numbers rather than `toFixed` strings from
+  `/api/dashboard`.
+- **Why parked:** the positions read is the dashboard's core; v3's shape needs checking against
+  the live API first, and the strings are cosmetic.
 
 ## P6 — Server-side alerts
 

@@ -8,7 +8,7 @@ timeframe (15m · 1h · 4h · 1d), and each shown next to **its own track record
 ### Module: `confluence.js` (ESM)
 Pure functions, no I/O. Indicators: `ema`, `rma`, `rsi` (Wilder), `macd`, `atrSeries`,
 `supertrend`, `adx`, `bollinger`, `donchian`, `swingStructure` (confirmed fractals only),
-`anchoredVwap`, `flowImbalance`, `rollingZ`, `alignToCandles`. `buildIndicators(candles,
+an anchored VWAP, `flowImbalance`, a rolling z-score, `alignToCandles`. `buildIndicators(candles,
 {tf, deriv, fundingIntervalMs})` computes every series once; the registry reads it.
 
 **The registry is the extension point.** `CONFLUENCES` holds `{ id, name, source, needs,

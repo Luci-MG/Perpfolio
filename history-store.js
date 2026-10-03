@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 
-export function ensureDir(dir) {
+function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }

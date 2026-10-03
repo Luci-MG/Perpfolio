@@ -43,7 +43,7 @@ export function isolatedLiq({ side, entry, lev, mmrPct }) {
   return { price, distPct: Math.abs(entry - price) / entry * 100 };
 }
 
-export const LADDER_STEPS = [-10, -5, -2, 2, 5, 10];
+const LADDER_STEPS = [-10, -5, -2, 2, 5, 10];
 
 /** P&L and return on margin with price moved by each of `steps` percent from `base`. */
 export function pnlLadder({ side, entry, qty, margin, base, steps = LADDER_STEPS }) {

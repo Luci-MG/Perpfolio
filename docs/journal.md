@@ -59,10 +59,9 @@ Two things `buildRoundTrips` has to get right, both found in the 2026-09-29 revi
   check does not count it as unmatched.
 
 Statistics over those trips: `summarise(trips)` (wins, losses, net, payoff, expectancy, fees,
-funding, median hold — on net after fees and funding) and `bySymbol(trips)`, which is
-`summarise` grouped and sorted worst first. From the income ledger: `dailyIncomeNet(income, tz)`
-(net per local day), `incomeTotals(income)` (per-type totals plus fee drag as a share of gross
-realised) and `costsBySymbol`.
+funding, median hold — on net after fees and funding). Per symbol, weekday, hour and calendar
+day they are `breakdowns.js`; costs and the wallet ledger are `costs.js` (*Timing, Symbols and
+Costs* below). From the income ledger: `dailyIncomeNet(income, tz)`, the net per local day.
 
 Breakdowns for the journal sections: `byDayOfWeek` / `byHourOfDay` / `byHoldTime` / `bySide`
 / `byMonth`, each bucket carrying its trip count and a `thin` flag below 10 trips, days and

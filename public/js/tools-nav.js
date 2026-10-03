@@ -39,7 +39,7 @@ function renderToolButton(tool, cls) {
   const off = tool.binanceOnly && !venueOn('binance');
   const title = off ? `${tool.label} — Binance is switched off` : active ? `Back to ${lastPositionsView}` : tool.label;
   return `<button class="${cls}${active ? ' active' : ''}${off ? ' off' : ''}"${active ? ' aria-current="page"' : ''}
-    onclick="openTool('${tool.view}')" title="${title}">${toolIcon(tool.view)}<span>${tool.label}</span></button>`;
+    onclick="openTool(${jsArg(tool.view)})" title="${title}">${toolIcon(tool.view)}<span>${tool.label}</span></button>`;
 }
 
 function renderToolsNav() {

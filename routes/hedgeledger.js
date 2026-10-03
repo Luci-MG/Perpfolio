@@ -1,3 +1,4 @@
+import { perDay as fundingPerDay } from '../funding.js';
 import * as risk from '../risk-engine.js';
 import * as ta from '../trade-analytics.js';
 import { analytics } from '../lib/analytics.js';
@@ -24,10 +25,9 @@ export function register(app) {
         const carry = g.positions.map(p => {
           const observed = ta.inferFundingInterval(income, p.symbol);
           const hours = observed.inferredHours ?? fundingMeta[p.symbol]?.intervalHours ?? 8;
-          const rate = (p.fundingRate ?? 0) / 100;
-          const perDay = (p.side === 'Long' ? -1 : 1) * rate * p.sizeUsd * (24 / hours);
+          const perDay = fundingPerDay({ ...p, fundingIntervalHours: hours });
           return { key: `${p.symbol}:${p.positionSide}`, asset: p.asset, side: p.side,
-                   notional: +p.sizeUsd.toFixed(2), ratePct: +(rate * 100).toFixed(5),
+                   notional: +p.sizeUsd.toFixed(2), ratePct: +(p.fundingRate ?? 0).toFixed(5),
                    intervalHours: hours,
                    declaredHours: fundingMeta[p.symbol]?.intervalHours ?? null,
                    observedHours: observed.inferredHours,

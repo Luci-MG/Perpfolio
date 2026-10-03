@@ -190,7 +190,7 @@ function renderConfluence() {
     ${quick.map(s => `<button class="st-btn${s === cfSymbol ? ' on' : ''}" onclick="setCfSymbol(${jsArg(s)})"
       title="${held.includes(s) ? 'open position' : ''}">${jrSym(s)}${held.includes(s) ? ' •' : ''}</button>`).join('')}
     <span class="st-sep"></span>
-    ${CF_ALL_TFS.map(tf => `<button class="st-btn${cfTfs.includes(tf) ? ' on' : ''}" onclick="toggleCfTf('${tf}')">${tf}</button>`).join('')}
+    ${CF_ALL_TFS.map(tf => `<button class="st-btn${cfTfs.includes(tf) ? ' on' : ''}" onclick="toggleCfTf(${jsArg(tf)})">${tf}</button>`).join('')}
     <span class="st-sep"></span>
     ${sessionSelectHtml()}
     <button class="st-btn" onclick="fetchConfluence()">${cfLoading ? 'Loading…' : 'Refresh'}</button>

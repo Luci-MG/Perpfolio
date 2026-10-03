@@ -2,12 +2,12 @@
 // how far it sits, how often a move that size happened on the symbol's own candles, and a
 // verdict. Pure functions over normalised positions, orders and candles.
 
-export const TOO_TIGHT_RATIO = 0.5;
-export const TOO_WIDE_RATIO = 2;
-export const TOO_TIGHT_HIT_RATE = 0.6;
-export const HIT_HORIZON_HOURS = 24;
-export const BREAKEVEN_BAND_PCT = 0.05;
-export const FULL_COVERAGE = 0.95;
+const TOO_TIGHT_RATIO = 0.5;
+const TOO_WIDE_RATIO = 2;
+const TOO_TIGHT_HIT_RATE = 0.6;
+const HIT_HORIZON_HOURS = 24;
+const BREAKEVEN_BAND_PCT = 0.05;
+const FULL_COVERAGE = 0.95;
 
 /** The order-matching leg of a normalised position, with its size when known: Hyperliquid legs are one-way, keyed by pair. */
 export function legOf(p) {

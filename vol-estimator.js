@@ -31,7 +31,7 @@ export function computeATR(candles, period = 14) {
 
 // ─── BBW ─────────────────────────────────────────────────────────────────────
 
-export function computeBBW(candles, period = 20) {
+function computeBBW(candles, period = 20) {
   if (!Array.isArray(candles) || candles.length < period) return null;
   const closes = candles.slice(-period).map(c => c.close);
   const sma = closes.reduce((a, b) => a + b, 0) / period;
@@ -45,7 +45,7 @@ export function percentileRank(value, history) {
   return history.filter(v => v < value).length / history.length;
 }
 
-export function getSqueezeFactor(pctile) {
+function getSqueezeFactor(pctile) {
   if (pctile < 0.10) return 0.50;
   if (pctile < 0.20) return 0.30;
   if (pctile < 0.35) return 0.15;
@@ -284,16 +284,6 @@ export function classifyRegime(compositeVol, volHistory) {
   if (compositeVol < pct(0.75)) return 'medium';
   if (compositeVol < pct(0.90)) return 'high';
   return 'extreme';
-}
-
-export function shouldTakeEntry(regimeLabel, strategyType = 'trend') {
-  const rules = {
-    low:     { trend: true,  meanRev: true,  breakout: true  },
-    medium:  { trend: true,  meanRev: true,  breakout: false },
-    high:    { trend: false, meanRev: true,  breakout: false },
-    extreme: { trend: false, meanRev: false, breakout: false }
-  };
-  return rules[regimeLabel]?.[strategyType] ?? false;
 }
 
 // ─── STOP ENGINE ─────────────────────────────────────────────────────────────

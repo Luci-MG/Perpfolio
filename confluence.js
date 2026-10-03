@@ -11,7 +11,7 @@ import { sessionOf } from './sessions.js';
 
 export const TIMEFRAMES = { '15m': 15 * 60e3, '1h': 3600e3, '4h': 4 * 3600e3, '1d': 86400e3 };
 export const TF_WEIGHTS = { '15m': 0.15, '1h': 0.25, '4h': 0.35, '1d': 0.25 };
-export const VWAP_ANCHOR = { '15m': 'day', '1h': 'week', '4h': 'month', '1d': 'year' };
+const VWAP_ANCHOR = { '15m': 'day', '1h': 'week', '4h': 'month', '1d': 'year' };
 
 export const SOURCES = [
   { id: 'trend',       name: 'Trend',          weight: 0.20 },
@@ -49,8 +49,7 @@ export function ema(values, period) {
   return smoothed(values, period, 2 / (period + 1));
 }
 
-/** Wilder's smoothing (RMA), as used by RSI, ATR and ADX. */
-export function rma(values, period) {
+function rma(values, period) {
   return smoothed(values, period, 1 / period);
 }
 
@@ -76,7 +75,7 @@ export function rsi(closes, period = 14) {
   return out;
 }
 
-export function macd(closes, fast = 12, slow = 26, signal = 9) {
+function macd(closes, fast = 12, slow = 26, signal = 9) {
   const f = ema(closes, fast), s = ema(closes, slow);
   const line = f.map((v, i) => v == null || s[i] == null ? null : v - s[i]);
   const sig = ema(line, signal);
@@ -84,7 +83,7 @@ export function macd(closes, fast = 12, slow = 26, signal = 9) {
   return { line, signal: sig, hist };
 }
 
-export function trueRange(candles) {
+function trueRange(candles) {
   return candles.map((c, i) => i === 0
     ? c.high - c.low
     : Math.max(c.high - c.low, Math.abs(c.high - candles[i - 1].close), Math.abs(c.low - candles[i - 1].close)));
@@ -137,7 +136,7 @@ export function adx(candles, period = 14) {
   return { adx: rma(dx, period), plusDI, minusDI };
 }
 
-export function bollinger(closes, period = 20, mult = 2) {
+function bollinger(closes, period = 20, mult = 2) {
   const n = closes.length;
   const mid = blank(n), upper = blank(n), lower = blank(n), pctB = blank(n), bw = blank(n);
   for (let i = period - 1; i < n; i++) {
@@ -204,11 +203,6 @@ const ANCHOR_KEYS = {
   year:  t => new Date(t).getUTCFullYear()
 };
 
-/** VWAP restarted at each UTC `anchor` period: day | week | month | year. */
-export function anchoredVwap(candles, anchor = 'week') {
-  return anchoredVwapWithPeriods(candles, anchor).vwap;
-}
-
 function anchoredVwapWithPeriods(candles, anchor) {
   const keyOf = ANCHOR_KEYS[anchor];
   const out = blank(candles.length);
@@ -241,8 +235,7 @@ export function flowImbalance(candles, window = 20) {
   return out;
 }
 
-/** Z-score of each value against the trailing `window` values including itself. */
-export function rollingZ(values, window = 100, minSamples = 20) {
+function rollingZ(values, window = 100, minSamples = 20) {
   const out = blank(values.length);
   for (let i = 0; i < values.length; i++) {
     if (values[i] == null) continue;
@@ -554,7 +547,7 @@ export function regimeKey(regime) {
   return regime?.squeeze ? 'squeeze' : regime?.label ?? 'unknown';
 }
 
-export const STABILITY_MIN_NEFF = 20;
+const STABILITY_MIN_NEFF = 20;
 
 function blankStat() { return { n: 0, hits: 0, longs: 0, shorts: 0 }; }
 

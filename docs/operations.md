@@ -103,11 +103,19 @@ device added its full cost and ~7 tabs exhausted Hyperliquid. Now:
 
 ### A ban stops everything, not just the signed path
 `noteBinanceResponse()` reads `x-mbx-used-weight-1m` from **every** Binance response, and on a
-418 or 429 sets `bnBannedUntil` from `Retry-After` (120s / 60s when absent). `binanceFetch` and
-the new `bnPublic()` — now used by premiumIndex, klines, depth, exchangeInfo, fundingInfo and
-every confluence series — refuse to send until it passes. The old signed path retried a 429
-four times and public calls ignored status entirely, so a ban could be extended by the next
-poll. Every fetch also carries a 10s `AbortSignal.timeout`, so a hung socket cannot hang a route.
+418, 429 or 403 (the web application firewall's limit) sets `bnBannedUntil` from `Retry-After`
+(120s / 60s when absent). `binanceFetch`, `bnPublic()` and `binanceKeyed()` (the listenKey
+keep-alive and release, which need the key but no signature) refuse to send until it passes.
+The old signed path retried a 429 four times, public calls ignored status entirely, and the
+listenKey calls went round the guard, so a ban could be extended by the next poll. Every fetch
+carries a 10s `AbortSignal.timeout`, so a hung socket cannot hang a route. A weight reading
+lapses after its minute, so health cannot stay "bad" on a figure from long ago.
+
+Signed calls carry `recvWindow` 10s and a timestamp on Binance's clock (`/fapi/v1/time`, re-read
+hourly; on failure the local clock is used), so a drifting machine does not fail every call
+with -1021. Errors carry Binance's own `code` and `msg`, e.g. `→ 400 (-1021: Timestamp outside of
+the recvWindow.)`. A commission rate, bracket table, exchange-info or funding-info read that
+fails is never cached; concurrent cold reads of the last three share one request.
 
 ### Health: `GET /api/health`
 One verdict — `ok`, `warn` or `bad`, with a reason per finding — on whether the figures on

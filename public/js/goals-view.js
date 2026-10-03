@@ -229,7 +229,7 @@ function milestoneChart(g) {
 function goalActionsHtml(g) {
   return `<div class="gl-actions">
       <button class="st-btn" onclick="openGoalDrawer(${jsArg(g.id)})">Edit</button>
-      <button class="st-btn" onclick="goalAction(${jsArg(g.id)}, '${g.pausedAt ? 'resume' : 'pause'}')">${g.pausedAt ? 'Resume' : 'Pause'}</button>
+      <button class="st-btn" onclick="goalAction(${jsArg(g.id)}, ${jsArg(g.pausedAt ? 'resume' : 'pause')})">${g.pausedAt ? 'Resume' : 'Pause'}</button>
       <button class="st-btn${goalConfirmDelete === g.id ? ' gl-danger' : ''}" onclick="goalAction(${jsArg(g.id)}, 'delete')">${goalConfirmDelete === g.id ? 'Confirm delete' : 'Delete'}</button>
     </div>`;
 }
@@ -306,13 +306,13 @@ function goalFieldHtml(spec) {
   if (spec.date) {
     const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
     return `<label class="gl-field"><span class="k">${spec.label}</span><input class="cf-sym gl-date" type="date" min="${tomorrow}" value="${esc(value ?? '')}"
-      oninput="setGoalParam('${spec.key}', this.value || null)">${spec.optional ? '<span class="gl-n">optional</span>' : ''}</label>`;
+      oninput="setGoalParam(${jsArg(spec.key)}, this.value || null)">${spec.optional ? '<span class="gl-n">optional</span>' : ''}</label>`;
   }
   const input = spec.options
-    ? `<select class="st-btn" onchange="setGoalParam('${spec.key}', this.value)">${spec.options.map(([v, l]) =>
+    ? `<select class="st-btn" onchange="setGoalParam(${jsArg(spec.key)}, this.value)">${spec.options.map(([v, l]) =>
         `<option value="${v}"${value === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`
     : `${spec.prefix ? `<span class="gl-n">${spec.prefix}</span>` : ''}<input class="cf-sym gl-num" type="number" min="${spec.min}" max="${spec.max}" step="${spec.step}" value="${esc(String(value))}"
-        oninput="setGoalParam('${spec.key}', this.value)">${spec.suffix ? `<span class="gl-n">${esc(spec.suffix)}</span>` : ''}`;
+        oninput="setGoalParam(${jsArg(spec.key)}, this.value)">${spec.suffix ? `<span class="gl-n">${esc(spec.suffix)}</span>` : ''}`;
   return `<label class="gl-field"><span class="k">${spec.label}</span>${input}</label>`;
 }
 

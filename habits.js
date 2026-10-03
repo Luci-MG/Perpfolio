@@ -8,9 +8,9 @@ import { localDayStart } from './local-time.js';
 import { dayBootstrap, groupByDay, mean, median, quantile, welch } from './stats.js';
 
 export const THIN_TRIPS = 10;
-export const REVENGE_SIZE_MULTIPLE = 1.5;
-export const WINNER_MFE_PCT = 1;
-export const REENTRY_MINUTES = 30;
+const REVENGE_SIZE_MULTIPLE = 1.5;
+const WINNER_MFE_PCT = 1;
+const REENTRY_MINUTES = 30;
 const FLAT_USD = 0.01;
 const TREND_WEEKS = 8;
 const DAY_MS = 86_400_000;

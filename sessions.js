@@ -2,7 +2,7 @@
 // London and New York hours on their weekdays. One label per moment for analytics, and the
 // opens, closes and next change the session clock shows. Served to the browser at /sessions.js.
 
-export const MARKETS = [
+const MARKETS = [
   { id: 'asia',   name: 'Tokyo',    zone: 'Asia/Tokyo',       open: 9, close: 18 },
   { id: 'europe', name: 'London',   zone: 'Europe/London',    open: 8, close: 17 },
   { id: 'us',     name: 'New York', zone: 'America/New_York', open: 8, close: 17 }
@@ -25,13 +25,12 @@ function localClock(ts, zone) {
   return { weekday: parts.weekday, hour: +parts.hour + +parts.minute / 60 };
 }
 
-/** Whether `market` is in its local trading hours on a local weekday at `ts`. */
-export function isOpen(market, ts) {
+function isOpen(market, ts) {
   const { weekday, hour } = localClock(ts, market.zone);
   return WEEKDAYS.has(weekday) && hour >= market.open && hour < market.close;
 }
 
-export function marketsOpen(ts) {
+function marketsOpen(ts) {
   return MARKETS.filter(m => isOpen(m, ts));
 }
 

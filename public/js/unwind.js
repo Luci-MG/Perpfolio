@@ -289,7 +289,7 @@ function closeCost(P, closes) {
     const r = riskEngine.exitCost(levels, qty, P.marks[pos.asset], rate, pos.q > 0 ? 'sell' : 'buy');
     if (r.vwap == null) continue;
     slip += r.slipUsd; fee += r.feeUsd; notional += r.filled * r.vwap;
-    if (r.exhausted) exhausted.push(`${pos.asset} ${r.remaining.toFixed(4)} unfilled`);
+    if (r.exhausted) exhausted.push(`${esc(pos.asset)} ${r.remaining.toFixed(4)} unfilled`);
   }
   return { slip: +slip.toFixed(2), fee: +fee.toFixed(2), total: +(slip + fee).toFixed(2),
            notional: +notional.toFixed(2), exhausted };
@@ -387,13 +387,13 @@ function renderSimBody() {
   }
 
   const { hedged, singles } = simGroups();
-  const btn = (label, name) => `<button class="st-btn" onclick="simPreset('${name}')">${label}</button>`;
+  const btn = (label, name) => `<button class="st-btn" onclick="simPreset(${jsArg(name)})">${label}</button>`;
 
   const row = g => {
     const sel = simSel[g.symbol] || { side: null, pct: 100 };
     const opt = (side, label, cls) =>
       `<button class="sim-opt${sel.side === side ? ' on ' + (cls || '') : ''}"
-        onclick="setSimSide(${jsArg(g.symbol)},'${side}')">${label}</button>`;
+        onclick="setSimSide(${jsArg(g.symbol)},${jsArg(side)})">${label}</button>`;
     const dec = priceDecimals(P.marks[g.legs[0].asset]);
     const legTxt = g.long && g.short
       ? `long ${fmt(Math.abs(g.long.q), 4)} / short ${fmt(Math.abs(g.short.q), 4)}`
@@ -410,7 +410,7 @@ function renderSimBody() {
       ${sel.side ? `<div class="sim-pct">
         <input type="range" min="0" max="100" step="5" value="${sel.pct}"
           oninput="setSimPct(${jsArg(g.symbol)}, this.value)" onchange="setSimPct(${jsArg(g.symbol)}, this.value, true)" />
-        <span id="sim-pct-${g.symbol}">${fmt(sel.pct, 0)}%</span></div>` : ''}
+        <span id="sim-pct-${esc(g.symbol)}">${fmt(sel.pct, 0)}%</span></div>` : ''}
     </div>`;
   };
 
@@ -629,7 +629,7 @@ function renderUnwindPlan(p) {
     return `<tr>
       <td>${i + 1}</td>
       <td><b>${s.type === 'matched-hedge' ? 'close matched hedge' : 'close leg'}</b>
-        <div class="uw-legs">${s.legs.map(l => `${l.asset} ${l.positionSide.toLowerCase()} ${fmt(l.qty, 4)}${l.qty < l.ofQty ? ` of ${fmt(l.ofQty, 4)}` : ''}`).join(' + ')}</div></td>
+        <div class="uw-legs">${s.legs.map(l => `${esc(l.asset)} ${l.positionSide.toLowerCase()} ${fmt(l.qty, 4)}${l.qty < l.ofQty ? ` of ${fmt(l.ofQty, 4)}` : ''}`).join(' + ')}</div></td>
       <td class="num" style="color:var(--success)">${fmtPlusUsd(s[gainKey])}</td>
       <td class="num"><span class="uw-badge" style="background:${col}22;color:${col}">${fmtPlusUsd(s.deltaShift)}</span></td>
       <td class="num ${s.realized >= 0 ? 'up' : 'dn'}">${fmtPlusUsd(s.realized)}</td>
@@ -639,7 +639,7 @@ function renderUnwindPlan(p) {
   }).join('');
 
   const after = p.thresholdsAfter.map(t =>
-    `${t.asset} ${t.upPct == null && t.downPct == null ? 'none'
+    `${esc(t.asset)} ${t.upPct == null && t.downPct == null ? 'none'
       : [t.upPct != null ? `+${fmt(t.upPct, 0)}%` : null, t.downPct != null ? `${fmt(t.downPct, 0)}%` : null].filter(Boolean).join(' / ')}`
   ).join(' · ');
 

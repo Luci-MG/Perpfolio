@@ -6,8 +6,9 @@
 server.js                      wiring: static files, routes in order, services when run directly
 routes/*.js                    one register(app) per area — request parsing and response shaping only
 lib/*.js                       exchange access, caches, snapshots, the history store sync
-risk-engine.js calc-engine.js sessions.js vol-estimator.js stop-check.js confluence.js trade-analytics.js trip-context.js habits.js
-performance.js stats.js breakdowns.js costs.js local-time.js history-store.js
+breakdowns.js calc-engine.js confluence.js costs.js funding.js goals.js habits.js history-store.js
+local-time.js milestones.js outcome-factors.js performance.js risk-engine.js sessions.js stats.js
+stop-check.js trade-analytics.js trip-context.js vol-estimator.js
                                pure engines at the root: no network, fully unit-tested
 public/index.html              markup only
 public/css/app.css             every style; theme tokens on :root
@@ -17,14 +18,15 @@ public/js/*.js                 classic scripts, one global scope, loaded in a fi
 `risk-engine.js`, `calc-engine.js` and `sessions.js` stay at the project root because the
 browser imports them from `/risk-engine.js`, `/calc-engine.js` and `/sessions.js` — the stress panel and the API run the same file, so they cannot disagree.
 
-## Server modules — imports only point down this list
+## Server modules
 
 | Module | Owns | Notes |
 |---|---|---|
 | `lib/config.js` | `.env`, base URLs, `FETCH_TIMEOUT_MS`, `ROOT_DIR`, `DATA_DIR` | loads `dotenv/config` first, so every importer sees the environment |
 | `lib/venues.js` | which exchanges may be called, saved in `data/settings.json` | the request functions refuse a venue that is off |
-| `lib/util.js` | `sleep`, `jitter`, `sharedSnapshot`, `once` | `once` holds the single in-flight Map every fetcher shares |
-| `lib/binance-client.js` | signing, `binanceFetch`, `bnPublic`, the ban guard, `throttleWeight` | **every** Binance call goes through here |
+| `lib/util.js` | `sleep`, `jitter`, `sharedSnapshot`, `once`, `readerClock` | `once` holds the single in-flight Map every fetcher shares |
+| `lib/http.js` | `jsonOnly(limit)`, `allowedHostsOnly(extra)` | every write is JSON only; any request for another Host is refused |
+| `lib/binance-client.js` | signing with `recvWindow` and Binance's time, `binanceFetch`, `bnPublic`, `binanceKeyed`, the ban guard, `throttleWeight` | **every** Binance call goes through here |
 | `lib/hyperliquid.js` | `hlFetch`, the HL account view | read-only |
 | `lib/binance-meta.js` | funding cadence, lot filters, commission, depth, brackets | exists to break the account ↔ stress import cycle |
 | `lib/orders-stream.js` | user-data websocket, order cache, 60s reconcile, watchdog | state that reassigns itself lives in one module |
@@ -39,6 +41,9 @@ browser imports them from `/risk-engine.js`, `/calc-engine.js` and `/sessions.js
 | `lib/entry-context.js` | context captured on each increasing fill, `entryContextByOrder()` | wired to the stream's `onFill` in `server.js` |
 | `lib/trip-enrichment.js` | per-trip candles and funding rates during a sync, `enrichedTrips()` | caches computed values only, versioned |
 | `lib/confluence-data.js` | klines on any timeframe, positioning series | |
+| `lib/annotations-store.js` | notes and tags on trips, `data/annotations.json` | written whole through a temp file |
+| `lib/goals-store.js` | the goals you set, `data/goals.json` | an unreadable file is reported, never overwritten |
+| `lib/health.js` | `assessHealth()` — one verdict from in-memory state | pure; costs no exchange call |
 
 A module that imports a `let` gets a live, read-only binding: reading another module's
 state is fine, reassigning it is impossible. That is why the order cache, its stream and
@@ -47,7 +52,8 @@ the watchdog share `lib/orders-stream.js`.
 ## Frontend scripts — load order is part of the contract
 
 `core → venues → tools-nav → sessions-view → positions → tiles-threads → stops → stress → hedge-ledger → confluence-view →
-journal → journal-trades → unwind → render → calculators → drawers → boot`
+journal → journal-trades → goals-view → factors-view → journal-overview → journal-performance → journal-behaviour →
+journal-timing → journal-symbols → journal-costs → unwind → render → calculators → drawers → funding-view → boot`
 
 - Classic scripts, not modules: inline `onclick="fn()"` handlers need globals, and classic
   scripts share one global lexical scope for `let`/`const` across files.

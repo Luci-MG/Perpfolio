@@ -137,7 +137,7 @@ export function validateGoal({ type, params = {}, session = null } = {}, now = n
   return { type, params: clean, session: session ?? null };
 }
 
-export function describeGoal({ type, params, session }) {
+function describeGoal({ type, params, session }) {
   const text = typeOf(type).describe(params);
   return session ? `${text} · ${session}` : text;
 }

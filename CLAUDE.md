@@ -124,8 +124,8 @@ Never log or expose these. Never commit `.env`.
 - Backend sends raw floats/numbers; format at render time in the frontend
 - `parseFloat()` everywhere on exchange API responses — they return strings
 - Funding rate math: `(side === 'Long' ? -1 : 1) * (fundingRate / 100) * sizeUsd` per settlement —
-  **positive = received**, negative = paid. `fundingPerDay(p)` in the frontend is the only place
-  the daily figure is computed
+  **positive = received**, negative = paid. The daily figure is computed in two places only:
+  `perDay(leg)` in `funding.js` on the server and `fundingPerDay(p)` in the browser
 - Funding **per day** is `rate × (24 / fundingIntervalHours) × notional`, never `× 3` — 8h, 4h
   and 1h symbols all exist, and the declared interval can itself be wrong (`docs/journal.md`,
   *Funding cadence*)

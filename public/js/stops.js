@@ -190,7 +190,7 @@ function renderHedgeHealth(c) {
   }).join('');
 
   const netted = (c.nettedSymbols || []).map(n =>
-    `${n.asset} ${n.netDelta >= 0 ? '+' : '−'}${fmtUsd(Math.abs(n.netDelta))}`).join(' · ');
+    `${esc(n.asset)} ${fmtPlusUsd(n.netDelta)}`).join(' · ');
 
   const side = v => Math.abs(v) < 1 ? 'flat' : `${v > 0 ? 'long' : 'short'} ${fmtUsd(Math.abs(v))}`;
   const nakedCol = Math.abs(naked) < 500 ? 'var(--success)'
