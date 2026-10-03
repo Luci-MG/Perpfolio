@@ -148,5 +148,10 @@ Never log or expose these. Never commit `.env`.
   empty symbol filters and 6h of every symbol assumed to settle every 8h
 - **Share reads across tabs.** Anything the 15s poll triggers must go through a shared
   snapshot, or the exchange quota scales with open tabs
+- **A dedupe key must be unique per row, not per event.** Binance books both legs of a hedged
+  funding settlement under one `tranId`; keying income on it dropped every receipt, funding
+  read many times worse than it was, and code was then written to "split the net row" that never existed
+- **Make the fake exchange return what the real one returns.** The fake gave every row its own
+  id, so no test could see the collision; check a new response shape against the live API once
 - **Refactor against a snapshot.** Moves that should change nothing are checked by the golden
   route snapshot and the page smoke test, not by eye

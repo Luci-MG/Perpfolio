@@ -247,13 +247,24 @@ One row per closed trip, built in three layers so each can be tested alone:
 - **ATR %** is ATR(14) of the 20 1h bars before entry; **BTC trend** is BTC's 1h EMA50 against
   EMA200 on bars closed before entry, `flat` within 0.5%.
 
-**Funding: a hedged pair settles as one net row.** Binance books a settlement against the
-symbol, not the leg: only a handful of thousands of funding rows came as two rows. With one leg open the row
-is that trip's exactly. With both open it is split by each leg's size at that moment × the
-historical funding rate × that settlement's mark, and the residual is shared equally, so
-the parts always sum to the row (verified on the live ledger: attributed − ledger =
-2.7e-12). Split trips show `≈`. A trip that opened before the income ledger starts — Binance
-keeps three months — has unknown funding, and its Net is shown before funding with `*`.
+**Funding: one row per leg, both under one tranId.** Binance books a hedged settlement as two
+`FUNDING_FEE` rows — the paying leg's and the receiving leg's — with the same `tranId`, time
+and symbol. Each row is matched to the leg whose size × rate × mark it is closest to, so every
+trip gets its own leg's funding exactly. With one leg open the rows are that trip's. When the
+trip rebuild thinks two legs were open but the ledger has one row, the ledger wins: the other
+leg paid nothing.
+
+**Fixed (2026-10-03): every hedged receipt had been dropped.** The income cache deduped on
+`tranId:type:symbol:time`, which both legs share, so the second row — usually the receipt —
+never reached the cache. Realised funding then counted only the paying side of each hedge
+(a week read many times worse than Binance's own ledger), and the code above was written to split that
+lone row across both legs, believing Binance netted them. The key now includes the amount, and
+a cache written under the old key refetches Binance's three-month window once, on the next
+sync, recording `incomeCompleteFrom` in `meta.json`. Hedged settlements cached before that
+date cannot be recovered: their trips show funding as unknown (`*`, *missing a leg's row*), never
+a guess. With no funding rate on record to tell the legs apart, a settlement is shared evenly
+and the trips show `≈`. A trip that opened before the income ledger starts has unknown funding
+too, and its Net is shown before funding with `*`.
 
 **Fetched during a sync, never on a request.** After fills, the sync's `context` phase fetches
 candles for each trip without a cached row and funding-rate history for symbols with hedged

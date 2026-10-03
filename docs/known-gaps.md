@@ -59,3 +59,7 @@
 - **Kill prices are scanned, not solved** — a piecewise-analytic solve would be exact by
   construction and ~100× cheaper per slider frame, but the scan already matches Binance exactly
   and the slider does not lag, so it was dropped (2026-10-03)
+- **Hedged funding before 2026-07-05 is incomplete** — the income cache dropped the receiving leg
+  of every hedged settlement until 2026-10-03, and Binance serves only three months of income, so
+  hedged settlements cached before the repair window keep one row. Their trips show funding as
+  unknown; ledger totals that reach back that far overstate funding paid

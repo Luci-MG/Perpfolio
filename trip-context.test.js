@@ -51,33 +51,48 @@ test('funding with one open leg belongs to it; before the ledger starts it is un
     { incomeType: 'FUNDING_FEE', symbol: 'ZUSDT', income: '-2', time: 4 * HOUR }
   ];
   const out = tc.attributeFunding({ trips: [a, early], income, incomeFrom: 1 * HOUR });
-  assert.deepEqual(out.get(tripKey(a)), { funding: -1, fundingSplit: false });
+  assert.deepEqual(out.get(tripKey(a)), { funding: -1, fundingSplit: false, fundingIncomplete: false });
   assert.equal(out.get(tripKey(early)).funding, null);
 });
 
-test('a hedged settlement splits by size and rate and sums exactly to the net row', () => {
+const hedge = () => {
   const long = trip({ openTime: 0, closeTime: 20 * HOUR });
   const short = trip({ positionSide: 'SHORT', side: 'Short', openTime: HOUR, closeTime: 20 * HOUR });
   const sizeSteps = new Map([[tripKey(long), [[0, 3]]], [tripKey(short), [[HOUR, 1]]]]);
-  const income = [{ incomeType: 'FUNDING_FEE', symbol: 'XUSDT', income: '-0.21', time: 8 * HOUR }];
   const rates = [{ symbol: 'XUSDT', fundingTime: 8 * HOUR, fundingRate: '0.001', markPrice: '100' }];
-  const out = tc.attributeFunding({ trips: [long, short], sizeSteps, income, rates, incomeFrom: 0 });
-  const l = out.get(tripKey(long)), s = out.get(tripKey(short));
-  assert.ok(Math.abs(l.funding - (-0.3 - 0.005)) < 1e-9, `long ${l.funding}`);
-  assert.ok(Math.abs(s.funding - (0.1 - 0.005)) < 1e-9, `short ${s.funding}`);
-  assert.ok(Math.abs(l.funding + s.funding - -0.21) < 1e-9);
-  assert.equal(l.fundingSplit && s.fundingSplit, true);
+  return { long, short, sizeSteps, rates };
+};
+const row = (income, tranId = 7) => ({ incomeType: 'FUNDING_FEE', symbol: 'XUSDT', income, time: 8 * HOUR, tranId });
+
+test('a hedged settlement books one row per leg, and each leg gets its own row whatever the order', () => {
+  const { long, short, sizeSteps, rates } = hedge();
+  for (const income of [[row('-0.301'), row('0.1002')], [row('0.1002'), row('-0.301')]]) {
+    const out = tc.attributeFunding({ trips: [long, short], sizeSteps, income, rates, incomeFrom: 0 });
+    assert.deepEqual([out.get(tripKey(long)).funding, out.get(tripKey(short)).funding], [-0.301, 0.1002]);
+    assert.equal(out.get(tripKey(long)).fundingSplit, false);
+  }
 });
 
-test('without a rate a hedged settlement splits evenly', () => {
-  const long = trip({ closeTime: 20 * HOUR });
-  const short = trip({ positionSide: 'SHORT', side: 'Short', openTime: HOUR, closeTime: 20 * HOUR });
-  const income = [{ incomeType: 'FUNDING_FEE', symbol: 'XUSDT', income: '-1', time: 8 * HOUR }];
-  const out = tc.attributeFunding({ trips: [long, short], income, incomeFrom: 0 });
-  assert.equal(out.get(tripKey(long)).funding, -0.5);
-  assert.equal(out.get(tripKey(short)).funding, -0.5);
+test('a hedged settlement missing a leg\'s row leaves both trips unknown, never a guess', () => {
+  const { long, short, sizeSteps, rates } = hedge();
+  const out = tc.attributeFunding({ trips: [long, short], sizeSteps, income: [row('-0.301')], rates, incomeFrom: 0 });
+  assert.deepEqual(out.get(tripKey(long)), { funding: null, fundingSplit: false, fundingIncomplete: true });
+  assert.equal(out.get(tripKey(short)).fundingIncomplete, true);
 });
 
+test('once the ledger is complete, a leg with no row of its own paid nothing', () => {
+  const { long, short, sizeSteps, rates } = hedge();
+  const out = tc.attributeFunding({ trips: [long, short], sizeSteps, income: [row('-0.301')], rates, incomeFrom: 0, completeFrom: 0 });
+  assert.deepEqual([out.get(tripKey(long)).funding, out.get(tripKey(short)).funding], [-0.301, 0]);
+  assert.equal(out.get(tripKey(long)).fundingIncomplete, false);
+});
+
+test('without a rate a hedged settlement is shared evenly and marked split', () => {
+  const { long, short, sizeSteps } = hedge();
+  const out = tc.attributeFunding({ trips: [long, short], sizeSteps, income: [row('-0.3'), row('0.1')], incomeFrom: 0 });
+  assert.equal(out.get(tripKey(long)).funding, -0.1);
+  assert.equal(out.get(tripKey(short)).fundingSplit, true);
+});
 test('ATR at entry is a percent of price, and needs fifteen bars', () => {
   const candles = Array.from({ length: 20 }, (_, i) => bar(i * HOUR, 99, 101, 100));
   assert.equal(tc.atrPctAtEntry(candles), 2);

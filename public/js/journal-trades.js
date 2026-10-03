@@ -22,9 +22,15 @@ function contextGap(t) {
   return `<span class="jt-gap" title="${why}">—</span>`;
 }
 
-function fundingGap() {
+const isoDay = t => new Date(t).toISOString().slice(0, 10);
+
+function fundingGap(t) {
+  if (t.fundingIncomplete) {
+    const from = tripsData?.coverage?.incomeCompleteFrom;
+    return `a hedged settlement is missing a leg's row${from ? ` — history before ${isoDay(from)} is beyond Binance's 3-month window` : ''}`;
+  }
   const from = tripsData?.coverage?.incomeFrom;
-  return `before the income ledger starts${from ? ` (${new Date(from).toISOString().slice(0, 10)})` : ''}`;
+  return `before the income ledger starts${from ? ` (${isoDay(from)})` : ''}`;
 }
 
 function entryGap() {
@@ -67,10 +73,10 @@ const TRADE_COLUMNS = [
     cell: t => (t.addsWhileUnderwater ? `<span class="dn" title="${t.addsWhileUnderwater} while underwater">${t.adds}</span>` : t.adds || '—'),
     exports: [['adds', t => t.adds], ['adds_underwater', t => t.addsWhileUnderwater], ['partial_closes', t => t.partialCloses]] },
   { id: 'net', label: 'Net', value: tripNet,
-    cell: t => (t.funding == null ? `<span title="excludes funding: ${fundingGap()}">${signedCell(t.net)}*</span>` : signedCell(tripNet(t))),
+    cell: t => (t.funding == null ? `<span title="excludes funding: ${fundingGap(t)}">${signedCell(t.net)}*</span>` : signedCell(tripNet(t))),
     exports: [['net_after_funding', t => t.netAfterFunding], ['net_before_funding', t => t.net]] },
   { id: 'costs', label: 'Fees + funding', value: tripCosts,
-    cell: t => `${signedCell(tripCosts(t))}${t.fundingSplit ? '<span class="jt-gap" title="funding split from a hedged pair\'s net settlement">≈</span>' : ''}`,
+    cell: t => `${signedCell(tripCosts(t))}${t.fundingSplit ? '<span class="jt-gap" title="no funding rate on record to tell the hedge legs apart, so it is shared evenly">≈</span>' : ''}`,
     exports: [] },
   { id: 'path', label: 'MAE / MFE', value: t => t.mae,
     cell: t => (t.mae == null ? contextGap(t) : `<span class="dn">${pctText(t.mae)}</span> / <span class="up">${pctText(t.mfe)}</span>`),
@@ -92,7 +98,7 @@ const TRADE_COLUMNS = [
   { id: 'fees', label: 'Fees', value: t => t.commission, more: true, cell: t => signedCell(-t.commission),
     exports: [['fees', t => t.commission]] },
   { id: 'funding', label: 'Funding', value: t => t.funding, more: true,
-    cell: t => (t.funding == null ? `<span class="jt-gap" title="${fundingGap()}">—</span>` : signedCell(t.funding)),
+    cell: t => (t.funding == null ? `<span class="jt-gap" title="${fundingGap(t)}">—</span>` : signedCell(t.funding)),
     exports: [['funding', t => t.funding], ['funding_split', t => t.fundingSplit]] },
   { id: 'eqEntry', label: 'Eq / margin at entry', value: t => t.entry?.account?.equity, more: true,
     cell: t => withEntry(t, e => (e.account ? `${fmtUsd(e.account.equity)} / ${fmt(e.account.marginPct, 1)}%` : entryGap())),

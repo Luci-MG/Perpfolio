@@ -181,6 +181,9 @@ function incomeRows() {
     rows.push({ symbol: 'BTCUSDT', incomeType: 'REALIZED_PNL', income: String((d % 5) * 12 - 20), asset: 'USDT', time, tranId: id++ });
     rows.push({ symbol: 'BTCUSDT', incomeType: 'COMMISSION', income: '-1.5', asset: 'USDT', time: time + 1, tranId: id++ });
     rows.push({ symbol: 'ETHUSDT', incomeType: 'FUNDING_FEE', income: '-0.8', asset: 'USDT', time: time + 2, tranId: id++ });
+    const settlement = id++;
+    rows.push({ symbol: 'SOLUSDT', incomeType: 'FUNDING_FEE', income: '-2.5', asset: 'USDT', time: time + 3, tranId: settlement });
+    rows.push({ symbol: 'SOLUSDT', incomeType: 'FUNDING_FEE', income: '2.4', asset: 'USDT', time: time + 3, tranId: settlement });
   }
   return rows;
 }

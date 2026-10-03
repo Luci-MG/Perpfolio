@@ -12,7 +12,7 @@ const { get, fake, stop } = await startTestServer();
 
 // Wall-clock fields differ between runs; everything else must reproduce exactly.
 const VOLATILE = new Set(['lastUpdated', 'lastReconcileAt', 'lastWsMessageAgeSec', 'at', 'ts',
-  'startedAt', 'finishedAt', 'ageSec', 'syncedAt']);
+  'startedAt', 'finishedAt', 'ageSec', 'syncedAt', 'incomeCompleteFrom']);
 function stable(v) {
   if (Array.isArray(v)) return v.map(stable);
   if (v && typeof v === 'object') {
@@ -471,4 +471,33 @@ test('a note and tags on a trip save, come back on /api/trips, and reach Factors
   assert.equal((await postNote({ key: first.key, tags: ['<b>'] })).status, 400);
   assert.equal((await postNote({ key: first.key, note: '', tags: [] })).status, 200);
   assert.equal((await get('/api/trips')).body.trips.find(t => t.key === first.key).note, null);
+});
+
+const syncHistory = async () => {
+  await get('/api/history/sync?start=true');
+  for (let i = 0; i < 200 && (await get('/api/history/sync')).body.state.running; i++) await new Promise(r => setTimeout(r, 20));
+};
+
+test('both legs of a hedged funding settlement are kept, though Binance books them under one tranId', async () => {
+  const dir = process.env.DASHBOARD_DATA_DIR;
+  const solFunding = () => fs.readFileSync(path.join(dir, 'income.ndjson'), 'utf8').trim().split('\n').map(JSON.parse)
+    .filter(r => r.symbol === 'SOLUSDT' && r.incomeType === 'FUNDING_FEE');
+  assert.equal(solFunding().length, 60, 'a paying and a receiving row for each of 30 settlements');
+  const perf = (await get('/api/performance')).body;
+  assert.ok(Math.abs(perf.totals.FUNDING_FEE - (30 * -0.8 + 30 * -0.1)) < 1e-6, `funding ${perf.totals.FUNDING_FEE}`);
+
+  const metaFile = path.join(dir, 'meta.json');
+  const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+  assert.equal(meta.incomeKeyVersion, 2);
+  const incomeFile = path.join(dir, 'income.ndjson');
+  const damaged = fs.readFileSync(incomeFile, 'utf8').trim().split('\n').filter(l => !(l.includes('SOLUSDT') && l.includes('"2.4"')));
+  fs.writeFileSync(incomeFile, damaged.join('\n') + '\n');
+  delete meta.incomeKeyVersion;
+  fs.writeFileSync(metaFile, JSON.stringify(meta));
+  await syncHistory();
+  assert.equal(solFunding().length, 60, 'a cache written under the old key is repaired on the next sync');
+  const repaired = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+  assert.equal(repaired.incomeKeyVersion, 2);
+  assert.ok(repaired.incomeCompleteFrom > 0);
+  assert.equal((await get('/api/trips')).body.coverage.incomeCompleteFrom, repaired.incomeCompleteFrom);
 });

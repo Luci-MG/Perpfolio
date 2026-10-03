@@ -1,5 +1,17 @@
 # Changelog
 
+## Fixed: hedged funding receipts were dropped (2026-10-03)
+
+- Binance books both legs of a hedged funding settlement under one `tranId`; the income cache
+  keyed on it and kept only the first row, usually the paying leg. Realised funding counted only
+  what hedges paid, never what they received, so the Overview flagged funding paid far above
+  the estimate when Binance's own ledger agreed with the estimate.
+- The key now includes the amount. On the next sync a cache written under the old key refetches
+  Binance's three-month window once to restore the missing rows; funding totals,
+  periods, the wallet curve, Costs, the funding drawer and each trip's funding all correct.
+- Trip funding no longer splits a "net" row: each leg's row is matched to it. Settlements cached
+  before the window cannot be recovered and show as unknown, not guessed.
+
 ## Journal Overview remodel (2026-10-03)
 
 - Overview now reads top to bottom: what needs attention (at most three ranked items, or
