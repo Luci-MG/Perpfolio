@@ -24,6 +24,7 @@ import { register as registerHealth } from './routes/health.js';
 import { register as registerVenues } from './routes/venues.js';
 import { register as registerTrips } from './routes/trips.js';
 import { register as registerGoals } from './routes/goals.js';
+import { register as registerFactors } from './routes/factors.js';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -36,6 +37,7 @@ registerHistory(app);
 registerPerformance(app);
 registerTrips(app);
 registerGoals(app);
+registerFactors(app);
 registerHedgeledger(app);
 registerDeleverage(app);
 registerConfluence(app);

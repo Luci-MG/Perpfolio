@@ -1,5 +1,17 @@
 # Changelog
 
+## What goes with better or worse trips (2026-10-03)
+
+- A Journal **Factors** tab: each condition known at entry — session, hour, side, hedged, size
+  against earlier trips, the previous trip, coin group, BTC trend, volatility, and from
+  captured entries confluence, leverage, margin and stop — compared with the rest of the book
+  on average net per trip and win rate, with intervals that count days rather than trips.
+- Only rows whose interval clears zero and that survive a false-discovery check across every
+  comparison are called out; the rest sit on the board behind *Show all factors*, with sign
+  flips, thin samples and early-against-recent stability marked. A losing factor that maps
+  to a goal offers *set a goal ›*.
+- The method and its sources are in `docs/research/outcome-factors.md`.
+
 ## Goals: milestones (2026-10-03)
 
 - Account-value targets, with an optional date, and a monthly drawdown limit, in their own

@@ -259,7 +259,10 @@ function milestoneDetail(g) {
 
 function openGoalDrawer(id = null, suggestion = null) {
   const goal = id ? goalsData.goals.find(g => g.id === id) : null;
-  const source = goal || (suggestion != null ? goalsData.suggestions[suggestion] : null) || { type: goalsData.types[0].id };
+  openGoalDrawerFrom(goal || (suggestion != null ? goalsData.suggestions[suggestion] : null) || { type: goalsData.types[0].id }, id);
+}
+
+function openGoalDrawerFrom(source, id = null) {
   goalDraft = { id, type: source.type, params: { ...goalDefaults(source.type), ...source.params }, session: source.session ?? null };
   goalSaveError = null;
   goalPreview = null;

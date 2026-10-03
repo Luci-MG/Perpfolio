@@ -494,3 +494,42 @@ test('Milestones: a block under the rules, every state renders, the chart projec
   await run('loadGoalPreview()');
   assert.deepEqual(strayValues(markup.get('goalPreview')), []);
 });
+
+test('Factors: verdict first, the board on demand, waiting factors named, a goal from a losing factor', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading && goalsData && !goalsLoading', 'the journal');
+  run(`setJrTab('factors')`);
+  await settle('factorsData && !factorsLoading', 'the factors');
+  const show = () => { run(`jrTab = 'factors'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+  assert.match(show(), /\d+ comparisons · \d+ trips over \d+ days · exploratory/);
+  assert.deepEqual(strayValues(show()), []);
+
+  run(`const b = { bucket: 'Weekend', label: 'Weekday or weekend', n: 31, days: 11, thin: true, avgNet: -12.5, restAvgNet: 4, diff: -16.5,
+         ci: { lo: -30.1, hi: -3.2 }, p: 0.004, medianDiff: 2, medianDisagrees: true, winRate: 0.29, winCi: { lo: 0.17, hi: 0.44 },
+         restWinRate: 0.55, net: -387.5, share: 0.4, stability: 'holds', signFlip: true, standsOut: true,
+         goal: { type: 'noSessions', params: { sessions: ['Weekend'] } } };
+       factorsData = { ...factorsData, comparisons: 27, worse: [{ ...b, factor: 'weekend' }], better: [{ ...b, bucket: 'Asia', label: 'Session', diff: 9, ci: { lo: 1, hi: 17 }, goal: null }],
+         waiting: ['Confluence at entry', 'Leverage at entry'], entryCaptured: 0,
+         factors: [{ id: 'weekend', label: 'Weekday or weekend', buckets: [b], hiddenBuckets: 1 }],
+         during: [{ id: 'adds', label: 'Added while underwater', buckets: [{ ...b, bucket: 'Added underwater', standsOut: false }], hiddenBuckets: 0 }] }`);
+  const verdict = show();
+  assert.match(verdict, /✗[\s\S]*Weekend[\s\S]*−\$16\.50\/trip[\s\S]*\[−\$30\.10, −\$3\.20\][\s\S]*holds recently[\s\S]*⚑[\s\S]*≠ median[\s\S]*set a goal ›/);
+  assert.match(verdict, /✓[\s\S]*Asia[\s\S]*\+\$9\.00\/trip/);
+  assert.match(verdict, /Confluence at entry, Leverage at entry: waiting for captured entries \(0 so far\)/);
+  assert.doesNotMatch(verdict, /During the trade/);
+
+  run(`toggleFactorsShowAll()`);
+  const board = show();
+  assert.match(board, /class="fx-ci dn"/);
+  assert.match(board, /1 bucket under 20 trips or 8 days/);
+  assert.match(board, /During the trade[\s\S]*Added underwater/);
+  assert.deepEqual(strayValues(board), []);
+
+  run(`openFactorGoal(0)`);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(goalDraft)')), { id: null, type: 'noSessions', params: { sessions: ['Weekend'] }, session: null });
+});

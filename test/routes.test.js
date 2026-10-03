@@ -282,6 +282,20 @@ test('milestones sit after rules, by target, and are scored from snapshots witho
   for (const g of goals) await postGoal({ action: 'delete', id: g.id });
 });
 
+test('factors compare buckets with intervals, cache the result, and drop the session factors under a session filter', async () => {
+  const { status, body } = await get('/api/factors?tz=0');
+  assert.equal(status, 200);
+  assert.equal(body.trips, (await get('/api/trips')).body.trips.length);
+  assert.ok(Array.isArray(body.factors) && Array.isArray(body.during));
+  for (const b of body.factors.flatMap(f => f.buckets)) assert.ok(b.ci.lo <= b.diff && b.diff <= b.ci.hi, `${b.bucket} interval`);
+  const again = await get('/api/factors?tz=0');
+  assert.deepEqual(again.body, body);
+  const europe = (await get('/api/factors?session=Europe')).body;
+  assert.equal(europe.session, 'Europe');
+  assert.ok(!europe.factors.some(f => f.id === 'session' || f.id === 'weekend'));
+  record('factors', body);
+});
+
 test('route output matches the golden snapshot', () => {
   if (!fs.existsSync(GOLDEN) || process.env.UPDATE_GOLDEN) {
     fs.mkdirSync(path.dirname(GOLDEN), { recursive: true });

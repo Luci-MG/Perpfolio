@@ -8170,5 +8170,109 @@
     "unit": "milestone"
    }
   ]
+ },
+ "factors": {
+  "better": [],
+  "comparisons": 0,
+  "days": 12,
+  "during": [
+   {
+    "buckets": [],
+    "hiddenBuckets": 2,
+    "id": "adds",
+    "label": "Added while underwater",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 1,
+    "id": "hold",
+    "label": "Hold time",
+    "needs": null
+   }
+  ],
+  "entryCaptured": 0,
+  "factors": [
+   {
+    "buckets": [],
+    "hiddenBuckets": 2,
+    "id": "session",
+    "label": "Session",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 2,
+    "id": "weekend",
+    "label": "Weekday or weekend",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 1,
+    "id": "hour",
+    "label": "Hour opened",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 1,
+    "id": "side",
+    "label": "Side",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 1,
+    "id": "hedged",
+    "label": "Hedged at entry",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 2,
+    "id": "size",
+    "label": "Size against earlier median",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 1,
+    "id": "previous",
+    "label": "Previous trip",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 1,
+    "id": "group",
+    "label": "Coin",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 3,
+    "id": "btc",
+    "label": "BTC trend at entry",
+    "needs": null
+   },
+   {
+    "buckets": [],
+    "hiddenBuckets": 3,
+    "id": "atr",
+    "label": "Volatility at entry (ATR)",
+    "needs": null
+   }
+  ],
+  "ok": true,
+  "session": null,
+  "trips": 24,
+  "waiting": [
+   "Confluence at entry",
+   "Leverage at entry",
+   "Margin used at entry",
+   "Stop within 5 minutes"
+  ],
+  "worse": []
  }
 }

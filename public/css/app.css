@@ -864,3 +864,17 @@ td .stop-mark { margin-left: 4px; vertical-align: -2px; }
 .gl-proj { stroke: var(--text3); }
 .gl-date { width: 140px; }
 @media (max-width: 700px) { .gl-mhead { grid-template-columns: 16px minmax(0, 1fr) 60px 14px; } .gl-mhead .gl-state, .gl-mhead .gl-adh { display: none; } }
+.fx-verdict { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline;
+  padding: 8px 11px; margin-bottom: 4px; border-radius: 8px; background: var(--surface2); font-size: 12px; }
+.fx-verdict > .gl-n, .fx-verdict > .gl-link { grid-column: 2 / -1; }
+.fx-verdict.thin { opacity: .6; }
+.fx-waiting { margin: 8px 0; }
+.fx-toggle { margin: 6px 0 4px; }
+.fx-factor { margin: 16px 0 6px; }
+.fx-tbl { font-size: 11px; }
+.fx-bar { position: relative; display: inline-block; width: 120px; height: 10px; vertical-align: middle; }
+.fx-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--border2); }
+.fx-ci { position: absolute; top: 4px; height: 2px; background: var(--text3); }
+.fx-ci.dn { background: var(--danger); }
+.fx-ci.up { background: var(--success); }
+.fx-dot { position: absolute; top: 2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--text); }

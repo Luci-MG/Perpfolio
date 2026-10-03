@@ -32,6 +32,28 @@ function contextOf(trips) {
   };
 }
 
+function sortedMedian(sorted) {
+  const m = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2;
+}
+
+function insertSorted(list, v) {
+  let lo = 0, hi = list.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (list[mid] < v) lo = mid + 1; else hi = mid; }
+  list.splice(lo, 0, v);
+}
+
+/** Each trip's median opening notional over the trips opened before it; null until there are THIN_TRIPS of them. */
+export function medianSizesBefore(all) {
+  const sizes = [];
+  const out = new Map();
+  for (const t of [...all].sort((a, b) => a.openTime - b.openTime)) {
+    out.set(t, sizes.length >= THIN_TRIPS ? sortedMedian(sizes) : null);
+    insertSorted(sizes, t.openNotional);
+  }
+  return out;
+}
+
 const biggerThanUsual = (t, c) => t.openNotional > REVENGE_SIZE_MULTIPLE * c.medianSize;
 const wasWinner = t => t.mfe >= WINNER_MFE_PCT;
 

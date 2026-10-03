@@ -89,7 +89,7 @@ the account's **real** commission rate — taker 0.05% / maker 0.02% at fee tier
   inflation under a pump
 
 ### Journal tab (7th) — seven sections
-Sub-tabs (`jrTab`): **Overview · Goals · Performance · Behaviour · Timing · Symbols · Costs · Trades**.
+Sub-tabs (`jrTab`): **Overview · Goals · Performance · Behaviour · Factors · Timing · Symbols · Costs · Trades**.
 
 **Overview is the account, not the closed trades.** Round-trip statistics alone mislead while
 a large position is still open: the closed-trip net (plus the orphan fills) can be a fraction
@@ -123,6 +123,7 @@ strips path characters so a malformed symbol cannot escape `data/`, `ensureDir`,
 | Goals | rules you set, scored from the day you set them — see [`goals.md`](goals.md) |
 | Performance | hero stats, cumulative curve + underwater panel + daily bars, month by month, records |
 | Behaviour | added-while-underwater split, hold-time buckets, long vs short, streaks, size after a win vs a loss, size distribution |
+| Factors | which conditions at entry go with better or worse trips — see *Factors* below |
 | Timing | calendar heatmap, day of week, hour of day |
 | Symbols | full per-symbol table with concentration |
 | Costs | maker/taker split, fees by symbol, funding by symbol |
@@ -167,6 +168,32 @@ centre line, and **every bucket shows its trip count**, with fewer than 10 dimme
 The cost is an **estimate** — (average net with the habit − average net of the comparison)
 × trips with the habit — using net after funding where known. Either side under 10 trips is
 dimmed and marked ⚠.
+
+### Factors: what goes with better or worse trips
+
+`outcome-factors.js` splits trips by conditions **known at entry** — session, weekday or
+weekend, hour, side, hedged, size against the median of *earlier* trips, the previous trip
+(closed before this one opened), BTC & ETH or alts, BTC trend, ATR terciles, and from captured
+entries confluence, leverage, margin used and a stop within 5 minutes — and compares each
+bucket with the rest of the book. The method and every threshold come from
+[`research/outcome-factors.md`](research/outcome-factors.md):
+
+- **Average net per trip** is the headline (it sums to the account); the median sits beside it
+  and the row is marked *≠ median* when the two disagree in sign.
+- **Intervals are 90% and count days, not trips:** a bootstrap that resamples whole UTC days
+  (seeded, so a page shows the same numbers on every load) next to a Welch interval, the wider
+  one shown; win rate uses Wilson.
+- **Hidden** under 20 trips or 8 days on either side, **dimmed** under 40.
+- **Stands out** only when the interval clears zero *and* the row passes Benjamini–Hochberg at
+  q = 0.10 across every comparison shown. The tab prints the count and says *exploratory,
+  association not cause*.
+- **⚑** when the sign flips within size buckets or within hedged / unhedged trips;
+  **holds / fades / thin** compare the early 70% of trips with the recent 30%, tercile cut
+  points taken from the early window only.
+- **During the trade** — adds while underwater, hold time — is shown apart and never ranked:
+  it is part of the outcome, not something known when the trip opened.
+
+`GET /api/factors` caches per window, session and trip count, so the poll never recomputes.
 
 ### Trades: every round trip with its context
 One row per closed trip, built in three layers so each can be tested alone:
