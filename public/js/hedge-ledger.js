@@ -120,11 +120,13 @@ function renderHlBody() {
   const body = document.getElementById('hlDrawerBody');
   if (!body) return;
   if (!hlData && loadErrors.hl) { body.innerHTML = loadErrorHtml('hl', 'openHlDrawer()', false); return; }
-  const pool = hlData?.pools?.[0];
+  const pools = hlData?.pools || [];
+  const pool = pools.find(x => x.marginAsset === (drawerPoolAsset ?? simPool()?.marginAsset)) || pools[0];
   if (!pool) { body.innerHTML = `<p style="font-size:12px;color:var(--text3)">No Binance cross positions.</p>`; return; }
+  const poolSwitch = drawerPoolSwitch(pools.map(x => x.marginAsset), pool.marginAsset, 'renderHlBody');
 
   if (!pool.rows.length) {
-    body.innerHTML = `<p style="font-size:12px;color:var(--text3)">No same-symbol hedges open — every
+    body.innerHTML = `${poolSwitch}<p style="font-size:12px;color:var(--text3)">No same-symbol hedges open — every
       position is directional, so none of the PnL is locked.</p>`;
     return;
   }
@@ -167,7 +169,7 @@ function renderHlBody() {
 
   const anyMismatch = pool.carry.some(c => c.observedHours && c.declaredHours && c.observedHours !== c.declaredHours);
 
-  body.innerHTML = `${loadErrorHtml('hl', 'openHlDrawer()', true)}
+  body.innerHTML = `${loadErrorHtml('hl', 'openHlDrawer()', true)}${poolSwitch}
     <div>
       <div class="hl-headline">
         <div class="k">Already decided — no price can change it</div>

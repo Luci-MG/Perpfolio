@@ -48,9 +48,15 @@ const BISECT_ITER    = 32;      // refines a breach to ~1e-9 of the ray
 
 // Bracket whose notional band contains `notional`. Highest bracket is the fallback
 // for notionals past the last cap.
+const sortedBrackets = new WeakMap();
+
 export function pickTier(brackets, notional) {
   if (!Array.isArray(brackets) || !brackets.length) return null;
-  const sorted = [...brackets].sort((a, b) => a.notionalFloor - b.notionalFloor);
+  let sorted = sortedBrackets.get(brackets);
+  if (!sorted) {
+    sorted = [...brackets].sort((a, b) => a.notionalFloor - b.notionalFloor);
+    sortedBrackets.set(brackets, sorted);
+  }
   for (const b of sorted) {
     if (notional >= b.notionalFloor && notional < b.notionalCap) return b;
   }
@@ -80,21 +86,17 @@ function priceFor(pos, prices) {
   return (p != null && isFinite(p) && p > 0) ? p : pos.mark;
 }
 
-// Bracket tier is selected from the COMBINED absolute notional of every position on
-// the symbol (hedge mode counts both legs), then MMR and cum are applied per leg.
-function combinedNotionals(positions, prices) {
+function tierBasis(positions, prices, opts = {}) {
+  const own = pos => Math.abs(pos.q) * priceFor(pos, prices) * (pos.notionalCoef > 0 ? pos.notionalCoef : 1);
+  if (opts.perSideTiers) return own;
   const totals = {};
-  for (const pos of positions) {
-    const coef = pos.notionalCoef > 0 ? pos.notionalCoef : 1;
-    const n = Math.abs(pos.q) * priceFor(pos, prices) * coef;
-    totals[pos.symbol] = (totals[pos.symbol] || 0) + n;
-  }
-  return totals;
+  for (const pos of positions) totals[pos.symbol] = (totals[pos.symbol] || 0) + own(pos);
+  return pos => totals[pos.symbol];
 }
 
 export function evalPool(pool, prices = {}, opts = {}) {
   const positions = pool.positions || [];
-  const tierBasis = opts.perSideTiers ? null : combinedNotionals(positions, prices);
+  const basisOf = tierBasis(positions, prices, opts);
 
   let equity = pool.collateral || 0;
   let mm = 0;
@@ -103,10 +105,8 @@ export function evalPool(pool, prices = {}, opts = {}) {
 
   for (const pos of positions) {
     const price    = priceFor(pos, prices);
-    const coef     = pos.notionalCoef > 0 ? pos.notionalCoef : 1;
     const notional = Math.abs(pos.q) * price;
-    const basis    = tierBasis ? tierBasis[pos.symbol] : notional * coef;
-    const tier     = pickTier(pos.brackets, basis);
+    const tier     = pickTier(pos.brackets, basisOf(pos));
     const posMm    = maintMargin(notional, tier);
     const posIm    = initialMargin(pos, price);
     const posPnl   = upnl(pos, price);
@@ -461,16 +461,12 @@ export function killPricesBoth(pool, asset, base, opts = {}) {
 // its current notional; its live margin engine re-tiers as the notional moves. This
 // returns a pool with the tiers pinned, so both readings can be shown when a threshold
 // crosses a bracket boundary.
-export function freezeTiers(pool, prices = {}) {
-  const totals = {};
-  for (const pos of pool.positions || []) {
-    const coef = pos.notionalCoef > 0 ? pos.notionalCoef : 1;
-    totals[pos.symbol] = (totals[pos.symbol] || 0) + Math.abs(pos.q) * priceFor(pos, prices) * coef;
-  }
+export function freezeTiers(pool, prices = {}, opts = {}) {
+  const basisOf = tierBasis(pool.positions || [], prices, opts);
   return {
     ...pool,
     positions: (pool.positions || []).map(pos => {
-      const tier = pickTier(pos.brackets, totals[pos.symbol]);
+      const tier = pickTier(pos.brackets, basisOf(pos));
       if (!tier) return pos;
       return { ...pos, brackets: [{ notionalFloor: 0, notionalCap: 1e15,
                                     maintMarginRatio: tier.maintMarginRatio, cum: tier.cum }] };
@@ -478,14 +474,14 @@ export function freezeTiers(pool, prices = {}) {
   };
 }
 
-// Does the symbol's combined notional change bracket between two prices?
-export function crossesTier(pool, asset, fromPrices, toPrice) {
-  const legs = (pool.positions || []).filter(p => p.asset === asset);
+// Does any leg of `asset` change bracket between two prices?
+export function crossesTier(pool, asset, fromPrices, toPrice, opts = {}) {
+  const positions = pool.positions || [];
+  const legs = positions.filter(p => p.asset === asset);
   if (!legs.length || !(toPrice > 0)) return false;
-  const at = price => legs.reduce((sum, p) =>
-    sum + Math.abs(p.q) * price * (p.notionalCoef > 0 ? p.notionalCoef : 1), 0);
-  return pickTier(legs[0].brackets, at(priceFor(legs[0], fromPrices)))
-      !== pickTier(legs[0].brackets, at(toPrice));
+  const before = tierBasis(positions, fromPrices, opts);
+  const after = tierBasis(positions, { ...fromPrices, [asset]: toPrice }, opts);
+  return legs.some(p => pickTier(p.brackets, before(p)) !== pickTier(p.brackets, after(p)));
 }
 
 // Buffer and free margin lost (negative) or gained (positive) by a ±1% move.
@@ -586,13 +582,15 @@ export function walkBook(levels, qty) {
   };
 }
 
-// Cost of closing a position at the current book: slippage against the mark plus commission.
-export function exitCost(levels, qty, mark, feeRate = 0) {
+/**
+ * Cost of closing a position at the current book: slippage against the mark plus commission.
+ * `side` is the closing order's, 'sell' for a long and 'buy' for a short; slippage is signed,
+ * so a fill better than the mark is a negative cost.
+ */
+export function exitCost(levels, qty, mark, feeRate = 0, side = 'sell') {
   const walk = walkBook(levels, qty);
   if (walk.vwap == null || !(mark > 0)) return { ...walk, slipPct: null, slipUsd: null, feeUsd: null, totalUsd: null };
-  // Closing a long sells into bids below the mark; closing a short buys from asks above it.
-  // Either way the signed cost is |vwap − mark| × filled.
-  const slipUsd = Math.abs(walk.vwap - mark) * walk.filled;
+  const slipUsd = (side === 'sell' ? mark - walk.vwap : walk.vwap - mark) * walk.filled;
   const feeUsd  = walk.vwap * walk.filled * feeRate;
   return {
     ...walk,
@@ -601,14 +599,6 @@ export function exitCost(levels, qty, mark, feeRate = 0) {
     feeUsd: +feeUsd.toFixed(4),
     totalUsd: +(slipUsd + feeUsd).toFixed(4)
   };
-}
-
-// Exchange quantities must land on the symbol's lot step or the order is rejected.
-export function roundToStep(qty, stepSize) {
-  const step = parseFloat(stepSize);
-  if (!(step > 0)) return qty;
-  const decimals = (String(stepSize).split('.')[1] || '').replace(/0+$/, '').length;
-  return +(Math.floor(Math.abs(qty) / step) * step * Math.sign(qty || 1)).toFixed(decimals);
 }
 
 // ─── HEDGE LEDGER ────────────────────────────────────────────────────────────
@@ -750,17 +740,8 @@ export function liquidationDetail(pool, asset, prices = {}, opts = {}) {
   const none = { price: null, coefficient: 0, sensitivityPerDollar: null, illConditioned: false };
   if (!positions.some(p => p.asset === asset)) return none;
 
-  const combined = {};
-  for (const p of positions) {
-    const coef = p.notionalCoef > 0 ? p.notionalCoef : 1;
-    combined[p.symbol] = (combined[p.symbol] || 0) + Math.abs(p.q) * priceFor(p, prices) * coef;
-  }
-  const tierOf = p => {
-    const coef = p.notionalCoef > 0 ? p.notionalCoef : 1;
-    return pickTier(p.brackets, opts.perSideTiers
-      ? Math.abs(p.q) * priceFor(p, prices) * coef
-      : combined[p.symbol]);
-  };
+  const basisOf = tierBasis(positions, prices, opts);
+  const tierOf = p => pickTier(p.brackets, basisOf(p));
 
   let A = 0;
   let C = pool.collateral || 0;
@@ -946,18 +927,19 @@ export function deleveragePlan(pool, prices = {}, opts = {}) {
   let blocked = null;
   for (let i = 0; i < maxSteps && !reached(); i++) {
     const all = deleverageCandidates(work, prices, opts).filter(c => gainOf(c) >= minGain);
-    const affordable = all.filter(c => -(realizedTotal - feesTotal + c.realized - c.fees) <= maxLoss);
+    const lossAfter = c => -(realizedTotal - feesTotal + c.realized - c.fees);
+    const affordable = all.filter(c => lossAfter(c) <= maxLoss);
     const safe       = all.filter(c => c.deltaShift <= deltaTol);
     const candidates = affordable.filter(c => c.deltaShift <= deltaTol);
 
     if (!candidates.length) {
       if (all.length) {
-        const cheapestSafe = safe.length ? Math.min(...safe.map(c => -c.realized)) : null;
+        const cheapestSafe = safe.length ? Math.min(...safe.map(lossAfter)) : null;
         blocked = {
           reason: !safe.length
             ? 'every remaining close would increase naked exposure'
             : 'every exposure-neutral close would breach the realised-loss cap',
-          lossNeededForNextSafeStep: cheapestSafe == null ? null : +cheapestSafe.toFixed(2),
+          capNeededForNextSafeStep: cheapestSafe == null ? null : +cheapestSafe.toFixed(2),
           unsafeGainAvailable: +Math.max(0, ...affordable.map(gainOf)).toFixed(2)
         };
       }

@@ -1,5 +1,27 @@
 # Changelog
 
+## Risk maths, batch 2 of the 2026-10-03 review (2026-10-03)
+
+- **Stress rows agree with the pool header when stops are honoured**: each asset's kill price
+  now starts from the book with the other assets' crossed stops already fired.
+- **Per-side margin tiers reach the frozen reading**: when calibration picks per-side tiers,
+  the frozen kill price, its "exch" note and the tier-crossing flag now tier each leg on its
+  own, as the live engine and the closed form already did.
+- **The drawers see every pool**: the liquidation, simulator and hedge-ledger drawers switch
+  between USDT and USDC pools, open on the one nearest a kill price, and say how old the book
+  is. Dragging a % slider no longer rebuilds the drawer under the pointer.
+- **Costs and caps read as entered**: a 0 fee is 0, a 0 risk is floored at 0.1% rather than
+  read as 1%, a fill better than the mark lowers the cost, and a blocked plan names the cap
+  that would let it continue, fees included. The Unwind fee defaults to your account's taker
+  rate, and a slow response can no longer overwrite a newer plan.
+- **Linked moves stay sane**: an asset with |β| under 0.2 moves alone instead of driving the
+  rest past −100%, and no shift goes below −99%.
+- **One asset without a mark no longer fails the risk book**; it gets an empty row.
+- Each Stress row shows how far its kill price is from Binance's published one.
+- A Stress frame is about three times faster (brackets are sorted once, not on every lookup),
+  and the risk book fetches depth and fees in parallel and scans each asset once fewer times.
+  The unused lot filters and `roundToStep` are gone.
+
 ## Correctness fixes, batch 1 of the 2026-10-03 review (2026-10-03)
 
 - **Trades no longer vanish from the Journal.** A hedge leg opened before the earliest

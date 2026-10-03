@@ -34,11 +34,16 @@ portion is the whole optimisation.
 unsafe closes when no safe one qualifies is how a planner ends up proposing to shut the
 *profitable* leg of a hedge under a realised-loss cap: at a stressed mark it freed a little
 buffer while leaving a large leg naked and liquidation at +5%. When constraints are mutually
-unsatisfiable the planner takes no step and returns `blocked` with the reason, the loss the
-cheapest exposure-neutral close would realise, and the gain it refused.
+unsatisfiable the planner takes no step and returns `blocked` with the reason,
+`capNeededForNextSafeStep` — the total realised loss, fees and earlier steps included, that
+the cap would have to allow for the cheapest exposure-neutral close — and the gain it refused.
+Before 2026-10 that figure counted the close's own realised PnL only, so it could name a
+loss below the cap as the reason the cap blocked.
 
 ### Endpoint: `GET /api/deleverage`
-`objective=free|buffer`, `target`, `maxLoss`, `fee`, `breakHedges`. Greedy, re-deriving
+`objective=free|buffer`, `target`, `maxLoss`, `fee`, `breakHedges`. Without `fee`, each pool
+plans at the highest taker rate among its symbols from `commissionRate`, reported per plan as
+`fee: { rate, source: account|assumed|given }`; `fee=0` is honoured. Greedy, re-deriving
 candidates against the evolving book each step so bracket tiers and part-closed legs are
 accounted for. Returns `ceiling`, `before`/`after`, `steps[]` (with legs, gain, `deltaShift`,
 realised, cumulative), `blocked`, `remaining[]` and `thresholdsAfter[]`. Uses the tier mode
@@ -48,7 +53,18 @@ Only a realised **loss** is capped — taking a profit is never blocked.
 ### Frontend
 6th view tab **Unwind** (`posView === 'unwind'`), fetched on activation. Same
 mounted-panel guard as the Stress tab (`#uw-mounted`) so the 15s poll cannot rebuild the
-panel and drop input focus mid-edit.
+panel and drop input focus mid-edit. The fee field is empty by default, showing the account's
+rate as its placeholder, and sends a fee only once typed in. A response that arrives after a
+newer request is dropped.
+
+### Shared by the drawers
+The liquidation, simulator and hedge-ledger drawers show one margin pool at a time, with a
+pool switch when there are two; it opens on the pool nearest a kill price and stays where it
+was put while the page is open. The liquidation and simulator drawers say how old the risk
+book they reuse is, with a Refresh. Dragging a % slider patches only its label and the
+outcome; releasing it rebuilds the drawer, so the slider being dragged is never replaced.
+Closing costs walk the live book on the closing side: slippage is signed, and a fill better
+than the mark lowers the cost.
 
 ### Liquidation after close (sidebar drawer)
 Close a subset of positions, get the liquidation price the **exchange** would then show for
@@ -105,6 +121,6 @@ it — the drawer lives at body level).
   This is the point of the tool — closing one side of a hedge converts a flat book into a
   directional one, and the thresholds say how much room the remaining side has.
 - `updateSimOutcome()` patches `#simOut` alone so that slider stays smooth; the rest of the
-  body is rebuilt only on a selection change.
-- State: `simSel` (symbol → {side, pct}), `simMove`. Fee rate is shared with the Unwind
-  tab's `uwFee`.
+  body is rebuilt only on a selection change or a released slider.
+- State: `simSel` (symbol → {side, pct}), `simMove`. Fee rate is the Unwind tab's `uwFee`
+  when typed in, otherwise each asset's own taker rate.
