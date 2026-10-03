@@ -1,0 +1,70 @@
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_2a6fe5747f955f 130-131,133-135
+  s_ce0783ce808ef4::t_1233aaaef143cb 129,132
+docs/operations.md
+  s_ce0783ce808ef4::t_94893de91476ea 133-138,175-177
+server.js
+  s_ce0783ce808ef4::t_d57e0d33cf683d 10-11,51
+test/routes.test.js
+  s_ce0783ce808ef4::t_d9567f35c670cf 192-219
+docs/architecture.md
+  s_ce0783ce808ef4::t_94893de91476ea 35-37
+lib/binance-account.js
+  s_ce0783ce808ef4::t_38e3b7c0d70be6 24,186-187
+lib/trip-enrichment.js
+  s_ce0783ce808ef4::t_d57e0d33cf683d 12,87-93,103,121-122,126,128
+docs/roadmap.md
+  s_ce0783ce808ef4::t_94893de91476ea 17,162-163
+lib/orders-stream.js
+  s_ce0783ce808ef4::t_13bb216afe7469 114,134-146,148,150-159,161,163,167,169,183
+  s_ce0783ce808ef4::t_92459aebcfeb8a 147,149,160,162,164-166,168,170-182
+  s_ce0783ce808ef4::t_340375d08635d3 184
+routes/confluence.js
+  s_ce0783ce808ef4::t_1e5c8ea2ffeb7c 2-4,31
+trade-analytics.js
+  s_ce0783ce808ef4::t_38e3b7c0d70be6 35,57,134,167
+docs/journal.md
+  s_ce0783ce808ef4::t_94893de91476ea 87,178-179,183-202
+  s_ce0783ce808ef4::t_1a033e8d925bb0 203
+test/fake-exchange.js
+  s_ce0783ce808ef4::t_ce66880b446dd5 196,199,203
+lib/stop-suggestion.js
+  s_ce0783ce808ef4::t_ceedf6993f2962 1-6,17-18,21,23,29,31,40,52,54,56-57,59-66,68-84,88-93
+  s_ce0783ce808ef4::t_a08d75e3930a88 7-16,19-20,22,24-28,30,32-39,41-51,53,55,58,67,85-87
+routes/volstops.js
+  s_ce0783ce808ef4::t_ceedf6993f2962 6,67-68,73
+lib/confluence-reading.js
+  s_ce0783ce808ef4::t_1e5c8ea2ffeb7c 1-71
+CLAUDE.md
+  s_ce0783ce808ef4::t_94893de91476ea 30
+trip-context.js
+  s_ce0783ce808ef4::t_38e3b7c0d70be6 141-149,151-165
+  s_ce0783ce808ef4::t_ce66880b446dd5 150
+trip-context.test.js
+  s_ce0783ce808ef4::t_d9567f35c670cf 99-124
+docs/changelog.md
+  s_ce0783ce808ef4::t_94893de91476ea 3-14
+test/golden/routes.json
+  s_ce0783ce808ef4::t_bb8d36fbb016d7 3341,3359,3373,3395,3409,3431,3445,3467,3481,3503,3517,3539,3553,3575,3589,3611,3625,3647,3661,3683,3697,3719,3733,3755,3769,3791,3805,3827,3841,3863,3877,3899,3913,3935,3949,3971,3985,4007,4021,4043,4057,4079,4093,4115,4129,4151,4165,4187,4201
+public/js/journal-trades.js
+  s_ce0783ce808ef4::t_f1c1c427a8ffb3 29-44,86-101
+lib/entry-context.js
+  s_ce0783ce808ef4::t_ce66880b446dd5 8
+  s_ce0783ce808ef4::t_1045e5e33e9e4e 1-7,9-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "23dc72e1f3348c65e49696157f2ca18deb3e98df",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
