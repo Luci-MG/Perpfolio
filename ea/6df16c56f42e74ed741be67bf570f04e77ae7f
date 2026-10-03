@@ -1,0 +1,62 @@
+habits.js
+  s_ce0783ce808ef4::t_3b79943d1ccd3b 1-67
+routes/performance.js
+  s_ce0783ce808ef4::t_3db36806a43495 2,4-6,10,25-31,71-74
+public/js/journal.js
+  s_ce0783ce808ef4::t_6805f701845a34 17-18,182-198,207-208,211-231,245-246,360,362,382-385
+  s_ce0783ce808ef4::t_d85b8d7f5776d6 199-206,209-210,232-244,444-446
+test/routes.test.js
+  s_ce0783ce808ef4::t_d3a94ef72c75b5 240-263
+  s_ce0783ce808ef4::t_67f611d644bb4d 119-121
+trade-analytics.test.js
+  s_ce0783ce808ef4::t_3b79943d1ccd3b 349-376,378-387
+  s_ce0783ce808ef4::t_29faab2a4fc560 377
+routes/dashboard.js
+  s_ce0783ce808ef4::t_3db36806a43495 54
+server.js
+  s_ce0783ce808ef4::t_3db36806a43495 11,52
+test/frontend.smoke.test.js
+  s_ce0783ce808ef4::t_16ec109eef7833 214-242
+CLAUDE.md
+  s_ce0783ce808ef4::t_48ea037c59a272 30,50
+docs/api.md
+  s_ce0783ce808ef4::t_48ea037c59a272 30,111-112
+test/golden/routes.json
+  s_ce0783ce808ef4::t_67f611d644bb4d 210-211,1860,2600-2645,3289-3320,3453-3578
+docs/changelog.md
+  s_ce0783ce808ef4::t_48ea037c59a272 3-12
+docs/architecture.md
+  s_ce0783ce808ef4::t_48ea037c59a272 9,37
+docs/operations.md
+  s_ce0783ce808ef4::t_48ea037c59a272 133-138
+lib/equity-snapshots.js
+  s_ce0783ce808ef4::t_3db36806a43495 1-39
+trade-analytics.js
+  s_ce0783ce808ef4::t_0b51719e767dc2 477-547
+docs/roadmap.md
+  s_ce0783ce808ef4::t_48ea037c59a272 15,135-136
+habits.test.js
+  s_ce0783ce808ef4::t_3b79943d1ccd3b 1-26,29-42
+  s_ce0783ce808ef4::t_646ecff356c2d6 27-28
+public/css/app.css
+  s_ce0783ce808ef4::t_d85b8d7f5776d6 757,764-766
+  s_ce0783ce808ef4::t_6805f701845a34 755-756,758-763
+docs/journal.md
+  s_ce0783ce808ef4::t_48ea037c59a272 140-169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ea6df16c56f42e74ed741be67bf570f04e77ae7f",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
