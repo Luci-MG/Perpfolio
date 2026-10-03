@@ -25,7 +25,7 @@ async function fetchGoals() {
     noteLoadError('goals', err);
   } finally {
     goalsLoading = false;
-    if (posView === 'journal') rerenderStress();
+    if (posView === 'journal' && ['goals', 'overview'].includes(jrTab)) rerenderStress();
   }
 }
 
@@ -96,7 +96,7 @@ function goalBreachesHtml(g) {
   const rows = g.breaches.map(b => `<tr><td>${goalWhen(b.openTime)}</td>
     <td>${esc(jrSym(b.symbol))} <span class="gl-n">${b.side.toLowerCase()}</span></td>
     <td>${esc(b.what)}${b.tags?.length ? ` ${tagChips(b.tags)}` : ''}${b.note ? ` <span class="jt-pen" title="${esc(b.note)}">✎</span>` : ''}</td><td>${signedCell(b.net)}</td>
-    <td><button class="gl-link" onclick="openGoalBreach('${esc(b.symbol)}', ${b.openTime})">open ›</button></td></tr>`).join('');
+    <td><button class="gl-link" onclick="openGoalBreach(${jsArg(b.symbol)}, ${b.openTime})">open ›</button></td></tr>`).join('');
   const more = g.breachCount > g.breaches.length ? `<p class="gl-n">latest ${g.breaches.length} of ${g.breachCount}</p>` : '';
   return `<table class="jr-tbl gl-breaches">${rows}</table>${more}`;
 }
@@ -117,7 +117,7 @@ function goalDetail(g) {
 function goalRow(g) {
   const open = goalOpen === g.id;
   return `<div class="gl-row ${g.status}">
-    <button class="gl-head" onclick="toggleGoal('${esc(g.id)}')" aria-expanded="${open}">
+    <button class="gl-head" onclick="toggleGoal(${jsArg(g.id)})" aria-expanded="${open}">
       <span class="gl-mark ${g.status}">${GOAL_MARK[g.status]}</span>
       <span class="gl-name">${esc(g.label)}</span>
       <span class="gl-state">${goalStateText(g)}</span>
@@ -194,7 +194,7 @@ function milestoneSummary(g) {
 function milestoneRow(g) {
   const open = goalOpen === g.id;
   return `<div class="gl-row ${g.status}">
-    <button class="gl-head gl-mhead" onclick="toggleGoal('${esc(g.id)}')" aria-expanded="${open}">
+    <button class="gl-head gl-mhead" onclick="toggleGoal(${jsArg(g.id)})" aria-expanded="${open}">
       <span class="gl-mark ${g.status}">${MILESTONE_MARK[g.status]}</span>
       <span class="gl-name">${esc(g.label)}</span>
       ${milestoneSummary(g)}
@@ -228,9 +228,9 @@ function milestoneChart(g) {
 
 function goalActionsHtml(g) {
   return `<div class="gl-actions">
-      <button class="st-btn" onclick="openGoalDrawer('${esc(g.id)}')">Edit</button>
-      <button class="st-btn" onclick="goalAction('${esc(g.id)}', '${g.pausedAt ? 'resume' : 'pause'}')">${g.pausedAt ? 'Resume' : 'Pause'}</button>
-      <button class="st-btn${goalConfirmDelete === g.id ? ' gl-danger' : ''}" onclick="goalAction('${esc(g.id)}', 'delete')">${goalConfirmDelete === g.id ? 'Confirm delete' : 'Delete'}</button>
+      <button class="st-btn" onclick="openGoalDrawer(${jsArg(g.id)})">Edit</button>
+      <button class="st-btn" onclick="goalAction(${jsArg(g.id)}, '${g.pausedAt ? 'resume' : 'pause'}')">${g.pausedAt ? 'Resume' : 'Pause'}</button>
+      <button class="st-btn${goalConfirmDelete === g.id ? ' gl-danger' : ''}" onclick="goalAction(${jsArg(g.id)}, 'delete')">${goalConfirmDelete === g.id ? 'Confirm delete' : 'Delete'}</button>
     </div>`;
 }
 
@@ -301,7 +301,7 @@ function goalFieldHtml(spec) {
   const value = goalDraft.params[spec.key];
   if (spec.sessions) {
     return `<div class="gl-field"><span class="k">${spec.label}</span><span class="gl-checks">${GOAL_SESSIONS.map(s => `<label class="gl-check">
-      <input type="checkbox"${value.includes(s) ? ' checked' : ''} onchange="toggleGoalSession('${esc(s)}', this.checked)">${esc(s)}</label>`).join('')}</span></div>`;
+      <input type="checkbox"${value.includes(s) ? ' checked' : ''} onchange="toggleGoalSession(${jsArg(s)}, this.checked)">${esc(s)}</label>`).join('')}</span></div>`;
   }
   if (spec.date) {
     const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10);

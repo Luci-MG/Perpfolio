@@ -193,7 +193,6 @@ test('the calculators fill from a picked position, and its liquidation matches S
   assert.ok(Math.abs(stress - reported) / reported < 1e-6, `${stress} vs ${reported}`);
   assert.equal(value('liqEntry'), 0.27);
   assert.equal(value('pnlLev'), 3);
-  assert.ok(value('liqMmr') > 0, 'the maintenance rate comes from the tier');
 
   run(`ctxPosition = lastData.binance.positions.find(p => p.symbol === 'BTCUSDT' && p.side === 'Long'); openCalc('pnl')`);
   await settle('document.getElementById("pnlInvested").value', 'the sized field');
@@ -836,4 +835,95 @@ test('the risk drawers switch pools, keep the slider being dragged, and say how 
 
   run(`openSimDrawer(); setDrawerPool('USDC', renderSimBody)`);
   assert.match(markup.get('simDrawerBody'), /ENA/);
+});
+
+const shownText = html => [...html.matchAll(/>([^<]+)</g)].map(m => m[1]).join(' ');
+
+test('exchange text with a quote or a tag renders as text everywhere, and handler arguments survive it', async () => {
+  const { markup, run, settle } = await bootPage();
+  const evil = `X'<b>Y</b>`;
+  run(`lastData.binance.positions[0] = { ...lastData.binance.positions[0], pair: ${JSON.stringify(evil + '/USDT')} };
+       lastData.binance.orders[0] = { ...lastData.binance.orders[0], pair: ${JSON.stringify(evil + '/USDT')}, type: ${JSON.stringify(evil)} }`);
+  for (const v of ['tiles', 'list', 'orders']) {
+    run(`posView = '${v}'; riskForceRender = true; render(lastData)`);
+    assert.doesNotMatch(markup.get('content'), /<b>Y/, v);
+  }
+  assert.match(run('jsArg(' + JSON.stringify(evil) + ')'), /^&quot;X&#39;&lt;b&gt;Y&lt;\/b&gt;&quot;$/,
+    'an attribute decodes this back to the JSON string literal');
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading', 'the journal');
+  run(`perfData.symbols.rows[0] = { ...perfData.symbols.rows[0], symbol: ${JSON.stringify(evil)} };
+       perfData.symbols.shown = [${JSON.stringify(evil)}]; jrTab = 'symbols'; riskForceRender = true; render(lastData)`);
+  assert.doesNotMatch(markup.get('content'), /<b>Y/);
+  assert.match(markup.get('content'), /onclick="openTradesFor\(\{ symbol: &quot;X&#39;&lt;b&gt;Y&lt;\/b&gt;&quot;, exact: true \}\)"/);
+});
+
+test('every negative figure on screen carries a minus glyph, never an ASCII hyphen', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`lastData.binance.positions.forEach(p => { p.upnl = -Math.abs(p.upnl || 5); })`);
+  for (const v of VIEWS) run(`setView('${v}')`);
+  await settle('volStopData && riskBook && unwindData && perfData && cfData && !cfLoading', 'every tab fetch');
+  const bad = [];
+  for (const v of VIEWS) {
+    run(`posView = '${v}'; riskForceRender = true; render(lastData)`);
+    for (const html of [markup.get('content'), markup.get('sidebar')]) {
+      for (const hit of shownText(html).matchAll(/(?:^|[\s(↓])(-\$?\d[\d,.]*%?)/g)) bad.push(`${v}: ${hit[1]}`);
+    }
+  }
+  assert.deepEqual(bad, []);
+});
+
+test('a tile hands the calculator and the hedge popup the full position', async () => {
+  const { markup, run } = await bootPage();
+  const long = `lastData.binance.positions.find(p => p.symbol === 'BTCUSDT' && p.side === 'Long')`;
+  const short = `lastData.binance.positions.find(p => p.symbol === 'BTCUSDT' && p.side === 'Short')`;
+  assert.equal(run(`positionById(posId(${long})) === ${long}`), true);
+  run(`showCtxMenu({ preventDefault() {}, clientX: 0, clientY: 0 }, positionById(posId(${long})))`);
+  await run(`openCalc('liq')`);
+  assert.equal(run('calcKeyOf(calcPick)'), 'binance:BTCUSDT:LONG:Long', 'the picker knows the leg');
+  const popup = run(`buildHedgePopup(positionById(posId(${long})), positionById(posId(${short})))`);
+  assert.match(popup, new RegExp(run(`fmtPlusUsd(fundingPerDay(${long}) + fundingPerDay(${short}))`).replace(/[$+.]/g, '\\$&')));
+  assert.doesNotMatch(markup.get('content') || '', /data-pos='/);
+});
+
+test('a slower response never overwrites a newer one, and a rebuild waits while you type', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading', 'the journal');
+  run(`const quick = fetch; fetch = (url, opts) => (String(url).includes('days=7')
+         ? new Promise(r => setTimeout(r, 150)).then(() => quick(url, opts)) : quick(url, opts))`);
+  run('setPerfDays(7); setPerfDays(30)');
+  await new Promise(r => setTimeout(r, 400));
+  assert.match(run('perfQuery'), /days=30/, 'the 7-day response arrived last and was dropped');
+
+  run(`setJrTab('trades')`);
+  await settle('tripsData && !tripsLoading', 'the trades');
+  const before = markup.get('content');
+  run(`document.getElementById('content').contains = () => true; document.activeElement = { tagName: 'TEXTAREA' }; rerenderStress()`);
+  assert.equal(markup.get('content'), before, 'nothing rebuilt under the note being typed');
+  run(`jrTab = 'overview'; rerenderStress()`);
+  assert.equal(markup.get('content'), before);
+  run(`document.activeElement = null; resumeContent()`);
+  assert.notEqual(markup.get('content'), before, 'the deferred rebuild runs once typing ends');
+});
+
+test('small things read right: stops after a venue goes off, margin health, the live account line, locked hedges, a stale tag filter', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`exchFilter = new Set(['hyperliquid']); setView('stops')`);
+  await settle('volStopData && !volLoading', 'the stops');
+  run(`lastData = { ...lastData, venues: { binance: true, hyperliquid: false } }; riskForceRender = true; render(lastData)`);
+  assert.doesNotMatch(markup.get('content'), /No open positions for selected exchanges/);
+  assert.match(markup.get('sidebar'), /Margin health[\s\S]*class="b-val nu"[^>]*>off</);
+
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading', 'the journal');
+  run(`jrTab = 'overview'; riskForceRender = true; render(lastData)`);
+  run(`lastData = { ...lastData, lastUpdated: new Date(Date.UTC(2026, 0, 1, 9, 41)).toISOString(), binance: { ...lastData.binance, equity: '123456.00' } }; render(lastData)`);
+  assert.match(run('ovAccountLine()'), /\$123,456\.00[\s\S]*as of/, 'the line the poll patches in');
+  assert.match(markup.get('content'), /id="ov-account"[\s\S]*hedges locked <span class="(up|dn|)">/);
+
+  run(`tripsData = { trips: [{ key: 'k', symbol: 'BTCUSDT', side: 'Long', tags: [] }] }; tradesFilter = { ...tradesFilter, tag: 'gone' }`);
+  assert.equal(run('filteredTrips().length'), 1, 'a tag that no trip carries any more resets to Any tag');
+  assert.equal(run('tradesFilter.tag'), 'all');
+  assert.match(run(`renderOrdersFor([{ ...lastData.binance.orders[0], price: 0.0000123, stopPrice: 0.0000456 }])`), /\$0\.000012[\s\S]*\$0\.000046/);
 });

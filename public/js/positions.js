@@ -137,18 +137,16 @@ function renderPositions(positions) {
       const dist = liqDist(p);
       const liqStyle = dist < 10 ? 'color:var(--danger);font-weight:600' : dist < 30 ? 'color:var(--warning)' : '';
       const costDay = fundingPerDay(p);
-      const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-      const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
       return `<tr>
-        <td><span class="pair">${p.pair}</span> ${stopMarkHtml(p, hedged.has(normalizePairKey(p.pair)))}<div class="pair-sub" style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span><span>${p.type}</span></div></td>
+        <td><span class="pair">${esc(p.pair)}</span> ${stopMarkHtml(p, hedged.has(normalizePairKey(p.pair)))}<div class="pair-sub" style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;font-weight:600;color:${venueColor(p)}">${venueLabel(p)}</span><span>${p.type}</span></div></td>
         <td>${sideBadge(p.side)}</td>
-        <td>${p.leverage}</td>
-        <td>${p.size}<div class="pair-sub">${fmtUsd(p.sizeUsd)}</div></td>
+        <td>${esc(p.leverage)}</td>
+        <td>${esc(p.size)}<div class="pair-sub">${fmtUsd(p.sizeUsd)}</div></td>
         <td>${fmtPrice(p.entry)}</td>
         <td>${fmtPrice(p.mark)}</td>
         <td style="${liqStyle}">${fmtPrice(p.liqPrice)}<div class="pair-sub">${dist < 999 ? fmt(dist,1)+'% away' : '—'}</div></td>
         <td>${fmtPnl(p.upnl)}</td>
-        <td>${p.funding8h}<div class="pair-sub">every ${fundingIntervalOf(p)}h</div></td>
+        <td>${fmtSignedPct(p.fundingRate, 4)}<div class="pair-sub">every ${fundingIntervalOf(p)}h</div></td>
         <td>${fmtPnl(costDay)}</td>
       </tr>`;
     }).join('')}
@@ -189,8 +187,6 @@ function renderPositionTiles(positions) {
     const barWidth = dist < 999 ? Math.max(0, Math.min(100, 100 - dist)) : 0;
     const barColor = dist < 10 ? 'var(--danger)' : dist < 30 ? 'var(--warning)' : 'var(--success)';
     const costDay = fundingPerDay(p);
-    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-    const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
     const focusColor = tc || (p.exchange === 'hyperliquid' ? '#7f77dd' : '#ef9f27');
     const threadAttrs = tc ? ` data-thread="${key}" data-thread-color="${tc}"` : '';
     const outlineStyle = tc ? `outline:1.5px solid ${tc}50;outline-offset:-1px;` : '';
@@ -199,13 +195,13 @@ function renderPositionTiles(positions) {
     const isHedged = !!tc;
     const stopMark = stopMarkHtml(p, isHedged);
 
-    return `<div class="pos-tile" draggable="true" data-pos-id="${posId(p)}"${threadAttrs} data-focus-color="${focusColor}" style="${outlineStyle}" data-pos='${JSON.stringify({pair:p.pair,side:p.side,entry:p.entry,mark:p.mark,sizeUsd:p.sizeUsd,leverage:p.leverage,exchange:p.exchange})}'>
+    return `<div class="pos-tile" draggable="true" data-pos-id="${esc(posId(p))}"${threadAttrs} data-focus-color="${focusColor}" style="${outlineStyle}">
       <div class="ptile-head">
-        <span class="ptile-pair">${p.pair}</span>
+        <span class="ptile-pair">${esc(p.pair)}</span>
         ${threadDot}
-        <span style="font-size:9px;font-weight:600;color:${exchColor};border:0.5px solid ${exchColor};border-radius:3px;padding:1px 4px;flex-shrink:0">${exchLabel}</span>
+        <span style="font-size:9px;font-weight:600;color:${venueColor(p)};border:0.5px solid ${venueColor(p)};border-radius:3px;padding:1px 4px;flex-shrink:0">${venueLabel(p)}</span>
         ${sideBadge(p.side)}
-        <span style="font-size:10px;color:var(--text3)">${p.leverage}</span>
+        <span style="font-size:10px;color:var(--text3)">${esc(p.leverage)}</span>
         ${stopMark}
       </div>
       <div class="ptile-mark">${fmtPrice(p.mark)}</div>
@@ -215,11 +211,11 @@ function renderPositionTiles(positions) {
       </div>
       <div style="font-size:10px;color:var(--${distCls});margin-bottom:7px;display:flex;justify-content:space-between;align-items:center"><span>${dist < 999 ? fmt(dist,1)+'% to liquidation' : 'No liquidation price'}</span>${dist < 999 ? `<span style="color:${barColor};font-size:10px">Liq ${fmtPrice(p.liqPrice)}</span>` : ''}</div>
       <div class="ptile-rows">
-        <div class="ptile-row"><span class="ptile-label">Size</span><span>${p.size} <span style="color:var(--text3)">(${fmtUsd(p.sizeUsd)})</span></span></div>
+        <div class="ptile-row"><span class="ptile-label">Size</span><span>${esc(p.size)} <span style="color:var(--text3)">(${fmtUsd(p.sizeUsd)})</span></span></div>
         <div class="ptile-row"><span class="ptile-label">Entry</span><span>${fmtPrice(p.entry)}</span></div>
 
         <div class="ptile-row"><span class="ptile-label">uPnL</span><span>${fmtPnl(p.upnl)}</span></div>
-        ${!compact ? `<div class="ptile-row"><span class="ptile-label">Funding / ${fundingIntervalOf(p)}h</span><span>${p.funding8h}</span></div>` : ''}
+        ${!compact ? `<div class="ptile-row"><span class="ptile-label">Funding / ${fundingIntervalOf(p)}h</span><span>${fmtSignedPct(p.fundingRate, 4)}</span></div>` : ''}
         ${!compact ? `<div class="ptile-row"><span class="ptile-label">Daily funding</span><span>${fmtPnl(costDay)}</span></div>` : ''}
       </div>
     </div>`;
@@ -231,10 +227,9 @@ function renderPositionTiles(positions) {
 
 function orderTypeBadge(o) {
   const t = (o.type || '').toLowerCase();
-  if (t.includes('take profit')) return badge(o.type, 'b-long');
-  if (t.includes('stop'))        return badge(o.type, 'b-short');
-  if (t === 'limit')             return `<span style="color:var(--text2)">${o.type}</span>`;
-  return `<span style="color:var(--text2)">${o.type}</span>`;
+  if (t.includes('take profit')) return badge(esc(o.type), 'b-long');
+  if (t.includes('stop'))        return badge(esc(o.type), 'b-short');
+  return `<span style="color:var(--text2)">${esc(o.type)}</span>`;
 }
 
 function renderOrdersFor(orders) {
@@ -246,21 +241,19 @@ function renderOrdersFor(orders) {
       <th>Pair</th><th>Side</th><th>Type</th><th>Price</th>${hasStopPrices ? '<th>Trigger</th>' : ''}<th>Size</th><th>Reduce Only</th>
     </tr>
     ${orders.map(o => {
-      const exchColor = o.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-      const exchLabel = o.exchange === 'hyperliquid' ? 'HL' : 'BN';
       const t = (o.type || '').toLowerCase();
       // For pure stop/TP market orders the limit price is 0 — show trigger instead in Price col
-      const priceDisplay = (o.price && o.price > 0) ? fmtUsd(o.price) : '<span style="color:var(--text3)">Market</span>';
+      const priceDisplay = (o.price && o.price > 0) ? fmtPrice(o.price) : '<span style="color:var(--text3)">Market</span>';
       const triggerDisplay = (o.stopPrice && o.stopPrice > 0)
-        ? `<span style="color:${t.includes('stop') ? 'var(--danger)' : 'var(--success)'};font-weight:500">${fmtUsd(o.stopPrice)}</span>`
+        ? `<span style="color:${t.includes('stop') ? 'var(--danger)' : 'var(--success)'};font-weight:500">${fmtPrice(o.stopPrice)}</span>`
         : '<span style="color:var(--text3)">—</span>';
       return `<tr>
-      <td><span class="pair">${o.pair}</span><div class="pair-sub" style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span></div></td>
+      <td><span class="pair">${esc(o.pair)}</span><div class="pair-sub" style="display:flex;align-items:center;gap:4px"><span style="font-size:9px;font-weight:600;color:${venueColor(o)}">${venueLabel(o)}</span></div></td>
       <td>${sideBadge(o.side)}</td>
       <td>${orderTypeBadge(o)}</td>
       <td>${priceDisplay}</td>
       ${hasStopPrices ? `<td>${triggerDisplay}</td>` : ''}
-      <td>${o.size}</td>
+      <td>${esc(o.size)}</td>
       <td>${o.reduceOnly ? badge('Reduce', 'b-warn') : '<span style="color:var(--text3)">—</span>'}</td>
     </tr>`;
     }).join('')}

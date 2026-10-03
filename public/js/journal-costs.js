@@ -22,7 +22,7 @@ function makerSpark(trend) {
 
 function costsHeadline(c) {
   const s = c.summary, p = c.previous;
-  const usd = v => ovUsd(v);
+  const usd = v => fmtPlusUsd(v);
   const drag = s.feeDragPct == null ? jrStat('Fee drag', '—', 'gross is under twice the costs, so a share of it says little')
     : jrStat('Fee drag', `${fmt(s.feeDragPct, 1)}%`, `of ${usd(s.gross)} gross realised${costVs(s.feeDragPct, p?.feeDragPct, v => (v == null ? '—' : `${fmt(v, 1)}%`))}`);
   return `<div class="jr-hero">
@@ -55,7 +55,7 @@ function weeklyCostsHtml(weeks) {
   const h = v => Math.abs(v) / max * (mid - 6);
   const bars = weeks.map((w, i) => {
     const fee = h(w.fees), paid = h(w.paid), got = h(w.received);
-    const label = `Week of ${w.week}: fees ${ovUsd(-w.fees)}, funding paid ${ovUsd(w.paid)}, received ${ovUsd(w.received)}`;
+    const label = `Week of ${w.week}: fees ${fmtPlusUsd(-w.fees)}, funding paid ${fmtPlusUsd(w.paid)}, received ${fmtPlusUsd(w.received)}`;
     return `<g><title>${esc(label)}</title>
       ${got ? `<rect x="${x(i).toFixed(1)}" y="${(mid - got).toFixed(1)}" width="${bw.toFixed(1)}" height="${got.toFixed(1)}" rx="2" fill="var(--cal-gain-2)"></rect>` : ''}
       ${fee ? `<rect x="${x(i).toFixed(1)}" y="${mid}" width="${bw.toFixed(1)}" height="${fee.toFixed(1)}" rx="2" fill="var(--text3)"></rect>` : ''}
@@ -68,17 +68,17 @@ function weeklyCostsHtml(weeks) {
 
 function symbolCostBars(part, sign) {
   const rows = part.top.map(e => ({ label: jrSym(e.symbol), net: sign * Math.abs(e.value), trips: e.trips, thin: false }));
-  if (part.others.symbols) rows.push({ label: `others (${part.others.symbols})`, net: sign * Math.abs(part.others.value), trips: part.others.symbols, thin: false });
-  return rows.length ? jrDivergingBars(rows, { showCount: false }) : '<p class="gl-n">None in this window.</p>';
+  if (part.others.symbols) rows.push({ label: `others (${part.others.symbols})`, net: sign * Math.abs(part.others.value), trips: part.others.symbols, unit: 'symbols', thin: false });
+  return rows.length ? jrDivergingBars(rows) : '<p class="gl-n">None in this window.</p>';
 }
 
 function ledgerCheckText(check) {
   const ok = v => Math.abs(v) < 0.01;
-  if (check.id === 'start') return check.checked ? `start against the equity snapshot then: ${ok(check.diff) ? 'matches' : `off by ${ovUsd(check.diff)}`}`
+  if (check.id === 'start') return check.checked ? `start against the equity snapshot then: ${ok(check.diff) ? 'matches' : `off by ${fmtPlusUsd(check.diff)}`}`
     : 'start: no equity snapshot that far back yet';
-  if (check.id === 'realised') return `realised against your fills: ${ok(check.diff) ? 'matches' : `off by ${ovUsd(check.diff)}`}`;
-  if (check.id === 'fees') return `fees against your fills: ${ok(check.diff) ? 'match' : `off by ${ovUsd(check.diff)}`}`;
-  return !check.checked ? 'funding: not checked' : check.rows ? `funding: ${check.rows} payments, ${ovUsd(check.diff)}, match no position in the history` : 'funding: every payment matches a position';
+  if (check.id === 'realised') return `realised against your fills: ${ok(check.diff) ? 'matches' : `off by ${fmtPlusUsd(check.diff)}`}`;
+  if (check.id === 'fees') return `fees against your fills: ${ok(check.diff) ? 'match' : `off by ${fmtPlusUsd(check.diff)}`}`;
+  return !check.checked ? 'funding: not checked' : check.rows ? `funding: ${check.rows} payments, ${fmtPlusUsd(check.diff)}, match no position in the history` : 'funding: every payment matches a position';
 }
 
 function walletLedgerSection() {
@@ -90,13 +90,13 @@ function walletLedgerSection() {
   const note = perfData.session ? ` The ledger is the whole account; the ${esc(perfData.session)} filter does not apply to it.` : '';
   return jrSection('How the wallet got here', `<div class="jr-flow">
       ${row(`wallet on ${since}`, fmtUsd(l.start), '', 'muted')}
-      ${row('deposits and withdrawals', ovUsd(l.transfers), ovTone(l.transfers))}
-      ${row('realised profit and loss', ovUsd(l.realised), ovTone(l.realised))}
-      ${row('trading fees', ovUsd(l.fees), 'dn')}
-      ${row('funding', ovUsd(l.funding), ovTone(l.funding))}
-      ${l.other.map(o => row(esc(o.type.toLowerCase().replace(/_/g, ' ')), ovUsd(o.amount), ovTone(o.amount))).join('')}
+      ${row('deposits and withdrawals', fmtPlusUsd(l.transfers), ovTone(l.transfers))}
+      ${row('realised profit and loss', fmtPlusUsd(l.realised), ovTone(l.realised))}
+      ${row('trading fees', fmtPlusUsd(l.fees), 'dn')}
+      ${row('funding', fmtPlusUsd(l.funding), ovTone(l.funding))}
+      ${l.other.map(o => row(esc(o.type.toLowerCase().replace(/_/g, ' ')), fmtPlusUsd(o.amount), ovTone(o.amount))).join('')}
       ${row(`wallet at the last sync, ${synced}`, fmtUsd(l.wallet), '', 'rule')}
-      ${l.sinceSync == null ? '' : row('since then, not yet in the ledger', ovUsd(l.sinceSync), ovTone(l.sinceSync))}
+      ${l.sinceSync == null ? '' : row('since then, not yet in the ledger', fmtPlusUsd(l.sinceSync), ovTone(l.sinceSync))}
     </div>
     <p class="gl-n">Checks: ${l.checks.map(ledgerCheckText).join(' · ')}</p>`,
     `Dollar assets only, from the Binance ledger.${note}`);

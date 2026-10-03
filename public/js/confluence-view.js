@@ -187,11 +187,10 @@ function renderConfluence() {
     <input class="cf-sym" list="cf-sym-list" value="${esc(cfSymbol)}" spellcheck="false" aria-label="Symbol"
       onchange="setCfSymbol(this.value)" onkeydown="if(event.key==='Enter')setCfSymbol(this.value)">
     <datalist id="cf-sym-list">${cfSymbolOptions()}</datalist>
-    ${quick.map(s => `<button class="st-btn${s === cfSymbol ? ' on' : ''}" onclick="setCfSymbol('${s}')"
+    ${quick.map(s => `<button class="st-btn${s === cfSymbol ? ' on' : ''}" onclick="setCfSymbol(${jsArg(s)})"
       title="${held.includes(s) ? 'open position' : ''}">${jrSym(s)}${held.includes(s) ? ' •' : ''}</button>`).join('')}
     <span class="st-sep"></span>
     ${CF_ALL_TFS.map(tf => `<button class="st-btn${cfTfs.includes(tf) ? ' on' : ''}" onclick="toggleCfTf('${tf}')">${tf}</button>`).join('')}
-    <span class="st-sep"></span>
     <span class="st-sep"></span>
     ${sessionSelectHtml()}
     <button class="st-btn" onclick="fetchConfluence()">${cfLoading ? 'Loading…' : 'Refresh'}</button>

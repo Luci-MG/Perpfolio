@@ -2,40 +2,52 @@
 
 // ── Journal ───────────────────────────────────────────────────────────────────
 // What already happened, rebuilt from the cached fill and income history.
-let perfData = null, perfLoading = false, perfDays = 0, syncPoll = null;
+let perfData = null, perfLoading = false, syncPoll = null;
+let perfDays = (d => ([0, 7, 30, 90].includes(d) ? d : 0))(Number(loadPref('perfDays', 0)));
 let jrTab = 'overview', perfQuery = null;
 function setJrTab(t) {
   jrTab = t;
   if (t === 'trades' && !tripsData && !tripsLoading) fetchTrips();
   if (t === 'goals' && !goalsLoading) fetchGoals();
   if (t === 'factors' && !factorsData && !factorsLoading) fetchFactors();
+  if (t === 'overview' && !fundData && !fundLoading) fetchFunding();
   rerenderStress();
 }
 
 async function fetchPerformance() {
+  const current = latest('perf');
   perfLoading = true;
   if (posView === 'journal') rerenderStress();
   const query = [clockParam(), perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
   try {
     const res = await fetch(`/api/performance?${query}`);
     const data = await res.json();
+    if (!current()) return;
     if (!data.ok) throw new Error(data.error || 'performance failed');
     perfData = data;
     perfQuery = query;
     clearLoadError('perf');
     fetchGoals();
     reloadFactors();
-    if (!fundLoading) fetchFunding();
+    if (!fundLoading && (jrTab === 'overview' || fundDrawerOpen())) fetchFunding();
   } catch (err) {
+    if (!current()) return;
     noteLoadError('perf', err);
     if (query !== perfQuery) perfData = null;
   } finally {
-    perfLoading = false;
-    if (posView === 'journal') rerenderStress();
+    if (current()) {
+      perfLoading = false;
+      if (posView === 'journal') rerenderStress();
+    }
   }
 }
 
-function setPerfDays(d) { perfDays = d; fetchPerformance(); reloadTrips(); }
+function setPerfDays(d) {
+  perfDays = d;
+  savePref('perfDays', d);
+  fetchPerformance();
+  reloadTrips();
+}
 
 function syncProgressText(state) {
   if (!state.running) return `sync ${state.phase}`;
@@ -48,7 +60,7 @@ async function startSync(full = false) {
     body: JSON.stringify({ full }) })).json();
   if (!started.ok) {
     const el = document.getElementById('jr-sync-state');
-    if (el) el.textContent = started.disabled ? 'Binance is switched off — switch it on to sync' : `Failed: ${esc(started.error)}`;
+    if (el) el.textContent = started.disabled ? 'Binance is switched off — switch it on to sync' : `Failed: ${started.error}`;
     return;
   }
   if (syncPoll) clearInterval(syncPoll);
@@ -83,7 +95,7 @@ function jrDivergingBars(buckets, { valueKey = 'net', countKey = 'trips', showCo
     const v = b[valueKey];
     const w = Math.abs(v) / max * 50;            // half the track per side
     const pos = v >= 0;
-    return `<div class="jr-bar-row${b.thin ? ' thin' : ''}" title="${esc(b.label)}: ${fmtSignedUsd(v)} over ${b[countKey]} trips${b.thin ? ' — thin sample' : ''}">
+    return `<div class="jr-bar-row${b.thin ? ' thin' : ''}" title="${esc(b.label)}: ${fmtSignedUsd(v)} over ${b[countKey]} ${b.unit ?? 'trips'}${b.thin ? ' — thin sample' : ''}">
       <span class="jr-bar-lbl">${esc(b.label)}</span>
       <span class="jr-bar-track">
         <span class="jr-bar-mid" style="left:50%"></span>

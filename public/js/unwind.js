@@ -98,7 +98,7 @@ function renderLiqBody() {
   const looseNote = loose.length
     ? `<div class="liq-sync warn" style="background:var(--amber-bg);color:var(--amber)">
          <b>Far from the mark</b>
-         <code>${loose.map(c => `${c.asset} at ${fmt(c.multipleOfMark, 1)}× mark — moves ${fmtUsd(c.movePerOnePctEquity)} per 1% of equity, ${fmt(c.errPct, 2)}% from Binance`).join(' · ')}
+         <code>${loose.map(c => `${esc(c.asset)} at ${fmt(c.multipleOfMark, 1)}× mark — moves ${fmtUsd(c.movePerOnePctEquity)} per 1% of equity, ${fmt(c.errPct, 2)}% from Binance`).join(' · ')}
          — an extrapolation, directionally right but not precise to the dollar</code></div>`
     : '';
 
@@ -107,26 +107,26 @@ function renderLiqBody() {
          the exchange reports none while the book is this tightly hedged.</div>`)
     : `<div class="liq-sync ${worst < 0.01 ? 'ok' : 'bad'}">
          <b>${worst < 0.01 ? 'In sync with Binance' : 'Does not match Binance'}</b>
-         <code>${solid.map(c => `${c.asset} ${fmt(c.price, priceDecimals(c.price))} vs ${fmt(c.rep, priceDecimals(c.rep))}`).join(' · ')}
+         <code>${solid.map(c => `${esc(c.asset)} ${fmt(c.price, priceDecimals(c.price))} vs ${fmt(c.rep, priceDecimals(c.rep))}`).join(' · ')}
          — worst difference ${worst < 1e-6 ? worst.toExponential(1) : fmt(worst, 6)}%</code></div>`) + looseNote;
 
   const posRow = p => {
     const on = liqSel[p.key] != null;
     const dec = priceDecimals(P.marks[p.asset]);
     const det = state.positions.find(x => x.key === p.key);
-    return `<div class="liq-pos${on ? ' on' : ''}" onclick="toggleLiqClose('${p.key}')">
+    return `<div class="liq-pos${on ? ' on' : ''}" onclick="toggleLiqClose(${jsArg(p.key)})">
         <span class="liq-box">${on ? '✕' : ''}</span>
         <span class="liq-pos-main">
-          <span class="liq-pos-name">${p.asset}
+          <span class="liq-pos-name">${esc(p.asset)}
             ${sideBadge(p.q > 0 ? 'Long' : 'Short')}
-            <span style="font-weight:400;color:var(--text3)">${p.leverage}×</span></span>
+            <span style="font-weight:400;color:var(--text3)">${esc(p.leverage)}×</span></span>
           <span class="liq-pos-sub">${fmt(Math.abs(p.q), 4)} @ ${fmt(p.entry, dec)} ·
             ${fmtUsd(det?.notional || 0)} · uPnL ${fmtSignedUsd(det?.upnl || 0)}</span>
         </span>
       </div>
       ${on ? `<div class="sim-pct" style="margin:-2px 0 8px 22px">
         <input type="range" min="5" max="100" step="5" value="${liqSel[p.key]}"
-          oninput="setLiqPct('${p.key}', this.value)" onchange="setLiqPct('${p.key}', this.value, true)" onclick="event.stopPropagation()" />
+          oninput="setLiqPct(${jsArg(p.key)}, this.value)" onchange="setLiqPct(${jsArg(p.key)}, this.value, true)" onclick="event.stopPropagation()" />
         <span id="liq-pct-${p.key}">${fmt(liqSel[p.key], 0)}%</span></div>` : ''}`;
   };
 
@@ -152,14 +152,14 @@ function liqOutcomeHtml(P, opts) {
     const dec = priceDecimals(row.mark);
     const show = (px, pct) => px == null
       ? `<span style="color:var(--text3)">none</span>`
-      : `${fmt(px, dec)}<span class="liq-dist">${pct >= 0 ? '+' : ''}${fmt(pct, 1)}% away</span>`;
+      : `${fmt(px, dec)}<span class="liq-dist">${fmtSignedPct(pct, 1)} away</span>`;
 
     let chip = '';
     if (row.closed) chip = `<span class="liq-arrow" style="background:var(--surface2);color:var(--text3)">closed</span>`;
     else if (row.roomGained != null) {
       const better = row.roomGained >= 0;
       chip = `<span class="liq-arrow" style="background:${better ? 'var(--green-bg)' : 'var(--red-bg)'};color:${better ? 'var(--green)' : 'var(--red)'}">
-        ${better ? '+' : ''}${fmt(row.roomGained, 1)}pp</span>`;
+        ${fmtSignedPct(row.roomGained, 1).replace('%', 'pp')}</span>`;
     } else if (row.liqBefore == null && row.liqAfter != null) {
       chip = `<span class="liq-arrow" style="background:var(--red-bg);color:var(--red)">now liquidatable</span>`;
     } else if (row.liqBefore != null && row.liqAfter == null) {
@@ -167,7 +167,7 @@ function liqOutcomeHtml(P, opts) {
     }
 
     return `<tr>
-      <td>${row.asset}<span class="liq-dist">mark ${fmt(row.mark, dec)}</span></td>
+      <td>${esc(row.asset)}<span class="liq-dist">mark ${fmt(row.mark, dec)}</span></td>
       <td>${show(row.liqBefore, row.pctBefore)}</td>
       <td>${row.closed ? '<span style="color:var(--text3)">—</span>' : show(row.liqAfter, row.pctAfter)}</td>
       <td>${chip}</td>
@@ -184,7 +184,7 @@ function liqOutcomeHtml(P, opts) {
         ${rows}
       </table>
       ${danger.length ? `<div class="st-banner bad" style="margin-top:10px">
-        <b>Closer to liquidation.</b> <code>${danger.map(x => `${x.asset} ${fmt(x.pctBefore, 1)}% → ${fmt(x.pctAfter, 1)}%`).join('; ')}</code>
+        <b>Closer to liquidation.</b> <code>${danger.map(x => `${esc(x.asset)} ${fmtSignedPct(x.pctBefore, 1)} → ${fmtSignedPct(x.pctAfter, 1)}`).join('; ')}</code>
         — closing one leg of a hedge leaves the other exposed, so its liquidation price moves toward the mark.</div>` : ''}
       ${anyClose ? `
       <div class="sim-line" style="margin-top:10px"><span class="k">realises</span>
@@ -260,7 +260,7 @@ function setDrawerPool(asset, rerender) {
 function drawerPoolSwitch(pools, current, rerender) {
   if (pools.length < 2) return '';
   return `<div class="sim-presets" role="group" aria-label="Margin pool">${pools.map(asset =>
-    `<button class="st-btn${asset === current ? ' on' : ''}" onclick="setDrawerPool('${esc(asset)}', ${rerender})">${esc(asset)} pool</button>`).join('')}</div>`;
+    `<button class="st-btn${asset === current ? ' on' : ''}" onclick="setDrawerPool(${jsArg(asset)}, ${rerender})">${esc(asset)} pool</button>`).join('')}</div>`;
 }
 
 function bookAgeHtml(rerender) {
@@ -297,12 +297,11 @@ function closeCost(P, closes) {
 
 function closeCostHtml(c) {
   if (!c) return '';
-  const signedUsd = v => `${v < 0 ? '−' : ''}${fmtUsd(Math.abs(v))}`;
-  const slip = c.slip < 0 ? `slippage ${signedUsd(c.slip)}, better than mark` : `${fmtUsd(c.slip)} slippage`;
+  const slip = c.slip < 0 ? `slippage ${fmtSignedUsd(c.slip)}, better than mark` : `${fmtUsd(c.slip)} slippage`;
   const thin = c.exhausted.length ? `<div class="sim-line"><span class="k" style="color:var(--warning)">book too thin</span>
     <span style="color:var(--warning)">${c.exhausted.join(', ')}</span></div>` : '';
   return `<div class="sim-line"><span class="k">cost to close, at the live book</span>
-    <span class="${c.total > 0 ? 'dn' : 'up'}">${signedUsd(c.total)} <span class="k">(${slip} + ${fmtUsd(c.fee)} fees)</span></span></div>${thin}`;
+    <span class="${c.total > 0 ? 'dn' : 'up'}">${fmtSignedUsd(c.total)} <span class="k">(${slip} + ${fmtUsd(c.fee)} fees)</span></span></div>${thin}`;
 }
 
 function simGroups() {
@@ -394,7 +393,7 @@ function renderSimBody() {
     const sel = simSel[g.symbol] || { side: null, pct: 100 };
     const opt = (side, label, cls) =>
       `<button class="sim-opt${sel.side === side ? ' on ' + (cls || '') : ''}"
-        onclick="setSimSide('${g.symbol}','${side}')">${label}</button>`;
+        onclick="setSimSide(${jsArg(g.symbol)},'${side}')">${label}</button>`;
     const dec = priceDecimals(P.marks[g.legs[0].asset]);
     const legTxt = g.long && g.short
       ? `long ${fmt(Math.abs(g.long.q), 4)} / short ${fmt(Math.abs(g.short.q), 4)}`
@@ -410,7 +409,7 @@ function renderSimBody() {
       </div>
       ${sel.side ? `<div class="sim-pct">
         <input type="range" min="0" max="100" step="5" value="${sel.pct}"
-          oninput="setSimPct('${g.symbol}', this.value)" onchange="setSimPct('${g.symbol}', this.value, true)" />
+          oninput="setSimPct(${jsArg(g.symbol)}, this.value)" onchange="setSimPct(${jsArg(g.symbol)}, this.value, true)" />
         <span id="sim-pct-${g.symbol}">${fmt(sel.pct, 0)}%</span></div>` : ''}
     </div>`;
   };
@@ -440,7 +439,6 @@ function updateSimOutcome() {
   if (!out || !simPool() || !riskEngine) return;
 
   const { P, opts, before, after, realized, fees, notionalClosed, pool: leftPool } = simState();
-  const signed = v => `${v >= 0 ? '+' : '−'}${fmtUsd(Math.abs(v))}`;
   const closes = simCloses();
 
   const netBefore = riskEngine.netDeltas(P.pool, P.marks);
@@ -449,7 +447,7 @@ function updateSimOutcome() {
     const b = netBefore[a] || 0, n = netAfter[a] || 0;
     if (Math.abs(b) < 1 && Math.abs(n) < 1) return '';
     return `<div class="sim-line"><span class="k">${a}</span>
-      <span>${signed(b)} → <b class="${n >= 0 ? 'up' : 'dn'}">${signed(n)}</b></span></div>`;
+      <span>${fmtPlusUsd(b)} → <b class="${n >= 0 ? 'up' : 'dn'}">${fmtPlusUsd(n)}</b></span></div>`;
   }).join('');
 
   // then what: every mark moves together, applied to whatever is still open
@@ -458,7 +456,7 @@ function updateSimOutcome() {
   const openPnl = atMove.equity - after.equity;
   const thresholds = Object.keys(P.marks).map(a => {
     const k = riskEngine.killPricesBoth(leftPool, a, P.marks, opts).buffer;
-    const bits = [k.up != null ? `+${fmt(k.upPct, 0)}%` : null, k.down != null ? `${fmt(k.downPct, 0)}%` : null]
+    const bits = [k.up != null ? fmtSignedPct(k.upPct, 0) : null, k.down != null ? fmtSignedPct(k.downPct, 0) : null]
       .filter(Boolean).join(' / ');
     return bits ? `${a} ${bits}` : null;
   }).filter(Boolean).join(' · ');
@@ -476,7 +474,7 @@ function updateSimOutcome() {
     <div class="sim-line"><span class="k">liquidation buffer</span>
       <span>${fmtSignedUsd(before.buffer)} → <b>${fmtSignedUsd(after.buffer)}</b></span></div>
     <div class="sim-line"><span class="k">realises</span>
-      <span class="${realized >= 0 ? 'up' : 'dn'}"><b>${signed(realized)}</b></span></div>
+      <span class="${realized >= 0 ? 'up' : 'dn'}"><b>${fmtPlusUsd(realized)}</b></span></div>
     <div class="sim-line"><span class="k">notional closed</span><span>${fmtUsd(notionalClosed)}</span></div>
     ${closes.length ? closeCostHtml(closeCost(P, closes)) : ''}
     <div class="sim-line"><span class="k">equity</span>
@@ -490,10 +488,10 @@ function updateSimOutcome() {
     <div class="sim-sec" style="margin-top:16px">Then the market moves</div>
     <div class="sim-pct">
       <input type="range" min="-50" max="50" step="0.5" value="${simMove}" oninput="setSimMove(this.value)" />
-      <span>${simMove >= 0 ? '+' : ''}${fmt(simMove, 1)}%</span>
+      <span>${fmtSignedPct(simMove, 1)}</span>
     </div>
     <div class="sim-line"><span class="k">uPnL on what's left</span>
-      <span class="${openPnl >= 0 ? 'up' : 'dn'}"><b class="sim-big">${signed(openPnl)}</b></span></div>
+      <span class="${openPnl >= 0 ? 'up' : 'dn'}"><b class="sim-big">${fmtPlusUsd(openPnl)}</b></span></div>
     <div class="sim-line"><span class="k">equity there</span><span>${fmtUsd(atMove.equity)}</span></div>
     <div class="sim-line"><span class="k">buffer there</span>
       <span class="${atMove.buffer < 0 ? 'dn' : ''}">${fmtSignedUsd(atMove.buffer)} ${statusChip}</span></div>
@@ -603,7 +601,6 @@ function renderUnwindPlan(p) {
   const c = p.ceiling;
   const gainKey = p.objective === 'buffer' ? 'bufferGain' : 'freeGain';
   const gainLbl = p.objective === 'buffer' ? 'buffer' : 'free';
-  const signed = v => `${v >= 0 ? '+' : '−'}${fmtUsd(Math.abs(v))}`;
 
   const ceilingStrip = `<div class="uw-ceiling">
     <span><span class="k">equity</span><b>${fmtUsd(c.equity)}</b></span>
@@ -633,9 +630,9 @@ function renderUnwindPlan(p) {
       <td>${i + 1}</td>
       <td><b>${s.type === 'matched-hedge' ? 'close matched hedge' : 'close leg'}</b>
         <div class="uw-legs">${s.legs.map(l => `${l.asset} ${l.positionSide.toLowerCase()} ${fmt(l.qty, 4)}${l.qty < l.ofQty ? ` of ${fmt(l.ofQty, 4)}` : ''}`).join(' + ')}</div></td>
-      <td class="num" style="color:var(--success)">${signed(s[gainKey])}</td>
-      <td class="num"><span class="uw-badge" style="background:${col}22;color:${col}">${signed(s.deltaShift)}</span></td>
-      <td class="num ${s.realized >= 0 ? 'up' : 'dn'}">${signed(s.realized)}</td>
+      <td class="num" style="color:var(--success)">${fmtPlusUsd(s[gainKey])}</td>
+      <td class="num"><span class="uw-badge" style="background:${col}22;color:${col}">${fmtPlusUsd(s.deltaShift)}</span></td>
+      <td class="num ${s.realized >= 0 ? 'up' : 'dn'}">${fmtPlusUsd(s.realized)}</td>
       <td class="num" style="color:var(--text3)">${fmtUsd(s.notionalClosed)}</td>
       <td class="num">${fmtUsd(p.objective === 'buffer' ? s.cumulativeBuffer : s.cumulativeFree)}</td>
     </tr>`;
@@ -656,7 +653,7 @@ function renderUnwindPlan(p) {
     <div class="hedge-naked">
       <span><span class="k">${gainLbl}</span> ${fmtSignedUsd(p.before[p.objective === 'buffer' ? 'buffer' : 'free'])} → <b>${fmtSignedUsd(p.after[p.objective === 'buffer' ? 'buffer' : 'free'])}</b></span>
       <span><span class="k">gross exposure</span> ${fmtUsd(p.before.gross)} → ${fmtUsd(p.after.gross)}</span>
-      <span><span class="k">realised in total</span> <span class="${p.realized >= 0 ? 'up' : 'dn'}">${signed(p.realized)}</span></span>
+      <span><span class="k">realised in total</span> <span class="${p.realized >= 0 ? 'up' : 'dn'}">${fmtPlusUsd(p.realized)}</span></span>
       <span><span class="k">fees</span> ${fmtUsd(p.fees)}</span>
       <span><span class="k">equity</span> ${fmtUsd(p.before.equity)} → ${fmtUsd(p.after.equity)}</span>
     </div>
@@ -664,7 +661,7 @@ function renderUnwindPlan(p) {
       and the margin balance is identical. <b>Δ exposure</b> is the change in gross directional exposure:
       negative means the close reduced it, positive means a leg was left naked.
       Liquidation after the plan: ${after || '—'}.
-      ${p.remaining.length ? `Left standing: ${p.remaining.map(r => `${r.asset} ${r.positionSide.toLowerCase()} ${fmtUsd(r.notional)}`).join(', ')}.` : 'Nothing left standing.'}
+      ${p.remaining.length ? `Left standing: ${p.remaining.map(r => `${esc(r.asset)} ${r.positionSide.toLowerCase()} ${fmtUsd(r.notional)}`).join(', ')}.` : 'Nothing left standing.'}
       Ordering assumes each close fills at the current mark; slippage is not modelled.</div>`;
 }
 
@@ -682,6 +679,6 @@ function renderUnwind() {
     return `${renderUnwindControls()}${stale}<p style="font-size:12px;color:var(--text3);padding:14px 0">No open Binance cross positions.</p>`;
   }
   return renderUnwindControls() + stale + unwindData.plans.map(p => `<div style="margin-bottom:22px">
-    ${unwindData.plans.length > 1 ? `<p class="section-label" style="margin:0 0 8px">${p.marginAsset} pool</p>` : ''}
+    ${unwindData.plans.length > 1 ? `<p class="section-label" style="margin:0 0 8px">${esc(p.marginAsset)} pool</p>` : ''}
     ${renderUnwindPlan(p)}</div>`).join('');
 }

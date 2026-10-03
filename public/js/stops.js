@@ -81,7 +81,7 @@ function renderVolStops() {
 
   // Apply the same HL/BN exchange filter used elsewhere.
   const all = volStopData.positions || [];
-  const positions = all.filter(p => exchFilter.has(p.exchange));
+  const positions = all.filter(p => shownVenues().includes(p.exchange));
 
   const combined = renderVolCombined(volStopData.combined, positions);
   const controls = volControlsHtml() + loadErrorHtml('vol', 'fetchVolStops()', true);
@@ -104,8 +104,8 @@ function renderVolCombined(c, positions) {
   // venue and would disagree with the tiles below whenever a venue is filtered out.
   const shown = positions || [];
   const dollarRisk = shown.reduce((s, p) => s + (p.dollarRisk || 0), 0);
-  const equity = (exchFilter.has('hyperliquid') ? (c.hlEquity || 0) : 0)
-               + (exchFilter.has('binance')     ? (c.bnEquity || 0) : 0);
+  const equity = (shownVenues().includes('hyperliquid') ? (c.hlEquity || 0) : 0)
+               + (shownVenues().includes('binance')     ? (c.bnEquity || 0) : 0);
   const rc = { low: 0, medium: 0, high: 0, extreme: 0 };
   shown.forEach(p => { if (rc[p.regimeLabel] != null) rc[p.regimeLabel]++; });
   const distSegments = ['low','medium','high','extreme'].map(r => {
@@ -117,7 +117,7 @@ function renderVolCombined(c, positions) {
   }).join('');
 
   const warnings = (c.hedgeWarnings || []).map(w =>
-    `<div class="vol-warn">⚠ ${w.asset}: ${w.warning}</div>`
+    `<div class="vol-warn">⚠ ${esc(w.asset)}: ${esc(w.warning)}</div>`
   ).join('');
 
   return `<div class="vol-combined" style="border-left:3px solid ${m.color}">
@@ -176,14 +176,14 @@ function renderHedgeHealth(c) {
   const rows = pairs.map(h => {
     const st = HEDGE_STATUS[h.status] || HEDGE_STATUS.unknown;
     if (h.status === 'unknown') {
-      return `<tr><td colspan="5" style="color:var(--text3)">${h.longAsset} / ${h.shortAsset} — ${h.warning}</td></tr>`;
+      return `<tr><td colspan="5" style="color:var(--text3)">${esc(h.longAsset)} / ${esc(h.shortAsset)} — ${esc(h.warning)}</td></tr>`;
     }
     const decayed = h.corrRecent < h.corrBaseline - 0.05;
     return `<tr>
-      <td><b>${h.longAsset}</b> long / <b>${h.shortAsset}</b> short</td>
+      <td><b>${esc(h.longAsset)}</b> long / <b>${esc(h.shortAsset)}</b> short</td>
       <td class="num" title="Correlation of hourly returns over the last 72h">
-        ${fmt(h.corrRecent, 2)}<span style="color:var(--text3)"> ${decayed ? '↓' : ''}${fmt(h.corrBaseline, 2)}</span></td>
-      <td class="num" title="Beta of the short leg against the long leg">β ${fmt(h.beta, 2)}</td>
+        ${fmtSigned(h.corrRecent)}<span style="color:var(--text3)"> ${decayed ? '↓' : ''}${fmtSigned(h.corrBaseline)}</span></td>
+      <td class="num" title="Beta of the short leg against the long leg">β ${fmtSigned(h.beta)}</td>
       <td class="num" title="Exposure this pair actually offsets, in BTC-equivalent terms">${fmtUsd(h.matchedBtcEquiv)}</td>
       <td class="num"><span class="hedge-status" style="background:${st.color}22;color:${st.color}">${st.label}</span></td>
     </tr>`;
@@ -215,13 +215,11 @@ function renderHedgeHealth(c) {
 }
 
 function renderVolTile(p) {
-  const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-  const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
 
   if (p.error) {
     return `<div class="vol-tile">
-      <div class="vt-head"><span class="pair">${p.pair}</span>
-        <span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span></div>
+      <div class="vt-head"><span class="pair">${esc(p.pair)}</span>
+        <span style="font-size:9px;font-weight:600;color:${venueColor(p)}">${venueLabel(p)}</span></div>
       <div style="font-size:11px;color:var(--danger);padding:8px 0">Failed: ${esc(p.error)}</div>
     </div>`;
   }
@@ -241,8 +239,8 @@ function renderVolTile(p) {
   return `<div class="vol-tile" style="border-top:2px solid ${m.color}">
     <div class="vt-head">
       <span style="display:flex;align-items:center;gap:6px">
-        <span class="pair">${p.pair}</span>
-        <span style="font-size:9px;font-weight:600;color:${exchColor}">${exchLabel}</span>
+        <span class="pair">${esc(p.pair)}</span>
+        <span style="font-size:9px;font-weight:600;color:${venueColor(p)}">${venueLabel(p)}</span>
         ${sideBadge(p.side)}
         ${estimated}
       </span>

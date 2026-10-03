@@ -23,6 +23,7 @@ const VIEWS = ['tiles', 'list', 'orders', 'stops', 'stress', 'unwind', 'journal'
 const savedView = loadPref('posView', 'tiles');
 fetchData().then(() => { if (VIEWS.includes(savedView) && savedView !== posView) setView(savedView); });
 autoRefresh = setInterval(() => { if (!document.hidden) fetchData(); }, 15000);
+document.addEventListener('focusout', () => setTimeout(resumeContent, 0));
 document.addEventListener('visibilitychange', () => { if (!document.hidden) fetchData(); });
 window.addEventListener('resize', () => { if (posView === 'tiles') requestAnimationFrame(drawThreadLines); });
 

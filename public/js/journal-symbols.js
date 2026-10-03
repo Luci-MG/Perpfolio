@@ -19,14 +19,14 @@ function sortSymbols(key) {
 function toggleAllSymbols() { symbolsShowAll = !symbolsShowAll; rerenderStress(); }
 
 function symbolCell(r, key) {
-  if (key === 'symbol') return `<button class="gl-link" onclick="openTradesFor({ symbol: '${esc(r.symbol)}', exact: true })" title="Trades on ${esc(r.symbol)}">${esc(jrSym(r.symbol))}</button>`;
-  if (key === 'net') return `<span class="${ovTone(r.net)}">${ovUsd(r.net)}</span>`;
+  if (key === 'symbol') return `<button class="gl-link" onclick="openTradesFor({ symbol: ${jsArg(r.symbol)}, exact: true })" title="Trades on ${esc(r.symbol)}">${esc(jrSym(r.symbol))}</button>`;
+  if (key === 'net') return `<span class="${ovTone(r.net)}">${fmtPlusUsd(r.net)}</span>`;
   if (key === 'units') return `${r.units}${r.legs > r.units ? ` <span class="gl-n">(${r.legs} legs)</span>` : ''}`;
   if (key === 'shrunk') return r.needs ? `<span class="gl-n">after ${r.needs} more</span>`
-    : `<span class="${ovTone(r.shrunk)}">${ovUsd(r.shrunk)}</span> <span class="gl-n" title="90% interval">${ovUsd(r.ci.lo)} to ${ovUsd(r.ci.hi)}</span>`;
+    : `<span class="${ovTone(r.shrunk)}">${fmtPlusUsd(r.shrunk)}</span> <span class="gl-n" title="90% interval">${fmtPlusUsd(r.ci.lo)} to ${fmtPlusUsd(r.ci.hi)}</span>`;
   if (key === 'winRate') return r.winRate == null ? '—' : `${fmt(r.winRate * 100, 0)}%`;
   if (key === 'costBp') return r.costBp == null ? '—' : `${fmt(r.costBp, 1)} bp`;
-  return r.fundingPerHour == null ? '<span class="gl-n">—</span>' : `<span class="${ovTone(r.fundingPerHour)}">${ovUsd(r.fundingPerHour)}</span>`;
+  return r.fundingPerHour == null ? '<span class="gl-n">—</span>' : `<span class="${ovTone(r.fundingPerHour)}">${fmtPlusUsd(r.fundingPerHour)}</span>`;
 }
 
 function sortedSymbolRows(rows) {
@@ -44,7 +44,7 @@ function symbolsTableHtml(s) {
   const head = SYMBOL_COLUMNS.map(c => `<th><button onclick="sortSymbols('${c.key}')">${c.label}${symbolsSort.key === c.key ? (symbolsSort.dir > 0 ? ' ▲' : ' ▼') : ''}</button></th>`).join('');
   const rows = sortedSymbolRows(shown).map(r => `<tr class="${r.needs ? 'jr-thin' : ''}">${SYMBOL_COLUMNS.map(c => `<td>${symbolCell(r, c.key)}</td>`).join('')}</tr>`).join('');
   const rest = !symbolsShowAll && s.rest.symbols ? `<tr class="jr-thin"><td colspan="2">rest: ${s.rest.symbols} symbols, ${s.rest.units} units</td>
-    <td class="${ovTone(s.rest.net)}">${ovUsd(s.rest.net)}</td><td colspan="4"></td></tr>` : '';
+    <td class="${ovTone(s.rest.net)}">${fmtPlusUsd(s.rest.net)}</td><td colspan="4"></td></tr>` : '';
   const toggle = s.rows.length > s.shown.length ? `<button class="gl-link" onclick="toggleAllSymbols()">${symbolsShowAll ? 'Best and worst only' : `Show all ${s.rows.length}`} ›</button>` : '';
   return `<table class="jr-tbl sym-tbl"><tr>${head}</tr>${rows}${rest}</table>${toggle}`;
 }
@@ -62,7 +62,7 @@ function renderSymbolsTab() {
   if (!s.rows.length) return `${note}<p class="gl-n">No trips in this window.</p>`;
   return `${note}${concentrationLine(s.concentration)}
     ${jrSection('By symbol', symbolsTableHtml(s),
-      `Sorted by total net, a fact at any size. The adjusted average is per unit, pulled toward the book's ${ovUsd(s.overall)} in
+      `Sorted by total net, a fact at any size. The adjusted average is per unit, pulled toward the book's ${fmtPlusUsd(s.overall)} in
        proportion to how few trades a symbol has, and appears from ${s.min} units; ${s.chance.shown} symbols have that many.
        Fees are in basis points of notional traded. Select a symbol for its trades.`)}`;
 }

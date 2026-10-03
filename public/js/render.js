@@ -5,7 +5,6 @@ function renderMarginHealth(data) {
 
   // ── Binance: standard margin utilisation % ────────────────────────────
   const bnPct = Math.min(parseFloat(bn.marginPct) || 0, 100);
-  const bnCol = bnPct > 80 ? '#e24b4a' : bnPct > 50 ? '#ba7517' : '#ef9f27';
   const bnColVar = bnPct > 80 ? 'var(--danger)' : bnPct > 50 ? 'var(--warning)' : 'var(--bn)';
 
   // ── Hyperliquid: margin utilisation (marginUsed / equity) ────────────
@@ -13,7 +12,6 @@ function renderMarginHealth(data) {
   const hlMarginUsed = parseFloat(hl.marginUsed) || 0;
   const hlFree       = parseFloat(hl.freeMargin) || 0;
   const hlPct        = hlEquity > 0 ? Math.min((hlMarginUsed / hlEquity) * 100, 100) : 0;
-  const hlCol        = hlPct > 80 ? '#e24b4a' : hlPct > 50 ? '#ba7517' : '#7f77dd';
   const hlColVar     = hlPct > 80 ? 'var(--danger)' : hlPct > 50 ? 'var(--warning)' : 'var(--hl)';
 
   // ── Overall status ────────────────────────────────────────────────────
@@ -61,9 +59,9 @@ function renderMarginHealth(data) {
       <!-- track -->
       <path d="${trackPath}" fill="none" stroke="var(--border2)" stroke-width="${stroke}" stroke-linecap="butt"/>
       <!-- zone colours (green→amber→red) rendered as layered arcs behind fill -->
-      <path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${(cx + r * Math.cos(Math.PI * 0.5)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.5)).toFixed(2)}" fill="none" stroke="#1d9e75" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.13"/>
-      <path d="M ${(cx + r * Math.cos(Math.PI * 0.5)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.5)).toFixed(2)} A ${r} ${r} 0 0 1 ${(cx + r * Math.cos(Math.PI * 0.2)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.2)).toFixed(2)}" fill="none" stroke="#ba7517" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.18"/>
-      <path d="M ${(cx + r * Math.cos(Math.PI * 0.2)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.2)).toFixed(2)} A ${r} ${r} 0 0 1 ${cx + r} ${cy}" fill="none" stroke="#e24b4a" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.22"/>
+      <path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${(cx + r * Math.cos(Math.PI * 0.5)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.5)).toFixed(2)}" fill="none" stroke="var(--success)" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.13"/>
+      <path d="M ${(cx + r * Math.cos(Math.PI * 0.5)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.5)).toFixed(2)} A ${r} ${r} 0 0 1 ${(cx + r * Math.cos(Math.PI * 0.2)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.2)).toFixed(2)}" fill="none" stroke="var(--warning)" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.18"/>
+      <path d="M ${(cx + r * Math.cos(Math.PI * 0.2)).toFixed(2)} ${(cy - r * Math.sin(Math.PI * 0.2)).toFixed(2)} A ${r} ${r} 0 0 1 ${cx + r} ${cy}" fill="none" stroke="var(--danger)" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.22"/>
       <!-- fill arc -->
       ${fillPath ? `<path d="${fillPath}" fill="none" stroke="${fillColor}" stroke-width="${stroke}" stroke-linecap="butt" opacity="0.9"/>` : ''}
       <!-- tick marks -->
@@ -78,8 +76,9 @@ function renderMarginHealth(data) {
   }
 
   const gaugeW = 124;
-  const hlSvg = arcGaugeSVG('mg-hl', hlPct, hlCol, 'HL', 'margin used', fmt(hlPct,1)+'%', gaugeW);
-  const bnSvg = arcGaugeSVG('mg-bn', bnPct, bnCol, 'BN', 'margin used', fmt(bnPct,1)+'%', gaugeW);
+  const offGauge = '<span class="b-val nu" style="padding:18px 0">off</span>';
+  const hlSvg = venueOn('hyperliquid') ? arcGaugeSVG('mg-hl', hlPct, hlColVar, 'HL', 'margin used', fmt(hlPct,1)+'%', gaugeW) : offGauge;
+  const bnSvg = venueOn('binance') ? arcGaugeSVG('mg-bn', bnPct, bnColVar, 'BN', 'margin used', fmt(bnPct,1)+'%', gaugeW) : offGauge;
 
   return `<div style="margin-top:8px">
     <div class="card" style="margin-bottom:0;background:var(--surface2);border:none;padding:10px 12px">
@@ -110,24 +109,24 @@ function renderMarginHealth(data) {
       <div style="border-top:0.5px solid var(--border);padding-top:6px;display:flex;flex-direction:column;gap:3px">
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
           <span>HL equity</span>
-          <span class="sb-num" style="color:var(--text2);font-weight:600">${fmtUsd(hlEquity)}</span>
+          ${offOr('hyperliquid', `<span class="sb-num" style="color:var(--text2);font-weight:600">${fmtUsd(hlEquity)}</span>`)}
         </div>
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
           <span>HL margin used</span>
-          <span class="sb-num" style="color:${hlColVar};font-weight:600">${fmtUsd(hlMarginUsed)}</span>
+          ${offOr('hyperliquid', `<span class="sb-num" style="color:${hlColVar};font-weight:600">${fmtUsd(hlMarginUsed)}</span>`)}
         </div>
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
           <span>HL free</span>
-          <span class="sb-num" style="color:var(--success);font-weight:600">${fmtUsd(hlFree)}</span>
+          ${offOr('hyperliquid', `<span class="sb-num" style="color:var(--success);font-weight:600">${fmtUsd(hlFree)}</span>`)}
         </div>
         <div style="height:0.5px;background:var(--border);margin:2px 0"></div>
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
           <span>BN used</span>
-          <span class="sb-num" style="color:${bnColVar};font-weight:600">${fmtUsd(bnUsed)}</span>
+          ${offOr('binance', `<span class="sb-num" style="color:${bnColVar};font-weight:600">${fmtUsd(bnUsed)}</span>`)}
         </div>
         <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
           <span>BN free</span>
-          <span class="sb-num" style="color:var(--success);font-weight:600">${fmtUsd(bnFree)}</span>
+          ${offOr('binance', `<span class="sb-num" style="color:var(--success);font-weight:600">${fmtUsd(bnFree)}</span>`)}
         </div>
       </div>
     </div>
@@ -173,7 +172,6 @@ function renderCalcTiles() {
   ];
 
   const tileHtml = tiles.map(t => {
-    if (!t) return `<div class="calc-tile empty"><div class="calc-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div></div>`;
     const onclick = t.action || `openCalcFromSidebar('${t.tab}')`;
     return `<div class="calc-tile" onclick="${onclick}" title="${t.label}">
       <div class="calc-tile-icon">${t.icon}</div>
@@ -214,8 +212,7 @@ function render(data) {
     <button class="view-tab${exchFilter.has('binance')?' active':''}" data-exch="binance" onclick="toggleExch('binance')" style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--bn);flex-shrink:0;display:inline-block"></span>BN</button>
   </div>`;
 
-  const shownVenues = venuesOn().filter(v => exchFilter.has(v));
-  const shown = shownVenues.length ? shownVenues : venuesOn();
+  const shown = shownVenues();
   const showHL = shown.includes('hyperliquid');
   const showBN = shown.includes('binance');
 
@@ -351,7 +348,10 @@ function render(data) {
   if (keepPanel) {
     if (posView === 'stress') updateStressAge();
     if (posView === 'confluence') updateConfluenceAge();
+    const account = posView === 'journal' && document.getElementById('ov-account');
+    if (account) account.innerHTML = ovAccountLine();
   }
+  else if (contentInUse()) contentStale = true;
   else document.getElementById('content').innerHTML = mainContent;
   document.getElementById('content').style.display = 'block';
   document.getElementById('loader').style.display = 'none';
@@ -378,7 +378,27 @@ function render(data) {
 
 // One poll at a time, and none while the tab is hidden: a background tab was spending the
 // same exchange quota as a visible one, and a slow response could land after a newer one.
+// A rebuild of #content waits while a text field in it has focus or a tile is being dragged,
+// and runs once that ends: replacing the markup would drop the typing or the drag.
+let tileDragging = false;
+let contentStale = false;
+
+function contentInUse() {
+  if (tileDragging) return true;
+  const el = document.activeElement;
+  const typing = el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && ['text', 'search'].includes(el.type)));
+  return !!typing && !!document.getElementById('content')?.contains(el);
+}
+
+function resumeContent() {
+  if (!contentStale || contentInUse()) return;
+  contentStale = false;
+  riskForceRender = true;
+  if (lastData) render(lastData);
+}
+
 let pollInFlight = false;
+let pollAgain = false;
 let lastGoodAt = null;
 
 // The server's own view of whether the figures can be trusted — ban state, request weight,
@@ -414,7 +434,7 @@ const venueMargin = v => (v.error ? '—' : `${v.marginPct}%`);
 const venueFree = v => (v.error ? '—' : fmtUsd(v.freeMargin));
 
 async function fetchData() {
-  if (pollInFlight) return;
+  if (pollInFlight) { pollAgain = true; return; }
   pollInFlight = true;
   const dot = document.getElementById('statusDot');
   const txt = document.getElementById('statusText');
@@ -446,6 +466,7 @@ async function fetchData() {
   } finally {
     ico.style.animation = 'none';
     pollInFlight = false;
+    if (pollAgain) { pollAgain = false; fetchData(); }
   }
 }
 

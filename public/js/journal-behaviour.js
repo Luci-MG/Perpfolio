@@ -28,9 +28,9 @@ function habitCostCell(h) {
   }
   if (h.kind === 'count') return `<span class="gl-n">counted only</span>${h.pending ? `<div class="gl-n">context pending for ${h.pending} losing trips</div>` : ''}`;
   if (h.verdict === 'thin') return `<span class="gl-n">too few to tell${h.comparisonTrips != null ? ` (${h.trips} against ${h.comparisonTrips})` : ` (${h.trips})`}</span>`;
-  const range = h.ci ? `<div class="gl-n" title="90% interval">${ovUsd(h.ci.lo)} to ${ovUsd(h.ci.hi)}</div>` : '';
+  const range = h.ci ? `<div class="gl-n" title="90% interval">${fmtPlusUsd(h.ci.lo)} to ${fmtPlusUsd(h.ci.hi)}</div>` : '';
   const label = h.verdict === 'cant-tell' ? '<div class="gl-n">can\'t tell yet</div>' : '';
-  return `<b class="${h.verdict === 'costs' ? 'dn' : h.verdict === 'helps' ? 'up' : ''}">${ovUsd(h.cost)}</b>${range}${label}`;
+  return `<b class="${h.verdict === 'costs' ? 'dn' : h.verdict === 'helps' ? 'up' : ''}">${fmtPlusUsd(h.cost)}</b>${range}${label}`;
 }
 
 function openHabitGoal(index) {

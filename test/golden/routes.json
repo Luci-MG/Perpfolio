@@ -91,7 +91,6 @@
      "asset": "BTC",
      "entry": 98000,
      "exchange": "binance",
-     "funding8h": "+0.0100%",
      "fundingIntervalHours": 8,
      "fundingPerDayPct": 0.03,
      "fundingRate": 0.01,
@@ -134,7 +133,6 @@
      "asset": "BTC",
      "entry": 103000,
      "exchange": "binance",
-     "funding8h": "+0.0100%",
      "fundingIntervalHours": 8,
      "fundingPerDayPct": 0.03,
      "fundingRate": 0.01,
@@ -168,7 +166,6 @@
      "asset": "ETH",
      "entry": 4100,
      "exchange": "binance",
-     "funding8h": "+0.0200%",
      "fundingIntervalHours": 4,
      "fundingPerDayPct": 0.12,
      "fundingRate": 0.02,
@@ -202,7 +199,6 @@
      "asset": "ENA",
      "entry": 0.27,
      "exchange": "binance",
-     "funding8h": "+0.0150%",
      "fundingIntervalHours": 4,
      "fundingPerDayPct": 0.09,
      "fundingRate": 0.015,
@@ -248,7 +244,6 @@
      "coin": "SOL",
      "entry": 210,
      "exchange": "hyperliquid",
-     "funding8h": "+0.0010%",
      "fundingIntervalHours": 1,
      "fundingRate": 0.001,
      "hasStop": false,
@@ -326,7 +321,7 @@
      "shortAsset": "ETH",
      "shortNet": 12000,
      "status": "broken",
-     "warning": "BTC long / ETH short: correlation -0.01 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+     "warning": "BTC long / ETH short: correlation −0.01 over the last 72h is below 0.5 — these legs are no longer hedging each other"
     },
     {
      "beta": -0.05,
@@ -342,7 +337,7 @@
      "shortAsset": "ENA",
      "shortNet": 2000,
      "status": "broken",
-     "warning": "BTC long / ENA short: correlation -0.20 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+     "warning": "BTC long / ENA short: correlation −0.20 over the last 72h is below 0.5 — these legs are no longer hedging each other"
     }
    ],
    "hedgeWarnings": [
@@ -378,7 +373,7 @@
      "shortAsset": "ETH",
      "shortNet": 12000,
      "status": "broken",
-     "warning": "BTC long / ETH short: correlation -0.01 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+     "warning": "BTC long / ETH short: correlation −0.01 over the last 72h is below 0.5 — these legs are no longer hedging each other"
     },
     {
      "asset": "BTC/ENA",
@@ -395,7 +390,7 @@
      "shortAsset": "ENA",
      "shortNet": 2000,
      "status": "broken",
-     "warning": "BTC long / ENA short: correlation -0.20 over the last 72h is below 0.5 — these legs are no longer hedging each other"
+     "warning": "BTC long / ENA short: correlation −0.20 over the last 72h is below 0.5 — these legs are no longer hedging each other"
     }
    ],
    "hlEquity": 3000,
