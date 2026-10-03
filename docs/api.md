@@ -27,12 +27,16 @@
 | `GET /api/volstops?risk=&k=` | volatility-adjusted stops, hedge health, regime | *Dynamic Stop Width* |
 | `GET /api/riskbook` | cross pools, calibration, stress inputs, depth, ADL | *Cross-Pool Stress Simulator* |
 | `GET /api/deleverage?objective=&target=&maxLoss=&fee=&breakHedges=` | unwind plan | *Unwind planner* |
-| `GET /api/performance?days=N` | journal: round trips, breakdowns, equity curve | *Account history* |
+| `GET /api/performance?days=N&tz=M` | journal: round trips, breakdowns, equity curve, periods in the reader's timezone, wallet and account curves, habit costs | *Account history* |
+| `GET /api/trips?days=N` | every closed round trip with size, costs, funding, price path and market at entry, plus context coverage | *Trades* in `journal.md` |
 | `GET /api/hedgeledger` | locked hedge PnL, carry, margin inflation | *Hedge ledger* |
 | `GET /api/history/sync?start=true&full=true` | starts a history sync, returns progress | *history-store* |
 | `GET /api/confluence?symbol=&tfs=` | signals, regime, scores and track records per timeframe | *Confluence* |
 | `GET /api/symbols` | trading USDM perpetuals, for the confluence picker | *Confluence* |
 | `GET /api/health` | ban state, request weight, order-stream age and drift, snapshot ages, sync — one `ok`/`warn`/`bad` verdict with reasons; no exchange calls | *Operations* |
+| `GET /api/venues` | per venue: enabled, configured, snapshot age | *Venue switch* |
+| `POST /api/venues` | `{ venue, enabled }` — switch a venue on or off; JSON only | *Venue switch* |
+| `GET /calc-engine.js` | the calculators' arithmetic, served to the browser | *Calculators* in `frontend.md` |
 | `GET /risk-engine.js` | the engine module, served to the browser | *Cross-Pool Stress Simulator* |
 
 Everything except `/api/dashboard` and `/api/volstops` is Binance-only. `/api/confluence` uses public
@@ -47,6 +51,7 @@ Returns unified JSON:
 {
   "ok": true,
   "lastUpdated": "ISO timestamp",
+  "venues": { "binance": true, "hyperliquid": false },
   "summary": {
     "totalEquity", "totalUpnl",
     "positionCount", "orderCount",
@@ -60,11 +65,24 @@ Returns unified JSON:
   },
   "binance": {
     "equity", "walletBalance", "marginPct", "marginUsed", "freeMargin", "maintMargin",
+    "assets": [{ "asset", "collateral", "wallet", "marginBalance", "unrealizedProfit",
+                 "availableBalance", "usdPrice", "usdValue" }],
     "positions": [...],
     "orders": [...]
   }
 }
 ```
+
+`venues` says which exchanges are switched on; an exchange that is off returns an empty
+book (zero equity, no positions or orders) — see *Venue switch* in `operations.md`.
+
+**Binance totals are summed across collateral assets.** In single-asset mode Binance's
+`total*` fields and `availableBalance` cover USDT only, so a USDC pool would be missing
+from equity, margin used, maintenance and free margin. With multi-assets mode off,
+`lib/binance-account.js` sums the per-asset rows instead (USD stables only, valued at the
+`<ASSET>USDT` mark, else 1). In multi-assets mode the totals are already USD across assets
+and are used as reported. `assets` lists every asset with a balance; `collateral` marks the
+ones counted.
 
 ---
 
@@ -90,6 +108,9 @@ Each position object (both exchanges, normalised — no realizedPnl):
 Binance positions additionally carry the fields the stress engine needs:
 `asset`, `quote`, `symbol`, `positionSide`, `sizeRaw` (signed float — `size` is a display
 string), `isolated`, `isolatedWallet`, `reportedMm`, `reportedLiqPrice`.
+`binance.walletBalance` on `/api/dashboard` is the wallet without unrealised PnL; `equity` is
+the margin balance. On `/api/dashboard` every position also carries `hasStop` — whether a closing `Stop…` order
+protects the leg (the rule in `docs/stops.md`).
 
 ## Order data shape
 Each order object (both exchanges, normalised):

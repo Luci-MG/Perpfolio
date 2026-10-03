@@ -6,21 +6,22 @@
 server.js                      wiring: static files, routes in order, services when run directly
 routes/*.js                    one register(app) per area — request parsing and response shaping only
 lib/*.js                       exchange access, caches, snapshots, the history store sync
-risk-engine.js vol-estimator.js confluence.js trade-analytics.js history-store.js
+risk-engine.js calc-engine.js vol-estimator.js stop-check.js confluence.js trade-analytics.js trip-context.js habits.js history-store.js
                                pure engines at the root: no network, fully unit-tested
 public/index.html              markup only
 public/css/app.css             every style; theme tokens on :root
 public/js/*.js                 classic scripts, one global scope, loaded in a fixed order
 ```
 
-`risk-engine.js` stays at the project root because the browser imports it from
-`/risk-engine.js` — the stress panel and the API run the same file, so they cannot disagree.
+`risk-engine.js` and `calc-engine.js` stay at the project root because the browser imports
+them from `/risk-engine.js` and `/calc-engine.js` — the stress panel and the API run the same file, so they cannot disagree.
 
 ## Server modules — imports only point down this list
 
 | Module | Owns | Notes |
 |---|---|---|
-| `lib/config.js` | `.env`, base URLs, `FETCH_TIMEOUT_MS`, `ROOT_DIR` | loads `dotenv/config` first, so every importer sees the environment |
+| `lib/config.js` | `.env`, base URLs, `FETCH_TIMEOUT_MS`, `ROOT_DIR`, `DATA_DIR` | loads `dotenv/config` first, so every importer sees the environment |
+| `lib/venues.js` | which exchanges may be called, saved in `data/settings.json` | the request functions refuse a venue that is off |
 | `lib/util.js` | `sleep`, `jitter`, `sharedSnapshot`, `once` | `once` holds the single in-flight Map every fetcher shares |
 | `lib/binance-client.js` | signing, `binanceFetch`, `bnPublic`, the ban guard, `throttleWeight` | **every** Binance call goes through here |
 | `lib/hyperliquid.js` | `hlFetch`, the HL account view | read-only |
@@ -31,6 +32,11 @@ public/js/*.js                 classic scripts, one global scope, loaded in a fi
 | `lib/pools.js` | cross pools, calibration against reported figures | used by riskbook, deleverage, hedge ledger |
 | `lib/history-sync.js` | income + fill sync into `data/` | `DASHBOARD_DATA_DIR` overrides the folder (tests) |
 | `lib/analytics.js` | memoised round trips and statistics | keyed on the sync cursors |
+| `lib/confluence-reading.js` | `readConfluence(symbol, tfs)` — one symbol's full reading | used by the Confluence route and the entry capture |
+| `lib/stop-suggestion.js` | `suggestStop(position, …)` — vol layers, regime, stop and size | used by the Stops route and the entry capture |
+| `lib/equity-snapshots.js` | account value every 15 minutes, both venues | started from `server.js` |
+| `lib/entry-context.js` | context captured on each increasing fill, `entryContextByOrder()` | wired to the stream's `onFill` in `server.js` |
+| `lib/trip-enrichment.js` | per-trip candles and funding rates during a sync, `enrichedTrips()` | caches computed values only, versioned |
 | `lib/confluence-data.js` | klines on any timeframe, positioning series | |
 
 A module that imports a `let` gets a live, read-only binding: reading another module's
@@ -39,8 +45,8 @@ the watchdog share `lib/orders-stream.js`.
 
 ## Frontend scripts — load order is part of the contract
 
-`core → positions → tiles-threads → stops → stress → hedge-ledger → confluence-view →
-journal → unwind → render → calculators → drawers → boot`
+`core → venues → tools-nav → positions → tiles-threads → stops → stress → hedge-ledger → confluence-view →
+journal → journal-trades → unwind → render → calculators → drawers → boot`
 
 - Classic scripts, not modules: inline `onclick="fn()"` handlers need globals, and classic
   scripts share one global lexical scope for `let`/`const` across files.
@@ -75,11 +81,14 @@ registered in `server.js`. Add a row to the route table in `docs/api.md` — the
 until you do — and a case to `test/routes.test.js`; if the fake exchange lacks an endpoint
 it returns a 404 naming it.
 
-**Add a tab.** A `public/js/<tab>.js` placed before `render.js`, a `data-view` button and a
-`renderX()` branch in `render.js`, `setView()`'s lazy fetch in `positions.js`, and `VIEWS`
-in `boot.js`. If the tab has inputs, give its controls a `…-mounted` id and add it to the
-`mountId` map in `render()`, or the 15s poll will rebuild it mid-edit. Add the view to
-`VIEWS` in `test/frontend.smoke.test.js`.
+**Add a positions view** (a way of looking at the book). A button in `tabsHtml` and a branch
+in `render.js`, `VIEWS` in `boot.js` and in `test/frontend.smoke.test.js`.
+
+**Add a tool** (a panel that fetches its own data). One entry in `TOOLS` and an icon in
+`TOOL_ICON` in `public/js/tools-nav.js` (`binanceOnly` or `exchangeFilter` if they apply) — then a `public/js/<tool>.js` placed before `render.js`, a
+`renderX()` branch in `render.js`, its fetch in `setView()`, and `VIEWS` in `boot.js` and the
+smoke test. If it has inputs, give its controls a `…-mounted` id and add it to the `mountId`
+map in `render()`, or the 15s poll will rebuild it mid-edit.
 
 **Add a confluence signal.** One entry in `CONFLUENCES` in `confluence.js` with a
 `scoreAt(x, i, regime)` that reads only bars ≤ `i`. It gets a track record automatically;

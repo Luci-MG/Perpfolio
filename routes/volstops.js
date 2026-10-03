@@ -3,6 +3,9 @@ import * as risk from '../risk-engine.js';
 import { getBinanceData } from '../lib/binance-account.js';
 import { getHyperliquidData } from '../lib/hyperliquid.js';
 import { getBinanceKlines, getHlCandles } from '../lib/market-data.js';
+import { suggestStop } from '../lib/stop-suggestion.js';
+import { checkLegStop, hasOppositeLeg, stopOrders } from '../stop-check.js';
+import { isEnabled } from '../lib/venues.js';
 
 // ── Dynamic Stop Width endpoint ───────────────────────────────────────────
 // Computes a composite-volatility-based stop + position size for every open
@@ -12,7 +15,7 @@ import { getBinanceKlines, getHlCandles } from '../lib/market-data.js';
 
 // Derive the base asset symbol from a normalised pair label.
 function baseAsset(pair) {
-  return pair.replace(/-PERP$/i, '').replace(/\/(USDT?|USD)$/i, '').toUpperCase();
+  return pair.replace(/-PERP$/i, '').replace(/\/(USDT|USDC|USD)$/i, '').toUpperCase();
 }
 
 // Fetch candles for a position; backfill from position context if unavailable.
@@ -51,99 +54,28 @@ export function register(app) {
         ...positions.map(p => candlesForPosition(p).catch(() => null))
       ]);
       let btcCandles = bnBtc;
-      if (!btcCandles || btcCandles.length < 21) btcCandles = await getHlCandles('BTC');
+      if ((!btcCandles || btcCandles.length < 21) && isEnabled('hyperliquid')) btcCandles = await getHlCandles('BTC');
       const btcAtrHistory = btcCandles ? vol.buildAtrSeries(btcCandles) : [];
 
       const totalEquity = (hlData.equity + bnData.equity) || 0;
 
+      const orders = stopOrders(bnData.openOrders, hlData.openOrders);
       const results = [];
       const candlesByAsset = {};
       const volHistories = [];
       for (const [idx, p] of positions.entries()) {
         try {
-          const backfilled = [];
           const { candles, backfilled: candlesBackfilled } = candleSets[idx] ?? await candlesForPosition(p);
-          if (candlesBackfilled) backfilled.push('candles');
-
-          // L1 ATR — with floor fallback if even synth fails to produce a value.
-          let atrPct = vol.computeATR(candles);
-          if (atrPct == null || !isFinite(atrPct)) {
-            atrPct = 0.01;                       // 1% baseline floor
-            if (!backfilled.includes('candles')) backfilled.push('atr');
-          }
-
-          // L2 BBW squeeze
-          const bbwHistory = vol.buildBbwSeries(candles);
-          const bbwAdj = vol.getBBWAdjustment(candles, bbwHistory);
-          if (bbwHistory.length < 20) backfilled.push('bbw');
-
-          // L3 Funding
-          const fundingRate8h = (p.fundingRate ?? 0) / 100;   // dashboard stores raw %
-          const fundingAdj = vol.getFundingAdjustment(fundingRate8h);
-          if (p.fundingRate == null) backfilled.push('funding');
-
-          // L4 Cross-asset
-          let crossAdj = 1.0, crossCorr = 0, crossRatio = null;
-          if (btcCandles && !candlesBackfilled) {
-            const x = vol.getCrossAssetAdj(btcCandles, candles, btcAtrHistory);
-            crossAdj = x.adj; crossCorr = x.corr; crossRatio = x.ratio;
-          } else {
-            backfilled.push('crossAsset');
-          }
-
-          // Composite + regime
-          const compositeVol = vol.computeCompositeVol({
-            atrPct, bbwAdj, fundingAdj, crossAssetAdj: crossAdj, kronosVol: null
-          });
-          const volSeries = vol.buildCompositeVolSeries(candles, { bbwAdj, fundingAdj, crossAssetAdj: crossAdj });
-          if (volSeries.length < 10) backfilled.push('regimeHistory');
-          const regimeLabel = vol.classifyRegime(compositeVol, volSeries);
-
+          const { result, volSeries } = suggestStop(p, { candles, candlesBackfilled, btcCandles, btcAtrHistory,
+                                                          totalEquity, riskPct, k });
           const assetKey = p.asset || baseAsset(p.pair);
           if (!candlesByAsset[assetKey] && !candlesBackfilled) candlesByAsset[assetKey] = candles;
           volHistories.push({ key: `${p.exchange}:${p.pair}:${p.side}`, series: volSeries,
                               weight: Math.abs(p.sizeUsd) || 1 });
-
-          // Account size: live exchange equity; fall back to total then exposure.
-          let accountSize = p._equity;
-          if (!accountSize || accountSize <= 0) {
-            accountSize = totalEquity > 0 ? totalEquity : (p.sizeUsd || 0);
-            backfilled.push('equity');
-          }
-
-          const direction = p.side === 'Long' ? 'long' : 'short';
-          const stop = vol.computeDynamicStop({
-            entryPrice: p.entry,
-            accountSize,
-            riskPct,
-            compositeVolPct: compositeVol,
-            k,
-            regimeLabel,
-            direction
-          });
-
-          results.push({
-            pair:        p.pair,
-            exchange:    p.exchange,
-            side:        p.side,
-            entry:       p.entry,
-            mark:        p.mark,
-            ...stop,
-            regimeLabel,
-            allowTrend:   vol.shouldTakeEntry(regimeLabel, 'trend'),
-            allowMeanRev: vol.shouldTakeEntry(regimeLabel, 'meanRev'),
-            allowBreakout:vol.shouldTakeEntry(regimeLabel, 'breakout'),
-            layers: {
-              atrPct:    +(atrPct * 100).toFixed(3),
-              bbwAdj:    +bbwAdj.toFixed(3),
-              fundingAdj:+fundingAdj.toFixed(3),
-              crossAdj:  +crossAdj.toFixed(3),
-              crossCorr: +crossCorr.toFixed(3),
-              crossRatio: crossRatio != null ? +crossRatio.toFixed(2) : null
-            },
-            accountSize: +accountSize.toFixed(2),
-            backfilled
-          });
+          results.push({ ...result, ...checkLegStop({
+            position: p, orders, hedged: hasOppositeLeg(p, positions), suggestedPct: result.stopDistPct,
+            atrPct: result.layers.atrPct, candles: candlesBackfilled ? null : candles
+          }) });
         } catch (perr) {
           // Never let one position break the panel.
           results.push({
@@ -257,7 +189,8 @@ export function register(app) {
           unmatchedShort,
           nettedSymbols,
           hedgePairs,
-          hedgeWarnings
+          hedgeWarnings,
+          stopVerdicts:    valid.reduce((acc, r) => ({ ...acc, [r.verdict]: (acc[r.verdict] || 0) + 1 }), {})
         },
         positions: results
       });

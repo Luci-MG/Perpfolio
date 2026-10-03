@@ -32,20 +32,36 @@ function signedDelta(side, positionSide, qty) {
 
 function blankTrip(symbol, positionSide, fill) {
   return {
-    symbol, positionSide,
+    symbol, positionSide, side: null, openOrderId: null,
     openTime: fill.time, closeTime: null,
-    size: 0, avgEntry: 0,
-    realized: 0, commission: 0, fills: 0,
-    addsWhileUnderwater: 0, peakNotional: 0, maxSize: 0, makerFills: 0
+    size: 0, avgEntry: 0, openNotional: 0, exitQty: 0, exitValue: 0,
+    realized: 0, commission: 0, fills: 0, adds: 0, partialCloses: 0,
+    addsWhileUnderwater: 0, peakNotional: 0, maxSize: 0, makerFills: 0, steps: []
   };
+}
+
+function sideOf(positionSide, delta) {
+  if (positionSide === 'LONG') return 'Long';
+  if (positionSide === 'SHORT') return 'Short';
+  return delta > 0 ? 'Long' : 'Short';
+}
+
+/** Identifies one round trip across the journal, the context cache and the funding split. */
+export function tripKey(trip) {
+  return `${trip.symbol}:${trip.positionSide}:${trip.openTime}`;
 }
 
 function finishTrip(trip, fill) {
   const net = trip.realized - Math.abs(trip.commission);
   return {
-    symbol: trip.symbol, positionSide: trip.positionSide,
+    symbol: trip.symbol, positionSide: trip.positionSide, side: trip.side, openOrderId: trip.openOrderId,
     openTime: trip.openTime, closeTime: fill.time,
     holdHours: (fill.time - trip.openTime) / 3_600_000,
+    openNotional: +trip.openNotional.toFixed(2),
+    avgEntry: trip.avgEntry,
+    avgExit: trip.exitQty ? trip.exitValue / trip.exitQty : null,
+    adds: trip.adds,
+    partialCloses: trip.partialCloses,
     realized: +trip.realized.toFixed(8),
     commission: +Math.abs(trip.commission).toFixed(8),
     net: +net.toFixed(8),
@@ -72,6 +88,12 @@ export function buildRoundTrips(fills) {
   const trips = [];
   let nonQuoteFees = 0;
   const orphans = { fills: 0, realized: 0, commission: 0 };
+  const sizeSteps = new Map();
+  const close = (trip, fill) => {
+    const done = finishTrip(trip, fill);
+    trips.push(done);
+    sizeSteps.set(tripKey(done), trip.steps);
+  };
 
   for (const fill of sorted) {
     const positionSide = fill.positionSide || 'BOTH';
@@ -105,14 +127,26 @@ export function buildRoundTrips(fills) {
       if (Math.abs(trip.size) > CLOSED) {
         const worse = trip.size > 0 ? price < trip.avgEntry : price > trip.avgEntry;
         if (worse) trip.addsWhileUnderwater++;
+        trip.adds++;
       } else {
         trip.openTime = fill.time;
+        trip.side = sideOf(positionSide, delta);
+        trip.openOrderId = fill.orderId ?? null;
+        trip.openNotional = qty * price;
       }
       const held = Math.abs(trip.size);
       trip.avgEntry = held <= CLOSED ? price : (trip.avgEntry * held + price * qty) / (held + qty);
     }
 
+    if (!adding) {
+      const closingQty = Math.min(qty, Math.abs(trip.size));
+      trip.exitQty += closingQty;
+      trip.exitValue += closingQty * price;
+      if (after !== 0 && Math.sign(after) === Math.sign(trip.size)) trip.partialCloses++;
+    }
+
     trip.size = after;
+    trip.steps.push([fill.time, Math.abs(after)]);
     trip.realized += parseFloat(fill.realizedPnl) || 0;
     trip.commission += fee;
     trip.fills++;
@@ -122,29 +156,36 @@ export function buildRoundTrips(fills) {
 
     // A one-way fill can cross zero, closing one position and opening the opposite one.
     if (after === 0) {
-      trips.push(finishTrip(trip, fill));
+      close(trip, fill);
       open.delete(key);
     } else if (positionSide === 'BOTH' && trip.size !== 0 && Math.sign(after) !== Math.sign(trip.size - delta)
                && Math.abs(trip.size - delta) > CLOSED) {
-      trips.push(finishTrip(trip, fill));
+      close(trip, fill);
       const next = blankTrip(fill.symbol, positionSide, fill);
       next.size = after;
+      next.side = sideOf(positionSide, after);
+      next.openOrderId = fill.orderId ?? null;
       next.avgEntry = price;
+      next.openNotional = Math.abs(after) * price;
       next.fills = 1;
       next.maxSize = Math.abs(after);
       next.peakNotional = Math.abs(after) * price;
+      next.steps = [[fill.time, Math.abs(after)]];
       open.set(key, next);
     }
   }
 
   const stillOpen = [...open.values()]
     .filter(t => t.size !== 0)
-    .map(t => ({ symbol: t.symbol, positionSide: t.positionSide, size: t.size,
-                 avgEntry: t.avgEntry, realized: t.realized, fills: t.fills,
-                 addsWhileUnderwater: t.addsWhileUnderwater, openTime: t.openTime }));
+    .map(t => {
+      sizeSteps.set(tripKey(t), t.steps);
+      return { symbol: t.symbol, positionSide: t.positionSide, side: t.side, size: t.size,
+               avgEntry: t.avgEntry, realized: t.realized, fills: t.fills,
+               addsWhileUnderwater: t.addsWhileUnderwater, openTime: t.openTime };
+    });
 
   return {
-    trips, stillOpen, nonQuoteFees: +nonQuoteFees.toFixed(8),
+    trips, stillOpen, sizeSteps, nonQuoteFees: +nonQuoteFees.toFixed(8),
     orphans: { fills: orphans.fills, realized: +orphans.realized.toFixed(8), commission: +orphans.commission.toFixed(8) }
   };
 }
@@ -432,4 +473,75 @@ export function inferFundingInterval(income, symbol) {
     inferredHours: median <= 2 ? 1 : median <= 6 ? 4 : 8,
     medianGapHours: +median.toFixed(2)
   };
+}
+
+// ─── OVERVIEW: PERIODS AND CURVES ───────────────────────────────────────────
+
+const DAY_MS = 86_400_000;
+const NET_TYPES = ['REALIZED_PNL', 'COMMISSION', 'FUNDING_FEE'];
+const USD_ASSETS = new Set(['USDT', 'USDC', 'BUSD', 'FDUSD']);
+
+/** Start of today, this week (Monday) and this month for a clock `tzOffsetMin` minutes ahead of UTC. */
+export function periodStarts(now, tzOffsetMin = 0) {
+  const shift = tzOffsetMin * 60_000;
+  const local = new Date(now + shift);
+  const today = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()) - shift;
+  return {
+    today,
+    week: today - ((local.getUTCDay() + 6) % 7) * DAY_MS,
+    month: Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), 1) - shift
+  };
+}
+
+const sumIncome = (rows, type) => rows.filter(r => r.incomeType === type).reduce((s, r) => s + parseFloat(r.income), 0);
+
+/** Realised, fees, funding, net, transfers and closed trips since each start in `starts`. */
+export function periodNet(income, trips, starts) {
+  return Object.fromEntries(Object.entries(starts).map(([period, from]) => {
+    const rows = (income || []).filter(r => r.time >= from);
+    const closed = (trips || []).filter(t => t.closeTime >= from);
+    const [realized, fees, funding] = NET_TYPES.map(type => sumIncome(rows, type));
+    return [period, { from, realized: +realized.toFixed(2), fees: +fees.toFixed(2), funding: +funding.toFixed(2),
+                      net: +(realized + fees + funding).toFixed(2), transfers: +sumIncome(rows, 'TRANSFER').toFixed(2),
+                      trips: closed.length, wins: closed.filter(t => t.win).length }];
+  }));
+}
+
+/**
+ * Wallet at the close of each day, rebuilt backwards from `walletNow` through every
+ * dollar-denominated income row — exact as far back as the ledger reaches.
+ */
+export function walletCurve(income, walletNow, now = Date.now()) {
+  const rows = (income || []).filter(r => USD_ASSETS.has((r.asset || 'USDT').toUpperCase()))
+    .sort((a, b) => b.time - a.time);
+  const points = [{ t: now, wallet: +walletNow.toFixed(2) }];
+  let wallet = walletNow;
+  let day = Math.floor(now / DAY_MS);
+  for (const r of rows) {
+    const rowDay = Math.floor(r.time / DAY_MS);
+    if (rowDay < day) {
+      points.push({ t: (rowDay + 1) * DAY_MS - 1, wallet: +wallet.toFixed(2) });
+      day = rowDay;
+    }
+    wallet -= parseFloat(r.income);
+  }
+  if (rows.length) points.push({ t: rows.at(-1).time - 1, wallet: +wallet.toFixed(2) });
+  return points.reverse();
+}
+
+/**
+ * Account value change since each start, from equity snapshots, with transfers removed so a
+ * deposit is not a gain. When snapshots begin after a start, the change runs from the first
+ * snapshot and `since` says so.
+ */
+export function accountChange(snapshots, income, starts) {
+  const sorted = [...(snapshots || [])].sort((a, b) => a.t - b.t);
+  const last = sorted.at(-1);
+  return Object.fromEntries(Object.entries(starts).map(([period, from]) => {
+    const first = sorted.find(s => s.t >= from);
+    if (!first || !last || first === last) return [period, null];
+    const transfers = sumIncome((income || []).filter(r => r.time >= first.t), 'TRANSFER');
+    return [period, { change: +(last.accountValue - first.accountValue - transfers).toFixed(2),
+                      since: first.t, partial: first.t - from > DAY_MS / 24 }];
+  }));
 }

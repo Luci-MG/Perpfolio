@@ -115,13 +115,49 @@ unit-tested) applies the thresholds:
 | Binance paused after a 418/429 (with seconds left) | bad |
 | request weight ≥ 1,800 of 2,400 (the sync throttle's ceiling) | bad |
 | request weight ≥ 1,200 | warn |
-| order stream not connected, or quiet > 10 min (key present) | warn |
+| order stream not connected, or quiet > 10 min (Binance on) | warn |
 | last reconcile found drift | warn |
-| an account snapshot older than 2 min | warn |
+| an account snapshot older than 2 min (exchange on) | warn |
 | last history sync failed | warn |
 
 The header chip beside *Last updated* is hidden while the verdict is `ok`; otherwise it shows
 ⚠ or ⛔ with the issue count, and every reason in its tooltip.
+
+### Trip context sync
+The history sync's last phase fetches candles per closed trip: one path request (≤1,500 bars,
+weight 10) and one 20-bar ATR request (weight 1) per trip, BTC 1h history once, and funding
+rates only for symbols with hedged settlements. Every request passes `throttleWeight()`; the
+first run on a few hundred trips took a few minutes and stayed far below the limit. Results are
+cached per trip, so later syncs fetch only new trips.
+
+### Equity snapshots
+`startEquitySnapshots()` (from `server.js`) records account value across both venues every 15
+minutes into `data/equity-snapshots.ndjson`, keyed by interval so a restart cannot double a
+row. It reads the shared snapshot when it is under a minute old — free while a tab is open —
+and otherwise costs one account read per venue. Nothing is recorded with both venues off.
+
+### Entry capture: `onFill`
+`lib/orders-stream.js` exposes `onFill(listener)`; `server.js` registers
+`captureEntryContext`, so the stream never imports the journal. Each increasing order costs
+one Confluence reading (about 20 public calls, mostly cached), two cached kline reads and one
+account read five minutes later — about nine orders a day on this book.
+
+### Venue switch: an exchange that is off costs nothing
+`lib/venues.js` holds one switch per exchange, saved in `data/settings.json`; without a
+saved choice an exchange is on when its credentials are in `.env`, so Hyperliquid stays off
+with no `HL_WALLET_ADDRESS`. Switched from the status bulb or `POST /api/venues`.
+
+| Off | Effect |
+|---|---|
+| Hyperliquid | `getHyperliquidData()` returns an empty book; no account read, no candles — before this, an empty wallet still sent four calls per poll with `user: ''` |
+| Binance | empty book; user-data stream closed and its listenKey released; reconcile, keepalive and watchdog idle; boot warm-up skipped; riskbook, deleverage, hedge ledger and sync start answer `409 { disabled: true }` |
+
+`hlFetch` and the signed `binanceFetch` refuse a venue that is off, so a call path the
+gate misses fails loudly instead of spending quota; the route tests assert zero requests per
+switched-off venue across every route. Public Binance market data (`bnPublic`) stays
+available, so Confluence works with Binance off. Switching Binance on reconciles the order
+cache at once and reopens the stream. `POST /api/venues` takes `application/json` only: a
+cross-site page cannot send that without a CORS preflight, which the server never answers.
 
 ### Restarts under `npm run dev`
 `node --watch` starts the new process at once. When several files were saved in the same
@@ -142,4 +178,7 @@ was the single largest cost.
 - **Local**: `npm start` → `http://localhost:3000`
 - **Railway / Render**: push to GitHub, add env vars in dashboard, deploy
 - **VPS**: use `pm2 start server.js --name dashboard`
+- **Keep it running to capture context at entry**: it is recorded from the live order stream,
+  so trades placed while the server is stopped have none (`docs/journal.md`). Locally,
+  `pm2 start server.js --name perpfolio` or a `launchd` agent keeps it up between sessions
 - Express serves `public/` (markup, `css/app.css`, `js/*.js`) as static files — no separate frontend deployment needed

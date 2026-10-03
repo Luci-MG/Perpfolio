@@ -4,13 +4,18 @@
 // What already happened, rebuilt from the cached fill and income history.
 let perfData = null, perfLoading = false, perfDays = 0, syncPoll = null;
 let jrTab = 'overview';
-function setJrTab(t) { jrTab = t; rerenderStress(); }
+function setJrTab(t) {
+  jrTab = t;
+  if (t === 'trades' && !tripsData && !tripsLoading) fetchTrips();
+  rerenderStress();
+}
 
 async function fetchPerformance() {
   perfLoading = true;
   if (posView === 'journal') rerenderStress();
   try {
-    const res = await fetch(`/api/performance${perfDays ? `?days=${perfDays}` : ''}`);
+    const tz = -new Date().getTimezoneOffset();
+    const res = await fetch(`/api/performance?tz=${tz}${perfDays ? `&days=${perfDays}` : ''}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'performance failed');
     perfData = data;
@@ -22,18 +27,27 @@ async function fetchPerformance() {
   }
 }
 
-function setPerfDays(d) { perfDays = d; fetchPerformance(); }
+function setPerfDays(d) { perfDays = d; fetchPerformance(); reloadTrips(); }
+
+function syncProgressText(state) {
+  if (!state.running) return `sync ${state.phase}`;
+  if (state.phase === 'context') return `syncing trip context — ${state.contextDone}/${state.contextTotal} trips`;
+  return `syncing ${state.phase} — ${state.symbolsDone}/${state.symbolsTotal} symbols, +${state.tradesAdded} fills`;
+}
 
 async function startSync(full = false) {
-  await fetch(`/api/history/sync?start=true${full ? '&full=true' : ''}`);
+  const started = await (await fetch(`/api/history/sync?start=true${full ? '&full=true' : ''}`)).json();
+  if (!started.ok) {
+    const el = document.getElementById('jr-sync-state');
+    if (el) el.textContent = started.disabled ? 'Binance is switched off — switch it on to sync' : `Failed: ${esc(started.error)}`;
+    return;
+  }
   if (syncPoll) clearInterval(syncPoll);
   syncPoll = setInterval(async () => {
     const s = await (await fetch('/api/history/sync')).json();
     const el = document.getElementById('jr-sync-state');
-    if (el) el.textContent = s.state.running
-      ? `syncing ${s.state.phase} — ${s.state.symbolsDone}/${s.state.symbolsTotal} symbols, +${s.state.tradesAdded} fills`
-      : `sync ${s.state.phase}`;
-    if (!s.state.running) { clearInterval(syncPoll); syncPoll = null; fetchPerformance(); }
+    if (el) el.textContent = syncProgressText(s.state);
+    if (!s.state.running) { clearInterval(syncPoll); syncPoll = null; fetchPerformance(); reloadTrips(); }
   }, 2000);
 }
 
@@ -165,6 +179,71 @@ function jrDivergingBars(buckets, { valueKey = 'net', countKey = 'trips', showCo
   }).join('')}</div>`;
 }
 
+const JR_PERIODS = [['today', 'Today'], ['week', 'This week'], ['month', 'This month']];
+
+function jrPeriodStrip(periods) {
+  if (!periods) return '';
+  const cell = ([key, label]) => {
+    const p = periods[key];
+    const account = p.account
+      ? `<div class="s">account ${fmtSignedUsd(p.account.change)}${p.account.partial
+          ? ` since ${new Date(p.account.since).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}</div>`
+      : '<div class="s" title="no equity snapshots in this period yet">account —</div>';
+    return `<div class="jr-stat"><div class="k">${label}</div>
+      <div class="v ${p.net > 0 ? 'up' : p.net < 0 ? 'dn' : ''}">${fmtSignedUsd(p.net)}</div>
+      <div class="s">${p.trips} trips closed${p.trips ? `, ${p.wins} won` : ''}</div>${account}</div>`;
+  };
+  return `<div class="jr-hero">${JR_PERIODS.map(cell).join('')}</div>`;
+}
+
+const CHART_MAX_POINTS = 400;
+
+function thinPoints(points) {
+  if (points.length <= CHART_MAX_POINTS) return points;
+  const step = Math.ceil(points.length / CHART_MAX_POINTS);
+  return points.filter((_, i) => i % step === 0 || i === points.length - 1);
+}
+
+function renderOverviewChart(walletCurve, accountCurve) {
+  const series = [
+    { label: 'Account value', points: thinPoints((accountCurve || []).map(p => ({ t: p.t, v: p.accountValue }))), cls: 'ov-account' },
+    { label: 'Wallet', points: thinPoints((walletCurve || []).map(p => ({ t: p.t, v: p.wallet }))), cls: 'ov-wallet' }
+  ].filter(s => s.points.length > 1);
+  if (!series.length) return `<p style="font-size:11px;color:var(--text3)">Not enough history to plot.</p>`;
+
+  const W = 1000, H = 150, PAD = 8, LABEL_W = 92;
+  const all = series.flatMap(s => s.points);
+  const t0 = Math.min(...all.map(p => p.t)), t1 = Math.max(...all.map(p => p.t));
+  const v0 = Math.min(...all.map(p => p.v)), v1 = Math.max(...all.map(p => p.v));
+  const x = t => PAD + (t - t0) / ((t1 - t0) || 1) * (W - PAD - LABEL_W);
+  const y = v => PAD + (1 - (v - v0) / ((v1 - v0) || 1)) * (H - 2 * PAD);
+  const path = pts => pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`).join(' ');
+  const when = t => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  const lines = series.map(s => {
+    const last = s.points.at(-1);
+    return `<path class="${s.cls}" d="${path(s.points)}" fill="none" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+      <text class="ov-label" x="${(x(last.t) + 6).toFixed(1)}" y="${(y(last.v) + 4).toFixed(1)}">${s.label}</text>
+      ${s.points.map(p => `<circle cx="${x(p.t).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="6" fill="transparent">
+        <title>${s.label} ${fmtUsd(p.v)} · ${when(p.t)}</title></circle>`).join('')}`;
+  }).join('');
+  const legend = series.map(s => `<span class="ov-key"><svg width="18" height="6"><line class="${s.cls}" x1="0" y1="3" x2="18" y2="3" stroke-width="2"></line></svg>${s.label}</span>`).join('');
+  return `<div class="ov-legend">${legend}<span class="ov-range">${fmtUsd(v0)} – ${fmtUsd(v1)}</span></div>
+    <svg class="ov-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Wallet and account value over time">${lines}</svg>`;
+}
+
+function jrHabitsTable(habits) {
+  if (!habits?.length) return '';
+  const avg = v => (v == null ? '—' : `<span class="${v >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(v)}</span>`);
+  const rows = habits.map(h => `<tr class="${h.thin ? 'jr-thin' : ''}">
+    <td>${h.label}<span class="jr-sub">against ${h.against}</span></td>
+    <td>${h.trips}${h.thin ? ' ⚠' : ''}</td><td>${avg(h.avgNet)}</td>
+    <td>${h.comparisonTrips}</td><td>${avg(h.avgNetComparison)}</td>
+    <td>${h.cost == null ? '—' : `<b class="${h.cost >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(h.cost)}</b>`}</td>
+  </tr>`).join('');
+  return `<table class="jr-tbl jr-habits"><tr><th>habit</th><th>trips</th><th>avg net</th><th>others</th><th>their avg</th><th>est. cost</th></tr>${rows}</table>`;
+}
+
 function jrSection(title, body, note) {
   return `<p class="section-label" style="margin:18px 0 7px">${title}</p>${body}
     ${note ? `<p style="font-size:10px;color:var(--text3);line-height:1.5;margin-top:6px">${note}</p>` : ''}`;
@@ -193,21 +272,6 @@ function jrCalendar(cal) {
     </div>`;
 }
 
-function jrTripRows(trips, limit) {
-  const held = h => h >= 48 ? `${fmt(h / 24, 1)}d` : h >= 1 ? `${fmt(h, 1)}h` : `${fmt(h * 60, 0)}m`;
-  return trips.slice(0, limit).map(t => `<tr>
-    <td>${jrSym(t.symbol)}
-      <span style="font-weight:400;color:var(--text3)">${t.positionSide.toLowerCase()}</span></td>
-    <td class="${t.net >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(t.net)}</td>
-    <td>${t.fills}</td>
-    <td class="${t.addsWhileUnderwater ? 'dn' : ''}">${t.addsWhileUnderwater || '—'}</td>
-    <td>${held(t.holdHours)}</td>
-    <td style="color:var(--text3)">${new Date(t.closeTime).toISOString().slice(0, 10)}</td>
-  </tr>`).join('');
-}
-
-const JR_TRIP_HEAD = `<tr><th>position</th><th>net</th><th>fills</th><th>adds&nbsp;down</th><th>held</th><th>closed</th></tr>`;
-
 // Locked PnL of the open same-symbol hedges, from the dashboard poll — no extra request.
 // A matched pair pins its PnL at (shortEntry − longEntry) × matchedQty.
 function jrLockedFromPositions(positions) {
@@ -230,7 +294,7 @@ function renderJournal() {
   if (!perfData) return `<p style="font-size:12px;color:var(--text3);padding:14px 0">No history loaded.</p>`;
   if (perfData.error) return `<p style="font-size:12px;color:var(--danger);padding:14px 0">Error: ${esc(perfData.error)}</p>`;
 
-  const syncBar = `<div class="jr-sync">
+  const syncBar = `<div class="jr-sync" id="jr-mounted">
     <span id="jr-sync-state">${perfData.empty ? 'no cached history' : `${perfData.overall.trips} round trips · ${perfData.equity.days} days`}</span>
     <button class="st-btn" onclick="startSync(false)">Sync recent</button>
     <button class="st-btn" onclick="startSync(true)">Full rebuild</button>
@@ -293,9 +357,9 @@ function renderJournal() {
     const funding = t.FUNDING_FEE || 0, transfers = t.TRANSFER || 0;
     const ledger = realised + fees + funding + transfers;
 
-    const wallet = parseFloat(bn?.equity ?? 0);          // walletBalance
+    const wallet = parseFloat(bn?.walletBalance ?? 0);
     const upnl = positions.reduce((s, p) => s + p.upnl, 0);
-    const accountValue = wallet + upnl;
+    const accountValue = parseFloat(bn?.equity ?? 0);
     const startWallet = wallet - ledger;
     const hedge = jrLockedFromPositions(positions);
     const gross = positions.reduce((s, p) => s + p.sizeUsd, 0);
@@ -315,6 +379,10 @@ function renderJournal() {
       </tr>`).join('') : '';
 
     body = `
+      ${jrSection('How it is going', jrPeriodStrip(perfData.periods),
+        'Realised is net of fees and funding, from the Binance ledger — exact. Account value includes open positions on both venues, net of deposits and withdrawals, from snapshots the server records every 15 minutes while it runs.')}
+      ${jrSection('Wallet and account value', renderOverviewChart(perfData.walletCurve, perfData.accountCurve),
+        'The gap between the lines is what the open positions are worth. Wallet is rebuilt from the ledger as far back as it reaches; account value starts when snapshots began.')}
       ${jrSection('Where the account stands', `<div class="jr-hero">
         ${stat('Account value', fmtUsd(accountValue), 'wallet + open positions', accountValue >= 0 ? '' : 'dn')}
         ${stat('Wallet', fmtUsd(wallet), 'realised money')}
@@ -373,7 +441,9 @@ function renderJournal() {
 
   if (jrTab === 'behaviour') {
     const sq = perfData.sequence, st = perfData.streaks, sz = perfData.size;
-    body = `${jrSection('Trips that added size while underwater, against those that did not',
+    body = `${jrSection('What your habits cost', jrHabitsTable(perfData.habits),
+        'Each cost is an estimate: the habit\'s trips against the comparison group, the gap in average net times the habit\'s trips. Rows with fewer than 10 trips on either side are dimmed and marked ⚠.')}
+      ${jrSection('Trips that added size while underwater, against those that did not',
         `<div class="jr-split">${card(perfData.behaviour.addedWhileUnderwater, 'var(--danger)')}${card(perfData.behaviour.clean, 'var(--success)')}</div>`,
         'The single largest split in the book. Adding at a worse price than your own average entry is the behaviour, not the outcome.')}
       ${jrSection('How long a position was held', jrDivergingBars(perfData.holdTime),
@@ -433,13 +503,7 @@ function renderJournal() {
         'Negative is funding you paid to hold the position.') : ''}`;
   }
 
-  if (jrTab === 'trades') {
-    body = `${jrSection('Most recent', `<table class="jr-tbl">${JR_TRIP_HEAD}${jrTripRows(perfData.recentTrips, 25)}</table>`)}
-      <div class="jr-two">
-        <div>${jrSection('Worst', `<table class="jr-tbl">${JR_TRIP_HEAD}${jrTripRows(perfData.worstTrips, 10)}</table>`)}</div>
-        <div>${jrSection('Best', `<table class="jr-tbl">${JR_TRIP_HEAD}${jrTripRows(perfData.bestTrips, 10)}</table>`)}</div>
-      </div>`;
-  }
+  if (jrTab === 'trades') body = renderTradesTab();
 
   if (jrTab === 'performance') requestAnimationFrame(initEquityHover);
 

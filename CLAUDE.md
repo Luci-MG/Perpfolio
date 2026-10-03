@@ -24,13 +24,14 @@ expected to say so rather than assert correctness.
 | How the pieces fit, recipes for common changes | [`docs/architecture.md`](docs/architecture.md) | `server.js`, `lib/`, `routes/` |
 | Routes, payload shapes, exchange endpoints | [`docs/api.md`](docs/api.md) | `routes/`, `lib/binance-*.js`, `lib/hyperliquid.js` |
 | Views, mounted panels, drawers, theming | [`docs/frontend.md`](docs/frontend.md) | `public/js/`, `public/css/app.css` |
-| Volatility-adjusted stops | [`docs/stops.md`](docs/stops.md) | `vol-estimator.js`, `routes/volstops.js` |
+| Volatility-adjusted stops, your real stops | [`docs/stops.md`](docs/stops.md) | `vol-estimator.js`, `stop-check.js`, `lib/stop-suggestion.js`, `routes/volstops.js` |
 | Stress / liquidation maths, calibration | [`docs/stress-engine.md`](docs/stress-engine.md) | `risk-engine.js`, `lib/pools.js` |
 | Unwind planner and drawers | [`docs/unwind.md`](docs/unwind.md) | `risk-engine.js`, `routes/deleverage.js` |
-| Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `lib/history-sync.js` |
+| Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `trip-context.js`, `habits.js`, `lib/history-sync.js`, `lib/trip-enrichment.js`, `lib/entry-context.js`, `lib/equity-snapshots.js` |
 | Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
 | Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |
-| What changed and what is next | [`docs/changelog.md`](docs/changelog.md) | — |
+| What changed | [`docs/changelog.md`](docs/changelog.md) | — |
+| What is next | [`docs/roadmap.md`](docs/roadmap.md) | — |
 | What is deliberately not done | [`docs/known-gaps.md`](docs/known-gaps.md) | — |
 
 ## Project structure
@@ -40,9 +41,13 @@ crypto-dashboard/
 ├── lib/                   # exchange clients, caches, shared snapshot, history sync (see docs/architecture.md)
 ├── routes/                # one register(app) per area
 ├── risk-engine.js         # stress / liquidation / unwind maths — also served to the browser
+├── calc-engine.js         # the calculators' arithmetic — also served to the browser
 ├── vol-estimator.js       # composite volatility for dynamic stops
+├── stop-check.js          # your real stop against the suggestion
 ├── confluence.js          # market signals, regime gating, self-calibration
 ├── trade-analytics.js     # round trips and statistics
+├── trip-context.js        # per-trip funding, price path, market at entry
+├── habits.js              # trading habits and their estimated cost
 ├── history-store.js       # append-only NDJSON cache
 ├── *.test.js              # engine unit tests
 ├── test/                  # fake exchange, route contract tests, golden snapshot, page smoke test
@@ -53,7 +58,7 @@ crypto-dashboard/
 └── public/
     ├── index.html         # markup only
     ├── css/app.css
-    └── js/                # 13 classic scripts, loaded in a fixed order (docs/frontend.md)
+    └── js/                # 16 classic scripts, loaded in a fixed order (docs/frontend.md)
 ```
 
 ## Running and verifying
@@ -84,7 +89,7 @@ Server runs on `http://localhost:3000` (or `$PORT`).
 |---|---|
 | `BINANCE_API_KEY` | Read-only Binance API key |
 | `BINANCE_API_SECRET` | Binance API secret (HMAC signing) |
-| `HL_WALLET_ADDRESS` | Hyperliquid public wallet address (`0x...`) |
+| `HL_WALLET_ADDRESS` | Hyperliquid public wallet address (`0x...`); without it Hyperliquid stays off |
 | `PORT` | Optional, defaults to 3000 |
 | `DASHBOARD_DATA_DIR` | Optional, where history is cached (defaults to `data/`; the tests use a temp dir) |
 

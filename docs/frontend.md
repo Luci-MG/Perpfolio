@@ -3,11 +3,13 @@
 ## Files
 
 `public/index.html` holds markup only, `public/css/app.css` every style, and `public/js/` the
-behaviour as thirteen **classic** scripts loaded in this order — no build step, no framework:
+behaviour as sixteen **classic** scripts loaded in this order — no build step, no framework:
 
 | # | File | Holds |
 |---|---|---|
 | 1 | `core.js` | preferences, shared view state, `fmt*` / `esc` / badges — load-time code in later files calls these |
+| 1b | `venues.js` | status bulb, exchange switches, `venueOn()` / `offOr()` / `venueOffHtml()` |
+| 1c | `tools-nav.js` | `TOOLS`, the tool widgets and narrow-screen strip, `openTool()` |
 | 2 | `positions.js` | `setView`, HL/BN filter, positions list and tiles, orders table |
 | 3 | `tiles-threads.js` | hedge popups, tile drag and focus, the hedge-thread SVG |
 | 4 | `stops.js` | Stops tab |
@@ -15,9 +17,10 @@ behaviour as thirteen **classic** scripts loaded in this order — no build step
 | 6 | `hedge-ledger.js` | hedge-ledger drawer |
 | 7 | `confluence-view.js` | Confluence tab (the engine is the server's `confluence.js`) |
 | 8 | `journal.js` | Journal tab |
+| 8b | `journal-trades.js` | Journal's Trades table: `TRADE_COLUMNS`, sort, filters, CSV |
 | 9 | `unwind.js` | liquidation-after-close and unwind-simulator drawers, Unwind tab |
 | 10 | `render.js` | sidebar widgets, `render()`, `fetchData()` and the poll guard |
-| 11 | `calculators.js` | context menu and calculators |
+| 11 | `calculators.js` | context menu and the calculator modal — page code only; the arithmetic is `/calc-engine.js` |
 | 12 | `drawers.js` | exposure, uPnL and funding drawers |
 | 13 | `boot.js` | global listeners, first poll, refresh timer — must stay last |
 
@@ -58,21 +61,49 @@ That is fine for a PnL column and wrong for anything where the sign is the point
 why `fmtSignedUsd` exists. `fmtPrice` scales decimals to the price magnitude; `fmtUsd` is
 always 2dp and turns a 1e-5 asset into `$0.00`.
 
-### View tabs — eight
+### Views: positions tabs and tools
 `posView` ∈ `tiles | list | orders | stops | stress | unwind | journal | confluence`, default `tiles`.
+**Positions views** (Tiles, List, Orders) are the tab strip in the main column. **Tools** (Stops,
+Stress, Unwind, Journal, Confluence) are the `TOOLS` table in `tools-nav.js`, opened from the
+sidebar's tool widgets; `isToolView()` / `toolFor()` read that table, so no other file lists them.
 `setView(v)` fetches on activation only: `stops` → `/api/volstops`, `stress` → `/api/riskbook`,
-`unwind` → `/api/deleverage`, `journal` → `/api/performance`, `confluence` → `/api/confluence`. The
-first four share the positions card; the last four replace it and hide the HL/BN filter and exchange header.
+`unwind` → `/api/deleverage`, `journal` → `/api/performance`, `confluence` → `/api/confluence`.
+Tools replace the positions card and its exchange header; only Stops (`exchangeFilter: true`)
+keeps the HL/BN filter.
+
+**Tool widgets.** One tile per tool — icon and name, nothing else — in a grid of three over
+two, between uPnL/Exposure and Margin health. The open tool is outlined; clicking it again
+returns to the last positions view (kept in memory, remembered across reloads). A
+Binance-only tool is dimmed while Binance is off. Below 900px wide the sidebar stacks under
+the content, so the same buttons render as a strip above it.
 
 **The mounted-panel rule.** The 15s poll calls `render()`, which would rebuild the whole main
 column — destroying a slider mid-drag or an input mid-edit. `render()` therefore leaves the
 panel alone whenever its mount marker (`#st-mounted`, `#uw-mounted`, `#cf-mounted`,
-`#vs-mounted`) is present, unless
+`#vs-mounted`, `#jr-mounted`) is present, unless
 `rerenderStress()` set `riskForceRender`. Every deliberate rebuild goes through that helper.
+
+### Status bulb and exchange switches
+The dot beside *Last updated* is a button. It opens a popover with one row per exchange: a
+switch, `synced Ns ago` or `off`, and that exchange's health reasons. Switching calls
+`POST /api/venues` and re-polls at once; switching Binance off asks first, because it also
+closes the order stream. A venue without credentials in `.env` shows a disabled switch.
+
+| Bulb | Means |
+|---|---|
+| pulsing amber | fetching |
+| solid | idle, every exchange on |
+| ring | one exchange off |
+| grey ring | every exchange off |
+| amber / red | the health verdict is `warn` / `bad` |
+
+With an exchange off its sidebar rows read `off`, its HL/BN filter chip disappears, and
+Stress, Unwind and the hedge ledger (Binance-only) show a *Switch Binance on* panel instead
+of fetching. Journal still reads its local cache; *Sync* says Binance is off.
 
 ### Sidebar
 Top to bottom: `metric-stack` (total equity, uPnL, exposure — each with HL/BN breakdown and a
-click-through drawer), `renderMarginHealth()`, then `renderSidebarBottomRow()` — the daily
+click-through drawer), `renderToolsNav()`, `renderMarginHealth()`, then `renderSidebarBottomRow()` — the daily
 funding widget beside `renderCalcTiles()`.
 
 **Margin health is an SVG arc gauge, not a donut.** The sweep never exceeds 180°, so the
@@ -80,6 +111,36 @@ arc's `large-arc-flag` must always be `0`; it was `pct > 50 ? 1 : 0`, which drew
 complement and painted the fill out of the viewBox for every utilisation between 50% and
 100% — exactly the range worth looking at. A `conic-gradient` survives elsewhere, for the
 small long/short split donut only.
+
+### Calculators
+One modal, five tabs (P&L, Avg down/up, Liq price, Size, Break-even), and a **position picker** at the top:
+*Manual* or any open position. Picking one fills every tab — side, entry, mark, actual
+leverage and size, and Binance's maintenance rate for that size tier — through one
+`fillFromPosition(p)`. Opening from a tile's context menu pre-picks that position; from the
+sidebar it starts on Manual.
+
+- **Arithmetic lives in `calc-engine.js`** at the root, served at `/calc-engine.js` and
+  unit-tested in Node; `calculators.js` only reads inputs and writes results.
+- **Liq price is account-aware for a Binance position**: `riskEngine.liquidationDetail` on
+  the position's own cross pool (found by key, so a USDC leg uses the USDC pool), with every
+  other leg, hedge and tier — the Stress tab's solve, number for number — beside Binance's
+  reported figure, and the ill-conditioned note when a near-flat book makes it a region rather
+  than a price. *What if I add* re-solves after `addToPosition`. Manual and Hyperliquid use the
+  isolated estimate, labelled as such.
+- **Avg** adds *liq after this add* for a Binance position.
+- **P&L** adds a ladder: P&L and return at the exit price moved −10/−5/−2/+2/+5/+10%.
+- **Size** sizes a trade from risk: equity (the position's venue, or the total), risk %,
+  entry and stop give quantity, notional and margin; a picked position pre-fills the Stops
+  tab's suggested stop when that tab has loaded. A stop on the wrong side says so.
+- **Break-even** is the exit that pays back both fees and the funding for the hours held:
+  fees default to the account's taker rate, funding to the position's own rate and cadence;
+  positive funding means longs pay, so it can lower a short's break-even.
+- The book is the Stress tab's `riskBook`, loaded on first use like the liquidation drawer;
+  no new route or poll.
+
+The flat formula it replaced (entry ± 1/leverage with a fixed 0.5% rate) was 54–98% away
+from Binance's reported price on every leg of the live book that has one, and showed a
+price on eight legs where Binance reports none.
 
 ### Drawers
 All at body level, outside `#sidebar`, so the poll's sidebar rebuild cannot wipe them:

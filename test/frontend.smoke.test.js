@@ -35,9 +35,11 @@ function fakeElement(store, id) {
 }
 
 function browserContext(base, markup) {
+  const elements = new Map();
+  const element = id => elements.get(id) || elements.set(id, fakeElement(markup, id)).get(id);
   const document = {
     hidden: false, body: fakeElement(markup, 'body'), documentElement: fakeElement(markup, 'html'),
-    getElementById: id => /-mounted$/.test(id) ? null : fakeElement(markup, id),
+    getElementById: id => /-mounted$/.test(id) ? null : element(id),
     querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, removeEventListener() {},
     createElement: tag => fakeElement(markup, `new:${tag}`), createElementNS: (_, tag) => fakeElement(markup, `new:${tag}`)
   };
@@ -50,7 +52,7 @@ function browserContext(base, markup) {
     requestAnimationFrame: () => 0, cancelAnimationFrame() {},
     getComputedStyle: () => ({ getPropertyValue: () => '' }),
     fetch: (url, opts) => fetch(base + url, opts),
-    __importEngine: () => import(path.join(ROOT, 'risk-engine.js'))
+    __importEngine: file => import(path.join(ROOT, file))
   };
   ctx.window.document = document;
   ctx.globalThis = ctx;
@@ -60,11 +62,11 @@ function browserContext(base, markup) {
 const { base, stop } = await startTestServer();
 test.after(stop);
 
-test('every view and drawer renders against live payloads without errors or NaN', async () => {
+async function bootPage() {
   const markup = new Map();
   const ctx = browserContext(base, markup);
   for (const { name, code } of pageScripts()) {
-    vm.runInContext(code.replaceAll("import('/risk-engine.js')", '__importEngine()'), ctx, { filename: name });
+    vm.runInContext(code.replace(/import\('\/([\w-]+\.js)'\)/g, "__importEngine('$1')"), ctx, { filename: name });
   }
   const run = js => vm.runInContext(js, ctx);
   const settle = async (check, what) => {
@@ -74,20 +76,213 @@ test('every view and drawer renders against live payloads without errors or NaN'
     }
     assert.fail(`timed out waiting for ${what}`);
   };
-
   await settle('lastData != null', 'the dashboard poll');
+  return { markup, run, settle };
+}
+
+const strayValues = html => [...html.matchAll(/(.{0,60}\b(?:undefined|NaN)\b.{0,20})/g)].map(([, hit]) => hit);
+
+test('every view and drawer renders against live payloads without errors or NaN', async () => {
+  const { markup, run, settle } = await bootPage();
   for (const v of VIEWS) run(`setView('${v}')`);
   await settle('volStopData && riskBook && unwindData && perfData && cfData && !cfLoading', 'every tab fetch');
 
   const bad = [];
   for (const v of VIEWS) {
     run(`posView = '${v}'; riskForceRender = true; render(lastData)`);
-    const html = markup.get('content') + markup.get('sidebar');
-    for (const [, hit] of html.matchAll(/(.{0,60}\b(?:undefined|NaN)\b.{0,20})/g)) bad.push(`${v}: …${hit}…`);
+    for (const hit of strayValues(markup.get('content') + markup.get('sidebar'))) bad.push(`${v}: …${hit}…`);
   }
   for (const data of ['volStopData', 'riskBook', 'unwindData', 'perfData', 'cfData']) {
     assert.equal(run(`${data}?.error ?? null`), null, `${data} failed to load`);
   }
   for (const fn of ['buildFundingDrawerContent(lastData)']) run(fn);
   assert.deepEqual(bad, []);
+});
+
+test('the Trades table sorts, filters, pages and exports what it shows', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200; i++) {
+    if (!(await (await fetch(`${base}/api/history/sync`)).json()).state.running) break;
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading', 'the journal');
+  run(`setJrTab('trades')`);
+  await settle('tripsData && !tripsLoading', 'the trips');
+  run(`riskForceRender = true; render(lastData)`);
+
+  const table = () => markup.get('jt-table') ?? markup.get('content');
+  const total = run('tripsData.trips.length');
+  assert.match(markup.get('content'), new RegExp(`${total} trips · ${total} match`));
+  assert.deepEqual(strayValues(markup.get('content')), []);
+
+  run(`sortTrades('net')`);
+  const nets = JSON.parse(run('JSON.stringify(sortedTrips(filteredTrips()).map(tripNet))'));
+  assert.deepEqual(nets, [...nets].sort((a, b) => b - a));
+  run(`filterTrades('symbol', 'eth')`);
+  assert.equal(run('filteredTrips().every(t => t.symbol === "ETHUSDT")'), true);
+  assert.match(table(), /trips · \d+ match/);
+
+  run(`toggleTradeColumns()`);
+  assert.match(markup.get('content'), /Entry → exit/);
+  assert.deepEqual(strayValues(markup.get('content')), []);
+
+  run(`sortedTrips(filteredTrips())[0].entry = { account: { equity: 1000, marginPct: 12.5, freeMargin: 800, leverage: 10 },
+    confluence: { score: 0.42, state: 'bullish', aligned: true, byTf: {} },
+    suggestedStop: { price: 95, distancePct: 2 }, yourStop: { price: 97, distancePct: 1.2 },
+    stopVsSuggested: 0.6, stopLooked: true, errors: [] }; refreshTradesTable()`);
+  assert.match(table(), /0\.60× sugg/);
+  assert.deepEqual(strayValues(table()), []);
+
+  const csv = run('tradesCsv()').split('\n');
+  assert.equal(csv.length, run('filteredTrips().length') + 1);
+  assert.match(csv[0], /^symbol,side,opened_utc,.*mae_pct,mfe_pct/);
+  assert.ok(csv.slice(1).every(line => line.startsWith('ETHUSDT,Long,')));
+});
+
+test('every stop verdict renders on the Stops tab, and the tile badge follows hasStop', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`setView('stops')`);
+  await settle('volStopData && !volLoading', 'the stops');
+  run(`const base = volStopData.positions[0];
+    volStopData.positions = ['none', 'hedged', 'tight', 'wide', 'breakeven', 'locks', 'ok'].map(verdict => ({ ...base, verdict,
+      ratio: verdict === 'locks' ? null : 0.8, lockedPct: verdict === 'locks' ? 1.5 : null,
+      yourStop: ['none', 'hedged'].includes(verdict) ? null
+        : { price: 95, distancePct: 1.2, atrMultiple: 1.4, hit: { rate: 0.41, windows: 176, independent: 7, days: 8.3 } } }));
+    riskForceRender = true; render(lastData)`);
+  const html = markup.get('content');
+  for (const label of ['No stop', 'Hedged', 'Too tight', 'Too wide', 'Breakeven', 'Locks profit', 'OK']) assert.match(html, new RegExp(label));
+  assert.match(html, /hit within 24h in 41% of windows/);
+  assert.match(html, /1 without a stop · 1 too tight · 1 too wide/);
+  assert.deepEqual(strayValues(html), []);
+
+  run(`setView('tiles')`);
+  assert.equal((markup.get('content').match(/class="sl-alert"/g) || []).length, 3,
+    'ETH, ENA and SOL have no stop and no hedge; the BTC legs are a hedge and the long has a stop');
+});
+
+test('the calculators fill from a picked position, and its liquidation matches Stress and Binance', async () => {
+  const { markup, run, settle } = await bootPage();
+  const value = id => run(`document.getElementById('${id}').value`);
+  const text = id => run(`document.getElementById('${id}').textContent`);
+
+  run(`ctxPosition = lastData.binance.positions.find(p => p.symbol === 'ENAUSDC'); openCalc('liq')`);
+  await settle('calcEngine && riskBook?.pools && document.getElementById("liqAccPrice").textContent', 'the account-aware liq');
+  const P = 'riskBook.pools.find(P => P.marginAsset === "USDC")';
+  const stress = run(`riskEngine.liquidationDetail(${P}.pool, 'ENA', ${P}.marks, ${P}.opts).price`);
+  const reported = run(`${P}.liqCheck.find(x => x.key === 'ENAUSDC:LONG').reportedLiqPrice`);
+  assert.equal(text('liqAccPrice'), run(`fmtPrice(${stress})`));
+  assert.equal(text('liqAccReported'), run(`fmtPrice(${reported})`));
+  assert.ok(Math.abs(stress - reported) / reported < 1e-6, `${stress} vs ${reported}`);
+  assert.equal(value('liqEntry'), 0.27);
+  assert.equal(value('pnlLev'), 3);
+  assert.ok(value('liqMmr') > 0, 'the maintenance rate comes from the tier');
+
+  run(`document.getElementById('liqAddUsd').value = 500; calcLiq()`);
+  const after = parseFloat(text('liqAddPrice2').replace(/[$,]/g, ''));
+  assert.ok(after > stress, 'adding to the long moves its liquidation up');
+
+  run(`document.getElementById('avgTarget').value = 0.26; switchCalcTab('avg')`);
+  assert.match(text('avgLiq'), /^\$[\d.]+ \(−[\d.]+%\)$/);
+
+  run(`switchCalcTab('pnl')`);
+  assert.equal((run(`document.getElementById('pnlLadder').innerHTML`).match(/<tr>/g) || []).length, 7, 'header + six steps');
+
+  run(`switchCalcTab('size')`);
+  assert.ok(value('sizeEquity') > 0 && value('sizeLev') === 3);
+  run(`document.getElementById('sizeRisk').value = 1; document.getElementById('sizeStop').value = 0.24; calcSize()`);
+  assert.match(text('sizeRiskUsd'), /^\$[\d,.]+$/);
+  run(`document.getElementById('sizeStop').value = 0.3; calcSize()`);
+  assert.match(run(`document.getElementById('sizeWarn').innerHTML`), /wrong side/);
+
+  run(`switchCalcTab('be')`);
+  assert.equal(value('beInterval'), 4, 'ENA settles every 4h');
+  assert.equal(value('beFeeIn'), 0.05, "the account's taker rate");
+  assert.match(text('beExit'), /^\$0\.27\d*$/);
+
+  run(`pickCalcPosition(''); switchCalcTab('liq'); document.getElementById('liqEntry').value = 100;
+       document.getElementById('liqLev').value = 10; calcLiq()`);
+  assert.equal(run(`document.getElementById('liqManual').style.display`), '');
+  assert.match(run(`document.getElementById('liqPrice').innerHTML`), /\$90\.50/);
+  for (const id of ['liqAccPrice', 'liqAccDist', 'liqAddPrice2', 'avgLiq', 'pnlPnl', 'liqPrice', 'pnlLadder',
+                    'sizeQty', 'sizeMargin', 'beExit', 'beMove', 'beFees', 'beFundingUsd']) {
+    assert.doesNotMatch(String(text(id) ?? '') + run(`document.getElementById('${id}').innerHTML`), /undefined|NaN/, id);
+  }
+});
+
+test('every Journal sub-tab renders, with and without equity snapshots', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading && perfData.periods', 'the journal');
+
+  const tabs = ['overview', 'performance', 'behaviour', 'timing', 'symbols', 'costs'];
+  const renderAll = () => tabs.map(tab => {
+    run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`);
+    return [tab, markup.get('content')];
+  });
+  for (const [tab, html] of renderAll()) assert.deepEqual(strayValues(html), [], tab);
+
+  const overview = renderAll()[0][1];
+  assert.match(overview, /Today[\s\S]*This week[\s\S]*This month/);
+  assert.match(overview, /account —/, 'no snapshots yet');
+  assert.match(renderAll()[2][1], /What your habits cost[\s\S]*Added while underwater/);
+
+  run(`perfData.accountCurve = [0, 1, 2].map(i => ({ t: Date.now() - (3 - i) * 9e5, accountValue: 1000 + i * 10 }));
+       perfData.periods.today.account = { change: 20, since: Date.now() - 27e5, partial: true }`);
+  const withSnaps = renderAll()[0][1];
+  assert.match(withSnaps, /class="ov-account"/);
+  assert.match(withSnaps, /account \$20\.00 since/);
+  assert.deepEqual(strayValues(withSnaps), []);
+});
+
+test('the tool widgets open each tool and toggle back to the last positions view', async () => {
+  const { markup, run } = await bootPage();
+  assert.equal(run('TOOLS.every(t => VIEWS.includes(t.view))'), true);
+
+  run(`setView('list')`);
+  assert.equal(markup.get('sidebar').match(/class="tool-tile/g).length, 5);
+  assert.match(markup.get('content'), /class="tools-strip"/);
+  assert.doesNotMatch(markup.get('content'), /data-view="stress"/, 'tools left the tab strip');
+
+  run(`openTool('confluence')`);
+  assert.equal(run('posView'), 'confluence');
+  assert.match(markup.get('sidebar'), /tool-tile active" aria-current="page"[\s\S]*?Confluence/);
+  run(`openTool('confluence')`);
+  assert.equal(run('posView'), 'list', 'opening the open tool returns to the last positions view');
+});
+
+test('switched-off venues render as off, and the popover lists both switches', async () => {
+  const { markup, run } = await bootPage();
+  const setVenue = (venue, enabled) => fetch(`${base}/api/venues`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ venue, enabled })
+  });
+
+  await setVenue('hyperliquid', false);
+  await run('fetchData()');
+  assert.match(run('bulbClass()'), /^status-dot partial\b/);
+  for (const v of VIEWS) {
+    run(`posView = '${v}'; riskForceRender = true; render(lastData)`);
+    assert.deepEqual(strayValues(markup.get('content') + markup.get('sidebar')), [], v);
+  }
+  assert.match(markup.get('sidebar'), /<span class="b-label">HL<\/span><span class="b-val nu">off<\/span>/);
+  await run('loadVenues()');
+  assert.match(markup.get('venuePopover'), /Hyperliquid[\s\S]*off/);
+  assert.match(markup.get('venuePopover'), /checked/);
+
+  await setVenue('binance', false);
+  await run('fetchData()');
+  assert.match(run('bulbClass()'), /^status-dot off\b/);
+  run(`posView = 'tiles'; render(lastData)`);
+  assert.match(markup.get('content'), /Every exchange is switched off/);
+  run(`posView = 'stress'; riskForceRender = true; render(lastData)`);
+  assert.match(markup.get('content'), /Binance is switched off/);
+  assert.match(markup.get('sidebar'), /tool-tile[^"]* off"[^>]*>[\s\S]*?Stress/);
+
+  await setVenue('binance', true);
+  await setVenue('hyperliquid', true);
 });

@@ -18,7 +18,9 @@
       <div class="sidebar-header">
         <h1>Perpfolio</h1>
         <div class="sidebar-meta">
-          <span class="status-dot loading" id="statusDot"></span>
+          <button class="venue-bulb" id="venueBulb" onclick="toggleVenuePopover(event)" title="Exchanges — switch on or off" aria-haspopup="true" aria-expanded="false">
+            <span class="status-dot loading" id="statusDot"></span>
+          </button>
           <span id="statusText">Connecting…</span>
           <span class="health-chip" id="healthChip" hidden></span>
           <div style="display:flex;align-items:center;gap:4px;margin-left:auto">
@@ -30,6 +32,7 @@
             </button>
           </div>
         </div>
+        <div class="venue-popover" id="venuePopover" hidden></div>
       </div>
       <div id="sidebar"></div>
     </div>
@@ -64,11 +67,14 @@
         </div>
         <button class="calc-close" onclick="closeCalc('calcOverlay')">&#x2715;</button>
       </div>
+      <select class="calc-pick" id="calcPick" onchange="pickCalcPosition(this.value)" aria-label="Position"></select>
     </div>
     <div class="calc-tabs">
       <button class="calc-tab" id="tab-pnl" onclick="switchCalcTab('pnl')">P&amp;L</button>
       <button class="calc-tab" id="tab-avg" onclick="switchCalcTab('avg')">Avg Down/Up</button>
       <button class="calc-tab" id="tab-liq" onclick="switchCalcTab('liq')">Liq Price</button>
+      <button class="calc-tab" id="tab-size" onclick="switchCalcTab('size')">Size</button>
+      <button class="calc-tab" id="tab-be" onclick="switchCalcTab('be')">Break-even</button>
     </div>
 
     <!-- ── P&L tab ── -->
@@ -96,7 +102,7 @@
       </div>
       <div class="calc-field">
         <label>
-          <span id="pnlSizeLbl">Amount invested (USDT)</span>
+          <span id="pnlSizeLbl">Amount invested (<span class="calc-quote">USD</span>)</span>
           <span class="lbl-toggle" onclick="togglePnlSizeMode()">Switch to qty</span>
         </label>
         <input id="pnlInvested" type="number" placeholder="0.00" oninput="calcPnl()">
@@ -117,6 +123,7 @@
         <div class="calc-res-row" id="pnlPnlRow"><span class="calc-res-label">P&amp;L</span><span class="calc-res-val" id="pnlPnl">—</span></div>
         <div class="calc-res-row" id="pnlRoiRow"><span class="calc-res-label">Return on margin</span><span class="calc-res-val" id="pnlRoi">—</span></div>
         <div class="calc-res-row" id="pnlExitRow" style="display:none"><span class="calc-res-label">Exit price needed</span><span class="calc-res-val" id="pnlExitPrice">—</span></div>
+        <div id="pnlLadder"></div>
       </div>
     </div>
 
@@ -132,7 +139,7 @@
       </div>
       <div class="calc-field">
         <label>
-          <span id="avgSizeLbl">Amount invested (USDT)</span>
+          <span id="avgSizeLbl">Amount invested (<span class="calc-quote">USD</span>)</span>
           <span class="lbl-toggle" onclick="toggleAvgSizeMode()">Switch to qty</span>
         </label>
         <input id="avgInvested" type="number" placeholder="0.00" oninput="calcAvg()">
@@ -146,17 +153,141 @@
         <input id="avgTarget" type="number" placeholder="0.00" oninput="calcAvg()">
       </div>
       <div class="calc-result" id="avgResult">
-        <div class="calc-res-row"><span class="calc-res-label">Additional USDT needed</span><span class="calc-res-val" id="avgAdd">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Additional USD needed</span><span class="calc-res-val" id="avgAdd">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">Additional margin</span><span class="calc-res-val" id="avgAddMargin">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">New position size</span><span class="calc-res-val" id="avgNewSize">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">Achieved average</span><span class="calc-res-val" id="avgAchieved">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">Total notional</span><span class="calc-res-val" id="avgTotal">—</span></div>
+        <div class="calc-res-row" id="avgLiqRow" style="display:none"><span class="calc-res-label">Liq after this add</span><span class="calc-res-val" id="avgLiq">—</span></div>
         <div id="avgWarnWrap"></div>
+      </div>
+    </div>
+
+    <!-- ── Size from risk tab ── -->
+    <div class="calc-body" id="calcBody-size" style="display:none">
+      <div class="calc-field-row">
+        <div class="calc-field">
+          <label>Side</label>
+          <select id="sizeSide" onchange="calcSize()">
+            <option value="Long">Long</option>
+            <option value="Short">Short</option>
+          </select>
+        </div>
+        <div class="calc-field">
+          <label>Leverage</label>
+          <input id="sizeLev" type="number" min="1" max="200" placeholder="1" oninput="calcSize()">
+        </div>
+      </div>
+      <div class="calc-field-row">
+        <div class="calc-field">
+          <label>Equity (<span class="calc-quote">USD</span>)</label>
+          <input id="sizeEquity" type="number" placeholder="0.00" oninput="calcSize()">
+        </div>
+        <div class="calc-field">
+          <label>Risk (% of equity)</label>
+          <input id="sizeRisk" type="number" placeholder="1" step="0.1" value="1" oninput="calcSize()">
+        </div>
+      </div>
+      <div class="calc-field-row">
+        <div class="calc-field">
+          <label>Entry price</label>
+          <input id="sizeEntry" type="number" placeholder="0.00" oninput="calcSize()">
+        </div>
+        <div class="calc-field">
+          <label>Stop price <span id="sizeStopHint" style="color:var(--text3);font-size:9px;text-transform:none;letter-spacing:0"></span></label>
+          <input id="sizeStop" type="number" placeholder="0.00" oninput="calcSize()">
+        </div>
+      </div>
+      <div class="calc-result" id="sizeResult">
+        <div class="calc-res-row"><span class="calc-res-label">Risk at the stop</span><span class="calc-res-val" id="sizeRiskUsd">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Stop distance</span><span class="calc-res-val" id="sizeStopPct">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Position size</span><span class="calc-res-val" id="sizeQty">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Notional</span><span class="calc-res-val" id="sizeNotional">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Margin at this leverage</span><span class="calc-res-val" id="sizeMargin">—</span></div>
+      </div>
+      <div id="sizeWarn"></div>
+    </div>
+
+    <!-- ── Break-even tab ── -->
+    <div class="calc-body" id="calcBody-be" style="display:none">
+      <div class="calc-field-row">
+        <div class="calc-field">
+          <label>Side</label>
+          <select id="beSide" onchange="calcBreakEven()">
+            <option value="Long">Long</option>
+            <option value="Short">Short</option>
+          </select>
+        </div>
+        <div class="calc-field">
+          <label>Hours held</label>
+          <input id="beHours" type="number" placeholder="24" value="24" oninput="calcBreakEven()">
+        </div>
+      </div>
+      <div class="calc-field-row">
+        <div class="calc-field">
+          <label>Entry price</label>
+          <input id="beEntry" type="number" placeholder="0.00" oninput="calcBreakEven()">
+        </div>
+        <div class="calc-field">
+          <label>Size (units)</label>
+          <input id="beQty" type="number" placeholder="0.00" oninput="calcBreakEven()">
+        </div>
+      </div>
+      <div class="calc-field-row">
+        <div class="calc-field">
+          <label>Entry fee (%)</label>
+          <input id="beFeeIn" type="number" placeholder="0.05" step="0.01" oninput="calcBreakEven()">
+        </div>
+        <div class="calc-field">
+          <label>Exit fee (%)</label>
+          <input id="beFeeOut" type="number" placeholder="0.05" step="0.01" oninput="calcBreakEven()">
+        </div>
+      </div>
+      <div class="calc-field-row">
+        <div class="calc-field">
+          <label>Funding rate (% per settlement)</label>
+          <input id="beFunding" type="number" placeholder="0.01" step="0.001" oninput="calcBreakEven()">
+        </div>
+        <div class="calc-field">
+          <label>Settles every (hours)</label>
+          <input id="beInterval" type="number" placeholder="8" value="8" oninput="calcBreakEven()">
+        </div>
+      </div>
+      <div class="calc-result" id="beResult">
+        <div class="calc-res-row"><span class="calc-res-label">Break-even exit</span><span class="calc-res-val" id="beExit">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Move needed</span><span class="calc-res-val" id="beMove">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Fees, both sides</span><span class="calc-res-val" id="beFees">—</span></div>
+        <div class="calc-res-row"><span class="calc-res-label">Funding for the hold</span><span class="calc-res-val" id="beFundingUsd">—</span></div>
       </div>
     </div>
 
     <!-- ── Liquidation Price tab ── -->
     <div class="calc-body" id="calcBody-liq" style="display:none">
+      <div id="liqAccount" style="display:none">
+        <p class="calc-method">Account-aware: the whole cross pool, hedge legs and margin tiers — the Stress tab's solve</p>
+        <div class="calc-result show">
+          <div class="calc-res-row"><span class="calc-res-label">Liquidation price</span><span class="calc-res-val" id="liqAccPrice">—</span></div>
+          <div class="calc-res-row"><span class="calc-res-label">Distance from mark</span><span class="calc-res-val" id="liqAccDist">—</span></div>
+          <div class="calc-res-row"><span class="calc-res-label">Binance reports</span><span class="calc-res-val" id="liqAccReported">—</span></div>
+          <p class="calc-method" id="liqAccNote"></p>
+        </div>
+        <div class="calc-field-row" style="margin-top:12px">
+          <div class="calc-field">
+            <label>What if I add (<span class="calc-quote">USD</span>)</label>
+            <input id="liqAddUsd" type="number" placeholder="0.00" oninput="calcLiq()">
+          </div>
+          <div class="calc-field">
+            <label>At price</label>
+            <input id="liqAddPrice" type="number" placeholder="mark" oninput="calcLiq()">
+          </div>
+        </div>
+        <div class="calc-result" id="liqAddResult">
+          <div class="calc-res-row"><span class="calc-res-label">Liquidation after the add</span><span class="calc-res-val" id="liqAddPrice2">—</span></div>
+          <div class="calc-res-row"><span class="calc-res-label">Distance from mark</span><span class="calc-res-val" id="liqAddDist">—</span></div>
+        </div>
+      </div>
+      <div id="liqManual">
+      <p class="calc-method">Isolated estimate: entry moved by 1/leverage less the maintenance rate</p>
       <div class="calc-field-row">
         <div class="calc-field">
           <label>Side</label>
@@ -175,13 +306,14 @@
         <input id="liqEntry" type="number" placeholder="0.00" oninput="calcLiq()">
       </div>
       <div class="calc-field">
-        <label>Maintenance margin rate (%) <span style="color:var(--text3);font-size:9px;text-transform:none;letter-spacing:0">default 0.5%</span></label>
+        <label>Maintenance margin rate (%) <span id="liqMmrHint" style="color:var(--text3);font-size:9px;text-transform:none;letter-spacing:0">default 0.5%</span></label>
         <input id="liqMmr" type="number" placeholder="0.5" step="0.1" oninput="calcLiq()">
       </div>
       <div class="calc-result" id="liqResult">
         <div class="calc-res-row"><span class="calc-res-label">Liquidation price</span><span class="calc-res-val" id="liqPrice">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">Distance to liq</span><span class="calc-res-val" id="liqDist">—</span></div>
         <div class="calc-res-row"><span class="calc-res-label">Max adverse move</span><span class="calc-res-val" id="liqMove">—</span></div>
+      </div>
       </div>
     </div>
   </div>
@@ -273,6 +405,8 @@
 <!-- Classic scripts, in this order: they share one global scope (inline onclick handlers need
      globals), and later files rely on earlier ones at load time. Never async. -->
 <script src="/js/core.js"></script>
+<script src="/js/venues.js"></script>
+<script src="/js/tools-nav.js"></script>
 <script src="/js/positions.js"></script>
 <script src="/js/tiles-threads.js"></script>
 <script src="/js/stops.js"></script>
@@ -280,6 +414,7 @@
 <script src="/js/hedge-ledger.js"></script>
 <script src="/js/confluence-view.js"></script>
 <script src="/js/journal.js"></script>
+<script src="/js/journal-trades.js"></script>
 <script src="/js/unwind.js"></script>
 <script src="/js/render.js"></script>
 <script src="/js/calculators.js"></script>

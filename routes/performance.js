@@ -1,9 +1,13 @@
 import * as ta from '../trade-analytics.js';
+import { habitCosts } from '../habits.js';
 import { analytics } from '../lib/analytics.js';
+import { getBinanceData } from '../lib/binance-account.js';
+import { readEquitySnapshots } from '../lib/equity-snapshots.js';
+import { enrichedTrips } from '../lib/trip-enrichment.js';
 import { syncState } from '../lib/history-sync.js';
 
 export function register(app) {
-  app.get('/api/performance', (req, res) => {
+  app.get('/api/performance', async (req, res) => {
     try {
       const { income, trips, stillOpen, nonQuoteFees, orphans, execution } = analytics();
       if (!income.length && !trips.length) {
@@ -18,6 +22,13 @@ export function register(app) {
 
       const equity = ta.equityCurve(incomeWindow);
       const totals = ta.incomeTotals(incomeWindow);
+      const now = Date.now();
+      const starts = ta.periodStarts(now, parseInt(req.query.tz, 10) || 0);
+      const snapshots = readEquitySnapshots();
+      const bn = await getBinanceData();
+      const periodsNet = ta.periodNet(income, trips, starts);
+      const periodsAccount = ta.accountChange(snapshots, income, starts);
+      const periods = Object.fromEntries(Object.keys(starts).map(k => [k, { ...periodsNet[k], account: periodsAccount[k] }]));
 
       res.json({
         ok: true,
@@ -57,10 +68,10 @@ export function register(app) {
             .reduce((acc, r) => { acc[r.symbol] = (acc[r.symbol] || 0) + Math.abs(parseFloat(r.income)); return acc; }, {}))
           .map(([symbol, v]) => ({ symbol, fees: +v.toFixed(2) }))
           .sort((a, b) => b.fees - a.fees),
-
-        worstTrips: [...inWindow].sort((a, b) => a.net - b.net).slice(0, 10),
-        bestTrips: [...inWindow].sort((a, b) => b.net - a.net).slice(0, 10),
-        recentTrips: [...inWindow].sort((a, b) => b.closeTime - a.closeTime).slice(0, 25),
+        periods,
+        walletCurve: bn.disabled ? [] : ta.walletCurve(incomeWindow, bn.walletBalance, now),
+        accountCurve: snapshots.filter(s => s.t >= cutoff).map(s => ({ t: s.t, accountValue: s.accountValue })),
+        habits: habitCosts(enrichedTrips().trips.filter(t => t.closeTime >= cutoff)),
         syncedAt: syncState.finishedAt
       });
     } catch (err) {

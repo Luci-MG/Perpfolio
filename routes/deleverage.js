@@ -1,5 +1,6 @@
 import * as risk from '../risk-engine.js';
 import { calibrate, marksOf, resolvePools } from '../lib/pools.js';
+import { isEnabled, venueOffBody } from '../lib/venues.js';
 
 export function register(app) {
   // ── Unwind planner ────────────────────────────────────────────────────────────
@@ -8,6 +9,7 @@ export function register(app) {
   // becomes liquidation buffer. Free margin is therefore capped by equity no matter what is
   // closed, which is why every response leads with the ceiling.
   app.get('/api/deleverage', async (req, res) => {
+    if (!isEnabled('binance')) return res.status(409).json(venueOffBody('binance'));
     try {
       const objective = req.query.objective === 'buffer' ? 'buffer' : 'free';
       const feeRate   = Math.max(0, Math.min(0.01, parseFloat(req.query.fee) || 0.00045));

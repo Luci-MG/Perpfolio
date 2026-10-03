@@ -11,7 +11,7 @@ import * as risk from '../risk-engine.js';
 
 export const NOW = Date.UTC(2026, 8, 1, 0, 0, 0);
 const HOUR = 3600e3;
-const INTERVAL_MS = { '15m': 15 * 60e3, '1h': HOUR, '2h': 2 * HOUR, '4h': 4 * HOUR, '1d': 24 * HOUR };
+const INTERVAL_MS = { '1m': 60e3, '5m': 5 * 60e3, '15m': 15 * 60e3, '1h': HOUR, '2h': 2 * HOUR, '4h': 4 * HOUR, '1d': 24 * HOUR };
 
 const TIERS = [
   { bracket: 1, notionalFloor: 0, notionalCap: 50000, maintMarginRatio: 0.004, cum: 0, initialLeverage: 125 },
@@ -85,6 +85,21 @@ function klines(symbol, interval, limit) {
   });
 }
 
+const pathPrice = (symbol, t) => SYMBOLS[symbol].base * (1 + 0.03 * Math.sin(t / (36 * HOUR)) + 0.01 * Math.sin(t / (5 * HOUR)));
+
+function klinesRange(symbol, interval, start, end, limit) {
+  const step = INTERVAL_MS[interval];
+  const last = Math.min(end ?? NOW, NOW);
+  const first = start != null ? Math.ceil(start / step) * step : Math.floor(last / step) * step - (limit - 1) * step;
+  const out = [];
+  for (let t = first; t <= last && out.length < limit; t += step) {
+    const open = pathPrice(symbol, t), close = pathPrice(symbol, t + step);
+    out.push([t, String(open), String(Math.max(open, close) * 1.002), String(Math.min(open, close) * 0.998),
+      String(close), '1000', t + step - 1, String(1000 * close), 100, '500', String(500 * close), '0']);
+  }
+  return out;
+}
+
 function periodRows(symbol, period, limit, value) {
   const step = INTERVAL_MS[period] || HOUR;
   const r = rng(seedOf(symbol + period + value.name));
@@ -109,6 +124,8 @@ function marksFor(quote) {
     .map(p => [p.symbol.replace(quote, ''), mark(p.symbol)]));
 }
 
+const inSingleAssetTotals = quote => quote === 'USDT';
+
 function accountState() {
   const assets = [];
   const positions = [];
@@ -129,6 +146,7 @@ function accountState() {
       positions.push({ symbol: d.symbol, positionSide: d.positionSide, maintMargin: String(d.mm),
         positionInitialMargin: String(d.im) });
     }
+    if (!inSingleAssetTotals(quote)) continue;
     tWallet += WALLETS[quote]; tMargin += state.equity; tIm += state.im + OPEN_ORDER_IM[quote];
     tMm += state.mm; tAvail += available; tUpnl += upnl;
   }
@@ -175,14 +193,14 @@ function tradeRows(symbol) {
   for (let k = 0; k < 12; k++) {
     const t = NOW - (40 - k * 3) * 24 * HOUR;
     const win = k % 3 !== 0;
-    out.push({ symbol, id: id++, side: 'BUY', positionSide: 'LONG', price: String(px), qty: '0.1',
+    out.push({ symbol, id, orderId: id++, side: 'BUY', positionSide: 'LONG', price: String(px), qty: '0.1',
       realizedPnl: '0', commission: '0.4', commissionAsset: 'USDT', time: t, maker: false });
     if (k % 4 === 1) {
-      out.push({ symbol, id: id++, side: 'BUY', positionSide: 'LONG', price: String(px * 0.98), qty: '0.1',
+      out.push({ symbol, id, orderId: id++, side: 'BUY', positionSide: 'LONG', price: String(px * 0.98), qty: '0.1',
         realizedPnl: '0', commission: '0.4', commissionAsset: 'USDT', time: t + HOUR, maker: true });
     }
     const qty = k % 4 === 1 ? '0.2' : '0.1';
-    out.push({ symbol, id: id++, side: 'SELL', positionSide: 'LONG', price: String(px * (win ? 1.01 : 0.99)), qty,
+    out.push({ symbol, id, orderId: id++, side: 'SELL', positionSide: 'LONG', price: String(px * (win ? 1.01 : 0.99)), qty,
       realizedPnl: String((win ? 1 : -1) * px * 0.001 * (k % 4 === 1 ? 2 : 1)), commission: '0.4',
       commissionAsset: 'USDT', time: t + 6 * HOUR, maker: k % 2 === 0 });
   }
@@ -229,7 +247,12 @@ function binance(url) {
   }
   if (path === '/fapi/v1/klines') {
     if (!known(symbol)) return { status: 400, body: { code: -1121, msg: 'Invalid symbol.' } };
-    return klines(symbol, q.get('interval'), Math.min(1000, parseInt(q.get('limit') || '500', 10)));
+    const limit = Math.min(1500, parseInt(q.get('limit') || '500', 10));
+    if (q.has('startTime') || q.has('endTime')) {
+      const num = k => (q.has(k) ? parseInt(q.get(k), 10) : null);
+      return klinesRange(symbol, q.get('interval'), num('startTime'), num('endTime'), limit);
+    }
+    return klines(symbol, q.get('interval'), Math.min(1000, limit));
   }
   if (path === '/fapi/v1/depth') {
     const m = mark(symbol);
@@ -239,8 +262,10 @@ function binance(url) {
   if (path === '/fapi/v1/fundingRate') {
     const v = SYMBOLS[symbol];
     if (!v) return [];
+    const from = parseInt(q.get('startTime') || '0', 10), to = parseInt(q.get('endTime') || String(NOW), 10);
     return Array.from({ length: 120 }, (_, i) => ({ symbol, fundingTime: NOW - (120 - i) * v.intervalHours * HOUR,
-      fundingRate: String(v.fundingRate * (1 + 0.3 * Math.sin(i / 5))) }));
+      fundingRate: String(v.fundingRate * (1 + 0.3 * Math.sin(i / 5))), markPrice: String(v.base) }))
+      .filter(r => r.fundingTime >= from && r.fundingTime <= to);
   }
   if (path === '/futures/data/openInterestHist') {
     return periodRows(symbol, q.get('period'), 500, function oi(i, r) {
@@ -297,12 +322,14 @@ function hyperliquid(body) {
 export function installFakeExchange() {
   const realFetch = globalThis.fetch;
   const calls = [];
+  const signedCalls = [];
   let bannedUntil = 0;
 
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
     if (url.hostname === 'fapi.binance.com') {
       calls.push(url.pathname);
+      if (url.searchParams.has('signature')) signedCalls.push(url.pathname);
       if (Date.now() < bannedUntil) return json({ code: -1003, msg: 'banned' }, { status: 418, headers: { 'Retry-After': '1' } });
       const out = binance(url);
       return out?.status ? json(out.body, { status: out.status }) : json(out);
@@ -316,6 +343,7 @@ export function installFakeExchange() {
 
   return {
     calls,
+    signedCalls,
     ban(seconds) { bannedUntil = Date.now() + seconds * 1000; },
     restore() { globalThis.fetch = realFetch; }
   };

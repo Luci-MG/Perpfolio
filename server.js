@@ -7,7 +7,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { fundingMeta, getBinanceLeverageBrackets, refreshFundingMeta, refreshSymbolFilters, symbolFilters } from './lib/binance-meta.js';
 import { BINANCE_API_KEY, PORT } from './lib/config.js';
-import { reconcileOrders, startBinanceUserDataStream, startStreamWatchdog } from './lib/orders-stream.js';
+import { captureEntryContext } from './lib/entry-context.js';
+import { startEquitySnapshots } from './lib/equity-snapshots.js';
+import { onFill, reconcileOrders, startBinanceUserDataStream, startStreamWatchdog } from './lib/orders-stream.js';
+import { isEnabled } from './lib/venues.js';
 import { register as registerDashboard } from './routes/dashboard.js';
 import { register as registerVolstops } from './routes/volstops.js';
 import { register as registerRiskbook } from './routes/riskbook.js';
@@ -18,6 +21,8 @@ import { register as registerDeleverage } from './routes/deleverage.js';
 import { register as registerConfluence } from './routes/confluence.js';
 import { register as registerAssets } from './routes/assets.js';
 import { register as registerHealth } from './routes/health.js';
+import { register as registerVenues } from './routes/venues.js';
+import { register as registerTrips } from './routes/trips.js';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,11 +33,13 @@ registerVolstops(app);
 registerRiskbook(app);
 registerHistory(app);
 registerPerformance(app);
+registerTrips(app);
 registerHedgeledger(app);
 registerDeleverage(app);
 registerConfluence(app);
 registerAssets(app);
 registerHealth(app);
+registerVenues(app);
 
 export { app, reconcileOrders };
 
@@ -42,10 +49,12 @@ const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPat
 
 function startServices() {
   startStreamWatchdog();
+  startEquitySnapshots();
+  onFill(o => captureEntryContext(o).catch(err => console.warn('[entry] capture failed:', err.message)));
 
   // Warm the slow, long-lived caches at boot: exchangeInfo is a large payload and the funding
   // table is a second round-trip, and paying for both on a user's first panel open cost 13s.
-  (async () => {
+  if (isEnabled('binance')) (async () => {
     try {
       const [, , brackets] = await Promise.all([
         refreshSymbolFilters(), refreshFundingMeta(), getBinanceLeverageBrackets()

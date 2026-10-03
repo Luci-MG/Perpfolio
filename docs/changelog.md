@@ -1,4 +1,97 @@
-# Changelog and roadmap
+# Changelog
+
+## Journal: Overview and Behaviour (2026-10-03)
+
+- **Fixed:** Overview counted unrealised PnL twice — it read the margin balance as the wallet
+  and added open positions on top. `walletBalance` is now sent and the identity is tested.
+- Overview leads with Today / This week / This month in the reader's timezone — realised net
+  from the ledger, account change from snapshots — and a chart of wallet (rebuilt exactly
+  from the ledger) against account value (snapshots every 15 minutes from now on).
+- Behaviour leads with what each habit cost: adding while underwater, sizing up after a loss,
+  winners turned losers, holding losers — each against a comparison group, with n.
+
+## Calculators, part 2: ladder, Size and Break-even (2026-10-03)
+
+- The P&L tab shows P&L and return at ±2/5/10% around the exit price.
+- **Size**: quantity, notional and margin that risk a chosen % of equity at a stop,
+  pre-filled with the Stops tab's suggestion. **Break-even**: the exit that covers both fees
+  and the funding for the hold, from the account's taker rate and the position's funding.
+- `pnlLadder`, `sizeFromRisk` and `breakEven` in `calc-engine.js`, unit-tested.
+
+## Calculators, part 1: live and account-aware (2026-10-03)
+
+- A position picker fills every calculator tab from a live position, including the
+  maintenance rate for its size tier.
+- The Liq tab is account-aware for Binance positions — the Stress tab's cross-pool solve,
+  with Binance's reported price beside it and a *what if I add* re-solve — and the Avg tab
+  shows liquidation after the add. The old flat formula was 54–98% off on every live leg.
+- The arithmetic moved into `calc-engine.js`, served at `/calc-engine.js` and unit-tested;
+  `addToPosition` joins the risk engine.
+
+## Stops: real vs suggested (2026-10-03)
+
+- Every Stops tile shows your real stop beside the suggestion: distance from mark, in ATRs,
+  as a multiple of the suggestion, and how often a 24h move that size happened on the
+  symbol's own candles — with a verdict: no stop, hedged, too tight, too wide, breakeven,
+  locks profit, OK. The combined panel counts them. No extra request.
+- A stop at entry read "too tight" on a short whose 24h hit rate was 60.2%: "locks" needed
+  strictly positive locked profit, so a breakeven stop fell through to the risk checks. A
+  stop within ±0.05% of entry is now `breakeven` and exempt from them.
+- One rule for "your stop" (a closing `Stop…` order) across the Stops tab, the entry
+  capture and the tiles' badge, via `hasStop` on `/api/dashboard`. The badge no longer counts
+  a reduce-only limit order — a take-profit — as a stop.
+- New pure engine `stop-check.js`; `legStop` moved there from `trip-context.js`.
+
+## Journal: context at entry (2026-10-03)
+
+- Every increasing fill on the order stream records, once per order: equity, margin %, free
+  margin, leverage, the Confluence reading, the suggested stop, and five minutes later your
+  stop and its ratio to the suggestion. Joined to trips by the opening orderId; shown under
+  *More columns* and in the CSV. Captured only while the server runs.
+- The Confluence and Stops calculations moved out of their routes into
+  `lib/confluence-reading.js` and `lib/stop-suggestion.js`, so the capture runs the same
+  code as the tabs; route output is byte-identical (golden snapshot). The stop layers are
+  now named helpers, and the stream's event handling is `applyUserDataEvent` with an
+  `onFill` hook.
+
+## Journal: richer Trades (2026-10-03)
+
+- The Trades sub-tab is one table of every round trip: opened and peak size, adds, held,
+  net after fees and funding, MAE / MFE, session, hedged at entry; *More columns* adds ATR,
+  BTC trend, entry → exit, fees, funding, fills and maker %. Sort, filter, CSV export.
+- `GET /api/trips`. Context is fetched by a new last phase of the history sync and cached
+  per trip, versioned; funding for hedged legs is split from Binance's net row and sums to it
+  exactly. `/api/performance` drops its three trip lists.
+- New pure engine `trip-context.js`; `buildRoundTrips` also returns each trip's size steps.
+
+## Tools in the sidebar (2026-10-03)
+
+- Stops, Stress, Unwind, Journal and Confluence moved from the tab strip to **tool widgets**
+  in the sidebar — icon and name, three over two. Clicking the open tool returns to the last
+  positions view; below 900px they sit in a strip above the content.
+- One `TOOLS` table in `public/js/tools-nav.js` replaces the three hand-written lists of tool
+  views in `render.js`.
+- A launcher list with a live hint per row was built first and dropped: too much on screen.
+
+## Venue switch (2026-10-03)
+
+- **Each exchange can be switched off from the status bulb**, and an exchange that is off is
+  never called: no account read, no candles, and for Binance no order stream, reconcile or
+  warm-up. Saved in `data/settings.json`; Hyperliquid defaults to off without a wallet — it
+  used to send four calls per poll with an empty `user`.
+- `GET`/`POST /api/venues` (JSON only); Binance-only routes answer `409 { disabled: true }`.
+- Health ignores an exchange that is off. The bulb shows a ring when one is off.
+- The route tests count requests per venue: zero for one that is off, on every route.
+
+## USDC collateral (2026-10-03)
+
+- **Binance equity left out the USDC pool.** In single-asset mode every account total covers
+  USDT only (Binance docs, confirmed on the live account: USDT + USDC held, three
+  USDC-margined positions, totals equal to the USDT pool). Equity, margin used, maintenance
+  and free margin now sum the collateral pools; `/api/dashboard` returns `binance.assets`
+  for a per-asset view later — the sidebar split was tried and dropped as too busy.
+- The fake exchange follows the same rule, so the route test fails if USDC is dropped.
+- `baseAsset` in `routes/volstops.js` strips `/USDC`; calculator labels say USD, not USDT.
 
 ## Maintainability restructure (2026-09-29, after the review)
 
@@ -56,23 +149,5 @@ status, remembered view, 900px breakpoint.
 ### Deliberately not applied
 - **Loopback binding and a POST-only sync start** — proposed, declined for now (see *Known gaps*).
 
-### Next, ranked by value for effort
-1. ~~**`/api/health` + a small status chip**~~ — done, see *Maintainability restructure* below.
-2. **Funding-adjusted PnL per trip** — attach `FUNDING_FEE` rows to the open trip by symbol and
-   time. On a hedged book held for days, carry is part of the result. Low effort.
-3. **Per-trip notes and tags** — `data/annotations.ndjson` keyed `symbol:positionSide:openTime`,
-   one POST route, one input. Makes the Behaviour tab actionable. Low effort.
-4. **Server-side alerts** — kill distance, free margin → 0, ADL quantile ≥ 3, order-feed drift,
-   evaluated on the shared snapshot and pushed by webhook.
-5. **`!markPrice@arr@1s` market stream** for marks and funding — replaces the premiumIndex
-   poll and gives the Stress tab live marks.
-6. **Piecewise-analytic kill prices** — exact by construction and ~100× fewer evaluations per
-   slider frame; keep the scan as the cross-check.
-7. **Regime-conditional and walk-forward confluence calibration** — split records by regime,
-   fit on the first 70% of bars and report on the last 30%.
-8. **MAE/MFE per trip from 1h klines** — whether losers were ever winners, whether stops were
-   too tight. Medium effort.
-9. **Keep controls visible on every tab's error state** — Stress, Journal and Unwind still
-   replace their controls with the error, so the input that caused it is gone.
-10. **Keyboard access** — `role="button"`/`tabindex` on tiles and calc tiles, focus trap and
-    focus return in drawers.
+### Next
+Moved to [`roadmap.md`](roadmap.md).

@@ -233,20 +233,17 @@ function render(data) {
     <button class="view-tab${posView==='tiles'?' active':''}" data-view="tiles" onclick="setView('tiles')">Tiles</button>
     <button class="view-tab${posView==='list'?' active':''}" data-view="list" onclick="setView('list')">List</button>
     <button class="view-tab${posView==='orders'?' active':''}" data-view="orders" onclick="setView('orders')">Orders${totalOrders ? ` <span style="background:var(--surface2);border-radius:10px;padding:0 5px;font-size:10px">${totalOrders}</span>` : ''}</button>
-    <button class="view-tab${posView==='stops'?' active':''}" data-view="stops" onclick="setView('stops')">Stops</button>
-    <button class="view-tab${posView==='stress'?' active':''}" data-view="stress" onclick="setView('stress')">Stress</button>
-    <button class="view-tab${posView==='unwind'?' active':''}" data-view="unwind" onclick="setView('unwind')">Unwind</button>
-    <button class="view-tab${posView==='journal'?' active':''}" data-view="journal" onclick="setView('journal')">Journal</button>
-    <button class="view-tab${posView==='confluence'?' active':''}" data-view="confluence" onclick="setView('confluence')">Confluence</button>
   </div>`;
 
-  const exchTabsHtml = `<div class="view-tabs">
+  const exchTabsHtml = venuesOn().length < 2 ? '' : `<div class="view-tabs">
     <button class="view-tab${exchFilter.has('hyperliquid')?' active':''}" data-exch="hyperliquid" onclick="toggleExch('hyperliquid')" style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--hl);flex-shrink:0;display:inline-block"></span>HL</button>
     <button class="view-tab${exchFilter.has('binance')?' active':''}" data-exch="binance" onclick="toggleExch('binance')" style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--bn);flex-shrink:0;display:inline-block"></span>BN</button>
   </div>`;
 
-  const showHL = exchFilter.has('hyperliquid');
-  const showBN = exchFilter.has('binance');
+  const shownVenues = venuesOn().filter(v => exchFilter.has(v));
+  const shown = shownVenues.length ? shownVenues : venuesOn();
+  const showHL = shown.includes('hyperliquid');
+  const showBN = shown.includes('binance');
 
   const filteredPositions = [
     ...(showHL ? data.hyperliquid.positions : []),
@@ -277,9 +274,9 @@ function render(data) {
             ? renderJournal()
             : posView === 'confluence'
               ? renderConfluence()
-              : renderPositions(filteredPositions);
+              : shown.length ? renderPositions(filteredPositions) : allVenuesOffHtml();
 
-  let cardHeader;
+  let cardHeader = '';
   if (showHL && showBN) {
     cardHeader = `<div class="exch-header" style="gap:0">
       <span style="display:flex;align-items:center;gap:8px;flex:1">
@@ -310,7 +307,7 @@ function render(data) {
         <span>Margin: ${data.hyperliquid.marginPct}%</span>
       </span>
     </div>`;
-  } else {
+  } else if (showBN) {
     cardHeader = `<div class="exch-header">
       <span class="exch-dot" style="background:var(--bn)"></span>
       <span class="exch-name">Binance</span>
@@ -323,16 +320,17 @@ function render(data) {
   }
 
   const mainContent = `
+    ${renderToolsStrip()}
     <div class="section-bar">
       <div style="display:flex;align-items:center;gap:8px">
         <p class="section-label" style="margin:0">${sectionLabel}</p>
-        ${['stress', 'unwind', 'journal', 'confluence'].includes(posView) ? '' : exchTabsHtml}
+        ${isToolView(posView) && !toolFor(posView).exchangeFilter ? '' : exchTabsHtml}
       </div>
       ${tabsHtml}
     </div>
 
     <div class="card" style="margin-bottom:24px">
-      ${['stops', 'stress', 'unwind', 'journal', 'confluence'].includes(posView) ? '' : cardHeader}
+      ${isToolView(posView) ? '' : cardHeader}
       ${unifiedContent}
     </div>
 
@@ -344,8 +342,8 @@ function render(data) {
         <div class="label">Total equity</div>
         <div class="val">${fmtUsd(s.totalEquity)}</div>
         <div class="breakdown">
-          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${fmtUsd(data.hyperliquid.equity)}</span></div>
-          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${fmtUsd(data.binance.equity)}</span></div>
+          <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span>${offOr('hyperliquid', `<span class="b-val">${fmtUsd(data.hyperliquid.equity)}</span>`)}</div>
+          <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span>${offOr('binance', `<span class="b-val">${fmtUsd(data.binance.equity)}</span>`)}</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -353,25 +351,26 @@ function render(data) {
           <div class="label">uPnL</div>
           <div class="val ${upnlNum>=0?'up':'dn'}" style="font-size:16px">${upnlNum>=0?'+':'−'}${fmtUsd(Math.abs(upnlNum))}</div>
           <div class="breakdown">
-            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val ${hlUpnl>=0?'up':'dn'}">${hlUpnl>=0?'+':'−'}${fmtUsd(Math.abs(hlUpnl))}</span></div>
-            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val ${bnUpnl>=0?'up':'dn'}">${bnUpnl>=0?'+':'−'}${fmtUsd(Math.abs(bnUpnl))}</span></div>
+            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span>${offOr('hyperliquid', `<span class="b-val ${hlUpnl>=0?'up':'dn'}">${hlUpnl>=0?'+':'−'}${fmtUsd(Math.abs(hlUpnl))}</span>`)}</div>
+            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span>${offOr('binance', `<span class="b-val ${bnUpnl>=0?'up':'dn'}">${bnUpnl>=0?'+':'−'}${fmtUsd(Math.abs(bnUpnl))}</span>`)}</div>
           </div>
         </div>
         <div class="metric clickable" onclick="openExpDrawer()" title="Click to see exposure breakdown">
           <div class="label">Exposure</div>
           <div class="val" style="font-size:16px">${fmtUsd(s.totalExposure)}</div>
           <div class="breakdown">
-            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${fmtUsd(s.hlExposure)}</span></div>
-            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${fmtUsd(s.bnExposure)}</span></div>
+            <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span>${offOr('hyperliquid', `<span class="b-val">${fmtUsd(s.hlExposure)}</span>`)}</div>
+            <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span>${offOr('binance', `<span class="b-val">${fmtUsd(s.bnExposure)}</span>`)}</div>
           </div>
         </div>
       </div>
     </div>
+    ${renderToolsNav()}
     ${renderMarginHealth(data)}
     ${renderSidebarBottomRow(data)}
   `;
 
-  const mountId = { stress: 'st-mounted', unwind: 'uw-mounted', confluence: 'cf-mounted', stops: 'vs-mounted' }[posView] || null;
+  const mountId = { stress: 'st-mounted', unwind: 'uw-mounted', confluence: 'cf-mounted', stops: 'vs-mounted', journal: 'jr-mounted' }[posView] || null;
   const keepPanel = mountId && !riskForceRender && document.getElementById(mountId);
   riskForceRender = false;
   if (keepPanel) {
@@ -414,6 +413,9 @@ async function updateHealthChip() {
   if (!el) return;
   try {
     const h = await (await fetch('/api/health')).json();
+    lastHealth = h;
+    document.getElementById('statusDot').className = bulbClass();
+    renderVenuePopover();
     el.hidden = h.level === 'ok';
     el.className = `health-chip ${h.level}`;
     el.textContent = `${h.level === 'bad' ? '⛔' : '⚠'} ${h.reasons.length} issue${h.reasons.length === 1 ? '' : 's'}`;
@@ -442,7 +444,7 @@ async function fetchData() {
     if (!data.ok) throw new Error(data.error || 'Unknown error');
     render(data);
     lastGoodAt = new Date(data.lastUpdated);
-    dot.className = 'status-dot';
+    dot.className = bulbClass();
     txt.textContent = `Last updated ${lastGoodAt.toLocaleTimeString()}`;
     updateHealthChip();
   } catch (e) {

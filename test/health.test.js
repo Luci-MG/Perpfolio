@@ -45,8 +45,8 @@ test('stream, drift, stale snapshots and a failed sync warn; the worst level win
   assert.equal(assessHealth(s).level, 'bad');
 });
 
-test('without an API key the order stream is not expected', () => {
+test('with Binance off or no API key the order stream is not expected', () => {
   const s = healthy();
   s.feed.connected = false;
-  assert.equal(assessHealth({ ...s, hasKey: false }).level, 'ok');
+  assert.equal(assessHealth({ ...s, streamExpected: false }).level, 'ok');
 });

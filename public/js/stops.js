@@ -8,6 +8,49 @@ const REGIME_META = {
   extreme: { label: 'Extreme', color: 'var(--danger)'  }
 };
 
+const STOP_VERDICT = {
+  none:   { label: 'No stop',      color: 'var(--danger)' },
+  hedged: { label: 'Hedged',       color: 'var(--text3)' },
+  tight:  { label: 'Too tight',    color: 'var(--warning)' },
+  wide:   { label: 'Too wide',     color: 'var(--warning)' },
+  breakeven: { label: 'Breakeven', color: 'var(--success)' },
+  locks:  { label: 'Locks profit', color: 'var(--success)' },
+  ok:     { label: 'OK',           color: 'var(--success)' }
+};
+
+function stopVerdictPill(verdict) {
+  const m = STOP_VERDICT[verdict];
+  return m ? `<span class="regime-badge" style="background:${m.color}20;color:${m.color};border:1px solid ${m.color}55">${m.label}</span>` : '';
+}
+
+function yourStopHtml(p) {
+  const s = p.yourStop;
+  if (!s) {
+    const why = p.verdict === 'hedged' ? 'no stop order — the opposite leg is open' : 'no stop order on this leg';
+    return `<div class="vt-yours"><div class="vt-yours-head"><span class="vt-k">Your stop</span>${stopVerdictPill(p.verdict)}</div>
+      <div class="vt-k">${why}</div></div>`;
+  }
+  const facts = [`${fmt(s.distancePct, 2)}% from mark`,
+    s.atrMultiple != null ? `${fmt(s.atrMultiple, 1)} ATR` : null,
+    p.verdict === 'breakeven' ? 'at entry' : p.verdict === 'locks' ? `locks +${fmt(p.lockedPct, 2)}%`
+      : p.ratio != null ? `${fmt(p.ratio, 2)}× suggested` : null].filter(Boolean);
+  const hit = s.hit
+    ? `<div class="vt-k" title="${s.hit.windows} overlapping 24h windows, about ${s.hit.independent} independent">hit within 24h in ${fmt(s.hit.rate * 100, 0)}% of windows, last ${fmt(s.hit.days, 1)} days</div>`
+    : '';
+  return `<div class="vt-yours">
+    <div class="vt-yours-head"><span class="vt-k">Your stop</span>${stopVerdictPill(p.verdict)}</div>
+    <div class="vt-yours-val">${fmtPrice(s.price)} <span>${facts.join(' · ')}</span></div>
+    ${hit}
+  </div>`;
+}
+
+function stopVerdictSummary(positions) {
+  const count = v => positions.filter(p => p.verdict === v).length;
+  const parts = [[count('none'), 'without a stop'], [count('tight'), 'too tight'], [count('wide'), 'too wide']]
+    .filter(([n]) => n).map(([n, l]) => `${n} ${l}`);
+  return parts.length ? parts.join(' · ') : 'every leg covered';
+}
+
 function regimeBadge(r) {
   const m = REGIME_META[r] || REGIME_META.medium;
   return `<span class="regime-badge" style="background:${m.color}20;color:${m.color};border:1px solid ${m.color}55">${m.label}</span>`;
@@ -96,6 +139,10 @@ function renderVolCombined(c, positions) {
       <div class="vol-combined-cell">
         <div class="vc-label">Account equity</div>
         <div class="vc-val">${fmtUsd(equity)}</div>
+      </div>
+      <div class="vol-combined-cell">
+        <div class="vc-label">Your stops</div>
+        <div class="vc-val">${stopVerdictSummary(shown)}</div>
       </div>
       <div class="vol-combined-cell" style="flex:2">
         <div class="vc-label">Regime spread</div>
@@ -205,8 +252,9 @@ function renderVolTile(p) {
       <div class="vt-stopbar" style="width:${barPct}%;background:${m.color}"></div>
     </div>
     <div class="vt-stopline">
-      <span>Stop dist</span><span style="font-weight:600">${fmt(p.stopDistPct, 2)}%</span>
+      <span>Suggested stop dist</span><span style="font-weight:600">${fmt(p.stopDistPct, 2)}%</span>
     </div>
+    ${yourStopHtml(p)}
 
     <div class="vt-grid">
       <div><div class="vt-k">Entry</div><div class="vt-v">${fmtPrice(p.entry)}</div></div>

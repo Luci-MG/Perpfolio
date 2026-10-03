@@ -1,5 +1,7 @@
 import { getBinanceData } from '../lib/binance-account.js';
 import { getHyperliquidData } from '../lib/hyperliquid.js';
+import { isEnabled } from '../lib/venues.js';
+import { legOf, legStop, stopOrders } from '../stop-check.js';
 
 function buildSummary(hlData, bnData) {
   const allPositions = [...hlData.openPositions, ...bnData.openPositions];
@@ -29,10 +31,13 @@ export function register(app) {
       ]);
 
       const summary = buildSummary(hlData, bnData);
+      const orders = stopOrders(bnData.openOrders, hlData.openOrders);
+      const withStop = positions => positions.map(p => ({ ...p, hasStop: !!legStop(orders, legOf(p), p.mark) }));
 
       res.json({
         ok: true,
         lastUpdated: new Date().toISOString(),
+        venues: { binance: isEnabled('binance'), hyperliquid: isEnabled('hyperliquid') },
         summary,
         hyperliquid: {
           equity:          hlData.equity.toFixed(2),
@@ -41,16 +46,18 @@ export function register(app) {
           freeMargin:      hlData.freeMargin.toFixed(2),
           totalNtlPos:     hlData.totalNtlPos.toFixed(2),
           accountLeverage: hlData.accountLeverage,
-          positions:       hlData.openPositions,
+          positions:       withStop(hlData.openPositions),
           orders:          hlData.openOrders
         },
         binance: {
           equity:      bnData.equity.toFixed(2),
+          walletBalance: bnData.walletBalance.toFixed(2),
           marginPct:   bnData.marginPct,
           marginUsed:  bnData.marginUsed.toFixed(2),
           freeMargin:  bnData.freeMargin.toFixed(2),
           maintMargin: bnData.maintMargin.toFixed(2),
-          positions:   bnData.openPositions,
+          assets:      bnData.assets,
+          positions:   withStop(bnData.openPositions),
           orders:      bnData.openOrders
         },
       });

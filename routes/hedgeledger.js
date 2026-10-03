@@ -3,10 +3,12 @@ import * as ta from '../trade-analytics.js';
 import { analytics } from '../lib/analytics.js';
 import { fundingMeta } from '../lib/binance-meta.js';
 import { calibrate, marksOf, resolvePools } from '../lib/pools.js';
+import { isEnabled, venueOffBody } from '../lib/venues.js';
 
 export function register(app) {
   // ── Hedge ledger ──────────────────────────────────────────────────────────────
   app.get('/api/hedgeledger', async (req, res) => {
+    if (!isEnabled('binance')) return res.status(409).json(venueOffBody('binance'));
     try {
       const { bn, pools: groups } = await resolvePools();
       const { income } = analytics();

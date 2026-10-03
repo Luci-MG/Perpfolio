@@ -319,3 +319,69 @@ test('a hedge-mode close with nothing open is an orphan, not a negative trip', (
   assert.equal(r.trips[0].realized, 3);
   assert.equal(r.stillOpen.length, 0);
 });
+
+test('a trip records its side, opening notional, adds, partial closes and average exit', () => {
+  const { trips, sizeSteps } = ta.buildRoundTrips([
+    fill({ side: 'SELL', positionSide: 'SHORT', qty: '2', price: '100', time: 1000 }),
+    fill({ side: 'SELL', positionSide: 'SHORT', qty: '1', price: '106', time: 2000 }),
+    fill({ side: 'BUY',  positionSide: 'SHORT', qty: '1', price: '95', time: 3000 }),
+    fill({ side: 'BUY',  positionSide: 'SHORT', qty: '2', price: '92', time: 4000 })
+  ]);
+  const [t] = trips;
+  assert.equal(t.side, 'Short');
+  assert.equal(t.openNotional, 200);
+  assert.equal(t.adds, 1);
+  assert.equal(t.partialCloses, 1);
+  assert.ok(Math.abs(t.avgExit - (95 + 2 * 92) / 3) < 1e-12);
+  assert.deepEqual(sizeSteps.get(ta.tripKey(t)), [[1000, 2], [2000, 3], [3000, 2], [4000, 0]]);
+});
+
+test('a one-way flip closes at the old size and opens the new side at the remainder', () => {
+  const { trips, stillOpen } = ta.buildRoundTrips([
+    fill({ positionSide: 'BOTH', side: 'BUY', qty: '1', price: '100', time: 1000 }),
+    fill({ positionSide: 'BOTH', side: 'SELL', qty: '3', price: '110', time: 2000 })
+  ]);
+  assert.equal(trips[0].side, 'Long');
+  assert.equal(trips[0].avgExit, 110);
+  assert.equal(trips[0].partialCloses, 0);
+  assert.equal(stillOpen[0].side, 'Short');
+});
+
+test('periods start at local midnight, Monday and the 1st, for the reader\'s timezone', () => {
+  const now = Date.UTC(2026, 9, 1, 23, 30);
+  const berlin = ta.periodStarts(now, 120);
+  assert.equal(berlin.today, Date.UTC(2026, 9, 1, 22, 0), 'already 2 October in Berlin');
+  assert.equal(berlin.week, Date.UTC(2026, 8, 27, 22, 0), 'Monday 28 September, local');
+  assert.equal(berlin.month, Date.UTC(2026, 8, 30, 22, 0));
+  assert.equal(ta.periodStarts(now, 0).today, Date.UTC(2026, 9, 1));
+});
+
+test('period net sums realised, fees and funding, and counts closed trips', () => {
+  const income = [
+    { incomeType: 'REALIZED_PNL', income: '50', time: 200 }, { incomeType: 'COMMISSION', income: '-2', time: 210 },
+    { incomeType: 'FUNDING_FEE', income: '-1', time: 220 }, { incomeType: 'TRANSFER', income: '1000', time: 230 },
+    { incomeType: 'REALIZED_PNL', income: '-30', time: 50 }];
+  const trips = [{ closeTime: 205, win: true }, { closeTime: 40, win: false }];
+  assert.deepEqual(ta.periodNet(income, trips, { today: 100 }).today,
+    { from: 100, realized: 50, fees: -2, funding: -1, net: 47, transfers: 1000, trips: 1, wins: 1 });
+});
+
+test('the wallet curve walks back from today exactly, one point per day closed', () => {
+  const day = 86_400_000;
+  const income = [
+    { incomeType: 'TRANSFER', income: '1000', time: 0.5 * day, asset: 'USDT' },
+    { incomeType: 'REALIZED_PNL', income: '200', time: 1.5 * day, asset: 'USDT' },
+    { incomeType: 'COMMISSION', income: '-0.01', time: 1.6 * day, asset: 'BNB' },
+    { incomeType: 'FUNDING_FEE', income: '-50', time: 2.5 * day, asset: 'USDC' }];
+  const curve = ta.walletCurve(income, 1150, 3 * day);
+  assert.deepEqual(curve.map(p => p.wallet), [0, 1000, 1200, 1150, 1150], 'start, the close of days 0–2, now');
+  assert.equal(curve.at(-1).t, 3 * day);
+});
+
+test('account change removes transfers and says when snapshots began after the period', () => {
+  const snaps = [{ t: 300, accountValue: 1000 }, { t: 400, accountValue: 2100 }, { t: 500, accountValue: 2050 }];
+  const income = [{ incomeType: 'TRANSFER', income: '1000', time: 350 }];
+  assert.deepEqual(ta.accountChange(snaps, income, { a: 250 }).a, { change: 50, since: 300, partial: false });
+  assert.equal(ta.accountChange(snaps, income, { b: 600 }).b, null);
+  assert.equal(ta.accountChange(snaps, income, { c: -1e7 }).c.partial, true);
+});

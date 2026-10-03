@@ -530,6 +530,7 @@ function renderStressPool(P, poolIdx) {
 }
 
 function renderStress() {
+  if (!venueOn('binance')) return venueOffHtml('binance');
   if (riskLoading && !riskBook) {
     return `<p style="font-size:12px;color:var(--text3);padding:14px 0">Resolving the cross pool…</p>`;
   }
