@@ -64,7 +64,6 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .metric .b-row { display: flex; align-items: center; gap: 5px; font-size: 11px; }
 .metric .b-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .metric .b-label { color: var(--text3); }
-.metric .b-sub { padding-left: 11px; font-size: 10px; }
 .metric .b-val { margin-left: auto; font-weight: 500; }
 .up { color: var(--success); } .dn { color: var(--danger); } .nu { color: var(--text3); }
 
@@ -698,3 +697,30 @@ tr:last-child td { border-bottom: none; }
 .vp-switch input:disabled { cursor: not-allowed; }
 .vp-switch input:focus-visible + span { outline: 2px solid var(--border2); outline-offset: 1px; }
 .venue-off { padding: 18px 0; font-size: 12px; color: var(--text2); display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+
+/* Tools: widgets in the sidebar, a strip above the content when the sidebar stacks under it */
+.tool-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.tool-tile { grid-column: span 2; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
+             min-height: 34px; padding: 6px 8px; border: 0.5px solid transparent; border-radius: var(--radius);
+             background: var(--surface2); color: var(--text2); font: inherit; font-size: 11px; cursor: pointer;
+             transition: border-color .15s, background .15s, color .15s; }
+.tool-tile span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                  text-transform: uppercase; letter-spacing: .05em; font-size: 10px; }
+.tool-tile:nth-child(n+4) { grid-column: span 3; }
+.tool-tile:hover { background: var(--surface); border-color: var(--border2); color: var(--text); }
+.tool-tile.active { background: var(--surface); border-color: var(--text2); color: var(--text); font-weight: 500; }
+.tool-tile.off, .tool-chip.off { opacity: .45; }
+.tool-ico { width: 14px; height: 14px; color: var(--text3); flex-shrink: 0; }
+.tool-tile:hover .tool-ico, .tool-tile.active .tool-ico { color: var(--text2); }
+.tool-tile:focus-visible, .tool-chip:focus-visible { outline: 2px solid var(--border2); outline-offset: 1px; }
+.tools-strip { display: none; }
+
+@media (max-width: 900px) {
+  .tool-grid { display: none; }
+  .tools-strip { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
+  .tool-chip { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 6px 11px;
+               border: 0.5px solid var(--border2); border-radius: 6px; background: var(--surface);
+               color: var(--text2); font: inherit; font-size: 11px; cursor: pointer; }
+  .tool-chip .tool-ico { width: 13px; height: 13px; }
+  .tool-chip.active { background: var(--surface2); color: var(--text); font-weight: 500; }
+}

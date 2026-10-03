@@ -3,12 +3,13 @@
 ## Files
 
 `public/index.html` holds markup only, `public/css/app.css` every style, and `public/js/` the
-behaviour as fourteen **classic** scripts loaded in this order — no build step, no framework:
+behaviour as fifteen **classic** scripts loaded in this order — no build step, no framework:
 
 | # | File | Holds |
 |---|---|---|
 | 1 | `core.js` | preferences, shared view state, `fmt*` / `esc` / badges — load-time code in later files calls these |
 | 1b | `venues.js` | status bulb, exchange switches, `venueOn()` / `offOr()` / `venueOffHtml()` |
+| 1c | `tools-nav.js` | `TOOLS`, the tool widgets and narrow-screen strip, `openTool()` |
 | 2 | `positions.js` | `setView`, HL/BN filter, positions list and tiles, orders table |
 | 3 | `tiles-threads.js` | hedge popups, tile drag and focus, the hedge-thread SVG |
 | 4 | `stops.js` | Stops tab |
@@ -59,11 +60,21 @@ That is fine for a PnL column and wrong for anything where the sign is the point
 why `fmtSignedUsd` exists. `fmtPrice` scales decimals to the price magnitude; `fmtUsd` is
 always 2dp and turns a 1e-5 asset into `$0.00`.
 
-### View tabs — eight
+### Views: positions tabs and tools
 `posView` ∈ `tiles | list | orders | stops | stress | unwind | journal | confluence`, default `tiles`.
+**Positions views** (Tiles, List, Orders) are the tab strip in the main column. **Tools** (Stops,
+Stress, Unwind, Journal, Confluence) are the `TOOLS` table in `tools-nav.js`, opened from the
+sidebar's tool widgets; `isToolView()` / `toolFor()` read that table, so no other file lists them.
 `setView(v)` fetches on activation only: `stops` → `/api/volstops`, `stress` → `/api/riskbook`,
-`unwind` → `/api/deleverage`, `journal` → `/api/performance`, `confluence` → `/api/confluence`. The
-first four share the positions card; the last four replace it and hide the HL/BN filter and exchange header.
+`unwind` → `/api/deleverage`, `journal` → `/api/performance`, `confluence` → `/api/confluence`.
+Tools replace the positions card and its exchange header; only Stops (`exchangeFilter: true`)
+keeps the HL/BN filter.
+
+**Tool widgets.** One tile per tool — icon and name, nothing else — in a grid of three over
+two, between uPnL/Exposure and Margin health. The open tool is outlined; clicking it again
+returns to the last positions view (kept in memory, remembered across reloads). A
+Binance-only tool is dimmed while Binance is off. Below 900px wide the sidebar stacks under
+the content, so the same buttons render as a strip above it.
 
 **The mounted-panel rule.** The 15s poll calls `render()`, which would rebuild the whole main
 column — destroying a slider mid-drag or an input mid-edit. `render()` therefore leaves the
@@ -91,7 +102,7 @@ of fetching. Journal still reads its local cache; *Sync* says Binance is off.
 
 ### Sidebar
 Top to bottom: `metric-stack` (total equity, uPnL, exposure — each with HL/BN breakdown and a
-click-through drawer), `renderMarginHealth()`, then `renderSidebarBottomRow()` — the daily
+click-through drawer), `renderToolsNav()`, `renderMarginHealth()`, then `renderSidebarBottomRow()` — the daily
 funding widget beside `renderCalcTiles()`.
 
 **Margin health is an SVG arc gauge, not a donut.** The sweep never exceeds 180°, so the

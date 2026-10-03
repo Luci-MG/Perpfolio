@@ -1,5 +1,14 @@
 # Changelog
 
+## Tools in the sidebar (2026-10-03)
+
+- Stops, Stress, Unwind, Journal and Confluence moved from the tab strip to **tool widgets**
+  in the sidebar — icon and name, three over two. Clicking the open tool returns to the last
+  positions view; below 900px they sit in a strip above the content.
+- One `TOOLS` table in `public/js/tools-nav.js` replaces the three hand-written lists of tool
+  views in `render.js`.
+- A launcher list with a live hint per row was built first and dropped: too much on screen.
+
 ## Venue switch (2026-10-03)
 
 - **Each exchange can be switched off from the status bulb**, and an exchange that is off is
@@ -15,8 +24,8 @@
 - **Binance equity left out the USDC pool.** In single-asset mode every account total covers
   USDT only (Binance docs, confirmed on the live account: USDT + USDC held, three
   USDC-margined positions, totals equal to the USDT pool). Equity, margin used, maintenance
-  and free margin now sum the collateral pools; `/api/dashboard` returns `binance.assets`,
-  and the sidebar splits BN equity by asset when more than one is held.
+  and free margin now sum the collateral pools; `/api/dashboard` returns `binance.assets`
+  for a per-asset view later — the sidebar split was tried and dropped as too busy.
 - The fake exchange follows the same rule, so the route test fails if USDC is dropped.
 - `baseAsset` in `routes/volstops.js` strips `/USDC`; calculator labels say USD, not USDT.
 

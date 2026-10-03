@@ -10,7 +10,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 |---|---|---|
 | P0 | [USDC in assets](#p0--usdc-in-assets) | done (2026-10-03) |
 | P1 | [Venue on/off](#p1--venue-onoff) | done (2026-10-03) |
-| P2 | [Tools in the sidebar](#p2--tools-in-the-sidebar) | planned |
+| P2 | [Tools in the sidebar](#p2--tools-in-the-sidebar) | done (2026-10-03) |
 | P3 | [Stops: real vs suggested](#p3--stops-real-vs-suggested) | planned |
 | P3 | [Journal: Overview and Behaviour](#p3--journal-overview-and-behaviour) | planned |
 | P3 | [Journal: richer Trades](#p3--journal-richer-trades) | planned |
@@ -42,7 +42,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   route test fails if either drops it.
 - **Depends on:** —
 - **Status:** done (2026-10-03) — see the changelog. Stress was already per-pool and
-  unaffected.
+  unaffected. The per-asset rows under Total equity were dropped as too busy;
+  `binance.assets` stays in `/api/dashboard` for a later asset view.
 
 ## P1 — Venue on/off
 
@@ -70,7 +71,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   positions views, though they are tools, not views of the book.
 - **Scope:** a **Tools** section in the right sidebar, between uPnL | Exposure and Margin
   health. Tiles / List / Orders stay as tabs. Tools still open full width in the main column.
-  Chosen layout — **C, launcher list with a live hint**:
+  Planned layout — **C, launcher list with a live hint** (built, then replaced by A):
   ```
    TOOLS
    ◎ Stops        2 too tight ›
@@ -104,6 +105,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Done when:** the five tools are reachable only from the sidebar, the smoke test renders
   each from there, and the poll never rebuilds a mounted tool mid-edit.
 - **Depends on:** P1 (the bulb popover shares the sidebar header).
+- **Status:** done (2026-10-03) as layout **A**, plain widgets — C's hints read as clutter in
+  use. See the changelog and `docs/frontend.md`, *Views*.
 
 ## P3 — Stops: real vs suggested
 

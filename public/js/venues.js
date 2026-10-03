@@ -110,5 +110,5 @@ async function setVenue(venue, on, input) {
   if (venue === 'binance') { riskBook = null; unwindData = null; hlData = null; }
   riskForceRender = true;
   await fetchData();
-  if (venue === 'binance' && venueOn('binance') && ['stress', 'unwind'].includes(posView)) setView(posView);
+  if (venue === 'binance' && venueOn('binance') && toolFor(posView)?.binanceOnly) setView(posView);
 }

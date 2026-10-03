@@ -4,6 +4,7 @@
 function setView(v) {
   posView = v;
   savePref('posView', v);
+  if (!isToolView(v)) rememberPositionsView(v);
   document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
   if (lastData) render(lastData);
   if (v === 'stops')  fetchVolStops();

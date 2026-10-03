@@ -40,7 +40,7 @@ the watchdog share `lib/orders-stream.js`.
 
 ## Frontend scripts — load order is part of the contract
 
-`core → venues → positions → tiles-threads → stops → stress → hedge-ledger → confluence-view →
+`core → venues → tools-nav → positions → tiles-threads → stops → stress → hedge-ledger → confluence-view →
 journal → unwind → render → calculators → drawers → boot`
 
 - Classic scripts, not modules: inline `onclick="fn()"` handlers need globals, and classic
@@ -76,11 +76,14 @@ registered in `server.js`. Add a row to the route table in `docs/api.md` — the
 until you do — and a case to `test/routes.test.js`; if the fake exchange lacks an endpoint
 it returns a 404 naming it.
 
-**Add a tab.** A `public/js/<tab>.js` placed before `render.js`, a `data-view` button and a
-`renderX()` branch in `render.js`, `setView()`'s lazy fetch in `positions.js`, and `VIEWS`
-in `boot.js`. If the tab has inputs, give its controls a `…-mounted` id and add it to the
-`mountId` map in `render()`, or the 15s poll will rebuild it mid-edit. Add the view to
-`VIEWS` in `test/frontend.smoke.test.js`.
+**Add a positions view** (a way of looking at the book). A button in `tabsHtml` and a branch
+in `render.js`, `VIEWS` in `boot.js` and in `test/frontend.smoke.test.js`.
+
+**Add a tool** (a panel that fetches its own data). One entry in `TOOLS` and an icon in
+`TOOL_ICON` in `public/js/tools-nav.js` (`binanceOnly` or `exchangeFilter` if they apply) — then a `public/js/<tool>.js` placed before `render.js`, a
+`renderX()` branch in `render.js`, its fetch in `setView()`, and `VIEWS` in `boot.js` and the
+smoke test. If it has inputs, give its controls a `…-mounted` id and add it to the `mountId`
+map in `render()`, or the 15s poll will rebuild it mid-edit.
 
 **Add a confluence signal.** One entry in `CONFLUENCES` in `confluence.js` with a
 `scoreAt(x, i, regime)` that reads only bars ≤ `i`. It gets a track record automatically;

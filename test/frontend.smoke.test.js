@@ -97,6 +97,22 @@ test('every view and drawer renders against live payloads without errors or NaN'
   assert.deepEqual(bad, []);
 });
 
+test('the tool widgets open each tool and toggle back to the last positions view', async () => {
+  const { markup, run } = await bootPage();
+  assert.equal(run('TOOLS.every(t => VIEWS.includes(t.view))'), true);
+
+  run(`setView('list')`);
+  assert.equal(markup.get('sidebar').match(/class="tool-tile/g).length, 5);
+  assert.match(markup.get('content'), /class="tools-strip"/);
+  assert.doesNotMatch(markup.get('content'), /data-view="stress"/, 'tools left the tab strip');
+
+  run(`openTool('confluence')`);
+  assert.equal(run('posView'), 'confluence');
+  assert.match(markup.get('sidebar'), /tool-tile active" aria-current="page"[\s\S]*?Confluence/);
+  run(`openTool('confluence')`);
+  assert.equal(run('posView'), 'list', 'opening the open tool returns to the last positions view');
+});
+
 test('switched-off venues render as off, and the popover lists both switches', async () => {
   const { markup, run } = await bootPage();
   const setVenue = (venue, enabled) => fetch(`${base}/api/venues`, {
@@ -122,6 +138,7 @@ test('switched-off venues render as off, and the popover lists both switches', a
   assert.match(markup.get('content'), /Every exchange is switched off/);
   run(`posView = 'stress'; riskForceRender = true; render(lastData)`);
   assert.match(markup.get('content'), /Binance is switched off/);
+  assert.match(markup.get('sidebar'), /tool-tile[^"]* off"[^>]*>[\s\S]*?Stress/);
 
   await setVenue('binance', true);
   await setVenue('hyperliquid', true);

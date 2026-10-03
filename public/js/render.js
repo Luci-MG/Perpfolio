@@ -219,13 +219,6 @@ function renderSidebarBottomRow(data) {
     </div>`;
 }
 
-function renderBinanceAssetRows(assets) {
-  const collateral = (assets || []).filter(a => a.collateral);
-  if (collateral.length < 2) return '';
-  return collateral.map(a => `
-          <div class="b-row b-sub"><span class="b-label">${esc(a.asset)}</span><span class="b-val">${fmtUsd(a.usdValue)}</span></div>`).join('');
-}
-
 function render(data) {
   lastData = data;
   const s = data.summary;
@@ -240,11 +233,6 @@ function render(data) {
     <button class="view-tab${posView==='tiles'?' active':''}" data-view="tiles" onclick="setView('tiles')">Tiles</button>
     <button class="view-tab${posView==='list'?' active':''}" data-view="list" onclick="setView('list')">List</button>
     <button class="view-tab${posView==='orders'?' active':''}" data-view="orders" onclick="setView('orders')">Orders${totalOrders ? ` <span style="background:var(--surface2);border-radius:10px;padding:0 5px;font-size:10px">${totalOrders}</span>` : ''}</button>
-    <button class="view-tab${posView==='stops'?' active':''}" data-view="stops" onclick="setView('stops')">Stops</button>
-    <button class="view-tab${posView==='stress'?' active':''}" data-view="stress" onclick="setView('stress')">Stress</button>
-    <button class="view-tab${posView==='unwind'?' active':''}" data-view="unwind" onclick="setView('unwind')">Unwind</button>
-    <button class="view-tab${posView==='journal'?' active':''}" data-view="journal" onclick="setView('journal')">Journal</button>
-    <button class="view-tab${posView==='confluence'?' active':''}" data-view="confluence" onclick="setView('confluence')">Confluence</button>
   </div>`;
 
   const exchTabsHtml = venuesOn().length < 2 ? '' : `<div class="view-tabs">
@@ -332,16 +320,17 @@ function render(data) {
   }
 
   const mainContent = `
+    ${renderToolsStrip()}
     <div class="section-bar">
       <div style="display:flex;align-items:center;gap:8px">
         <p class="section-label" style="margin:0">${sectionLabel}</p>
-        ${['stress', 'unwind', 'journal', 'confluence'].includes(posView) ? '' : exchTabsHtml}
+        ${isToolView(posView) && !toolFor(posView).exchangeFilter ? '' : exchTabsHtml}
       </div>
       ${tabsHtml}
     </div>
 
     <div class="card" style="margin-bottom:24px">
-      ${['stops', 'stress', 'unwind', 'journal', 'confluence'].includes(posView) ? '' : cardHeader}
+      ${isToolView(posView) ? '' : cardHeader}
       ${unifiedContent}
     </div>
 
@@ -355,7 +344,6 @@ function render(data) {
         <div class="breakdown">
           <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span>${offOr('hyperliquid', `<span class="b-val">${fmtUsd(data.hyperliquid.equity)}</span>`)}</div>
           <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span>${offOr('binance', `<span class="b-val">${fmtUsd(data.binance.equity)}</span>`)}</div>
-          ${renderBinanceAssetRows(data.binance.assets)}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -377,6 +365,7 @@ function render(data) {
         </div>
       </div>
     </div>
+    ${renderToolsNav()}
     ${renderMarginHealth(data)}
     ${renderSidebarBottomRow(data)}
   `;
