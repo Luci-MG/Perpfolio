@@ -32,6 +32,7 @@
 | `GET /api/goals?tz=M` | goals scored from their set date, ordered broken → in progress → kept → paused; today's line; suggestions | *Goals* in `goals.md` |
 | `GET /api/goals/preview?type=&params=&session=&tz=M` | what a goal would have scored on all history — the add drawer's preview | *Goals* in `goals.md` |
 | `POST /api/goals` | `{ action: add\|edit\|pause\|resume\|delete, … }`; JSON only | *Goals* in `goals.md` |
+| `GET /api/factors?days=N&session=S&tz=M` | factors known at entry, each bucket against the rest: average net and win rate with intervals, the rows that stand out, during-trade behaviour apart | *Factors* in `journal.md` |
 | `GET /api/hedgeledger` | locked hedge PnL, carry, margin inflation | *Hedge ledger* |
 | `GET /api/history/sync?start=true&full=true` | starts a history sync, returns progress | *history-store* |
 | `GET /api/confluence?symbol=&tfs=` | signals, regime, scores and track records per timeframe | *Confluence* |

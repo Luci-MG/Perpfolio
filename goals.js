@@ -3,7 +3,7 @@
 // validation, so a new goal is one entry. Pure, over trips enriched with session and entry
 // context (lib/trip-enrichment.js).
 
-import { THIN_TRIPS, netOf } from './habits.js';
+import { THIN_TRIPS, medianSizesBefore, netOf } from './habits.js';
 import { deadlineOf, previewMilestone, scoreMilestone } from './milestones.js';
 import { SESSIONS } from './sessions.js';
 import { periodStarts } from './trade-analytics.js';
@@ -135,27 +135,6 @@ export function describeGoal({ type, params, session }) {
 }
 
 const localDay = (ts, tz) => periodStarts(ts, tz).today;
-
-function median(sorted) {
-  const m = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2;
-}
-
-function insertSorted(list, v) {
-  let lo = 0, hi = list.length;
-  while (lo < hi) { const mid = (lo + hi) >> 1; if (list[mid] < v) lo = mid + 1; else hi = mid; }
-  list.splice(lo, 0, v);
-}
-
-function medianSizesBefore(all) {
-  const sizes = [];
-  const out = new Map();
-  for (const t of [...all].sort((a, b) => a.openTime - b.openTime)) {
-    out.set(t, sizes.length >= THIN_TRIPS ? median(sizes) : null);
-    insertSorted(sizes, t.openNotional);
-  }
-  return out;
-}
 
 function trailingLosses(scoped, trip, day) {
   const closed = scoped.filter(x => x.closeTime >= day && x.closeTime <= trip.openTime).sort((a, b) => a.closeTime - b.closeTime);
