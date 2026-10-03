@@ -1,0 +1,23 @@
+docs/changelog.md
+  s_ce0783ce808ef4::t_b812641fee68f7 1,59-60
+CLAUDE.md
+  s_ce0783ce808ef4::t_b812641fee68f7 33-34
+docs/roadmap.md
+  s_ce0783ce808ef4::t_62c27ec601a10b 1-215
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "86edaaf4fcee52899212632febad78d0f9085b76",
+  "prompts": {},
+  "sessions": {
+    "s_ce0783ce808ef4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8b81969-9053-4bd3-9053-40c94a6a331a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Mrudhul Guda <gm13@iitbbs.ac.in>"
+    }
+  }
+}
