@@ -105,17 +105,12 @@ function goalDetail(g) {
   const b = g.before;
   const before = b ? `<p class="gl-line${b.thin ? ' thin' : ''}">Before you set it: ${goalPct(b.adherence)} kept over ${b.n}
     ${b.unit === 'day' ? 'days' : 'trades'}${b.cost != null && b.brokenTrips ? ` · est. cost ${fmtSignedUsd(b.cost)}` : ''}${b.thin ? ' ⚠' : ''}</p>` : '';
-  const del = goalConfirmDelete === g.id ? 'Confirm delete' : 'Delete';
   return `<div class="gl-detail">
     <div class="gl-detail-top">${goalCalendar(g.calendar)}
       <p class="gl-line${g.thin ? ' thin' : ''}">${goalCostText(g)}</p></div>
     ${goalBreachesHtml(g)}${before}
     <p class="gl-line gl-n">set ${goalDay(g.setAt)}${g.pausedAt ? ` · paused ${goalDay(g.pausedAt)}` : ''}</p>
-    <div class="gl-actions">
-      <button class="st-btn" onclick="openGoalDrawer('${esc(g.id)}')">Edit</button>
-      <button class="st-btn" onclick="goalAction('${esc(g.id)}', '${g.pausedAt ? 'resume' : 'pause'}')">${g.pausedAt ? 'Resume' : 'Pause'}</button>
-      <button class="st-btn${goalConfirmDelete === g.id ? ' gl-danger' : ''}" onclick="goalAction('${esc(g.id)}', 'delete')">${del}</button>
-    </div>
+    ${goalActionsHtml(g)}
   </div>`;
 }
 
@@ -134,16 +129,21 @@ function goalRow(g) {
   </div>`;
 }
 
+const isMilestone = g => g.unit === 'milestone';
+
 function goalsTodayText(today, goals) {
   if (today.scored) return `today ${today.kept} of ${today.scored} kept`;
-  return `${goals.filter(g => g.status !== 'paused').length} set · no trades today`;
+  const rules = goals.filter(g => !isMilestone(g) && g.status !== 'paused');
+  if (rules.length) return `${rules.length} set · no trades today`;
+  return `${goals.length} milestone${goals.length > 1 ? 's' : ''}`;
 }
 
 function goalsOverviewLine() {
   if (!goalsData?.goals?.length) return '';
   const t = goalsData.today;
   const broken = t.broken.length ? ` · <span class="dn">✗ ${esc(t.broken.join(', '))}</span>` : '';
-  return `<button class="gl-overview" onclick="setJrTab('goals')"><span class="k">Goals</span>${goalsTodayText(t, goalsData.goals)}${broken}<span class="gl-caret">›</span></button>`;
+  const offTrack = t.offTrack.map(m => ` · <span class="${m.status === 'missed' ? 'dn' : 'gl-late'}">${MILESTONE_MARK[m.status]} ${esc(m.label)} ${m.status}</span>`).join('');
+  return `<button class="gl-overview" onclick="setJrTab('goals')"><span class="k">Goals</span>${goalsTodayText(t, goalsData.goals)}${broken}${offTrack}<span class="gl-caret">›</span></button>`;
 }
 
 function goalEmptyHtml(suggestions) {
@@ -162,8 +162,99 @@ function renderGoalsTab() {
     <span class="gl-n">${goals.length ? goalsTodayText(today, goals) : ''}</span>
     <button class="st-btn" onclick="openGoalDrawer()">+ Add goal</button></div>`;
   const error = goalsData.actionError ? `<p class="dn gl-line">${esc(goalsData.actionError)}</p>` : '';
-  if (!goals.length) return `${head}${error}${goalEmptyHtml(suggestions)}`;
-  return `${head}${error}<div class="gl-list">${goals.map(goalRow).join('')}</div>`;
+  const rules = goals.filter(g => !isMilestone(g)), milestones = goals.filter(isMilestone);
+  const ruleBlock = rules.length ? `<div class="gl-list">${rules.map(goalRow).join('')}</div>` : goalEmptyHtml(suggestions);
+  const milestoneBlock = milestones.length
+    ? `<p class="section-label gl-block">Milestones</p><div class="gl-list">${milestones.map(milestoneRow).join('')}</div>` : '';
+  return `${head}${error}${ruleBlock}${milestoneBlock}`;
+}
+
+const MILESTONE_MARK = { onpace: '◎', open: '◎', early: '◎', late: '◔', reached: '★', missed: '✗', paused: '‖',
+                         progress: '●', broken: '✗', kept: '✓', idle: '·' };
+const clamp01 = v => Math.min(1, Math.max(0, v ?? 0));
+const fallText = pct => `${pct < 0 ? '−' : ''}${fmt(Math.abs(pct), 1)}%`;
+
+function targetStateText(g) {
+  if (g.waiting) return 'waiting for the first snapshot';
+  const pace = g.eta ? `on pace for ${goalDay(g.eta)}` : 'not rising';
+  return {
+    early: `not enough history · ${fmt(g.days, 1)} of 7 days`, open: pace, onpace: pace, late: `${pace} · late`,
+    reached: `reached ${goalDay(g.reachedAt)}`, missed: `missed ${goalDay(g.deadline)}`, paused: 'paused'
+  }[g.status];
+}
+
+function milestoneBar(fill, tick) {
+  const marker = tick == null ? '' : `<span class="gl-tick" style="left:${(clamp01(tick) * 100).toFixed(1)}%" title="where a straight line to the date would be today"></span>`;
+  return `<span class="gl-bar"><span class="gl-fill" style="width:${(clamp01(fill) * 100).toFixed(1)}%"></span>${marker}</span>`;
+}
+
+function milestoneSummary(g) {
+  if (g.type === 'accountTarget') {
+    return `${g.waiting ? milestoneBar(0) : milestoneBar(g.progress, g.paceFraction)}
+      <span class="gl-adh">${g.waiting ? '—' : goalPct(Math.max(0, g.progress))}</span><span class="gl-state">${targetStateText(g)}</span>`;
+  }
+  const m = g.month;
+  const state = g.status === 'paused' ? 'paused' : m ? `${fallText(m.ddPct)} of −${m.limit}% this month${m.approx ? ' ≈ wallet' : ''}` : 'no readings this month';
+  return `${milestoneBar(m ? Math.abs(m.ddPct) / m.limit : 0)}<span class="gl-adh">${goalPct(g.adherence)} <span class="gl-n">n=${g.n}mo</span></span>
+    <span class="gl-state">${state}</span>`;
+}
+
+function milestoneRow(g) {
+  const open = goalOpen === g.id;
+  return `<div class="gl-row ${g.status}">
+    <button class="gl-head gl-mhead" onclick="toggleGoal('${esc(g.id)}')" aria-expanded="${open}">
+      <span class="gl-mark ${g.status}">${MILESTONE_MARK[g.status]}</span>
+      <span class="gl-name">${esc(g.label)}</span>
+      ${milestoneSummary(g)}
+      <span class="gl-caret">${open ? '▾' : '▸'}</span>
+    </button>
+    ${open ? milestoneDetail(g) : ''}
+  </div>`;
+}
+
+function milestoneChart(g) {
+  const line = g.chart || [];
+  if (line.length < 2) return '<p class="gl-n">The chart starts once a few snapshots have been recorded.</p>';
+  const proj = g.projection || [];
+  const all = [...line, ...proj];
+  const W = 600, H = 120, PAD = 6;
+  const t0 = Math.min(...all.map(p => p.t)), t1 = Math.max(...all.map(p => p.t), g.deadline ?? 0);
+  const values = all.map(p => p.value);
+  const v0 = Math.min(...values), v1 = Math.max(...values);
+  const x = t => PAD + (t - t0) / ((t1 - t0) || 1) * (W - 2 * PAD);
+  const y = v => PAD + (1 - (v - v0) / ((v1 - v0) || 1)) * (H - 2 * PAD);
+  const path = pts => pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' ');
+  const targetIn = g.target >= v0 && g.target <= v1;
+  return `<svg class="gl-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Account value since the goal was set">
+      ${targetIn ? `<line class="gl-target" x1="${PAD}" x2="${W - PAD}" y1="${y(g.target).toFixed(1)}" y2="${y(g.target).toFixed(1)}"></line>` : ''}
+      ${g.deadline && g.deadline <= t1 ? `<line class="gl-deadline" x1="${x(g.deadline).toFixed(1)}" x2="${x(g.deadline).toFixed(1)}" y1="${PAD}" y2="${H - PAD}"></line>` : ''}
+      <path class="ov-account" d="${path(line)}" fill="none" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+      ${proj.length ? `<path class="gl-proj" d="${path(proj)}" fill="none" stroke-width="2" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"></path>` : ''}
+    </svg>
+    <p class="gl-n">${fmtUsd(v0)} – ${fmtUsd(v1)}${proj.length ? ' · dashed: straight-line extrapolation of the daily trend' : ''}${targetIn ? '' : ` · target ${fmtUsd(g.target)} is off the chart`}</p>`;
+}
+
+function goalActionsHtml(g) {
+  return `<div class="gl-actions">
+      <button class="st-btn" onclick="openGoalDrawer('${esc(g.id)}')">Edit</button>
+      <button class="st-btn" onclick="goalAction('${esc(g.id)}', '${g.pausedAt ? 'resume' : 'pause'}')">${g.pausedAt ? 'Resume' : 'Pause'}</button>
+      <button class="st-btn${goalConfirmDelete === g.id ? ' gl-danger' : ''}" onclick="goalAction('${esc(g.id)}', 'delete')">${goalConfirmDelete === g.id ? 'Confirm delete' : 'Delete'}</button>
+    </div>`;
+}
+
+function milestoneDetail(g) {
+  if (g.type !== 'accountTarget') {
+    const cells = g.strip.map(c => `<span class="gl-cell ${c.state}" title="${new Date(c.day).toLocaleDateString([], { month: 'short', year: 'numeric' })} · ${
+      c.ddPct == null ? GOAL_CELL[c.state][1] : `${fallText(c.ddPct)}${c.approx ? ' ≈ wallet' : ''}`}">${GOAL_CELL[c.state === 'progress' ? 'kept' : c.state][0]}</span>`).join('');
+    const b = g.before;
+    const before = b ? `<p class="gl-line">Before you set it: ${goalPct(b.adherence)} of ${b.n} months kept · worst ${fallText(b.worst)}${b.approx ? ' ≈ wallet' : ''}</p>` : '';
+    return `<div class="gl-detail"><p class="gl-line"><span class="gl-strip">${cells}</span> <span class="gl-n">last 12 months</span></p>${before}
+      <p class="gl-line gl-n">set ${goalDay(g.setAt)}</p>${goalActionsHtml(g)}</div>`;
+  }
+  const facts = g.waiting ? '' : `<p class="gl-line">From ${fmtUsd(g.start)} toward ${fmtUsd(g.target)} · now ${fmtUsd(g.current)} as of ${goalWhen(g.asOf)}
+    ${g.perDay != null ? ` · trend ${fmtSignedUsd(g.perDay)} a day` : ''} · deposits and withdrawals left out</p>`;
+  return `<div class="gl-detail">${g.waiting ? '' : milestoneChart(g)}${facts}
+    <p class="gl-line gl-n">set ${goalDay(g.setAt)}${g.deadline ? ` · due ${goalDay(g.deadline - 1)}` : ''}</p>${goalActionsHtml(g)}</div>`;
 }
 
 function openGoalDrawer(id = null, suggestion = null) {
@@ -217,10 +308,15 @@ function goalFieldHtml(spec) {
     return `<div class="gl-field"><span class="k">${spec.label}</span><span class="gl-checks">${GOAL_SESSIONS.map(s => `<label class="gl-check">
       <input type="checkbox"${value.includes(s) ? ' checked' : ''} onchange="toggleGoalSession('${esc(s)}', this.checked)">${esc(s)}</label>`).join('')}</span></div>`;
   }
+  if (spec.date) {
+    const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    return `<label class="gl-field"><span class="k">${spec.label}</span><input class="cf-sym gl-date" type="date" min="${tomorrow}" value="${esc(value ?? '')}"
+      oninput="setGoalParam('${spec.key}', this.value || null)">${spec.optional ? '<span class="gl-n">optional</span>' : ''}</label>`;
+  }
   const input = spec.options
     ? `<select class="st-btn" onchange="setGoalParam('${spec.key}', this.value)">${spec.options.map(([v, l]) =>
         `<option value="${v}"${value === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`
-    : `<input class="cf-sym gl-num" type="number" min="${spec.min}" max="${spec.max}" step="${spec.step}" value="${esc(String(value))}"
+    : `${spec.prefix ? `<span class="gl-n">${spec.prefix}</span>` : ''}<input class="cf-sym gl-num" type="number" min="${spec.min}" max="${spec.max}" step="${spec.step}" value="${esc(String(value))}"
         oninput="setGoalParam('${spec.key}', this.value)">${spec.suffix ? `<span class="gl-n">${esc(spec.suffix)}</span>` : ''}`;
   return `<label class="gl-field"><span class="k">${spec.label}</span>${input}</label>`;
 }
@@ -269,6 +365,7 @@ function goalPreviewHtml() {
   const p = goalPreview;
   if (!p) return '<p class="gl-n">Scoring your history…</p>';
   if (p.error) return `<p class="dn">${esc(p.error)}</p>`;
+  if (p.unit === 'milestone') return milestonePreviewHtml(p);
   if (!p.n) return '<p class="gl-n">No trades in your history that this applies to.</p>';
   const comparison = p.cost == null || !p.brokenTrips ? ''
     : p.cost < 0 ? ` · breaking trades averaged ${fmtSignedUsd(p.avgBroken)} vs ${fmtSignedUsd(p.avgKept)}`
@@ -287,4 +384,19 @@ async function saveGoal() {
     goalSaveError = err.message;
     renderGoalDrawer();
   }
+}
+
+function milestonePreviewHtml(p) {
+  if (p.type === 'monthlyDrawdown') {
+    if (!p.n) return '<p class="gl-n">No months on record yet.</p>';
+    return `<p class="section-label">On your last ${p.n} months</p>
+      <p class="gl-line">kept ${goalPct(p.adherence)} · worst month ${fallText(p.worst)}${p.approx ? ' (≈ wallet before snapshots began)' : ''}</p>`;
+  }
+  if (p.current == null) return '<p class="gl-n">No account value recorded yet.</p>';
+  const now = `Now ${fmtUsd(p.current)}${p.currentApprox ? ' ≈ wallet' : ''}`;
+  if (p.needed <= 0) return `<p class="gl-line">${now} · already above this target.</p>`;
+  const due = p.daysLeft != null ? ` in ${fmt(p.daysLeft, 0)} days · ${fmtUsd(p.requiredPerDay ?? 0)} a day` : '';
+  const pace = p.pace ? `Your trend over the last 30 days: ${fmtSignedUsd(p.pace.perDay)} a day${p.pace.approx ? ' (≈ wallet)' : ''}`
+    : 'Not enough history for a trend yet.';
+  return `<p class="gl-line">${now} · needs +${fmtUsd(p.needed)} (+${fmt(p.neededPct, 1)}%)${due}</p><p class="gl-line gl-n">${pace}</p>`;
 }

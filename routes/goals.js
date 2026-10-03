@@ -15,22 +15,35 @@ const TYPES = GOAL_TYPES.map(({ id, label, unit, forwardOnly = false, scoped = t
   ({ id, label, unit, forwardOnly, scoped, params }));
 
 const STATUS_ORDER = ['broken', 'progress', 'kept', 'idle', 'paused'];
+const OFF_TRACK = ['missed', 'late'];
 
 async function scoringContext(tz) {
   const now = Date.now();
   const bn = await getBinanceData();
-  const wallet = bn.disabled ? [] : walletCurve(analytics().income, bn.walletBalance, now);
-  return { now, tzOffsetMin: parseInt(tz, 10) || 0, equityAt: equityLookup(readEquitySnapshots(), wallet) };
+  const { income } = analytics();
+  const wallet = bn.disabled ? [] : walletCurve(income, bn.walletBalance, now);
+  const snapshots = readEquitySnapshots();
+  const transfers = income.filter(r => r.incomeType === 'TRANSFER').map(r => ({ t: r.time, amount: parseFloat(r.income) }));
+  return { now, tzOffsetMin: parseInt(tz, 10) || 0, equityAt: equityLookup(snapshots, wallet), snapshots, transfers, wallet };
+}
+
+const milestoneRank = g => [g.status === 'paused', g.type === 'accountTarget', g.params.target ?? 0];
+const byMilestoneRank = (a, b) => milestoneRank(a).reduce((d, v, i) => d || v - milestoneRank(b)[i], 0);
+
+function rulesOrdered(rules) {
+  const order = g => STATUS_ORDER.indexOf(g.status);
+  return rules.map((g, i) => ({ g, i })).sort((a, b) => order(a.g) - order(b.g) || a.i - b.i).map(x => x.g);
 }
 
 function scoreboard(goals, trips, ctx) {
   const scored = goals.map(g => scoreGoal(g, trips, ctx));
-  const order = g => STATUS_ORDER.indexOf(g.status);
-  const sorted = scored.map((g, i) => ({ g, i })).sort((a, b) => order(a.g) - order(b.g) || a.i - b.i).map(x => x.g);
-  const active = scored.filter(g => g.status !== 'paused' && g.today.trips > 0);
-  return { goals: sorted,
+  const rules = scored.filter(g => g.unit !== 'milestone');
+  const milestones = scored.filter(g => g.unit === 'milestone');
+  const active = rules.filter(g => g.status !== 'paused' && g.today.trips > 0);
+  return { goals: [...rulesOrdered(rules), ...[...milestones].sort(byMilestoneRank)],
            today: { scored: active.length, kept: active.filter(g => g.status !== 'broken').length,
-                    broken: active.filter(g => g.status === 'broken').map(g => g.label) },
+                    broken: active.filter(g => g.status === 'broken').map(g => g.label),
+                    offTrack: milestones.filter(g => OFF_TRACK.includes(g.status)).map(g => ({ label: g.label, status: g.status })) },
            suggestions: suggestGoals(trips, ctx, goals.map(g => g.type)) };
 }
 

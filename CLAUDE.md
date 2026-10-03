@@ -31,7 +31,7 @@ expected to say so rather than assert correctness.
 | Trading sessions, the clock and the session filter | [`docs/sessions.md`](docs/sessions.md) | `sessions.js`, `public/js/sessions-view.js` |
 | Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
 | Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |
-| Goals: rules you set, scored from the day you set them | [`docs/goals.md`](docs/goals.md) | `goals.js`, `lib/goals-store.js`, `routes/goals.js`, `public/js/goals-view.js` |
+| Goals: rules you set, scored from the day you set them | [`docs/goals.md`](docs/goals.md) | `goals.js`, `milestones.js`, `lib/goals-store.js`, `routes/goals.js`, `public/js/goals-view.js` |
 | What changed | [`docs/changelog.md`](docs/changelog.md) | — |
 | What is next | [`docs/roadmap.md`](docs/roadmap.md) | — |
 | What is deliberately not done | [`docs/known-gaps.md`](docs/known-gaps.md) | — |
@@ -52,6 +52,7 @@ crypto-dashboard/
 ├── trip-context.js        # per-trip funding, price path, market at entry
 ├── habits.js              # trading habits and their estimated cost
 ├── goals.js               # goal types and their scoring
+├── milestones.js          # account-value targets and the monthly drawdown limit
 ├── history-store.js       # append-only NDJSON cache
 ├── *.test.js              # engine unit tests
 ├── test/                  # fake exchange, route contract tests, golden snapshot, page smoke test

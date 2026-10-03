@@ -5,8 +5,8 @@ from the day you set them. Two kinds, chosen deliberately: **process rules** che
 your trades, and **milestones** with a deadline. Pure profit targets are left out — they
 reward forcing trades.
 
-The design was agreed on 2026-10-03. **Rules are built**; milestones are the next roadmap card
-(*Goals: milestones*).
+The design was agreed on 2026-10-03; rules and milestones are both built. Milestones live in
+`milestones.js`, which `goals.js` calls for every type whose unit is `milestone`.
 
 ## Goal types
 
@@ -20,7 +20,7 @@ The design was agreed on 2026-10-03. **Rules are built**; milestones are the nex
 | Max trades per day | day | trips opened per local day; only the trips past the cap are breaches | yes |
 | Stop for the day after N losses in a row | trip | losing closes earlier that local day | yes |
 | No trading in chosen sessions | trip | `session` | yes |
-| Milestone: account value ≥ X by a date | milestone | equity snapshots | from the first snapshot |
+| Milestone: account value ≥ X, optionally by a date | milestone | equity snapshots, deposits and withdrawals removed | from the first snapshot |
 | Milestone: monthly drawdown no worse than −Y% | milestone | equity snapshots, else the wallet curve | yes, on the wallet |
 
 Every rule can be scoped to a session (*Applies: Weekend*), reusing `sessions.js`.
@@ -37,9 +37,14 @@ Every rule can be scoped to a session (*Applies: Weekend*), reusing `sessions.js
   trips — the habit-cost method, labelled an estimate, dimmed with ⚠ under 10 on either side.
 - **Editing a threshold re-scores from the same set date**; history never mixes two versions
   of a rule. Pausing keeps the record and stops scoring.
-- **Milestones** show progress from the value when set to the target, and a straight-line
-  projection from the trend since setting it ("on pace for …"), labelled an extrapolation;
-  under 7 days of history it says so instead.
+- **Milestones** show progress from the value when set to the target, with deposits and
+  withdrawals left out so a transfer never reaches a target. The projection is a least-squares
+  line through the daily closes since setting it ("on pace for …"), labelled an extrapolation;
+  under 7 days of history it says so instead. A target without a date is never late or
+  missed. The drawdown milestone scores each local month from the month it was set; months
+  before snapshots began read from the wallet curve, marked ≈ wallet.
+- **Order:** rules first, as below; then milestones, the drawdown limit first and account
+  targets by target, paused last — so a ladder of targets reads in order.
 
 ## Suggestions are honest
 

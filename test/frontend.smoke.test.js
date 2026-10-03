@@ -431,7 +431,7 @@ test('Goals: empty state suggests, rows order and render every state, the drawer
          today: { trips: 2, broken: 1, limit: 2 }, waiting: status === 'idle', pausedAt: status === 'paused' ? Date.now() : null,
          breaches: [{ symbol: 'ETHUSDT', side: 'Long', openTime: Date.now() - 36e5, closeTime: Date.now(), net: -4.2, what: 'trade 3 of the day' }],
          breachCount: 1, brokenTrips: 1, keptTrips: 3, avgBroken: -4.2, avgKept: 2, cost: -6.2, thin: true }));
-       goalsData.today = { scored: 2, kept: 1, broken: [g.label] };
+       goalsData.today = { scored: 2, kept: 1, broken: [g.label], offTrack: [] };
        goalOpen = 'g0'`);
   const board = show('goals');
   assert.deepEqual([...board.matchAll(/class="gl-mark (\w+)"/g)].map(m => m[1]), ['broken', 'progress', 'kept', 'idle', 'paused']);
@@ -445,4 +445,52 @@ test('Goals: empty state suggests, rows order and render every state, the drawer
   assert.equal(run('jrTab'), 'trades');
   assert.equal(run('filteredTrips().every(t => t.symbol === "ETHUSDT")'), true);
   assert.match(show('trades'), /onclick="filterTrades\('day', null\)"/);
+});
+
+test('Milestones: a block under the rules, every state renders, the chart projects, the drawer takes a date', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading && goalsData && !goalsLoading', 'the journal and goals');
+  const show = tab => { run(`jrTab = '${tab}'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+  const now = Date.now(), day = 864e5;
+  run(`const base = { type: 'accountTarget', unit: 'milestone', params: { target: 2e6, by: null }, setAt: ${now - 20 * day}, pausedAt: null,
+         start: 1000, current: 1500, asOf: ${now}, target: 2e6, progress: 0.0005, paceFraction: null, deadline: null, days: 20, perDay: 25,
+         eta: ${now + 900 * day}, reachedAt: null,
+         chart: [0, 1, 2].map(i => ({ t: ${now} - (2 - i) * ${day}, value: 1000 + i * 250 })),
+         projection: [{ t: ${now}, value: 1500 }, { t: ${now + 30 * day}, value: 2250 }] };
+       goalsData.goals = ['open', 'onpace', 'late', 'early', 'reached', 'missed', 'paused'].map((status, i) => ({ ...base, id: 'm' + i, status,
+         label: 'Account ≥ $' + (i + 1) + '00k', deadline: ['onpace', 'late', 'missed'].includes(status) ? ${now + 10 * day} : null,
+         paceFraction: status === 'late' ? 0.6 : null, pausedAt: status === 'paused' ? ${now} : null }));
+       goalsData.goals.push({ id: 'dd', type: 'monthlyDrawdown', unit: 'milestone', label: 'Monthly drawdown under 10%', params: { maxPct: 10 },
+         setAt: ${now - 40 * day}, status: 'progress', n: 1, adherence: 1, streak: 1, pausedAt: null,
+         month: { ddPct: -3.2, limit: 10, approx: false }, before: { n: 2, adherence: 0.5, worst: -14.1, approx: true },
+         strip: Array.from({ length: 12 }, (_, i) => ({ day: ${now} - (11 - i) * 30 * ${day}, state: i === 11 ? 'progress' : i > 9 ? 'kept' : 'unset', ddPct: i > 9 ? -2 : null, approx: false })) });
+       goalsData.today = { scored: 0, kept: 0, broken: [], offTrack: [{ label: 'Account ≥ $250k', status: 'late' }] };
+       goalOpen = 'm0'`);
+  const board = show('goals');
+  assert.match(board, /No goals yet[\s\S]*section-label gl-block">Milestones/, 'rule suggestions still offered above the milestones');
+  assert.deepEqual([...board.matchAll(/gl-mark (\w+)">/g)].map(m => m[1]),
+    ['open', 'onpace', 'late', 'early', 'reached', 'missed', 'paused', 'progress']);
+  assert.match(board, /class="gl-proj"[^>]*stroke-dasharray/);
+  assert.match(board, /target \$2,000,000\.00 is off the chart/);
+  assert.match(board, /not enough history · 20\.0 of 7 days|on pace for/);
+  assert.match(board, /−3\.2% of −10% this month/);
+  assert.deepEqual(strayValues(board), []);
+  run(`goalOpen = 'dd'`);
+  assert.match(show('goals'), /Before you set it: 50% of 2 months kept · worst −14\.1% ≈ wallet/);
+  assert.match(show('overview'), /gl-late">◔ Account ≥ \$250k late/);
+
+  run(`openGoalDrawer(); setGoalType('accountTarget')`);
+  assert.match(markup.get('goalDrawerBody'), /type="date"[\s\S]*optional/);
+  assert.doesNotMatch(markup.get('goalDrawerBody'), /Applies/);
+  run(`setGoalParam('target', '2000000')`);
+  await run('loadGoalPreview()');
+  assert.match(markup.get('goalPreview'), /Now \$[\d,.]+( ≈ wallet)? · needs \+\$/);
+  run(`setGoalType('monthlyDrawdown')`);
+  await run('loadGoalPreview()');
+  assert.deepEqual(strayValues(markup.get('goalPreview')), []);
 });

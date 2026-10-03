@@ -1,5 +1,14 @@
 # Changelog
 
+## Goals: milestones (2026-10-03)
+
+- Account-value targets, with an optional date, and a monthly drawdown limit, in their own
+  block under the rules. Progress leaves deposits and withdrawals out; the pace is a
+  least-squares line through daily closes, shown only after a week of snapshots, and drawn
+  dashed as an extrapolation in the expanded chart.
+- States: on pace, late, reached, missed and *not enough history*; the Overview line names a
+  milestone only when it is late or missed.
+
 ## Goals: rules (2026-10-03)
 
 - Eight process rules — max leverage, a stop within 5 minutes, a max loss per trade, no adding

@@ -4,6 +4,7 @@
 // context (lib/trip-enrichment.js).
 
 import { THIN_TRIPS, netOf } from './habits.js';
+import { deadlineOf, previewMilestone, scoreMilestone } from './milestones.js';
 import { SESSIONS } from './sessions.js';
 import { periodStarts } from './trade-analytics.js';
 
@@ -22,6 +23,7 @@ const broke = what => ({ kept: false, what });
 const judge = (isBroken, what) => (isBroken ? broke(what()) : kept);
 const lost = t => netOf(t) < 0;
 const fmtUsd = v => `$${Math.abs(v).toFixed(2)}`;
+const fmtTarget = v => (v >= 1e6 ? `$${+(v / 1e6).toFixed(2)}M` : v >= 1e3 ? `$${+(v / 1e3).toFixed(1)}k` : `$${v}`);
 
 /** The goals that can be set: params describe the form fields, `check` judges one trip. */
 export const GOAL_TYPES = [
@@ -72,7 +74,14 @@ export const GOAL_TYPES = [
   { id: 'noSessions', label: 'No trading in sessions', unit: 'trip', scoped: false,
     params: [{ key: 'sessions', label: 'Sessions', sessions: true, default: ['Weekend'] }],
     describe: p => `No trading: ${p.sessions.join(', ')}`,
-    check: (t, p) => judge(p.sessions.includes(t.session), () => t.session) }
+    check: (t, p) => judge(p.sessions.includes(t.session), () => t.session) },
+  { id: 'accountTarget', label: 'Account value target', unit: 'milestone', scoped: false,
+    params: [{ key: 'target', label: 'Target', prefix: '$', min: 1, max: 1e10, step: 1, default: 10000 },
+             { key: 'by', label: 'By', date: true, optional: true, default: null }],
+    describe: p => `Account ≥ ${fmtTarget(p.target)}${p.by ? ` by ${p.by}` : ''}` },
+  { id: 'monthlyDrawdown', label: 'Monthly drawdown limit', unit: 'milestone', scoped: false,
+    params: [{ key: 'maxPct', label: 'Max', suffix: '% fall in a month', min: 0.1, max: 100, step: 0.1, default: 10 }],
+    describe: p => `Monthly drawdown under ${p.maxPct}%` }
 ];
 
 const typeOf = id => GOAL_TYPES.find(g => g.id === id);
@@ -84,7 +93,18 @@ function cleanNumber(spec, raw) {
   return v;
 }
 
-function cleanParam(spec, raw) {
+function cleanDate(spec, raw, now) {
+  if (raw == null || raw === '') {
+    if (spec.optional) return null;
+    throw new Error(`${spec.label} is required`);
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw) || Number.isNaN(Date.parse(raw))) throw new Error(`${spec.label} must be a date`);
+  if (now != null && deadlineOf(raw) <= now) throw new Error(`${spec.label} must be in the future`);
+  return raw;
+}
+
+function cleanParam(spec, raw, now) {
+  if (spec.date) return cleanDate(spec, raw, now);
   if (spec.sessions) {
     const list = Array.isArray(raw) ? [...new Set(raw)] : [];
     if (!list.length || !list.every(s => SESSIONS.includes(s))) throw new Error(`${spec.label}: pick from ${SESSIONS.join(', ')}`);
@@ -97,12 +117,15 @@ function cleanParam(spec, raw) {
   return cleanNumber(spec, raw);
 }
 
-/** The goal's type, params and session scope, checked against GOAL_TYPES; throws a readable Error otherwise. */
-export function validateGoal({ type, params = {}, session = null } = {}) {
+/**
+ * The goal's type, params and session scope, checked against GOAL_TYPES; throws a readable
+ * Error otherwise. Given `now`, a date param must lie in the future.
+ */
+export function validateGoal({ type, params = {}, session = null } = {}, now = null) {
   const def = typeOf(type);
   if (!def) throw new Error(`unknown goal type ${type}`);
   if (session != null && (def.scoped === false || !SESSIONS.includes(session))) throw new Error('session scope not allowed here');
-  const clean = Object.fromEntries(def.params.map(spec => [spec.key, cleanParam(spec, params?.[spec.key] ?? spec.default)]));
+  const clean = Object.fromEntries(def.params.map(spec => [spec.key, cleanParam(spec, params?.[spec.key] ?? spec.default, now)]));
   return { type, params: clean, session: session ?? null };
 }
 
@@ -209,13 +232,19 @@ function statusOf(def, goal, today, periods) {
   return periods.length ? 'kept' : 'idle';
 }
 
+const goalHeader = (goal, def) => ({
+  id: goal.id, type: goal.type, params: goal.params, session: goal.session, setAt: goal.setAt,
+  label: describeGoal(goal), unit: def.unit, forwardOnly: !!def.forwardOnly, pausedAt: activePause(goal)?.from ?? null
+});
+
 /**
  * One goal's record from `setAt`: status today, adherence with n, streak, the day strip and
  * calendar, breaches with their estimated cost, and what history before `setAt` would have said.
- * `ctx` is `{ tzOffsetMin, now, equityAt }`; time paused is never scored.
+ * `ctx` is `{ tzOffsetMin, now, equityAt, snapshots, transfers, wallet }`; time paused is never scored.
  */
 export function scoreGoal(goal, trips, ctx) {
   const def = typeOf(goal.type);
+  if (def.unit === 'milestone') return { ...goalHeader(goal, def), ...scoreMilestone(goal, ctx, t => inPause(goal, t)) };
   const tz = ctx.tzOffsetMin || 0;
   const rows = evaluate(def, goal, trips || [], ctx);
   const scored = rows.filter(r => r.trip.openTime >= goal.setAt && !inPause(goal, r.trip.openTime));
@@ -226,10 +255,8 @@ export function scoreGoal(goal, trips, ctx) {
   const scoredDay = day => day >= goal.setAt && !inPause(goal, day);
   const breaches = scored.filter(r => !r.kept).reverse();
   return {
-    id: goal.id, type: goal.type, params: goal.params, session: goal.session, setAt: goal.setAt,
-    label: describeGoal(goal), unit: def.unit, forwardOnly: !!def.forwardOnly,
+    ...goalHeader(goal, def),
     status: statusOf(def, goal, todayRows, periods),
-    pausedAt: activePause(goal)?.from ?? null,
     waiting: !!def.forwardOnly && !rows.length,
     today: { trips: todayRows.length, broken: todayRows.filter(r => !r.kept).length,
              limit: def.unit === 'day' ? goal.params.max : null },
@@ -248,6 +275,7 @@ export function scoreGoal(goal, trips, ctx) {
 /** What a goal would have scored on all of `trips`, with no set date: the add drawer's preview. */
 export function previewGoal(goal, trips, ctx) {
   const def = typeOf(goal.type);
+  if (def.unit === 'milestone') return { label: describeGoal(goal), unit: def.unit, type: goal.type, ...previewMilestone(goal, ctx) };
   const rows = evaluate(def, goal, trips || [], ctx);
   return { label: describeGoal(goal), ...summary(def, rows),
            strip: dayCells(rows, localDay(ctx.now, ctx.tzOffsetMin || 0), PREVIEW_DAYS) };

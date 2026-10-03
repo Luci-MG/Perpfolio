@@ -138,3 +138,59 @@ test('the preview scores all history with no set date', () => {
   const p = previewGoal(validateGoal({ type: 'noUnderwaterAdds' }), [trip(T0, { addsWhileUnderwater: 1 }), trip(NOW - HOUR)], ctx);
   assert.deepEqual([p.n, p.brokenTrips, p.strip.length], [2, 1, 14]);
 });
+
+const snapsDaily = (from, days, value) => Array.from({ length: days }, (_, i) => ({ t: from + i * DAY, accountValue: value(i) }));
+const milestone = (type, params, o = {}) => ({ id: 'm', ...validateGoal({ type, params }), setAt: T0, pauses: [], ...o });
+const mctx = o => ({ ...ctx, snapshots: [], transfers: [], wallet: [], ...o });
+
+test('an account target reads progress from snapshots and waits a week before projecting', () => {
+  const early = score(milestone('accountTarget', { target: 2000 }), [], mctx({ snapshots: snapsDaily(T0, 3, i => 1000 + i * 10), now: T0 + 2 * DAY }));
+  assert.deepEqual([early.status, early.start, early.current, early.progress, early.projection], ['early', 1000, 1020, 0.02, null]);
+
+  const r = score(milestone('accountTarget', { target: 2000 }), [], mctx({ snapshots: snapsDaily(T0, 11, i => 1000 + i * 50) }));
+  assert.deepEqual([r.status, r.perDay, r.progress], ['open', 50, 0.5]);
+  assert.equal(r.eta, T0 + 20 * DAY);
+  assert.equal(r.projection.at(-1).value, 2000);
+});
+
+test('an account target is on pace, late, reached or missed against its date', () => {
+  const rising = mctx({ snapshots: snapsDaily(T0, 11, i => 1000 + i * 50) });
+  assert.equal(score(milestone('accountTarget', { target: 3000, by: '2026-10-30' }), [], rising).status, 'onpace');
+  assert.equal(score(milestone('accountTarget', { target: 3000, by: '2026-10-01' }), [], rising).status, 'late');
+  assert.equal(score(milestone('accountTarget', { target: 1400 }), [], rising).status, 'reached');
+  const after = { ...rising, now: Date.UTC(2026, 9, 2) };
+  assert.equal(score(milestone('accountTarget', { target: 5000, by: '2026-09-30' }), [], after).status, 'missed');
+  const paused = milestone('accountTarget', { target: 5000 }, { pauses: [{ from: T0 + DAY, to: null }] });
+  assert.equal(score(paused, [], rising).status, 'paused');
+});
+
+test('a deposit never counts as progress toward a target', () => {
+  const snapshots = snapsDaily(T0, 3, i => (i < 2 ? 1000 : 6000));
+  const r = score(milestone('accountTarget', { target: 5000 }), [], mctx({ snapshots, transfers: [{ t: T0 + 1.5 * DAY, amount: 5000 }] }));
+  assert.deepEqual([r.current, r.status], [1000, 'early']);
+});
+
+test('monthly drawdown scores each local month from the month it was set, the wallet standing in before snapshots', () => {
+  const aug = Date.UTC(2026, 7, 1);
+  const wallet = [{ t: aug + DAY, wallet: 1000 }, { t: aug + 5 * DAY, wallet: 800 }, { t: aug + 9 * DAY, wallet: 900 }];
+  const snapshots = [{ t: T0 + DAY, accountValue: 1000 }, { t: T0 + 2 * DAY, accountValue: 1100 }, { t: T0 + 3 * DAY, accountValue: 1045 }];
+  const r = score(milestone('monthlyDrawdown', { maxPct: 10 }), [], mctx({ wallet, snapshots }));
+  assert.deepEqual([r.status, r.month.ddPct, r.n], ['progress', -5, 0]);
+  assert.deepEqual([r.before.n, r.before.worst, r.before.approx], [1, -20, true]);
+  assert.equal(r.strip.at(-1).state, 'progress');
+  assert.equal(r.strip.at(-2).state, 'unset');
+  const broken = score(milestone('monthlyDrawdown', { maxPct: 4 }), [], mctx({ wallet, snapshots }));
+  assert.equal(broken.status, 'broken');
+});
+
+test('a milestone date must be a real date in the future; the preview states what is needed', () => {
+  assert.throws(() => validateGoal({ type: 'accountTarget', params: { target: 10, by: '2026-02-30x' } }), /must be a date/);
+  assert.throws(() => validateGoal({ type: 'accountTarget', params: { target: 10, by: '2026-09-01' } }, NOW), /in the future/);
+  assert.equal(validateGoal({ type: 'accountTarget', params: { target: 2e6 } }).params.by, null);
+  assert.match(score(milestone('accountTarget', { target: 2e6 }), [], mctx()).label, /Account ≥ \$2M$/);
+
+  const p = previewGoal(validateGoal({ type: 'accountTarget', params: { target: 3000, by: '2026-10-01' } }), [],
+    mctx({ snapshots: snapsDaily(NOW - 10 * DAY, 10, i => 1000 + i * 20) }));
+  assert.deepEqual([p.current, p.needed, p.neededPct, p.pace.perDay, p.pace.approx], [1180, 1820, 154.24, 20, false]);
+  assert.ok(p.requiredPerDay > 100);
+});

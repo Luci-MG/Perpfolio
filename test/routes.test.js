@@ -265,6 +265,23 @@ test('goals accept only well-formed JSON changes, and preview without saving', a
   assert.deepEqual((await get('/api/goals')).body.goals, []);
 });
 
+test('milestones sit after rules, by target, and are scored from snapshots without counting transfers', async () => {
+  for (const target of [60000, 20000]) await postGoal({ action: 'add', type: 'accountTarget', params: { target } });
+  await postGoal({ action: 'add', type: 'monthlyDrawdown', params: { maxPct: 10 } });
+  await postGoal({ action: 'add', type: 'noUnderwaterAdds' });
+  assert.equal((await postGoal({ action: 'add', type: 'accountTarget', params: { target: 5, by: '2020-01-01' } })).status, 400);
+  const { goals, today } = (await get('/api/goals?tz=0')).body;
+  assert.deepEqual(goals.map(g => g.label), ['No adding while underwater', 'Monthly drawdown under 10%', 'Account ≥ $20k', 'Account ≥ $60k']);
+  const target = goals[2];
+  assert.ok(['early', 'reached'].includes(target.status), target.status);
+  assert.ok(Array.isArray(today.offTrack));
+  const params = encodeURIComponent(JSON.stringify({ target: 2e6 }));
+  const preview = (await get(`/api/goals/preview?type=accountTarget&params=${params}`)).body.preview;
+  assert.equal(preview.unit, 'milestone');
+  assert.ok(preview.current > 0 && preview.needed > 0);
+  for (const g of goals) await postGoal({ action: 'delete', id: g.id });
+});
+
 test('route output matches the golden snapshot', () => {
   if (!fs.existsSync(GOLDEN) || process.env.UPDATE_GOLDEN) {
     fs.mkdirSync(path.dirname(GOLDEN), { recursive: true });

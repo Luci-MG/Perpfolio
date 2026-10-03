@@ -7985,6 +7985,7 @@
   "today": {
    "broken": [],
    "kept": 0,
+   "offTrack": [],
    "scored": 0
   },
   "types": [
@@ -8124,6 +8125,49 @@
     ],
     "scoped": false,
     "unit": "trip"
+   },
+   {
+    "forwardOnly": false,
+    "id": "accountTarget",
+    "label": "Account value target",
+    "params": [
+     {
+      "default": 10000,
+      "key": "target",
+      "label": "Target",
+      "max": 10000000000,
+      "min": 1,
+      "prefix": "$",
+      "step": 1
+     },
+     {
+      "date": true,
+      "default": null,
+      "key": "by",
+      "label": "By",
+      "optional": true
+     }
+    ],
+    "scoped": false,
+    "unit": "milestone"
+   },
+   {
+    "forwardOnly": false,
+    "id": "monthlyDrawdown",
+    "label": "Monthly drawdown limit",
+    "params": [
+     {
+      "default": 10,
+      "key": "maxPct",
+      "label": "Max",
+      "max": 100,
+      "min": 0.1,
+      "step": 0.1,
+      "suffix": "% fall in a month"
+     }
+    ],
+    "scoped": false,
+    "unit": "milestone"
    }
   ]
  }

@@ -22,7 +22,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | idea |
 | P4 | [Goals: design spike](#p4--goals-design-spike) | done (2026-10-03) |
 | P4 | [Goals: rules](#p4--goals-rules) | done (2026-10-03) |
-| P4 | [Goals: milestones](#p4--goals-milestones) | planned |
+| P4 | [Goals: milestones](#p4--goals-milestones) | done (2026-10-03) |
 | — | [Carried over](#carried-over) | planned |
 
 ---
@@ -261,6 +261,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 
 ## P4 — Goals: milestones
 
+- **Status:** done (2026-10-03).
 - **Scope:** account-value-by-date and monthly-drawdown milestones — progress bar with the
   pace marker in the row, mini chart with a dashed projection when expanded, labelled an
   extrapolation.
