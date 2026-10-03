@@ -4,7 +4,6 @@
 
 let fundData = null, fundLoading = false;
 
-const signedUsd = v => (v > 0 ? `+${fmtUsd(v)}` : fmtSignedUsd(v));
 const signGlyph = v => (v > 0 ? '+' : v < 0 ? '−' : '');
 const ratePctText = v => `${signGlyph(v)}${fmt(Math.abs(v), 4)}%`;
 const aprText = v => `${signGlyph(v)}${fmt(Math.abs(v), 1)}%`;
@@ -37,13 +36,15 @@ function renderDailyFundingWidget(data) {
   const next = nextSettlementOf(bn);
   const tone = v => (v > 0 ? 'up' : v < 0 ? 'dn' : '');
   const venueRow = (label, venue, positions) => `<div class="fw-row"><span>${label}</span>${venueOn(venue)
-    ? `<span class="sb-num ${tone(cost(positions))}">${signedUsd(cost(positions))}</span>` : '<span>off</span>'}</div>`;
+    ? `<span class="sb-num ${tone(cost(positions))}">${fmtPlusUsd(cost(positions))}</span>` : '<span>off</span>'}</div>`;
   return `
     <div class="label" style="margin-bottom:6px">Daily funding</div>
-    <div class="fw-total"><span class="sb-num ${total >= 0 ? 'up' : 'dn'}">${signedUsd(total)}</span><span class="fw-unit">/day est.</span></div>
-    ${next ? `<div class="fw-row"><span>next in ${countdownHtml(next.at)}</span><span class="sb-num ${next.amount >= 0 ? 'up' : 'dn'}">${signedUsd(next.amount)}</span></div>` : ''}
+    <div class="fw-total"><span class="sb-num ${total >= 0 ? 'up' : 'dn'}">${fmtPlusUsd(total)}</span><span class="fw-unit">/day est.</span></div>
+    ${next ? `<div class="fw-row"><span>next in ${countdownHtml(next.at)}</span><span class="sb-num ${next.amount >= 0 ? 'up' : 'dn'}">${fmtPlusUsd(next.amount)}</span></div>` : ''}
     ${venueRow('HL', 'hyperliquid', hl)}${venueRow('BN', 'binance', bn)}`;
 }
+
+const fundDrawerOpen = () => !!document.getElementById('fundDrawer')?.classList.contains('open');
 
 async function openFundDrawer() {
   document.getElementById('fundOverlay').classList.add('open');
@@ -103,7 +104,7 @@ function nearCapHtml(row) {
 
 function fundRowHtml(r) {
   const name = r.pair ? `${shortName(r.symbol)} hedge` : `${shortName(r.symbol)} <span class="gl-n">${r.side.toLowerCase()}</span>`;
-  const legs = r.pair ? `<div class="gl-n">long ${signedUsd(r.long.perDay)} · short ${signedUsd(r.short.perDay)} a day</div>` : '';
+  const legs = r.pair ? `<div class="gl-n">long ${fmtPlusUsd(r.long.perDay)} · short ${fmtPlusUsd(r.short.perDay)} a day</div>` : '';
   const venue = r.exchange === 'hyperliquid' ? ' <span class="gl-n">HL</span>' : '';
   const charged = r.usual?.lastCharged ? `<span title="charged at the last settlement">${ratePctText(r.usual.lastCharged.ratePct)}</span>` : '—';
   return `<tr>
@@ -124,19 +125,19 @@ function fundSummaryHtml(d) {
     <div class="upnl-sum-val ${cls}">${value}</div>${sub ? `<div class="gl-n">${sub}</div>` : ''}</div>`;
   const tone = v => (v > 0 ? 'up' : v < 0 ? 'dn' : '');
   return `<div class="upnl-summary-strip fd-summary">
-    ${cell('Est. net / day', signedUsd(t.perDay), tone(t.perDay), 'at today’s estimated rates')}
-    ${cell('Realised 7d', signedUsd(r.d7), tone(r.d7), `24h ${signedUsd(r.d1)} · 30d ${signedUsd(r.d30)}`)}
+    ${cell('Est. net / day', fmtPlusUsd(t.perDay), tone(t.perDay), 'at today’s estimated rates')}
+    ${cell('Realised 7d', fmtPlusUsd(r.d7), tone(r.d7), `24h ${fmtPlusUsd(r.d1)} · 30d ${fmtPlusUsd(r.d30)}`)}
     ${cell('Of equity', t.pctOfEquityPerDay == null ? '—' : `${t.pctOfEquityPerDay < 0 ? '−' : ''}${fmt(Math.abs(t.pctOfEquityPerDay), 3)}%`, tone(t.perDay ?? 0), 'a day')}
     ${cell('On gross', t.aprOnGrossPct == null ? '—' : `${t.aprOnGrossPct < 0 ? '−' : ''}${fmt(Math.abs(t.aprOnGrossPct), 2)}%`, tone(t.perDay ?? 0), 'a year, estimated')}
   </div>`;
 }
 
 function fundNotesHtml(d) {
-  const next = d.next ? `<p class="gl-line">Next settlement in ${countdownHtml(d.next.at)} · <span class="${d.next.amount >= 0 ? 'up' : 'dn'}">${signedUsd(d.next.amount)}</span></p>` : '';
+  const next = d.next ? `<p class="gl-line">Next settlement in ${countdownHtml(d.next.at)} · <span class="${d.next.amount >= 0 ? 'up' : 'dn'}">${fmtPlusUsd(d.next.amount)}</span></p>` : '';
   const gap = d.realised.differsFromEstimate == null
     ? '<p class="gl-n">Sync history to compare realised funding with the estimate.</p>'
     : d.realised.differsFromEstimate
-      ? `<p class="gl-line">Binance funding realised over the ${fmt(d.realised.coveredDays, 0)} days to the last sync averaged ${signedUsd(d.realised.perDay7d)} a day against ${signedUsd(d.realised.estimatePerDay)} estimated now: rates or positions have moved.</p>` : '';
+      ? `<p class="gl-line">Binance funding realised over the ${fmt(d.realised.coveredDays, 0)} days to the last sync averaged ${fmtPlusUsd(d.realised.perDay7d)} a day against ${fmtPlusUsd(d.realised.estimatePerDay)} estimated now: rates or positions have moved.</p>` : '';
   const synced = d.realised.syncedAt ? `<p class="gl-n">Realised as of the last history sync, ${goalWhen(new Date(d.realised.syncedAt).getTime())}.</p>` : '';
   return `${next}${gap}${synced}`;
 }
@@ -144,7 +145,7 @@ function fundNotesHtml(d) {
 function fundVenueLine(d) {
   const x = d.totals.byExchange;
   if (!x.binance || !x.hyperliquid) return '';
-  return `<p class="gl-line">Binance ${signedUsd(x.binance)} · Hyperliquid ${signedUsd(x.hyperliquid)} a day</p>`;
+  return `<p class="gl-line">Binance ${fmtPlusUsd(x.binance)} · Hyperliquid ${fmtPlusUsd(x.hyperliquid)} a day</p>`;
 }
 
 function openFundingHistory() {

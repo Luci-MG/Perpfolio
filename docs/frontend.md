@@ -60,16 +60,29 @@ Why classic scripts and why the order matters: [`architecture.md`](architecture.
 | `renderMarginHealth(data)` | Sidebar SVG arc gauges for HL and BN margin use |
 | `renderSidebarBottomRow(data)` | Funding widget + `renderCalcTiles()` icon block |
 | `renderCalcTiles()` | The 3×2 icon grid: three calculators + three drawers |
-| `fmt` / `fmtUsd` / `fmtSignedUsd` / `fmtPrice` / `fmtPnl` | Number formatting |
+| `fmt` / `fmtUsd` / `fmtSignedUsd` / `fmtPlusUsd` / `fmtSigned` / `fmtSignedPct` / `fmtPrice` / `fmtPnl` | Number formatting |
+| `esc` / `jsArg` | Text into markup / a value into a handler argument |
+| `latest(key)` | A check that is true only while no newer call for `key` has started |
+| `positionById(id)` / `venueColor` / `venueLabel` / `shortPair` | The live position behind a tile; venue and pair labels |
 | `liqDist(p)` | `abs(mark − liqPrice) / mark × 100` |
 
 `esc()` escapes anything interpolated into markup from user input or an exchange/server
-string — attributes, titles and error messages.
+string — attributes, titles and error messages. A value passed to an inline handler goes
+through `jsArg()` instead (`onclick="f(${jsArg(x)})"`): `esc()` inside a single-quoted JS
+string is not enough, because the attribute decodes `&#39;` back to `'` before the JS runs.
 
-`fmtPnl` renders a negative as a red `$X` with **no minus sign** — colour carries the sign.
-That is fine for a PnL column and wrong for anything where the sign is the point, which is
-why `fmtSignedUsd` exists. `fmtPrice` scales decimals to the price magnitude; `fmtUsd` is
-always 2dp and turns a 1e-5 asset into `$0.00`.
+Every sign is the `−` glyph from one of the shared helpers — `fmtSignedUsd` (−$ only),
+`fmtPlusUsd` (+$ / −$), `fmtSigned` (a bare number) and `fmtSignedPct`; `fmtPnl` wraps
+`fmtPlusUsd` in its colour. No view keeps its own sign helper, and nothing negative reaches
+the page through plain `fmt()`; a smoke test scans every view for a hyphen before a figure.
+`fmtPrice` scales decimals to the price magnitude; `fmtUsd` is always 2dp and turns a 1e-5
+asset into `$0.00`, so prices — orders, triggers, entries — use `fmtPrice`.
+
+Tiles carry only `data-pos-id`; the calculator, the context menu and the drag-to-hedge
+popup look the full position up in `lastData` with `positionById`. Each fetch a later one
+can overtake (performance, trips, factors, risk book, unwind) takes a `latest(key)` check
+and drops its response once a newer request has started; a poll asked for while one is in
+flight runs straight after it rather than being skipped.
 
 ### Views: positions tabs and tools
 `posView` ∈ `tiles | list | orders | stops | stress | unwind | journal | confluence`, default `tiles`.
@@ -92,6 +105,12 @@ column — destroying a slider mid-drag or an input mid-edit. `render()` therefo
 panel alone whenever its mount marker (`#st-mounted`, `#uw-mounted`, `#cf-mounted`,
 `#vs-mounted`, `#jr-mounted`) is present, unless
 `rerenderStress()` set `riskForceRender`. Every deliberate rebuild goes through that helper.
+Even a deliberate rebuild waits while a text field in the main column has focus or a tile is
+being dragged (`contentInUse()`), and runs on blur or drop (`resumeContent()`): a sync that
+finished used to wipe the note being typed. On the poll, the Journal Overview's account line
+is patched in place (`#ov-account`) so it stays live without a rebuild. A Journal fetch
+rebuilds only for the sub-tab it feeds, and funding is fetched only for Overview or its
+drawer. The Journal window (7d/30d/90d/all) is remembered across reloads.
 
 ### Status bulb and exchange switches
 The dot beside *Last updated* is a button. It opens a popover with one row per exchange: a
@@ -203,9 +222,9 @@ A CSS grid track defaults to `min-width: auto`, so one wide table widens the tra
 content out under the sidebar rather than shrinking or scrolling. Any new wide element inside
 a grid needs `min-width: 0` on its track.
 
-Key layout classes: `.metric-grid`, `.metric .breakdown`, `.b-row`, `.view-tabs`, `.view-tab`, `.pos-tile-grid`, `.pos-tile`, `.rvc-grid`, `.rvc`, `.donut`, `.donut-hole`, `.fviz-row`, `.two-col`, `.card`.
+Key layout classes: `.metric .breakdown`, `.b-row`, `.view-tabs`, `.view-tab`, `.pos-tile-grid`, `.pos-tile`, `.card`.
 
 `renderCalcTiles()` is the icon-button block beside the funding tile: a `repeat(3, 1fr)` grid
-holding five tools and one reserved slot, two rows tall so it matches the funding tile's
+holding six tools, two rows tall so it matches the funding tile's
 height. A tile either carries `tab` (opens the calculator modal) or `action` (raw onclick,
 used by the two drawers).

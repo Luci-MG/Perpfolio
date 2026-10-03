@@ -110,7 +110,6 @@ Each position object (both exchanges, normalised — no realizedPnl):
   liqPrice:    54100.00,
   upnl:        -12.00,
   fundingRate: 0.012,         // raw %, e.g. 0.012 = 0.012%
-  funding8h:   "+0.0120%",    // formatted string with sign
   exchange:    "hyperliquid" | "binance"
 }
 ```

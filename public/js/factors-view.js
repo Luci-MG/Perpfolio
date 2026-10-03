@@ -4,22 +4,25 @@
 let factorsData = null, factorsLoading = false, factorsShowAll = false;
 
 const FACTOR_STABILITY = { holds: 'holds recently', fades: 'fades recently', thin: 'too few recent trips' };
-const plusUsd = v => (v > 0 ? `+${fmtUsd(v)}` : fmtSignedUsd(v));
 const factorPct = v => `${fmt(v * 100, 0)}%`;
 
 async function fetchFactors() {
+  const current = latest('factors');
   factorsLoading = true;
   try {
     const query = [clockParam(), perfDays ? `days=${perfDays}` : '', sessionParam()].filter(Boolean).join('&');
     const data = await (await fetch(`/api/factors?${query}`)).json();
+    if (!current()) return;
     if (!data.ok) throw new Error(data.error || 'factors failed');
     factorsData = data;
     clearLoadError('factors');
   } catch (err) {
-    noteLoadError('factors', err);
+    if (current()) noteLoadError('factors', err);
   } finally {
-    factorsLoading = false;
-    if (posView === 'journal' && ['factors', 'overview'].includes(jrTab)) rerenderStress();
+    if (current()) {
+      factorsLoading = false;
+      if (posView === 'journal' && ['factors', 'overview'].includes(jrTab)) rerenderStress();
+    }
   }
 }
 
@@ -51,15 +54,15 @@ function verdictRow(b, i) {
   return `<div class="fx-verdict${b.thin ? ' thin' : ''}">
     <span class="gl-mark ${worse ? 'broken' : 'kept'}">${worse ? '✗' : '✓'}</span>
     <span class="gl-name">${esc(b.bucket)} <span class="gl-n">${esc(b.label)}</span></span>
-    <span class="${worse ? 'dn' : 'up'}">${plusUsd(b.diff)}/trip</span>
-    <span class="gl-n">[${plusUsd(b.ci.lo)}, ${plusUsd(b.ci.hi)}] · win ${factorPct(b.winRate)} vs ${factorPct(b.restWinRate)} · n=${b.n} (${b.days}d) · ${FACTOR_STABILITY[b.stability]} ${factorFlags(b)}</span>${goal}
+    <span class="${worse ? 'dn' : 'up'}">${fmtPlusUsd(b.diff)}/trip</span>
+    <span class="gl-n">[${fmtPlusUsd(b.ci.lo)}, ${fmtPlusUsd(b.ci.hi)}] · win ${factorPct(b.winRate)} vs ${factorPct(b.restWinRate)} · n=${b.n} (${b.days}d) · ${FACTOR_STABILITY[b.stability]} ${factorFlags(b)}</span>${goal}
   </div>`;
 }
 
 function intervalBar(b, scale) {
   const x = v => 50 + v / scale * 50;
   const lo = Math.max(0, x(b.ci.lo)), hi = Math.min(100, x(b.ci.hi));
-  return `<span class="fx-bar" title="90% interval ${plusUsd(b.ci.lo)} to ${plusUsd(b.ci.hi)} per trip">
+  return `<span class="fx-bar" title="90% interval ${fmtPlusUsd(b.ci.lo)} to ${fmtPlusUsd(b.ci.hi)} per trip">
     <span class="fx-zero"></span>
     <span class="fx-ci ${b.ci.hi < 0 ? 'dn' : b.ci.lo > 0 ? 'up' : ''}" style="left:${lo.toFixed(1)}%;width:${Math.max(1, hi - lo).toFixed(1)}%"></span>
     <span class="fx-dot" style="left:${Math.min(100, Math.max(0, x(b.diff))).toFixed(1)}%"></span>

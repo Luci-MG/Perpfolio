@@ -137,13 +137,13 @@ function renderHlBody() {
     const dec = priceDecimals(r.mark);
     return `<div class="hl-pair">
       <div class="hl-pair-head">
-        <b>${r.asset}</b>
+        <b>${esc(r.asset)}</b>
         <span class="${r.locked >= 0 ? 'up' : 'dn'}" style="font-size:15px;font-variant-numeric:tabular-nums">
           ${fmtSignedUsd(r.locked)}</span>
       </div>
       <div class="hl-row"><span class="k">long entry / short entry</span>
         <span>${fmt(r.longEntry, dec)} / ${fmt(r.shortEntry, dec)}</span></div>
-      <div class="hl-row"><span class="k">matched size</span><span>${fmt(r.matched, 4)} ${r.asset}</span></div>
+      <div class="hl-row"><span class="k">matched size</span><span>${fmt(r.matched, 4)} ${esc(r.asset)}</span></div>
       <div class="hl-bar">
         <div style="width:${matchedPct.toFixed(1)}%;background:var(--danger);opacity:.55"></div>
         <div style="flex:1;background:var(--bn);opacity:.7"></div>
@@ -161,7 +161,7 @@ function renderHlBody() {
   const carryRows = pool.carry.map(c => {
     const mismatch = c.observedHours && c.declaredHours && c.observedHours !== c.declaredHours;
     return `<div class="hl-row">
-      <span class="k">${c.asset} ${c.side.toLowerCase()}
+      <span class="k">${esc(c.asset)} ${c.side.toLowerCase()}
         <span style="opacity:.7">${c.intervalHours}h</span>
         ${mismatch ? `<span title="Binance declares ${c.declaredHours}h but ${c.settlementsSeen} settlements show ${c.observedHours}h" style="color:var(--warning)">✳</span>` : ''}</span>
       <span class="${c.perDay >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(c.perDay)}/day</span></div>`;

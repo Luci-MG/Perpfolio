@@ -17,7 +17,6 @@ function buildHedgePopup(srcPos, tgtPos) {
 
   const netUpnl  = (longP.upnl || 0) + (shortP.upnl || 0);
   const netUpnlCol = netUpnl >= 0 ? 'var(--success)' : 'var(--danger)';
-  const sign = n => n >= 0 ? '+' : '−';
 
   // Funding net: if hedged, long pays when rate positive, short receives
   const longFundingDay  = fundingPerDay(longP);
@@ -41,7 +40,7 @@ function buildHedgePopup(srcPos, tgtPos) {
   return `
     <div class="hedge-popup-title">
       <div style="width:10px;height:10px;border-radius:50%;background:${labelCol};flex-shrink:0"></div>
-      ${longP.pair} hedge
+      ${esc(longP.pair)} hedge
       ${exchNote}
     </div>
     <div class="hedge-popup-sub">${label} · ${fmt(hedgeRatio, 1)}% matched</div>
@@ -71,24 +70,24 @@ function buildHedgePopup(srcPos, tgtPos) {
       </div>
       <div class="hedge-row">
         <span class="hedge-row-label">Combined uPnL</span>
-        <span class="hedge-row-val" style="color:${netUpnlCol}">${sign(netUpnl)}${fmtUsd(Math.abs(netUpnl))}</span>
+        <span class="hedge-row-val" style="color:${netUpnlCol}">${fmtPlusUsd(netUpnl)}</span>
       </div>
       <div class="hedge-row">
         <span class="hedge-row-label">Long entry</span>
-        <span class="hedge-row-val">${fmtUsd(longP.entry)}</span>
+        <span class="hedge-row-val">${fmtPrice(longP.entry)}</span>
       </div>
       <div class="hedge-row">
         <span class="hedge-row-label">Short entry</span>
-        <span class="hedge-row-val">${fmtUsd(shortP.entry)}</span>
+        <span class="hedge-row-val">${fmtPrice(shortP.entry)}</span>
       </div>
       <div class="hedge-row">
         <span class="hedge-row-label">Entry spread</span>
-        <span class="hedge-row-val" style="color:${entryDeltaCol}">${sign(entryDelta)}${fmtUsd(Math.abs(entryDelta))}</span>
+        <span class="hedge-row-val" style="color:${entryDeltaCol}">${entryDelta > 0 ? '+' : entryDelta < 0 ? '−' : ''}${fmtPrice(Math.abs(entryDelta))}</span>
       </div>
       <div class="hedge-row">
         <span class="hedge-row-label">Net funding/day</span>
         <span class="hedge-row-val" style="color:${netFundingDay >= 0 ? 'var(--success)' : 'var(--danger)'}">
-          ${sign(netFundingDay)}${fmtUsd(Math.abs(netFundingDay))}
+          ${fmtPlusUsd(netFundingDay)}
         </span>
       </div>
     </div>`;
@@ -198,14 +197,9 @@ function onThreadClick(threadKey, x, y) {
 }
 
 function isHedgePair(srcTile, tgtTile) {
-  try {
-    const a = JSON.parse(srcTile.dataset.pos);
-    const b = JSON.parse(tgtTile.dataset.pos);
-    return normalizePairKey(a.pair) === normalizePairKey(b.pair)
-        && a.side !== b.side
-        && (a.side === 'Long' || a.side === 'Short')
-        && (b.side === 'Long' || b.side === 'Short');
-  } catch { return false; }
+  const a = positionById(srcTile.dataset.posId);
+  const b = positionById(tgtTile.dataset.posId);
+  return !!a && !!b && normalizePairKey(a.pair) === normalizePairKey(b.pair) && a.side !== b.side;
 }
 
 function initTileDrag() {
@@ -216,11 +210,12 @@ function initTileDrag() {
 
   grid.querySelectorAll('.pos-tile').forEach(tile => {
     tile.addEventListener('contextmenu', e => {
-      try { showCtxMenu(e, JSON.parse(tile.dataset.pos)); } catch(_) { showCtxMenu(e, null); }
+      showCtxMenu(e, positionById(tile.dataset.posId));
     });
 
     tile.addEventListener('dragstart', e => {
       dragSrc = tile;
+      tileDragging = true;
       tile.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', tile.dataset.posId);
@@ -235,6 +230,8 @@ function initTileDrag() {
       dragSrc = null;
       hedgeTarget = null;
       hideHedgePopup(true);
+      tileDragging = false;
+      resumeContent();
     });
 
     tile.addEventListener('dragover', e => {
@@ -250,18 +247,9 @@ function initTileDrag() {
       if (isHedgePair(dragSrc, tile)) {
         tile.classList.add('hedge-target');
         hedgeTarget = tile;
-        try {
-          const srcPos = JSON.parse(dragSrc.dataset.pos);
-          const tgtPos = JSON.parse(tile.dataset.pos);
-          // enrich with fundingRate + upnl from lastData
-          const enrich = p => {
-            if (!lastData) return p;
-            const all = [...(lastData.hyperliquid?.positions||[]), ...(lastData.binance?.positions||[])];
-            const match = all.find(x => x.exchange === p.exchange && normalizePairKey(x.pair) === normalizePairKey(p.pair) && x.side === p.side);
-            return match ? { ...p, upnl: match.upnl, fundingRate: match.fundingRate } : p;
-          };
-          showHedgePopup(buildHedgePopup(enrich(srcPos), enrich(tgtPos)), e.clientX, e.clientY, false);
-        } catch { hideHedgePopup(true); }
+        const srcPos = positionById(dragSrc.dataset.posId), tgtPos = positionById(tile.dataset.posId);
+        if (srcPos && tgtPos) showHedgePopup(buildHedgePopup(srcPos, tgtPos), e.clientX, e.clientY, false);
+        else hideHedgePopup(true);
       } else {
         tile.classList.add('drag-over');
         hedgeTarget = null;

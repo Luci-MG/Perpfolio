@@ -22,6 +22,9 @@ let volK = 1.5;                // user stop multiplier k
 let volLoading = false;
 
 function posId(p) { return `${p.exchange}:${p.pair}:${p.side}`; }
+function positionById(id) {
+  return [...(lastData?.hyperliquid?.positions || []), ...(lastData?.binance?.positions || [])].find(p => posId(p) === id) || null;
+}
 
 function fmt(n, decimals=2) {
   const num = parseFloat(n);
@@ -36,6 +39,9 @@ function clockParam() {
 function esc(v) {
   return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+// A value as a JS literal inside a double-quoted handler attribute: the attribute decodes back
+// to the JSON, so a quote in exchange text can neither end the string nor the attribute.
+function jsArg(v) { return esc(JSON.stringify(v ?? null)); }
 function fmtUsd(n) { return '$' + fmt(n); }
 
 // A failed load keeps the panel's last good data; the failure is held here, apart from it.
@@ -55,6 +61,21 @@ function fmtSignedUsd(n) {
   if (isNaN(num)) return '—';
   return (num < 0 ? '−' : '') + fmtUsd(Math.abs(num));
 }
+function fmtPlusUsd(n) {
+  const num = parseFloat(n);
+  if (isNaN(num)) return '—';
+  return (num > 0 ? '+' : '') + fmtSignedUsd(num);
+}
+function fmtSigned(n, decimals = 2) {
+  const num = parseFloat(n);
+  if (isNaN(num)) return '—';
+  return `${num < 0 ? '−' : ''}${fmt(Math.abs(num), decimals)}`;
+}
+function fmtSignedPct(n, decimals = 2) {
+  const num = parseFloat(n);
+  if (isNaN(num)) return '—';
+  return `${num > 0 ? '+' : num < 0 ? '−' : ''}${fmt(Math.abs(num), decimals)}%`;
+}
 function fmtPrice(n) {
   const num = parseFloat(n);
   if (isNaN(num)) return '—';
@@ -65,8 +86,7 @@ function fmtPnl(n) {
   const num = parseFloat(n);
   if (isNaN(num)) return '—';
   const cls = num >= 0 ? 'up' : 'dn';
-  const sign = num >= 0 ? '+' : '';
-  return `<span class="${cls}">${sign}$${fmt(Math.abs(num))}</span>`;
+  return `<span class="${cls}">${fmtPlusUsd(num)}</span>`;
 }
 // Funding per day in USD, positive when received. Symbols settle every 8h, 4h or 1h
 // (Hyperliquid hourly), so the daily multiple comes from the position's own interval.
@@ -85,6 +105,20 @@ function liqDist(p) {
 const THREAD_PALETTE = [
   '#c87c6a', '#6a8fc8', '#6ac87e', '#c8b46a', '#976ac8', '#6ac8be', '#c86aa2', '#a8c86a'
 ];
+
+function shortPair(pair) {
+  return String(pair).replace(/-PERP$/i, '').replace(/\/USDT?$/i, '');
+}
+const venueColor = p => (p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)');
+const venueLabel = p => (p.exchange === 'hyperliquid' ? 'HL' : 'BN');
+
+// Each call returns a check that is true only while no later call for the same key has
+// started, so a slow response cannot overwrite a newer one.
+const latestCalls = {};
+function latest(key) {
+  const n = (latestCalls[key] = (latestCalls[key] || 0) + 1);
+  return () => latestCalls[key] === n;
+}
 
 function normalizePairKey(pair) {
   return pair.replace(/-PERP$/i, '').replace(/\/(USDT?|USD)$/i, '').toUpperCase();

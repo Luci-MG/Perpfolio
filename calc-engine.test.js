@@ -34,13 +34,6 @@ test('the isolated estimate moves entry by 1/leverage less the maintenance rate'
   assert.equal(calc.isolatedLiq({ side: 'Long', entry: 100, lev: 0.5, mmrPct: 0.5 }).price, 0);
 });
 
-test('the maintenance rate follows the bracket for the notional', () => {
-  const brackets = [{ notionalFloor: 0, notionalCap: 50000, maintMarginRatio: 0.004, cum: 0 },
-                    { notionalFloor: 50000, notionalCap: 250000, maintMarginRatio: 0.005, cum: 50 }];
-  assert.equal(calc.maintRatePct(brackets, 10000), 0.4);
-  assert.equal(calc.maintRatePct(brackets, 60000), 0.5);
-});
-
 test('the ladder moves price from the base and reports P&L and return at each step', () => {
   const rows = calc.pnlLadder({ side: 'Short', entry: 100, qty: 2, margin: 20, base: 100, steps: [-5, 5] });
   assert.deepEqual(rows.map(r => [r.movePct, r.price, r.pnl, r.roiPct]), [[-5, 95, 10, 50], [5, 105, -10, -50]]);

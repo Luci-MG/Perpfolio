@@ -86,12 +86,10 @@ function buildExposureDrawerContent(data) {
     const pct       = (p.sizeUsd / maxSize) * 100;
     const isLong    = p.side === 'Long';
     const barColor  = isLong ? 'var(--success)' : 'var(--danger)';
-    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-    const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
     const lev       = p.leverage || '—';
     return `<div class="exp-pos-row">
-      <div class="exp-pos-pair" title="${p.pair}">
-        <span style="font-size:9px;font-weight:700;color:${exchColor};margin-right:2px">${exchLabel}</span>${p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'')}
+      <div class="exp-pos-pair" title="${esc(p.pair)}">
+        <span style="font-size:9px;font-weight:700;color:${venueColor(p)};margin-right:2px">${venueLabel(p)}</span>${esc(shortPair(p.pair))}
       </div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
         <span style="font-size:9px;padding:1px 4px;border-radius:3px;background:${isLong?'var(--green-bg)':'var(--red-bg)'};color:${isLong?'var(--green)':'var(--red)'};font-weight:600">${p.side}</span>
@@ -198,22 +196,19 @@ function buildUpnlDrawerContent(data) {
   document.getElementById('upnlDrawerSub').textContent =
     `${allPos.length} position${allPos.length !== 1 ? 's' : ''} · as of last refresh`;
 
-  const sign   = n => n >= 0 ? '+' : '−';
   const col    = n => n >= 0 ? 'var(--success)' : 'var(--danger)';
   const colCls = n => n >= 0 ? 'up' : 'dn';
-  const RAW_SUCCESS = '#1d9e75';
-  const RAW_DANGER  = '#e24b4a';
 
   // ── 1. Summary strip ──────────────────────────────────────────────────
   const summaryHtml = `
     <div class="upnl-summary-strip">
       <div class="upnl-sum-cell">
         <div class="upnl-sum-label">Total uPnL</div>
-        <div class="upnl-sum-val ${colCls(totalUpnl)}">${sign(totalUpnl)}${fmtUsd(Math.abs(totalUpnl))}</div>
+        <div class="upnl-sum-val ${colCls(totalUpnl)}">${fmtPlusUsd(totalUpnl)}</div>
       </div>
       <div class="upnl-sum-cell">
         <div class="upnl-sum-label">ROI on margin</div>
-        <div class="upnl-sum-val ${colCls(overallRoi)}">${sign(overallRoi)}${fmt(Math.abs(overallRoi), 2)}%</div>
+        <div class="upnl-sum-val ${colCls(overallRoi)}">${fmtSignedPct(overallRoi)}</div>
       </div>
       <div class="upnl-sum-cell">
         <div class="upnl-sum-label">W / L</div>
@@ -248,17 +243,15 @@ function buildUpnlDrawerContent(data) {
       const baseB   = isPos ? 117 : 74;
       const alpha   = 0.25 + intensity * 0.65;
       const bg      = `rgba(${baseR},${baseG},${baseB},${alpha.toFixed(2)})`;
-      const shortName = p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'');
-      const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
       const minH    = weight > 0.12 ? 64 : 48;
       return `<div style="flex:${(weight*100).toFixed(2)};min-width:60px;min-height:${minH}px;background:${bg};border-radius:5px;padding:7px 8px;display:flex;flex-direction:column;justify-content:space-between;cursor:default;transition:filter .15s;border:1px solid rgba(255,255,255,0.06)"
-        title="${p.pair} · ${p.side} · ${sign(upnl)}${fmtUsd(Math.abs(upnl))} · ROI ${sign(roi)}${fmt(Math.abs(roi),2)}%"
+        title="${esc(p.pair)} · ${p.side} · ${fmtPlusUsd(upnl)} · ROI ${fmtSignedPct(roi)}"
         onmouseenter="this.style.filter='brightness(1.18)'" onmouseleave="this.style.filter=''">
-        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.65)">${exchLabel} · ${p.side[0]}</div>
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.65)">${venueLabel(p)} · ${p.side[0]}</div>
         <div>
-          <div style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${shortName}</div>
-          <div style="font-size:${weight > 0.1 ? 11 : 9}px;font-weight:700;color:#fff">${sign(upnl)}${fmtUsd(Math.abs(upnl))}</div>
-          ${weight > 0.08 ? `<div style="font-size:9px;color:rgba(255,255,255,0.65)">${sign(roi)}${fmt(Math.abs(roi),2)}%</div>` : ''}
+          <div style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(shortPair(p.pair))}</div>
+          <div style="font-size:${weight > 0.1 ? 11 : 9}px;font-weight:700;color:#fff">${fmtPlusUsd(upnl)}</div>
+          ${weight > 0.08 ? `<div style="font-size:9px;color:rgba(255,255,255,0.65)">${fmtSignedPct(roi)}</div>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -299,27 +292,25 @@ function buildUpnlDrawerContent(data) {
   const dots = allPos.map(p => {
     const x = sx(p.upnl || 0).toFixed(1);
     const y = sy(getRoi(p)).toFixed(1);
-    const c = (p.upnl || 0) >= 0 ? RAW_SUCCESS : RAW_DANGER;
-    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-    const shortName = p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'');
+    const c = (p.upnl || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
     const r = Math.max(4, Math.min(9, 4 + p.sizeUsd / 20000));
     return `<g>
-      <circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="${c}" opacity="0.75" stroke="${exchColor}" stroke-width="1.5"/>
-      <text x="${x}" y="${(parseFloat(y)-parseFloat(r)-2).toFixed(1)}" text-anchor="middle" font-size="7" fill="var(--text2)">${shortName}</text>
+      <circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="${c}" opacity="0.75" stroke="${venueColor(p)}" stroke-width="1.5"/>
+      <text x="${x}" y="${(parseFloat(y)-parseFloat(r)-2).toFixed(1)}" text-anchor="middle" font-size="7" fill="var(--text2)">${esc(shortPair(p.pair))}</text>
     </g>`;
   }).join('');
 
   // axis labels
   const xLabels = [minUpnl, 0, maxUpnl].filter((v,i,a)=>a.indexOf(v)===i).map(v => {
     const x = sx(v).toFixed(1);
-    const lbl = v===0 ? '$0' : `${v>=0?'+':''}${fmtUsd(Math.abs(v))}`;
+    const lbl = v===0 ? '$0' : fmtPlusUsd(v);
     return `<text x="${x}" y="${(H-8).toFixed(0)}" text-anchor="middle" font-size="8" fill="var(--text3)">${lbl}</text>
       <line x1="${x}" y1="${PAD.t}" x2="${x}" y2="${(H-PAD.b).toFixed(0)}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2 2"/>`;
   }).join('');
 
   const yLabels = [minRoi, 0, maxRoi].filter((v,i,a)=>a.indexOf(v)===i).map(v => {
     const y = sy(v).toFixed(1);
-    const lbl = `${v>=0?'+':''}${fmt(Math.abs(v),1)}%`;
+    const lbl = fmtSignedPct(v, 1);
     return `<text x="${(PAD.l-4).toFixed(0)}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="8" fill="var(--text3)">${lbl}</text>
       <line x1="${PAD.l}" y1="${y}" x2="${(W-PAD.r).toFixed(0)}" y2="${y}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2 2"/>`;
   }).join('');
@@ -359,20 +350,17 @@ function buildUpnlDrawerContent(data) {
     </svg>`;
   };
 
+  const maxAbsRoi = Math.max(...lbSorted.map(p => Math.abs(getRoi(p))), 0.01);
   const lbRows = lbSorted.map((p, i) => {
     const upnl      = p.upnl || 0;
     const roi       = getRoi(p);
     const isPos     = upnl >= 0;
-    const exchColor = p.exchange === 'hyperliquid' ? 'var(--hl)' : 'var(--bn)';
-    const exchLabel = p.exchange === 'hyperliquid' ? 'HL' : 'BN';
-    const shortName = p.pair.replace(/-PERP$/i,'').replace(/\/USDT?$/i,'');
     const roiColor  = isPos ? 'var(--success)' : 'var(--danger)';
     const roiBg     = isPos ? 'var(--green-bg)' : 'var(--red-bg)';
     const roiTxt    = isPos ? 'var(--green)' : 'var(--red)';
     // bar width: proportion of max |uPnL| across all positions
     const barW      = (Math.abs(upnl) / maxAbsUpnl * 100).toFixed(1);
     // arc pct: |ROI| as % of the max |ROI| in the set (so best = full circle)
-    const maxAbsRoi = Math.max(...lbSorted.map(p => Math.abs(getRoi(p))), 0.01);
     const arcPct    = Math.abs(roi) / maxAbsRoi * 100;
     const rankColor = i === 0 ? '#f5a623' : i === 1 ? '#a0a099' : i === 2 ? '#c07a3a' : 'var(--text3)';
 
@@ -384,9 +372,9 @@ function buildUpnlDrawerContent(data) {
       <!-- pair + exchange -->
       <div style="min-width:0;flex:1">
         <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
-          <span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${shortName}</span>
-          <span style="font-size:8px;font-weight:700;color:${exchColor};border:0.5px solid ${exchColor};border-radius:3px;padding:0 3px;flex-shrink:0">${exchLabel}</span>
-          <span style="font-size:8px;font-weight:600;padding:1px 5px;border-radius:10px;background:${roiBg};color:${roiTxt};flex-shrink:0">${roi>=0?'+':''}${fmt(Math.abs(roi),2)}%</span>
+          <span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(shortPair(p.pair))}</span>
+          <span style="font-size:8px;font-weight:700;color:${venueColor(p)};border:0.5px solid ${venueColor(p)};border-radius:3px;padding:0 3px;flex-shrink:0">${venueLabel(p)}</span>
+          <span style="font-size:8px;font-weight:600;padding:1px 5px;border-radius:10px;background:${roiBg};color:${roiTxt};flex-shrink:0">${fmtSignedPct(roi, 2)}</span>
         </div>
         <!-- uPnL progress bar -->
         <div style="height:4px;background:var(--surface2);border-radius:2px;overflow:hidden">
@@ -394,7 +382,7 @@ function buildUpnlDrawerContent(data) {
         </div>
       </div>
       <!-- uPnL value -->
-      <span style="font-size:11px;font-weight:700;color:${roiColor};flex-shrink:0;text-align:right;min-width:60px">${upnl>=0?'+':''}${fmtUsd(Math.abs(upnl))}</span>
+      <span style="font-size:11px;font-weight:700;color:${roiColor};flex-shrink:0;text-align:right;min-width:60px">${fmtPlusUsd(upnl)}</span>
     </div>`;
   }).join('');
 

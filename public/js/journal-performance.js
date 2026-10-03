@@ -18,14 +18,14 @@ function perfSessionNote() {
 }
 
 function perfReturnStat(a, prev) {
-  if (a.curve === 'trips') return jrStat('Net', ovUsd(perfData.units.net), 'these trips, fees and funding in', ovTone(perfData.units.net));
+  if (a.curve === 'trips') return jrStat('Net', fmtPlusUsd(perfData.units.net), 'these trips, fees and funding in', ovTone(perfData.units.net));
   const twr = a.twr;
   return jrStat('Return', perfPct(twr.pct, 2), `${twr.days} day${twr.days === 1 ? '' : 's'}, transfers out${twr.gaps ? ` · ${twr.gaps} without data` : ''}`
     + perfVs(twr.pct, prev?.twr, v => perfPct(v, 2)), ovTone(twr.pct ?? 0));
 }
 
 function perfDrawdownStat(a) {
-  if (a.curve === 'trips') return jrStat('Drawdown', ovUsd(a.maxDrawdownUsd), 'deepest fall in these trips\' net', ovTone(a.maxDrawdownUsd));
+  if (a.curve === 'trips') return jrStat('Drawdown', fmtPlusUsd(a.maxDrawdownUsd), 'deepest fall in these trips\' net', ovTone(a.maxDrawdownUsd));
   const d = a.drawdown;
   if (!d.troughAt) return jrStat('Drawdown', '0%', 'no fall from a peak in this window');
   const recovery = d.recoveredAt ? `recovered in ${d.days}d` : `${d.days}d, not yet recovered`;
@@ -42,7 +42,7 @@ function perfWinStat(u, prev) {
 
 function perfExpectancyStat(u, prev) {
   if (!u.units) return jrStat('Expectancy', '—', 'no units');
-  return jrStat('Expectancy', `${ovUsd(u.expectancy)} ${perfRange(u.expectancyCi, ovUsd)}`, 'per unit' + perfVs(u.expectancy, prev?.expectancy, ovUsd),
+  return jrStat('Expectancy', `${fmtPlusUsd(u.expectancy)} ${perfRange(u.expectancyCi, fmtPlusUsd)}`, 'per unit' + perfVs(u.expectancy, prev?.expectancy, fmtPlusUsd),
     ovTone(u.expectancy));
 }
 
@@ -69,8 +69,8 @@ function perfCostsLine(a, u) {
   const beta = a.curve !== 'account' ? '' : a.beta.needs ? ` · beta to BTC after ${a.beta.needs} more days`
     : ` · beta to BTC ${fmt(a.beta.beta, 2)} (correlation ${fmt(a.beta.correlation, 2)})`;
   const r = u.r.trips ? ` · ${fmt(u.r.avg, 2)}R a trip on the ${u.r.trips} of ${u.r.of} with a stop` : '';
-  return `<p class="gl-line">Net ${ovUsd(u.net)} after fees <span class="dn">${ovUsd(-c.fees)}</span> and funding
-    <span class="${ovTone(funding)}">${ovUsd(funding)}</span>${beta}${r}</p>`;
+  return `<p class="gl-line">Net ${fmtPlusUsd(u.net)} after fees <span class="dn">${fmtPlusUsd(-c.fees)}</span> and funding
+    <span class="${ovTone(funding)}">${fmtPlusUsd(funding)}</span>${beta}${r}</p>`;
 }
 
 function perfChartPoints(a) {
@@ -138,7 +138,7 @@ function initPerfHover() {
   wrap.querySelectorAll('rect[data-date]').forEach(r => {
     r.addEventListener('mouseenter', () => {
       const d = r.dataset;
-      const fall = usd ? ovUsd(+d.dd) : perfPct(+d.dd);
+      const fall = usd ? fmtPlusUsd(+d.dd) : perfPct(+d.dd);
       tip.innerHTML = `<b>${esc(d.date)}</b><br>day ${fmtSignedUsd(+d.pnl)}<br>${d.source === 'wallet' ? 'wallet' : usd ? 'cumulative' : 'account'} ${fmtUsd(+d.value)}`
         + (+d.dd < 0 ? `<br><span class="dn">${fall} below peak</span>` : '');
       tip.style.opacity = '1';
@@ -154,7 +154,7 @@ function initPerfHover() {
 
 function perfRecords(r) {
   const card = (k, value, sub) => `<div class="jr-rec-card"><div class="k">${k}</div>
-    <div class="v ${ovTone(value)}">${ovUsd(value)}</div><div class="s">${sub}</div></div>`;
+    <div class="v ${ovTone(value)}">${fmtPlusUsd(value)}</div><div class="s">${sub}</div></div>`;
   const unit = (k, u) => (u ? card(k, u.net, `${esc(jrSym(u.symbol))}${u.legs > 1 ? ` hedge, ${u.legs} legs` : ''} · of ${r.units} units`) : '');
   const day = (k, d) => (d ? card(k, d.pnl, `${esc(d.date)} · of ${r.days} days`) : '');
   return `<div class="jr-rec">${unit('Best unit', r.bestUnit)}${unit('Worst unit', r.worstUnit)}${day('Best day', r.bestDay)}${day('Worst day', r.worstDay)}</div>`;

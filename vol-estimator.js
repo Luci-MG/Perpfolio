@@ -198,9 +198,10 @@ export function assessHedgePair({
   const status = flags.find(f => f !== 'thin') || (flags.length ? 'thin' : 'intact');
 
   const pair = `${longAsset} long / ${shortAsset} short`;
+  const signed = v => v.toFixed(2).replace('-', '−');
   const warning =
-      flags.includes('broken')    ? `${pair}: correlation ${corrRecent.toFixed(2)} over the last ${recentN}h is below ${threshold} — these legs are no longer hedging each other`
-    : flags.includes('degrading') ? `${pair}: correlation fell from ${corrBaseline.toFixed(2)} to ${corrRecent.toFixed(2)} — the hedge is decaying`
+      flags.includes('broken')    ? `${pair}: correlation ${signed(corrRecent)} over the last ${recentN}h is below ${threshold} — these legs are no longer hedging each other`
+    : flags.includes('degrading') ? `${pair}: correlation fell from ${signed(corrBaseline)} to ${signed(corrRecent)} — the hedge is decaying`
     : null;
 
   return {

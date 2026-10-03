@@ -24,12 +24,14 @@ function rerenderStress() {
 const RANGE_TIERS = [30, 50, 80, 120];
 
 async function fetchRiskBook(fresh = false) {
+  const current = latest('risk');
   riskLoading = true;
   if (posView === 'stress') rerenderStress();
   try {
     if (!riskEngine) riskEngine = await import('/risk-engine.js');
     const res  = await fetch(`/api/riskbook${fresh ? '?fresh=1' : ''}`);
     const data = await res.json();
+    if (!current()) return;
     if (!data.ok) throw new Error(data.error || 'riskbook failed');
     riskBook = data;
     clearLoadError('risk');
@@ -46,10 +48,13 @@ async function fetchRiskBook(fresh = false) {
     }));
     if (!riskRangeExplicit) riskRange = rangeForNearestKill(data);
   } catch (err) {
-    noteLoadError('risk', err);
+    if (current()) noteLoadError('risk', err);
   } finally {
-    riskLoading = false;
-    if (posView === 'stress') rerenderStress();
+    if (current()) {
+      riskLoading = false;
+      if (posView === 'stress') rerenderStress();
+      updateStressAge();
+    }
   }
 }
 
@@ -159,17 +164,6 @@ function toggleStressOpt(which) {
   rerenderStress();
 }
 
-// Apply a named scenario at a chosen magnitude, in the driving asset's own terms.
-function applyStressScenario(poolIdx, mode, sign, magnitude) {
-  const P = riskBook.pools[poolIdx];
-  const dir = riskEngine.scenarioDir(P.pool, mode, {
-    betas: Object.fromEntries(Object.keys(riskBeta).map(a => [a, betaOf(a)])),
-    sign, prices: P.marks
-  });
-  Object.entries(dir).forEach(([a, d]) => { riskShift[a] = d * magnitude; });
-  afterStressChange(true);
-}
-
 // Snap every slider to the point where the pool dies under this scenario.
 function snapToKill(poolIdx, mode, sign) {
   const P = riskBook.pools[poolIdx];
@@ -260,7 +254,7 @@ function updateStress() {
       if (!state.liquidated) casc.innerHTML = '';
       else {
         const c = riskEngine.cascade(riskHonorStops ? riskEngine.applyStops(P.pool, P.marks, prices).pool : P.pool, prices, P.opts);
-        const names = c.closed.map(x => `${x.asset} ${x.positionSide.toLowerCase()}`).join(', ') || 'nothing left to close';
+        const names = c.closed.map(x => `${esc(x.asset)} ${x.positionSide.toLowerCase()}`).join(', ') || 'nothing left to close';
         casc.innerHTML = `<div class="st-note" style="color:var(--danger)">Cascade (approximate — Binance does not publish its ordering):
           force-closes ${names} → ${c.wipedOut ? 'account wiped out' : `survives with ${fmtUsd(c.finalBuffer)} buffer and ${c.survivors.length} position(s)`}.</div>`;
       }
@@ -290,16 +284,15 @@ function updateStress() {
 
       const priceBox = document.getElementById(`st-new-${i}-${asset}`);
       if (priceBox && document.activeElement !== priceBox) priceBox.value = prices[asset].toFixed(dec);
-      set(`st-shift-${i}-${asset}`, `${(riskShift[asset] || 0) >= 0 ? '+' : ''}${fmt(riskShift[asset] || 0, 1)}%`);
-      const signed = v => `${v >= 0 ? '+' : '−'}${fmtUsd(Math.abs(v))}`;
-      set(`st-drain-${i}-${asset}`, `buf ${signed(dr.up)} · free ${signed(dr.freeUp)}`,
+      set(`st-shift-${i}-${asset}`, fmtSignedPct(riskShift[asset] || 0, 1));
+      set(`st-drain-${i}-${asset}`, `buf ${fmtPlusUsd(dr.up)} · free ${fmtPlusUsd(dr.freeUp)}`,
           'v ' + (dr.up >= 0 ? 'up' : 'dn'));
 
       const killTxt = (price, pct, worst, exch) => {
         if (price == null) return `none · worst ${fmtUsd(worst)}`;
         const sig = sigma ? ` · ${fmt(Math.abs(pct) / sigma, 1)}σ` : '';
         const alt = exch != null ? ` · exch ${fmt(exch, dec)}` : '';
-        return `${fmt(price, dec)} (${pct >= 0 ? '+' : ''}${fmt(pct, 1)}%${sig})${alt}`;
+        return `${fmt(price, dec)} (${fmtSignedPct(pct, 1)}${sig})${alt}`;
       };
       set(`st-killup-${i}-${asset}`, killTxt(kill.up, kill.upPct, kill.minBufferUp,
           crossUp ? frozen?.up : null));
@@ -361,12 +354,12 @@ function renderScenarioTable(P, poolIdx) {
     const worse  = rawPct != null && stopPct != null && stopPct < rawPct - 0.01;
 
     const moves = Object.entries(s.dir)
-      .map(([a, d]) => `${a} ${d >= 0 ? '+' : ''}${fmt(d * (rawPct ?? 0), 0)}%`)
+      .map(([a, d]) => `${esc(a)} ${fmtSignedPct(d * (rawPct ?? 0), 0)}`)
       .join('  ');
 
     const cell = (pct, scannedTo) => pct == null
       ? `<span style="color:var(--success)">survives +${fmt(scannedTo * 100, 0)}%</span>`
-      : `${fmt(pct, 1)}%`;
+      : fmtSignedPct(pct, 1);
 
     return `<tr>
       <td>${s.label}<div style="color:var(--text3);font-size:10px">${s.note}</div></td>
@@ -448,7 +441,7 @@ function renderStressBanner() {
   }
   if ((riskBook.isolated || []).length) {
     out.push(`<div class="st-banner warn">${riskBook.isolated.length} isolated position(s) excluded — they carry their own margin and liquidate on their own:
-      ${riskBook.isolated.map(p => `${p.pair} ${p.side}`).join(', ')}.</div>`);
+      ${riskBook.isolated.map(p => `${esc(p.pair)} ${p.side}`).join(', ')}.</div>`);
   }
   return out.join('');
 }
@@ -476,8 +469,8 @@ function renderStressRow(P, poolIdx, asset) {
   return `<div class="st-row">
     <div class="st-rowhead">
       <span class="st-asset">${asset}
-        <button class="st-link${riskLink[asset] ? ' on' : ''}" onclick="toggleStressLink('${asset}')"
-          title="${riskLink[asset] ? 'Moves with the beta chain — click to move it on its own' : 'Moves on its own — click to link it to the beta chain'}">β ${fmt(betaOf(asset), 2)}</button>
+        <button class="st-link${riskLink[asset] ? ' on' : ''}" onclick="toggleStressLink(${jsArg(asset)})"
+          title="${riskLink[asset] ? 'Moves with the beta chain — click to move it on its own' : 'Moves on its own — click to link it to the beta chain'}">β ${fmtSigned(betaOf(asset))}</button>
       </span>
       ${weakBeta}
       <span class="st-mark">mark ${fmt(mark, dec)}${bars ? '' : ' · no candles'}</span>
@@ -491,14 +484,14 @@ function renderStressRow(P, poolIdx, asset) {
       <span class="st-tick freez" id="st-freetickdn-${poolIdx}-${asset}" style="display:none"></span>
       <input type="range" id="st-range-${poolIdx}-${asset}" min="${-riskRange}" max="${riskRange}" step="0.1"
         value="${Math.max(-riskRange, Math.min(riskRange, shift))}"
-        oninput="setStressShift('${asset}', this.value)" />
+        oninput="setStressShift(${jsArg(asset)}, this.value)" />
       <div class="st-scale"><span>−${riskRange}%</span><span>mark</span><span>+${riskRange}%</span></div>
     </div>
 
     <div class="st-meta">
       <span class="k">price</span><span class="v"><input type="number" class="st-price" id="st-new-${poolIdx}-${asset}"
         step="${priceStep(mark)}" value="${mark.toFixed(dec)}"
-        onchange="setStressPrice('${asset}', this.value)" title="Type a price to move this coin there" /></span>
+        onchange="setStressPrice(${jsArg(asset)}, this.value)" title="Type a price to move this coin there" /></span>
       <span class="k">shift</span><span class="v" id="st-shift-${poolIdx}-${asset}">+0.0%</span>
       <span class="k">liq up</span><span class="v" id="st-killup-${poolIdx}-${asset}">—</span>
       <span class="k">liq down</span><span class="v" id="st-killdn-${poolIdx}-${asset}">—</span>
@@ -539,7 +532,7 @@ function renderStressPool(P, poolIdx) {
     ${(() => {
       const risky = (P.adl || []).filter(a => a.quantile >= 3);
       if (!risky.length) return '';
-      return `<div class="st-banner warn">ADL queue: ${risky.map(a => `${a.asset} ${a.side.toLowerCase()} at ${a.quantile}/4`).join(', ')}.
+      return `<div class="st-banner warn">ADL queue: ${risky.map(a => `${esc(a.asset)} ${a.side.toLowerCase()} at ${a.quantile}/4`).join(', ')}.
         Auto-deleveraging closes <i>profitable</i> positions, so on a hedge it takes the winning leg and
         leaves the loser naked.</div>`;
     })()}

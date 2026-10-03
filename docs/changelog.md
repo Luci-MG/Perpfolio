@@ -1,5 +1,25 @@
 # Changelog
 
+## Frontend, batch 4 of the 2026-10-03 review (2026-10-03)
+
+- **Exchange text is always text**: every symbol, pair, order type and warning reaching the
+  page is escaped, and values passed to buttons go through `jsArg`, so a quote can no longer
+  break out of a handler.
+- **A minus is a minus everywhere**: one set of sign helpers replaces a dozen local ones;
+  uPnL, ROI, the scatter axis, betas, correlations and stress and unwind percentages now
+  carry `−`, and the server no longer sends a preformatted funding string.
+- **A tile hands over the whole position**: the calculator opened from a tile knows the leg
+  and its account-aware liquidation, and the drag-to-hedge popup counts 1h and 4h funding.
+- **No stale or lost screens**: a slower response no longer overwrites a newer one; a venue
+  switch during a poll is applied straight after it; a note being typed or a tile being
+  dragged is not rebuilt away; the Journal fetches and rebuilds only what the open tab shows.
+- **Small reads fixed**: Stops after a filtered venue goes off, Margin health for a venue
+  that is off, the Overview account line live with its time, the colour of locked hedges, a
+  tag filter whose tag is gone, tiny order prices, cost bars with their counts, and the
+  Journal window remembered.
+- Dark mode reaches the margin gauges and the scatter; about 40 unused CSS classes, an unused
+  scenario helper, an unreachable tile branch and a calculator field that never showed are gone.
+
 ## Funding, journal and goals, batch 3 of the 2026-10-03 review (2026-10-03)
 
 - **The funding warning compares like with like**: realised Binance funding against the Binance

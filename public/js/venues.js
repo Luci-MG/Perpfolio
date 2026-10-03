@@ -11,6 +11,11 @@ function venueOn(venue) { return lastData?.venues?.[venue] !== false; }
 
 function venuesOn() { return ['hyperliquid', 'binance'].filter(venueOn); }
 
+function shownVenues() {
+  const filtered = venuesOn().filter(v => exchFilter.has(v));
+  return filtered.length ? filtered : venuesOn();
+}
+
 function offOr(venue, html) { return venueOn(venue) ? html : '<span class="b-val nu">off</span>'; }
 
 function venueOffHtml(venue) {

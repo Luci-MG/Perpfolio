@@ -17,7 +17,6 @@ const browserDate = t => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 const utcText = t => new Date(t).toISOString().slice(5, 16).replace('T', ' ');
-const pctText = v => `${v < 0 ? '−' : v > 0 ? '+' : ''}${fmt(Math.abs(v), 2)}%`;
 const signedCell = v => `<span class="${v >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(v)}</span>`;
 const BTC_ARROW = { up: '▲', down: '▼', flat: '–' };
 
@@ -57,7 +56,7 @@ const tagChips = tags => (tags || []).map(tag => `<span class="jt-tag">${esc(tag
 
 function notesCell(t) {
   const empty = !t.note && !t.tags?.length;
-  return `<button class="jt-note" onclick="editTripNote('${esc(t.key)}')" title="${esc(t.note || 'Add a note or tags')}">${
+  return `<button class="jt-note" onclick="editTripNote(${jsArg(t.key)})" title="${esc(t.note || 'Add a note or tags')}">${
     t.note ? '<span class="jt-pen">✎</span>' : ''}${tagChips(t.tags)}${empty ? '<span class="jt-gap">+</span>' : ''}</button>`;
 }
 
@@ -83,7 +82,7 @@ const TRADE_COLUMNS = [
     cell: t => `${signedCell(tripCosts(t))}${t.fundingSplit ? '<span class="jt-gap" title="no funding rate on record to tell the hedge legs apart, so it is shared evenly">≈</span>' : ''}`,
     exports: [] },
   { id: 'path', label: 'MAE / MFE', value: t => t.mae,
-    cell: t => (t.mae == null ? contextGap(t) : `<span class="dn">${pctText(t.mae)}</span> / <span class="up">${pctText(t.mfe)}</span>`),
+    cell: t => (t.mae == null ? contextGap(t) : `<span class="dn">${fmtSignedPct(t.mae)}</span> / <span class="up">${fmtSignedPct(t.mfe)}</span>`),
     exports: [['mae_pct', t => t.mae], ['mfe_pct', t => t.mfe], ['path_interval', t => t.pathInterval]] },
   { id: 'session', label: 'Session', value: t => t.session, cell: t => t.session },
   { id: 'notes', label: 'Notes', value: t => (t.tags || []).join(' ') || null, cell: notesCell,
@@ -126,22 +125,27 @@ const TRADE_COLUMNS = [
 ];
 
 async function fetchTrips() {
+  const current = latest('trips');
   tripsLoading = true;
   try {
     const res = await fetch(`/api/trips${perfDays ? `?days=${perfDays}` : ''}`);
     const data = await res.json();
+    if (!current()) return;
     if (!data.ok) throw new Error(data.error || 'trips failed');
     tripsData = data;
     clearLoadError('trips');
   } catch (err) {
-    noteLoadError('trips', err);
+    if (current()) noteLoadError('trips', err);
   } finally {
-    tripsLoading = false;
-    if (posView === 'journal' && jrTab === 'trades') rerenderStress();
+    if (current()) {
+      tripsLoading = false;
+      if (posView === 'journal' && jrTab === 'trades') rerenderStress();
+    }
   }
 }
 
 function filteredTrips() {
+  if (!['all', 'untagged', ...knownTags()].includes(tradesFilter.tag)) tradesFilter = { ...tradesFilter, tag: 'all' };
   const f = tradesFilter;
   const sym = f.symbol.trim().toUpperCase();
   return (tripsData?.trips || []).filter(t =>
@@ -189,7 +193,7 @@ function noteEditorHtml(t) {
     <datalist id="jt-tag-list">${knownTags().map(tag => `<option value="${esc(tag)}">`).join('')}</datalist>
     ${noteError ? `<span class="dn">${esc(noteError)}</span>` : ''}
     <button class="st-btn" onclick="cancelTripNote()">Cancel</button>
-    <button class="st-btn on" onclick="saveTripNote('${esc(t.key)}')">Save</button>
+    <button class="st-btn on" onclick="saveTripNote(${jsArg(t.key)})">Save</button>
   </div>`;
 }
 

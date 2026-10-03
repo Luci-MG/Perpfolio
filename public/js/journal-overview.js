@@ -6,7 +6,6 @@ const OV_PERIODS = [['today', 'Today', 'yesterday'], ['week', 'This week', 'last
 const OV_ATTENTION_MAX = 3;
 const ovGoals = () => goalsData?.goals || [];
 const ovTone = v => (v > 0 ? 'up' : v < 0 ? 'dn' : '');
-const ovUsd = v => (v > 0 ? `+${fmtUsd(v)}` : fmtSignedUsd(v));
 
 const ATTENTION_SOURCES = [
   () => ovGoals().filter(g => g.unit !== 'milestone' && g.status === 'broken')
@@ -16,12 +15,12 @@ const ATTENTION_SOURCES = [
   () => ovGoals().filter(g => g.status === 'late')
     .map(g => ({ html: `◔ ${esc(g.label)} late`, cls: 'gl-late', go: "setJrTab('goals')" })),
   () => (fundData?.realised?.differsFromEstimate
-    ? [{ html: `⚠ Binance funding paid ${ovUsd(fundData.realised.perDay7d)}/day this week against ${ovUsd(fundData.realised.estimatePerDay)} estimated`,
+    ? [{ html: `⚠ Binance funding paid ${fmtPlusUsd(fundData.realised.perDay7d)}/day this week against ${fmtPlusUsd(fundData.realised.estimatePerDay)} estimated`,
          cls: 'gl-late', go: 'openFundDrawer()' }] : []),
   () => (factorsData?.worse || [])
-    .map(b => ({ html: `✗ ${esc(b.bucket)} trips run ${ovUsd(b.diff)}/trip against the rest`, cls: 'dn', go: "setJrTab('factors')" })),
+    .map(b => ({ html: `✗ ${esc(b.bucket)} trips run ${fmtPlusUsd(b.diff)}/trip against the rest`, cls: 'dn', go: "setJrTab('factors')" })),
   () => (perfData?.habits || []).filter(h => h.verdict === 'costs')
-    .map(h => ({ html: `✗ ${esc(h.label)}: ${ovUsd(h.cost)} over ${h.trips} trips`, cls: 'dn', go: "setJrTab('behaviour')" }))
+    .map(h => ({ html: `✗ ${esc(h.label)}: ${fmtPlusUsd(h.cost)} over ${h.trips} trips`, cls: 'dn', go: "setJrTab('behaviour')" }))
 ];
 
 function ovGoalsToday() {
@@ -45,10 +44,10 @@ function ovPeriods(periods) {
   const cell = ([key, label, previousLabel]) => {
     const p = periods[key];
     const delta = p.previous ? p.net - p.previous.net : null;
-    const account = p.account ? `<div class="s" title="account value, deposits and withdrawals removed">account ${ovUsd(p.account.change)}${p.account.partial ? ' (partial)' : ''}</div>` : '';
+    const account = p.account ? `<div class="s" title="account value, deposits and withdrawals removed">account ${fmtPlusUsd(p.account.change)}${p.account.partial ? ' (partial)' : ''}</div>` : '';
     return `<div class="jr-stat"><div class="k">${label}</div>
-      <div class="v ${ovTone(p.net)}">${ovUsd(p.net)} <span class="gl-n">n=${p.trips}${p.trips ? ` · ${p.wins}W` : ''}</span></div>
-      ${delta == null ? '' : `<div class="s">vs ${previousLabel} by now <span class="${ovTone(delta)}">${ovUsd(delta)}</span></div>`}${account}</div>`;
+      <div class="v ${ovTone(p.net)}">${fmtPlusUsd(p.net)} <span class="gl-n">n=${p.trips}${p.trips ? ` · ${p.wins}W` : ''}</span></div>
+      ${delta == null ? '' : `<div class="s">vs ${previousLabel} by now <span class="${ovTone(delta)}">${fmtPlusUsd(delta)}</span></div>`}${account}</div>`;
   };
   return `<div class="jr-hero ov-periods" title="Net of fees and funding, from the Binance ledger">${OV_PERIODS.map(cell).join('')}</div>`;
 }
@@ -75,11 +74,16 @@ function ovAccountNow() {
            upnl: positions.reduce((s, p) => s + p.upnl, 0), hedge: jrLockedFromPositions(positions) };
 }
 
-function ovAccount() {
+function ovAccountLine() {
   const a = ovAccountNow();
-  const hedges = a.hedge.pairs ? ` · <span title="${a.hedge.pairs} matched pair${a.hedge.pairs > 1 ? 's' : ''}: cannot change with price">hedges locked <span class="dn">${ovUsd(a.hedge.locked)}</span></span>` : '';
-  return `<div class="ov-account"><span class="section-label">Account</span>
-      <b>${fmtUsd(a.accountValue)}</b> · wallet ${fmtUsd(a.wallet)} · open <span class="${ovTone(a.upnl)}">${ovUsd(a.upnl)}</span>${hedges}</div>
+  const hedges = a.hedge.pairs ? ` · <span title="${a.hedge.pairs} matched pair${a.hedge.pairs > 1 ? 's' : ''}: cannot change with price">hedges locked <span class="${ovTone(a.hedge.locked)}">${fmtPlusUsd(a.hedge.locked)}</span></span>` : '';
+  const asOf = lastData?.lastUpdated ? ` <span class="gl-n">as of ${new Date(lastData.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>` : '';
+  return `<span class="section-label">Account</span>
+      <b>${fmtUsd(a.accountValue)}</b> · wallet ${fmtUsd(a.wallet)} · open <span class="${ovTone(a.upnl)}">${fmtPlusUsd(a.upnl)}</span>${hedges}${asOf}`;
+}
+
+function ovAccount() {
+  return `<div class="ov-account" id="ov-account">${ovAccountLine()}</div>
     ${renderOverviewChart(perfData.walletCurve, perfData.accountCurve)}
     <button class="gl-link ov-bridge-link" onclick="setJrTab('costs')">How the wallet got here ›</button>`;
 }
@@ -104,9 +108,9 @@ function ovNextMilestone() {
 
 function ovRecentTrades() {
   const trips = perfData.recentTrips || [];
-  const rows = trips.map(t => `<button class="ov-trip" onclick="openGoalBreach('${esc(t.symbol)}', ${t.openTime})">
+  const rows = trips.map(t => `<button class="ov-trip" onclick="openGoalBreach(${jsArg(t.symbol)}, ${t.openTime})">
       <span>${esc(jrSym(t.symbol))} <span class="gl-n">${t.side.toLowerCase()}</span></span>
-      <span class="${ovTone(t.net)}">${ovUsd(t.net)}</span><span class="gl-n">${heldText(t.holdHours)}</span>
+      <span class="${ovTone(t.net)}">${fmtPlusUsd(t.net)}</span><span class="gl-n">${heldText(t.holdHours)}</span>
       <span class="ov-tags">${tagChips(t.tags)}${t.note ? ` <span class="jt-pen" title="${esc(t.note)}">✎</span>` : ''}</span></button>`).join('');
   return `<div class="ov-card"><span class="section-label">Recent trades</span>${rows || '<p class="gl-n">No closed trades yet.</p>'}
     <button class="gl-link" onclick="setJrTab('trades')">Trades ›</button></div>`;

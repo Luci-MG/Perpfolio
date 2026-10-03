@@ -2,8 +2,6 @@
 // return, the add that reaches a target average, and the isolated liquidation estimate.
 // Served to the browser at /calc-engine.js, so the modal and the tests run the same code.
 
-import { pickTier } from './risk-engine.js';
-
 /** Quantity, margin and notional from either the margin committed (`usd`) or the quantity (`qty`). */
 export function sizeFrom({ mode, value, entry, lev = 1 }) {
   if (!(value > 0) || !(entry > 0) || !(lev > 0)) return null;
@@ -43,12 +41,6 @@ export function isolatedLiq({ side, entry, lev, mmrPct }) {
   const mmr = mmrPct / 100;
   const price = Math.max(0, side === 'Long' ? entry * (1 - 1 / lev + mmr) : entry * (1 + 1 / lev - mmr));
   return { price, distPct: Math.abs(entry - price) / entry * 100 };
-}
-
-/** Binance's maintenance rate, in percent, for a position of `notional` on `brackets`. */
-export function maintRatePct(brackets, notional) {
-  const tier = pickTier(brackets, notional);
-  return tier ? tier.maintMarginRatio * 100 : null;
 }
 
 export const LADDER_STEPS = [-10, -5, -2, 2, 5, 10];

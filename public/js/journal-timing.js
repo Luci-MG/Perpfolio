@@ -7,21 +7,21 @@ const calDateText = date => new Date(`${date}T12:00:00Z`).toLocaleDateString([],
 
 function calCell(d, max) {
   if (d.pnl == null) return `<span class="jr-cal-cell" title="${esc(d.date)} · no trading"></span>`;
-  const label = `${calDateText(d.date)}: ${ovUsd(d.pnl)}, ${d.trips} trade${d.trips === 1 ? '' : 's'} closed`;
+  const label = `${calDateText(d.date)}: ${fmtPlusUsd(d.pnl)}, ${d.trips} trade${d.trips === 1 ? '' : 's'} closed`;
   const cls = d.pnl === 0 ? 'cal-zero' : `cal-${d.pnl > 0 ? 'gain' : 'loss'}-${calStep(d.pnl, max)}`;
   return `<button class="jr-cal-cell ${cls}" aria-label="${esc(label)}" title="${esc(label)}"
-    onclick="openTradesFor({ closeDay: '${esc(d.date)}' })"></button>`;
+    onclick="openTradesFor({ closeDay: ${jsArg(d.date)} })"></button>`;
 }
 
 function calendarHtml(cal) {
   if (!cal.weeks.length) return '<p class="gl-n">No trading in this window.</p>';
-  const columns = cal.weeks.map(w => `<div class="jr-cal-col" title="Week of ${esc(w.start)}: ${ovUsd(w.total)}">
+  const columns = cal.weeks.map(w => `<div class="jr-cal-col" title="Week of ${esc(w.start)}: ${fmtPlusUsd(w.total)}">
     ${w.days.map(d => calCell(d, cal.maxAbs)).join('')}</div>`).join('');
   const swatch = cls => `<span class="jr-cal-cell ${cls}"></span>`;
-  const months = cal.months.map(m => `<span>${esc(m.month)} <b class="${ovTone(m.total)}">${ovUsd(m.total)}</b></span>`).join('');
+  const months = cal.months.map(m => `<span>${esc(m.month)} <b class="${ovTone(m.total)}">${fmtPlusUsd(m.total)}</b></span>`).join('');
   const weeks = [...cal.weeks].sort((a, b) => a.total - b.total);
-  const extremes = weeks.length > 1 ? `<span class="gl-n">best week of ${esc(weeks.at(-1).start)} ${ovUsd(weeks.at(-1).total)} ·
-    worst of ${esc(weeks[0].start)} ${ovUsd(weeks[0].total)}</span>` : '';
+  const extremes = weeks.length > 1 ? `<span class="gl-n">best week of ${esc(weeks.at(-1).start)} ${fmtPlusUsd(weeks.at(-1).total)} ·
+    worst of ${esc(weeks[0].start)} ${fmtPlusUsd(weeks[0].total)}</span>` : '';
   return `<div class="jr-cal" role="group" aria-label="Net by day, one column per week, Monday at the top">${columns}</div>
     <div class="jr-cal-key">−${swatch('cal-loss-3')}${swatch('cal-loss-2')}${swatch('cal-loss-1')}${swatch('cal-zero')}${swatch('cal-gain-1')}${swatch('cal-gain-2')}${swatch('cal-gain-3')}+
       <span>orange is a loss, blue a gain, darker is larger · outlined: no trading · select a day for its trades</span></div>
@@ -36,24 +36,24 @@ function estimateAxis(b) {
 }
 
 function estimateRow(r, at, overall) {
-  const n = `${r.units} unit${r.units === 1 ? '' : 's'} · ${ovUsd(r.total)}`;
+  const n = `${r.units} unit${r.units === 1 ? '' : 's'} · ${fmtPlusUsd(r.total)}`;
   const guides = `<span class="sb-zero" style="left:${at(0)}%"></span>${overall == null ? '' : `<span class="sb-avg" style="left:${at(overall)}%"></span>`}`;
   if (r.needs) {
     return `<div class="sb-row needs"><span>${esc(r.label)}</span><span class="sb-track">${guides}</span>
       <span class="sb-val">${r.units ? `average after ${r.needs} more` : 'no trades'}</span><span class="sb-n">${n}</span></div>`;
   }
   return `<div class="sb-row"><span>${esc(r.label)}</span>
-    <span class="sb-track" title="${esc(r.label)}: ${ovUsd(r.shrunk)}, 90% range ${ovUsd(r.ci.lo)} to ${ovUsd(r.ci.hi)}">${guides}
+    <span class="sb-track" title="${esc(r.label)}: ${fmtPlusUsd(r.shrunk)}, 90% range ${fmtPlusUsd(r.ci.lo)} to ${fmtPlusUsd(r.ci.hi)}">${guides}
       <span class="sb-whisker" style="left:${at(r.ci.lo)}%;width:${(at(r.ci.hi) - at(r.ci.lo)).toFixed(1)}%"></span>
       <span class="sb-dot ${ovTone(r.shrunk)}" style="left:${at(r.shrunk)}%"></span></span>
-    <span class="sb-val"><b class="${ovTone(r.shrunk)}">${ovUsd(r.shrunk)}</b> <span class="gl-n">${ovUsd(r.ci.lo)} to ${ovUsd(r.ci.hi)}</span></span>
+    <span class="sb-val"><b class="${ovTone(r.shrunk)}">${fmtPlusUsd(r.shrunk)}</b> <span class="gl-n">${fmtPlusUsd(r.ci.lo)} to ${fmtPlusUsd(r.ci.hi)}</span></span>
     <span class="sb-n">${n}</span></div>`;
 }
 
 function shrunkBarsHtml(b) {
   const at = estimateAxis(b);
   const key = b.overall == null ? '' : `<div class="sb-key"><span class="sb-dot"></span> adjusted average · <span class="sb-key-line"></span> 90% range ·
-    <span class="sb-key-avg"></span> book average ${ovUsd(b.overall)} · <span class="sb-key-zero"></span> $0</div>`;
+    <span class="sb-key-avg"></span> book average ${fmtPlusUsd(b.overall)} · <span class="sb-key-zero"></span> $0</div>`;
   return `<div class="sb-bars">${b.rows.map(r => estimateRow(r, at, b.overall)).join('')}</div>${key}`;
 }
 

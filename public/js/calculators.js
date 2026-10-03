@@ -116,10 +116,6 @@ function fillFromPosition(p) {
   setCalc('liqLev', lev);
   setCalc('liqAddPrice', p.mark);
   fillSizeAndBreakEven(p, lev);
-  const leg = poolLegFor(p);
-  const mmr = leg && calcEngine.maintRatePct(leg.pos.brackets, Math.abs(leg.pos.q) * leg.pos.mark * (leg.pos.notionalCoef || 1));
-  setCalc('liqMmr', mmr != null ? +mmr.toFixed(3) : '');
-  calcEl('liqMmrHint').textContent = mmr != null ? `tier rate for this size` : 'default 0.5%';
 }
 
 function recalcActiveTab() {

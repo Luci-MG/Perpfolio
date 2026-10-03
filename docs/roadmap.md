@@ -32,6 +32,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P5 | [Review fixes, batch 1: correctness](#p5--review-fixes-batch-1-correctness) | done (2026-10-03) |
 | P5 | [Review fixes, batch 2: risk maths](#p5--review-fixes-batch-2-risk-maths) | done (2026-10-03) |
 | P5 | [Review fixes, batch 3: funding, journal, goals](#p5--review-fixes-batch-3-funding-journal-goals) | done (2026-10-03) |
+| P5 | [Review fixes, batch 4: frontend](#p5--review-fixes-batch-4-frontend) | done (2026-10-03) |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
 | — | [Parked](#parked) | parked |
 
@@ -375,6 +376,15 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   rates re-requested every sync; milestones that called a late target reached; slow Factors.
 - **Done when:** each has a test that fails without its fix, and on the real book the ledger
   checks still pass and a sync re-requests almost no funding rates.
+
+## P5 — Review fixes, batch 4: frontend
+
+- **Status:** done (2026-10-03).
+- **Problem:** handler arguments a quote could break; hyphens for minus signs and a dozen
+  copies of the sign logic; tiles that lost the position they stood for; responses landing
+  out of order; rebuilds that wiped a note being typed; dead CSS and code.
+- **Done when:** a symbol with a quote and a tag renders as text in every view, no view shows
+  a hyphen before a figure, and each fix has a smoke assertion.
 
 ## P6 — Server-side alerts
 
