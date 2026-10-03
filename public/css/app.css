@@ -764,3 +764,16 @@ tr:last-child td { border-bottom: none; }
 .jr-habits { table-layout: auto; }
 .jr-habits td:first-child { white-space: normal; }
 .jr-thin td { opacity: .55; }
+
+/* Confluence: the verdict */
+.cf-verdict { background: var(--surface2); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+.cf-v-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.cf-v-lean { font-size: 18px; font-weight: 600; }
+.cf-v-strength { font-size: 12px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.cf-v-meta { font-size: 11px; color: var(--text3); margin-left: auto; }
+.cf-v-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; font-size: 12px; }
+.cf-v-row .k { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text3); padding-top: 2px; }
+.cf-v-line { line-height: 1.7; }
+.cf-v-tf { font-size: 10px; color: var(--text3); margin-right: 4px; }
+.cf-detail-toggle { margin: 4px 0 12px; }
+@media (max-width: 720px) { .cf-v-row { grid-template-columns: minmax(0, 1fr); gap: 2px; } }

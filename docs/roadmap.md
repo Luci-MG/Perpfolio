@@ -15,8 +15,10 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P3 | [Journal: Overview and Behaviour](#p3--journal-overview-and-behaviour) | done (2026-10-03) |
 | P3 | [Journal: richer Trades](#p3--journal-richer-trades) | done (2026-10-03) |
 | P3 | [Journal: context at entry](#p3--journal-context-at-entry) | done (2026-10-03) |
-| P3 | [Confluence: verdict and honest calibration](#p3--confluence-verdict-and-honest-calibration) | planned |
+| P3 | [Confluence: verdict and honest calibration](#p3--confluence-verdict-and-honest-calibration) | done (2026-10-03) |
 | P3 | [Calculators: live and account-aware](#p3--calculators-live-and-account-aware) | done (2026-10-03) |
+| P3 | [Sessions across the dashboard](#p3--sessions-across-the-dashboard) | planned |
+| P3 | [Protected tiles read as safe](#p3--protected-tiles-read-as-safe) | planned |
 | P4 | [What correlates with outcome](#p4--what-correlates-with-outcome) | idea |
 | P4 | [Goals: design spike](#p4--goals-design-spike) | idea |
 | — | [Carried over](#carried-over) | planned |
@@ -174,9 +176,12 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
      bars, report on the last 30%.
   - **Later:** liquidation levels, volume profile, order-book imbalance, sessions; custom
     confluences / rule builder; alert on a bias flip.
-- **Done when:** the verdict is readable at a glance and every hit rate shown is
-  out-of-sample.
+- **Done when:** the verdict is readable at a glance and every hit rate shown says which regime
+  and whether it held up recently.
 - **Depends on:** —
+- **Status:** done (2026-10-03) — see `docs/confluence.md`. The signals are fixed rules, so
+  "out-of-sample" became a stability check (early 70% against recent 30%). New signals, the
+  rule builder and alerts remain *later*.
 
 ## P3 — Calculators: live and account-aware
 
@@ -191,6 +196,36 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Depends on:** P0 (asset).
 - **Status:** done (2026-10-03) — see `docs/frontend.md`, *Calculators*. Account-aware for
   Binance only; Hyperliquid stays on the isolated estimate.
+
+## P3 — Sessions across the dashboard
+
+- **Problem:** trading sessions (Asia, Europe, US) shape volatility, funding and your own
+  results, but only the Trades table knows about them — nothing says which session is live,
+  when the next one opens, or how a view looks for one session alone.
+- **Scope:**
+  - **Session clock** on the dashboard: the live session, time left in it, the next session
+    and its countdown, overlaps (Europe/US) marked. One definition, shared with the journal's
+    `sessionOf()` (UTC: Asia 22–08, Europe 08–14, US 14–22), shown in the reader's local time.
+  - **Session as a dashboard-wide parameter**: one selector (All · Asia · Europe · US) that
+    the views honour where it means something — Journal stats and Trades, habit costs,
+    Confluence calibration and Stops hit rates by session — and ignore, visibly, where it
+    does not (live positions).
+  - Remembered per browser, like the view.
+- **Done when:** the clock is always visible and correct across a DST change, and every view
+  that honours the session says so in its header with its sample size.
+- **Depends on:** — (Confluence and Stops by session build on their own cards).
+
+## P3 — Protected tiles read as safe
+
+- **Problem:** a position tile only ever signals trouble — the red "no stop" badge. A leg that
+  is protected looks the same as one nobody has checked, so every tile still draws the eye.
+- **Scope:** a calm "protected" mark on the tile when the leg has a stop order (`hasStop`),
+  matching the Stops verdict — OK, breakeven or locks profit read as safe; too tight or too
+  wide get a muted caution; hedged legs keep their thread colour. Shape plus colour, never
+  colour alone; the tooltip names the stop price and verdict.
+- **Done when:** a glance at the tiles separates "covered, ignore" from "needs a look", and the
+  tile and the Stops tab never disagree about a leg.
+- **Depends on:** Stops: real vs suggested (done) — the verdict needs to reach `/api/dashboard`.
 
 ## P4 — What correlates with outcome
 

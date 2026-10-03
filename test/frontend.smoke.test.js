@@ -240,6 +240,36 @@ test('every Journal sub-tab renders, with and without equity snapshots', async (
   assert.deepEqual(strayValues(withSnaps), []);
 });
 
+test('the Confluence verdict leads, reads for every lean, and the matrix opens on demand', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`cfShowAll = false; setView('confluence')`);
+  await settle('cfData && !cfLoading', 'the confluence');
+  run(`riskForceRender = true; render(lastData)`);
+  let html = markup.get('content');
+  assert.match(html, /class="cf-verdict"[\s\S]*Can you trust it\?/);
+  assert.doesNotMatch(html, /class="cf-table"/, 'the matrix starts collapsed');
+  assert.deepEqual(strayValues(html), []);
+
+  for (const [direction, state, label] of [[1, 'bull', 'Leaning long'], [-1, 'bear', 'Leaning short'], [0, 'neutral', 'No clear lean']]) {
+    run(`cfData.verdict = { ...cfData.verdict, direction: ${direction}, state: '${state}',
+      against: ${direction} ? cfData.verdict.reasons[0] : null }; riskForceRender = true; render(lastData)`);
+    html = markup.get('content');
+    assert.match(html, new RegExp(label));
+    assert.deepEqual(strayValues(html), [], label);
+  }
+
+  for (const [edge, stability, text] of [[0.05, 'holds', /held up/], [-0.07, 'holds', /ran below chance/],
+                                         [0.05, 'fades', /changed direction/], [0.05, 'thin', /too few recent bars/]]) {
+    run(`cfData.verdict.trust = { ...cfData.verdict.trust, stability: '${stability}',
+      record: { ...cfData.verdict.trust.record, edge: ${edge} } }; riskForceRender = true; render(lastData)`);
+    assert.match(markup.get('content'), text, `${stability} at edge ${edge}`);
+  }
+
+  run(`toggleCfDetail()`);
+  assert.match(markup.get('content'), /class="cf-table"/);
+  run(`toggleCfDetail()`);
+});
+
 test('the tool widgets open each tool and toggle back to the last positions view', async () => {
   const { markup, run } = await bootPage();
   assert.equal(run('TOOLS.every(t => VIEWS.includes(t.view))'), true);

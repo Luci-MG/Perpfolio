@@ -160,6 +160,17 @@ test('confluence scores every timeframe and rejects anything that is not a perpe
   assert.equal(btc.status, 200);
   assert.deepEqual(Object.keys(btc.body.timeframes), ['15m', '1h', '4h', '1d']);
   for (const r of Object.values(btc.body.timeframes)) assert.ok(r.score == null || Math.abs(r.score) <= 1);
+  const v = btc.body.verdict;
+  assert.equal(v.state, btc.body.overall.state);
+  assert.ok(v.reasons.length > 0 && v.reasons.length <= 3);
+  for (const r of [...v.reasons, ...(v.against ? [v.against] : [])]) {
+    assert.ok(['1h', '4h', '1d'].includes(r.tf) && Number.isFinite(r.score) && r.record?.nEff >= 0, r.id);
+  }
+  assert.equal(v.trust.tf, '4h');
+  assert.ok(['holds', 'fades', 'thin'].includes(v.trust.stability));
+  const composite = btc.body.timeframes['4h'].calibration.composite;
+  assert.equal(Object.values(composite.byRegime).reduce((a, r) => a + r.n, 0), composite.n);
+  assert.ok(btc.body.timeframes['4h'].bars > 1000, 'calibrated on the deeper history');
   record('confluence', btc.body);
   const alt = await get('/api/confluence?symbol=ETHUSDT&tfs=1h,4h');
   assert.equal(alt.status, 200);

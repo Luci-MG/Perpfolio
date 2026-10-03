@@ -1,5 +1,16 @@
 # Changelog
 
+## Confluence: verdict and honest calibration (2026-10-03)
+
+- A verdict card leads: lean and strength, the three signals carrying it with their records in
+  the current regime, the strongest signal against, and whether the composite can be trusted —
+  its record in this regime and whether it held up in the most recent 30% of bars. The full
+  matrix sits behind *Show all signals*.
+- Calibration records each signal per regime (tagged at each bar, against that regime's own
+  up-bar share) and early against recent; history is 1,500 bars. A reading ships only the
+  current regime's record per signal, so the response grew 23 → 40 KB, not 92.
+- A composite that ran below chance both early and recent is called unreliable, not stable.
+
 ## Journal: Overview and Behaviour (2026-10-03)
 
 - **Fixed:** Overview counted unrealised PnL twice — it read the margin balance as the wallet

@@ -252,7 +252,7 @@ function binance(url) {
       const num = k => (q.has(k) ? parseInt(q.get(k), 10) : null);
       return klinesRange(symbol, q.get('interval'), num('startTime'), num('endTime'), limit);
     }
-    return klines(symbol, q.get('interval'), Math.min(1000, limit));
+    return klines(symbol, q.get('interval'), limit);
   }
   if (path === '/fapi/v1/depth') {
     const m = mark(symbol);

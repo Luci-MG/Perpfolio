@@ -548,49 +548,85 @@ export function wilson(p, n, z = 1.96) {
   return [centre - half, centre + half];
 }
 
+/** The calibration bucket for a regime: squeeze wins over the ADX label. */
+export function regimeKey(regime) {
+  return regime?.squeeze ? 'squeeze' : regime?.label ?? 'unknown';
+}
+
+export const STABILITY_MIN_NEFF = 20;
+
+function blankStat() { return { n: 0, hits: 0, longs: 0, shorts: 0 }; }
+
+function tally(st, score, up) {
+  st.n++;
+  if (score > 0) st.longs++; else st.shorts++;
+  if ((score > 0) === up) st.hits++;
+}
+
+function finish(st, base, horizon) {
+  const nEff = Math.floor(st.n / horizon);
+  if (!st.n || base.total === 0) {
+    return { n: st.n, nEff, hitRate: null, expected: null, edge: null, ci: null, significant: false, thin: true };
+  }
+  const baseUp = base.ups / base.total;
+  const hitRate = st.hits / st.n;
+  const expected = (st.longs * baseUp + st.shorts * (1 - baseUp)) / st.n;
+  const ci = wilson(hitRate, nEff);
+  const significant = !!ci && (ci[0] > expected || ci[1] < expected);
+  return { n: st.n, nEff, hitRate, expected, edge: hitRate - expected, ci, significant, thin: nEff < 30 };
+}
+
+/** A signal's record trimmed to what a reading shows: overall, the current regime's record and stability. */
+export function forRegime(record, regime) {
+  if (!record) return record;
+  const { byRegime = {}, early, recent, ...overall } = record;
+  return { ...overall, byRegime: byRegime[regime] ? { [regime]: byRegime[regime] } : {} };
+}
+
+/** Whether an edge seen in the early bars survived into the recent ones: holds, fades or thin. */
+export function stabilityOf(early, recent) {
+  if (recent.edge == null || early.edge == null || recent.nEff < STABILITY_MIN_NEFF) return 'thin';
+  return Math.sign(recent.edge) === Math.sign(early.edge) || early.edge === 0 ? 'holds' : 'fades';
+}
+
 /**
  * Replays every signal and the composite over history: how often a reading shown as ▲ or ▼
- * matched the close `horizon` bars later. `expected` is the hit rate a coin-flip with the
- * same long/short mix would score given the period's up-bar share, so `edge` is what the
- * signal adds beyond riding the drift. Forward windows overlap, so the interval uses an
- * effective sample of n ÷ horizon, and `significant` means it excludes `expected`.
+ * matched the close `horizon` bars later, overall, per regime (tagged at each bar) and for the
+ * early and the most recent `recentShare` of bars. `expected` is what a coin-flip with the
+ * same long/short mix scores on that bucket's own up-bar share; intervals use n ÷ horizon.
  */
-export function calibrate(x, { horizon = 6, informational = [], signalMin = 0.25, compositeMin = 0.25 } = {}) {
-  const blankStat = () => ({ n: 0, hits: 0, longs: 0, shorts: 0 });
-  const stats = Object.fromEntries(CONFLUENCES.map(d => [d.id, blankStat()]));
-  const composite = blankStat();
-  let ups = 0, total = 0;
-  const tally = (st, score, up) => {
-    st.n++;
-    if (score > 0) st.longs++; else st.shorts++;
-    if ((score > 0) === up) st.hits++;
-  };
+export function calibrate(x, { horizon = 6, informational = [], signalMin = 0.25, compositeMin = 0.25, recentShare = 0.3 } = {}) {
+  const ids = [...CONFLUENCES.map(d => d.id), 'composite'];
+  const records = Object.fromEntries(ids.map(id => [id, new Map()]));
+  const bases = new Map();
+  const bucket = (map, key) => map.get(key) || map.set(key, blankStat()).get(key);
+  const baseOf = key => bases.get(key) || bases.set(key, { ups: 0, total: 0 }).get(key);
+  const split = Math.floor((x.n - horizon) * (1 - recentShare));
+
   for (let i = 0; i + horizon < x.n; i++) {
     const fwd = x.close[i + horizon] - x.close[i];
     if (fwd === 0) continue;
     const up = fwd > 0;
-    total++;
-    if (up) ups++;
     const r = scoreTimeframe(x, { i, informational });
-    for (const s of r.signals) if (s.score != null && Math.abs(s.score) >= signalMin) tally(stats[s.id], s.score, up);
-    if (r.score != null && Math.abs(r.score) >= compositeMin) tally(composite, r.score, up);
+    const keys = ['all', `regime:${regimeKey(r.regime)}`, i < split ? 'early' : 'recent'];
+    for (const k of keys) { const b = baseOf(k); b.total++; if (up) b.ups++; }
+    const active = [...r.signals.filter(s => s.score != null && Math.abs(s.score) >= signalMin).map(s => [s.id, s.score]),
+                    ...(r.score != null && Math.abs(r.score) >= compositeMin ? [['composite', r.score]] : [])];
+    for (const [id, score] of active) for (const k of keys) tally(bucket(records[id], k), score, up);
   }
-  const baseUp = total ? ups / total : null;
-  const finish = st => {
-    const nEff = Math.floor(st.n / horizon);
-    if (!st.n || baseUp == null) {
-      return { n: st.n, nEff, hitRate: null, expected: null, edge: null, ci: null, significant: false, thin: true };
-    }
-    const hitRate = st.hits / st.n;
-    const expected = (st.longs * baseUp + st.shorts * (1 - baseUp)) / st.n;
-    const ci = wilson(hitRate, nEff);
-    const significant = !!ci && (ci[0] > expected || ci[1] < expected);
-    return { n: st.n, nEff, hitRate, expected, edge: hitRate - expected, ci, significant, thin: nEff < 30 };
+
+  const record = id => {
+    const at = k => finish(records[id].get(k) || blankStat(), bases.get(k) || { ups: 0, total: 0 }, horizon);
+    const regimes = [...bases.keys()].filter(k => k.startsWith('regime:'));
+    const early = at('early'), recent = at('recent');
+    return { ...at('all'), byRegime: Object.fromEntries(regimes.map(k => [k.slice(7), at(k)])),
+             early, recent, stability: stabilityOf(early, recent) };
   };
+  const all = bases.get('all') || { ups: 0, total: 0 };
   return {
-    horizon, bars: total, baseUp,
-    signals: Object.fromEntries(Object.entries(stats).map(([id, st]) => [id, finish(st)])),
-    composite: finish(composite)
+    horizon, bars: all.total, baseUp: all.total ? all.ups / all.total : null,
+    signals: Object.fromEntries(CONFLUENCES.map(d => [d.id, record(d.id)])),
+    composite: record('composite')
   };
 }
 
@@ -626,4 +662,61 @@ export function btcCorrelation(assetCandles, btcCandles, bars = 72) {
   const { x, y } = alignedReturns(assetCandles, btcCandles);
   if (x.length < 24) return null;
   return pearsonCorr(x.slice(-bars), y.slice(-bars));
+}
+
+const VERDICT_TFS = ['1h', '4h', '1d'];
+const TRUST_TF = '4h';
+
+function strengthOf(score) {
+  const a = Math.abs(score ?? 0);
+  return a >= 0.6 ? 'strong' : a >= 0.35 ? 'moderate' : 'weak';
+}
+
+function recordIn(hit, regime) {
+  if (!hit) return null;
+  const inRegime = hit.byRegime?.[regime];
+  const r = inRegime && !inRegime.thin ? inRegime : hit;
+  return { hitRate: r.hitRate, expected: r.expected, edge: r.edge, nEff: r.nEff, significant: r.significant,
+           thin: r.thin, scope: r === hit ? 'overall' : 'regime', regime };
+}
+
+function contributionsOf(timeframes, weights) {
+  return VERDICT_TFS.filter(tf => timeframes[tf]).flatMap(tf => {
+    const r = timeframes[tf];
+    const regime = regimeKey(r.regime);
+    return r.sources.filter(src => src.weight > 0).flatMap(src => {
+      const live = r.signals.filter(s => s.source === src.id && s.score != null);
+      return live.map(s => ({ tf, id: s.id, name: s.name, score: s.score,
+                              pull: (weights[tf] ?? 0) * src.weight / live.length * s.score,
+                              record: recordIn(s.hit, regime) }));
+    });
+  });
+}
+
+/**
+ * The reading in words: lean and strength, the three signals pulling hardest that way across
+ * 1h–1d with their records in each timeframe's current regime, the strongest signal against,
+ * and the composite's record and stability on 4h (or the heaviest timeframe present).
+ */
+export function explainVerdict(timeframes, overall, weights = TF_WEIGHTS) {
+  const direction = overall?.state === 'bull' ? 1 : overall?.state === 'bear' ? -1 : 0;
+  const byPull = list => [...list].sort((a, b) => Math.abs(b.pull) - Math.abs(a.pull));
+  const contributions = contributionsOf(timeframes, weights);
+  const reasons = direction ? byPull(contributions.filter(c => Math.sign(c.score) === direction)) : byPull(contributions);
+  const against = direction ? byPull(contributions.filter(c => Math.sign(c.score) === -direction))[0] ?? null : null;
+
+  const present = Object.keys(timeframes).filter(tf => timeframes[tf]);
+  const trustTf = timeframes[TRUST_TF] ? TRUST_TF : present.sort((a, b) => (weights[b] ?? 0) - (weights[a] ?? 0))[0];
+  const trustRegime = trustTf ? regimeKey(timeframes[trustTf].regime) : null;
+  const composite = trustTf ? timeframes[trustTf].calibration?.composite : null;
+  const strip = ({ pull, ...c }) => c;
+
+  return {
+    direction, state: overall?.state ?? 'n/a', score: overall?.score ?? null, strength: strengthOf(overall?.score),
+    aligned: overall?.aligned ?? null,
+    reasons: reasons.slice(0, 3).map(strip),
+    against: against && strip(against),
+    trust: trustTf ? { tf: trustTf, regime: trustRegime, record: recordIn(composite, trustRegime),
+                       stability: composite?.stability ?? 'thin' } : null
+  };
 }
