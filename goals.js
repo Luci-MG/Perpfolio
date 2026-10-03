@@ -246,7 +246,7 @@ export function scoreGoal(goal, trips, ctx) {
     breachCount: breaches.length,
     breaches: breaches.slice(0, BREACHES_LISTED).map(({ trip, what }) => ({
       symbol: trip.symbol, side: trip.side, openTime: trip.openTime, closeTime: trip.closeTime,
-      net: round2(netOf(trip)), what })),
+      net: round2(netOf(trip)), what, tags: trip.tags ?? [], note: trip.note ?? null })),
     before: before.length ? summary(def, before) : null
   };
 }

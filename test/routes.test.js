@@ -431,3 +431,22 @@ test('the venue switch accepts only a well-formed JSON body', async () => {
   assert.equal(state.body.venues.binance.enabled, true);
   assert.equal(state.body.venues.hyperliquid.enabled, true);
 });
+
+const postNote = (body, type = 'application/json') =>
+  get('/api/annotations', { method: 'POST', headers: { 'Content-Type': type }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+
+test('a note and tags on a trip save, come back on /api/trips, and reach Factors and Goals', async () => {
+  const [first] = (await get('/api/trips')).body.trips;
+  assert.deepEqual([first.note, first.tags], [null, []]);
+  assert.equal((await postNote({ key: first.key, note: 'chased the move', tags: ['Revenge'] })).status, 200);
+  const saved = (await get('/api/trips')).body.trips.find(t => t.key === first.key);
+  assert.deepEqual([saved.note, saved.tags], ['chased the move', ['revenge']]);
+  assert.ok((await get('/api/factors?tz=0')).body.tags, 'factors carry the tags section');
+
+  assert.equal((await postNote('key=x', 'application/x-www-form-urlencoded')).status, 415);
+  assert.equal((await postNote('{"key":')).status, 400);
+  assert.equal((await postNote({ key: 'NOPE:LONG:1', note: 'x' })).status, 404);
+  assert.equal((await postNote({ key: first.key, tags: ['<b>'] })).status, 400);
+  assert.equal((await postNote({ key: first.key, note: '', tags: [] })).status, 200);
+  assert.equal((await get('/api/trips')).body.trips.find(t => t.key === first.key).note, null);
+});

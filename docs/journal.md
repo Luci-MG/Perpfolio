@@ -195,6 +195,17 @@ bucket with the rest of the book. The method and every threshold come from
 
 `GET /api/factors` caches per window, session and trip count, so the poll never recomputes.
 
+### Notes and tags
+
+Your own note (up to 500 characters) and up to five tags on any closed trip, edited inline in
+Trades (✎ or the empty Notes cell). Kept in `data/annotations.json` by the trip key, with the
+opening order id as a fallback so a note survives a rebuild that moves a trip's start; notes
+that match no trip are counted under the table. `enrichedTrips()` attaches them, so Trades
+(column, tag filter, CSV), Goals (breach rows) and Factors read them with no extra request.
+Tags are free, lowercased slugs with autocomplete from the ones already used. In Factors they
+sit in their own section and never reach the verdict: a tag is written after the result is
+known, so its link to outcome is partly hindsight.
+
 ### Trades: every round trip with its context
 One row per closed trip, built in three layers so each can be tested alone:
 

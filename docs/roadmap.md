@@ -24,7 +24,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P4 | [Goals: rules](#p4--goals-rules) | done (2026-10-03) |
 | P4 | [Goals: milestones](#p4--goals-milestones) | done (2026-10-03) |
 | P5 | [Error states keep their controls](#p5--error-states-keep-their-controls) | done (2026-10-03) |
-| P5 | [Per-trip notes and tags](#p5--per-trip-notes-and-tags) | planned |
+| P5 | [Per-trip notes and tags](#p5--per-trip-notes-and-tags) | done (2026-10-03) |
 | P5 | [Funding section](#p5--funding-section) | idea |
 | P5 | [Journal Overview remodel](#p5--journal-overview-remodel) | idea |
 | P6 | [Server-side alerts](#p6--server-side-alerts) | planned |
@@ -293,6 +293,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 
 ## P5 — Per-trip notes and tags
 
+- **Status:** done (2026-10-03). Tags reach Factors in their own section, not the ranked
+  factors, because they are set after the result is known.
 - **Problem:** everything in the Journal is derived from exchange records; nothing records why
   a trade was taken or what went wrong, so Factors and Goals cannot see setups or mistakes.
 - **Scope:** a note and free tags per round trip in Trades, stored in

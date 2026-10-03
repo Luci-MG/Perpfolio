@@ -1,5 +1,13 @@
 # Changelog
 
+## Notes and tags on trips (2026-10-03)
+
+- A note and up to five tags on any closed trip, edited inline in Trades, with a Notes column,
+  a tag filter and both in the CSV. Saved in `data/annotations.json`; a note follows its trip
+  through a rebuild by its opening order.
+- Goal breaches show the trip's tags and note; Factors compares each tag with enough trips in
+  a separate *Your tags* section, marked as set after the trade.
+
 ## Error states keep their controls (2026-10-03)
 
 - A failed load no longer replaces a tab's controls: Stress, Unwind, Stops, Confluence, the

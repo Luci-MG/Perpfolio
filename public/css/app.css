@@ -880,3 +880,10 @@ td .stop-mark { margin-left: 4px; vertical-align: -2px; }
 .fx-dot { position: absolute; top: 2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--text); }
 .load-error { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; font-size: 11px; color: var(--text2); margin: 8px 0; }
 .load-error .st-btn { margin-left: 6px; }
+.jt-note { display: inline-flex; gap: 3px; align-items: center; border: none; background: none; padding: 0; font: inherit; color: var(--text2); cursor: pointer; }
+.jt-tag { font-size: 10px; padding: 0 5px; border-radius: 4px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border2); }
+.jt-pen { color: var(--text2); }
+.jt-edit td { background: var(--surface2); }
+.jt-editor { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 0; }
+.jt-editor textarea { flex: 1 1 320px; min-height: 36px; font: inherit; font-size: 12px; resize: vertical; }
+.jt-editor input { flex: 0 1 200px; }

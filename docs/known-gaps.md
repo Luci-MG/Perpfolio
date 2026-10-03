@@ -54,9 +54,8 @@
 - **Journal: positions opened before the earliest reachable fill** are excluded from round
   trips; their closing fills are reported as an orphan bucket rather than dropped
 - **Depth is a snapshot** — it shows what the book can absorb now, not during a move
-- **Journal has no manual annotation** (roadmap P5, *Per-trip notes and tags*) — no per-trade notes, tags, screenshots or emotional
-  state. Everything shown is derived from exchange records, which is why it can be
-  reconciled; anything hand-entered would need storage the store does not yet have
+- **Notes only on closed trips** — an open position has no trip key yet; tagging at entry would
+  need the entry order id from entry capture
 - **Kill prices are scanned, not solved** — a piecewise-analytic solve would be exact by
   construction and ~100× cheaper per slider frame, but the scan already matches Binance exactly
   and the slider does not lag, so it was dropped (2026-10-03)

@@ -3610,6 +3610,7 @@
   "coverage": {
    "entryCapturedSince": null,
    "incomeFrom": 1785628800000,
+   "orphanNotes": 0,
    "pending": 0,
    "ready": 24,
    "unavailable": 0
@@ -3639,6 +3640,7 @@
     "mfe": 0,
     "net": -100.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1000,
     "openTime": 1784764800000,
@@ -3650,6 +3652,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -3675,6 +3678,7 @@
     "mfe": 4.31,
     "net": 198.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1002,
     "openTime": 1785024000000,
@@ -3686,6 +3690,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3711,6 +3716,7 @@
     "mfe": 2.51,
     "net": 99.2,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1005,
     "openTime": 1785283200000,
@@ -3722,6 +3728,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3747,6 +3754,7 @@
     "mfe": 0,
     "net": -100.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1007,
     "openTime": 1785542400000,
@@ -3758,6 +3766,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -3783,6 +3792,7 @@
     "mfe": 2.36,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1009,
     "openTime": 1785801600000,
@@ -3794,6 +3804,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3819,6 +3830,7 @@
     "mfe": 4.47,
     "net": 198.8,
     "netAfterFunding": 198.8,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1011,
     "openTime": 1786060800000,
@@ -3830,6 +3842,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3855,6 +3868,7 @@
     "mfe": 0,
     "net": -100.8,
     "netAfterFunding": -100.8,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1014,
     "openTime": 1786320000000,
@@ -3866,6 +3880,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -3891,6 +3906,7 @@
     "mfe": 0.9,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1016,
     "openTime": 1786579200000,
@@ -3902,6 +3918,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3927,6 +3944,7 @@
     "mfe": 3.76,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1018,
     "openTime": 1786838400000,
@@ -3938,6 +3956,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -3963,6 +3982,7 @@
     "mfe": 0,
     "net": -201.2,
     "netAfterFunding": -201.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1020,
     "openTime": 1787097600000,
@@ -3974,6 +3994,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -3999,6 +4020,7 @@
     "mfe": 0,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1023,
     "openTime": 1787356800000,
@@ -4010,6 +4032,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4035,6 +4058,7 @@
     "mfe": 3.96,
     "net": 99.2,
     "netAfterFunding": 99.2,
+    "note": null,
     "openNotional": 10000,
     "openOrderId": 1025,
     "openTime": 1787616000000,
@@ -4046,6 +4070,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "BTCUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4071,6 +4096,7 @@
     "mfe": 0,
     "net": -4.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2000,
     "openTime": 1784764800000,
@@ -4082,6 +4108,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -4107,6 +4134,7 @@
     "mfe": 4.31,
     "net": 6.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2002,
     "openTime": 1785024000000,
@@ -4118,6 +4146,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4143,6 +4172,7 @@
     "mfe": 2.51,
     "net": 3.2,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2005,
     "openTime": 1785283200000,
@@ -4154,6 +4184,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4179,6 +4210,7 @@
     "mfe": 0,
     "net": -4.8,
     "netAfterFunding": null,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2007,
     "openTime": 1785542400000,
@@ -4190,6 +4222,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -4215,6 +4248,7 @@
     "mfe": 2.36,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2009,
     "openTime": 1785801600000,
@@ -4226,6 +4260,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4251,6 +4286,7 @@
     "mfe": 4.47,
     "net": 6.8,
     "netAfterFunding": 6,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2011,
     "openTime": 1786060800000,
@@ -4262,6 +4298,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4287,6 +4324,7 @@
     "mfe": 0,
     "net": -4.8,
     "netAfterFunding": -5.6,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2014,
     "openTime": 1786320000000,
@@ -4298,6 +4336,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -4323,6 +4362,7 @@
     "mfe": 0.9,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2016,
     "openTime": 1786579200000,
@@ -4334,6 +4374,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4359,6 +4400,7 @@
     "mfe": 3.76,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2018,
     "openTime": 1786838400000,
@@ -4370,6 +4412,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4395,6 +4438,7 @@
     "mfe": 0,
     "net": -9.2,
     "netAfterFunding": -10,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2020,
     "openTime": 1787097600000,
@@ -4406,6 +4450,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": false
    },
    {
@@ -4431,6 +4476,7 @@
     "mfe": 0,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2023,
     "openTime": 1787356800000,
@@ -4442,6 +4488,7 @@
     "session": "Weekend",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    },
    {
@@ -4467,6 +4514,7 @@
     "mfe": 3.96,
     "net": 3.2,
     "netAfterFunding": 2.4,
+    "note": null,
     "openNotional": 400,
     "openOrderId": 2025,
     "openTime": 1787616000000,
@@ -4478,6 +4526,7 @@
     "session": "Asia",
     "side": "Long",
     "symbol": "ETHUSDT",
+    "tags": [],
     "win": true
    }
   ]
@@ -8266,6 +8315,12 @@
   ],
   "ok": true,
   "session": null,
+  "tags": {
+   "buckets": [],
+   "hiddenBuckets": 0,
+   "id": "tags",
+   "label": "Your tags"
+  },
   "trips": 24,
   "waiting": [
    "Confluence at entry",

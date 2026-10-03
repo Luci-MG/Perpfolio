@@ -3,7 +3,8 @@
 
 let tripsData = null, tripsLoading = false;
 let tradesSort = { id: 'closed', dir: -1 };
-let tradesFilter = { symbol: '', side: 'all', result: 'all', hedged: 'all', day: null };
+let tradesFilter = { symbol: '', side: 'all', result: 'all', hedged: 'all', tag: 'all', day: null };
+let noteEditing = null, noteError = null;
 let tradesMore = loadPref('tradesMore', false);
 let tradesShowAll = false;
 const TRADES_PAGE = 50;
@@ -42,6 +43,14 @@ function entryStopCell(e) {
 
 const withEntry = (t, render) => (t.entry ? render(t.entry) : entryGap());
 
+const tagChips = tags => (tags || []).map(tag => `<span class="jt-tag">${esc(tag)}</span>`).join('');
+
+function notesCell(t) {
+  const empty = !t.note && !t.tags?.length;
+  return `<button class="jt-note" onclick="editTripNote('${esc(t.key)}')" title="${esc(t.note || 'Add a note or tags')}">${
+    t.note ? '<span class="jt-pen">✎</span>' : ''}${tagChips(t.tags)}${empty ? '<span class="jt-gap">+</span>' : ''}</button>`;
+}
+
 const TRADE_COLUMNS = [
   { id: 'symbol', label: 'Symbol', value: t => t.symbol, cell: t => esc(jrSym(t.symbol)) },
   { id: 'side', label: 'Side', value: t => t.side, cell: t => `<span class="${t.side === 'Long' ? 'up' : 'dn'}">${t.side}</span>` },
@@ -67,6 +76,8 @@ const TRADE_COLUMNS = [
     cell: t => (t.mae == null ? contextGap(t) : `<span class="dn">${pctText(t.mae)}</span> / <span class="up">${pctText(t.mfe)}</span>`),
     exports: [['mae_pct', t => t.mae], ['mfe_pct', t => t.mfe], ['path_interval', t => t.pathInterval]] },
   { id: 'session', label: 'Session', value: t => t.session, cell: t => t.session },
+  { id: 'notes', label: 'Notes', value: t => (t.tags || []).join(' ') || null, cell: notesCell,
+    exports: [['note', t => t.note], ['tags', t => (t.tags || []).join(' ')]] },
   { id: 'hedged', label: 'Hedged', value: t => (t.hedged ? 1 : 0), cell: t => (t.hedged ? '✓' : ''),
     exports: [['hedged', t => t.hedged]] },
   { id: 'atr', label: 'ATR %', value: t => t.atrPct, more: true,
@@ -129,6 +140,7 @@ function filteredTrips() {
     && (f.side === 'all' || t.side === f.side)
     && (f.result === 'all' || (f.result === 'win') === (tripNet(t) > 0))
     && (f.hedged === 'all' || (f.hedged === 'yes') === t.hedged)
+    && (f.tag === 'all' || (f.tag === 'untagged' ? !t.tags?.length : t.tags?.includes(f.tag)))
     && (!f.day || (t.openTime >= f.day && t.openTime < f.day + 86_400_000)));
 }
 
@@ -148,12 +160,58 @@ function tradesTableHtml() {
   const shown = tradesShowAll ? rows : rows.slice(0, TRADES_PAGE);
   const arrow = c => (c.id === tradesSort.id ? (tradesSort.dir > 0 ? ' ↑' : ' ↓') : '');
   const head = cols.map(c => `<th><button class="jt-sort" onclick="sortTrades('${c.id}')">${c.label}${arrow(c)}</button></th>`).join('');
-  const body = shown.map(t => `<tr>${cols.map(c => `<td>${c.cell(t)}</td>`).join('')}</tr>`).join('');
+  const body = shown.map(t => `<tr>${cols.map(c => `<td>${c.cell(t)}</td>`).join('')}</tr>${
+    noteEditing === t.key ? `<tr class="jt-edit"><td colspan="${cols.length}">${noteEditorHtml(t)}</td></tr>` : ''}`).join('');
   const more = rows.length > shown.length
     ? `<button class="st-btn" onclick="showAllTrades()">Show all ${rows.length}</button>` : '';
   const scope = sessionFilter === 'All' ? '' : `${sessionFilter} · `;
   return `<p class="jt-count">${scope}${tripsData.trips.length} trips · ${rows.length} match · ${shown.length} shown</p>
     <div class="jt-wrap"><table class="jr-tbl jt-tbl"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>${more}`;
+}
+
+const knownTags = () => [...new Set((tripsData?.trips || []).flatMap(t => t.tags || []))].sort();
+
+function noteEditorHtml(t) {
+  return `<div class="jt-editor">
+    <textarea id="jt-note-text" class="cf-sym" maxlength="500" rows="2" placeholder="Why you took it, what happened">${esc(t.note || '')}</textarea>
+    <input id="jt-note-tags" class="cf-sym" list="jt-tag-list" placeholder="tags, comma separated" value="${esc((t.tags || []).join(', '))}">
+    <datalist id="jt-tag-list">${knownTags().map(tag => `<option value="${esc(tag)}">`).join('')}</datalist>
+    ${noteError ? `<span class="dn">${esc(noteError)}</span>` : ''}
+    <button class="st-btn" onclick="cancelTripNote()">Cancel</button>
+    <button class="st-btn on" onclick="saveTripNote('${esc(t.key)}')">Save</button>
+  </div>`;
+}
+
+function editTripNote(key) {
+  noteEditing = noteEditing === key ? null : key;
+  noteError = null;
+  refreshTradesTable();
+}
+
+function cancelTripNote() {
+  if (noteEditing == null) return;
+  noteEditing = null;
+  refreshTradesTable();
+}
+
+async function saveTripNote(key) {
+  const note = document.getElementById('jt-note-text').value;
+  const tags = document.getElementById('jt-note-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+  try {
+    const res = await fetch('/api/annotations', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                  body: JSON.stringify({ key, note, tags }) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'save failed');
+    const trip = tripsData.trips.find(t => t.key === key);
+    Object.assign(trip, { note: data.annotation?.note || null, tags: data.annotation?.tags ?? [] });
+    noteEditing = null;
+    noteError = null;
+    reloadFactors();
+    if (goalsData) fetchGoals();
+  } catch (err) {
+    noteError = err.message;
+  }
+  refreshTradesTable();
 }
 
 function refreshTradesTable() {
@@ -199,7 +257,7 @@ function exportTradesCsv() {
 
 function tradesSelect(key, options) {
   return `<select class="st-btn" onchange="filterTrades('${key}', this.value)">${options.map(([v, l]) =>
-    `<option value="${v}"${tradesFilter[key] === v ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
+    `<option value="${esc(v)}"${tradesFilter[key] === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
 }
 
 function reloadTrips() {
@@ -215,10 +273,13 @@ function renderTradesTab() {
     ${tradesSelect('side', [['all', 'Long + short'], ['Long', 'Long'], ['Short', 'Short']])}
     ${tradesSelect('result', [['all', 'Wins + losses'], ['win', 'Wins'], ['loss', 'Losses']])}
     ${tradesSelect('hedged', [['all', 'Hedged or not'], ['yes', 'Hedged at entry'], ['no', 'Not hedged']])}
+    ${tradesSelect('tag', [['all', 'Any tag'], ['untagged', 'Untagged'], ...knownTags().map(tag => [tag, tag])])}
     ${tradesFilter.day ? `<button class="st-btn on" onclick="filterTrades('day', null)" title="Show every day">${new Date(tradesFilter.day).toLocaleDateString([], { month: 'short', day: 'numeric' })} ✕</button>` : ''}
     <button class="st-btn" onclick="toggleTradeColumns()">${tradesMore ? 'Fewer columns' : 'More columns'}</button>
     <button class="st-btn" onclick="exportTradesCsv()">Export CSV</button>
   </div>`;
-  const note = pending ? `<p class="jt-count">Price path and market context for ${pending} trips arrive with the next sync.</p>` : '';
+  const orphans = tripsData.coverage.orphanNotes;
+  const note = `${pending ? `<p class="jt-count">Price path and market context for ${pending} trips arrive with the next sync.</p>` : ''}${
+    orphans ? `<p class="jt-count">${orphans} note${orphans > 1 ? 's' : ''} no longer match a trip.</p>` : ''}`;
   return `${controls}${loadErrorHtml('trips', 'fetchTrips()', true)}${note}<div id="jt-table">${tradesTableHtml()}</div>`;
 }

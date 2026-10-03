@@ -589,3 +589,45 @@ test('a failed load keeps each tab\'s controls with Retry, escapes the message, 
   assert.deepEqual(strayValues(stale), []);
   working();
 });
+
+test('notes and tags: the inline editor saves and cancels, chips and the tag filter work, and a note renders escaped', async () => {
+  const { markup, run, settle } = await bootPage();
+  await fetch(`${base}/api/history/sync?start=true`);
+  for (let i = 0; i < 200 && (await (await fetch(`${base}/api/history/sync`)).json()).state.running; i++) {
+    await new Promise(r => setTimeout(r, 25));
+  }
+  run(`setView('journal')`);
+  await settle('perfData && !perfLoading', 'the journal');
+  run(`setJrTab('trades')`);
+  await settle('tripsData && !tripsLoading', 'the trips');
+  const show = () => { run(`jrTab = 'trades'; riskForceRender = true; render(lastData)`); return markup.get('content'); };
+  const table = () => markup.get('jt-table');
+  show();
+  const key = run('sortedTrips(filteredTrips())[0].key');
+
+  run(`editTripNote('${key}')`);
+  assert.match(table(), /class="jt-edit"[\s\S]*id="jt-note-text"[\s\S]*Save/);
+  run(`cancelTripNote()`);
+  assert.doesNotMatch(table(), /jt-edit/);
+
+  run(`editTripNote('${key}')`);
+  run(`document.getElementById('jt-note-text').value = '<b>chased</b> it'; document.getElementById('jt-note-tags').value = 'Revenge, late-entry'`);
+  await run(`saveTripNote('${key}')`);
+  assert.equal(run('noteEditing'), null);
+  assert.match(table(), /title="&lt;b&gt;chased&lt;\/b&gt; it"[\s\S]*jt-tag">revenge[\s\S]*jt-tag">late-entry/);
+  assert.doesNotMatch(table(), /<b>chased/);
+
+  run(`filterTrades('tag', 'revenge')`);
+  assert.equal(run('filteredTrips().length'), 1);
+  assert.match(show(), /<option value="revenge" selected>revenge<\/option>/);
+  assert.match(run('tradesCsv()').split('\n')[0], /,note,tags/);
+
+  run(`editTripNote('${key}')`);
+  run(`document.getElementById('jt-note-tags').value = 'a, b, c, d, e, f'`);
+  await run(`saveTripNote('${key}')`);
+  assert.match(table(), /class="dn">at most 5 tags/);
+  run(`document.getElementById('jt-note-text').value = ''; document.getElementById('jt-note-tags').value = ''`);
+  await run(`saveTripNote('${key}')`);
+  run(`filterTrades('tag', 'all')`);
+  assert.deepEqual(strayValues(show()), []);
+});

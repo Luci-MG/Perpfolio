@@ -96,7 +96,7 @@ function goalBreachesHtml(g) {
   if (!g.breaches.length) return '';
   const rows = g.breaches.map(b => `<tr><td>${goalWhen(b.openTime)}</td>
     <td>${esc(jrSym(b.symbol))} <span class="gl-n">${b.side.toLowerCase()}</span></td>
-    <td>${esc(b.what)}</td><td>${signedCell(b.net)}</td>
+    <td>${esc(b.what)}${b.tags?.length ? ` ${tagChips(b.tags)}` : ''}${b.note ? ` <span class="jt-pen" title="${esc(b.note)}">✎</span>` : ''}</td><td>${signedCell(b.net)}</td>
     <td><button class="gl-link" onclick="openGoalBreach('${esc(b.symbol)}', ${b.openTime})">open ›</button></td></tr>`).join('');
   const more = g.breachCount > g.breaches.length ? `<p class="gl-n">latest ${g.breaches.length} of ${g.breachCount}</p>` : '';
   return `<table class="jr-tbl gl-breaches">${rows}</table>${more}`;

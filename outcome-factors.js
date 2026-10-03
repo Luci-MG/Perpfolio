@@ -269,6 +269,14 @@ function compareBucket(name, members, trips, days, ctx) {
   };
 }
 
+function scoreTags(trips, days, ctx) {
+  const byTag = new Map();
+  for (const t of trips) for (const tag of t.tags || []) byTag.set(tag, (byTag.get(tag) || new Set()).add(t));
+  const strata = ctx.strata.map(s => s.of);
+  const buckets = [...byTag].map(([tag, members]) => ({ ...compareBucket(tag, members, trips, days, { ...ctx, strata }), standsOut: false }));
+  return { id: 'tags', label: 'Your tags', buckets: buckets.filter(b => !b.hidden), hiddenBuckets: buckets.filter(b => b.hidden).length };
+}
+
 function scoreFactor(def, trips, days, ctx) {
   const bucketOf = bucketerFor(def, ctx.early, ctx.facts);
   const groups = new Map();
@@ -286,7 +294,8 @@ function scoreFactor(def, trips, days, ctx) {
 /**
  * Every factor's buckets against the rest of the book, the rows that stand out (interval clear
  * of zero and passing Benjamini–Hochberg across every comparison shown), and the during-trade
- * behaviours apart. `session` hides the factors a session filter makes meaningless.
+ * behaviours and your own tags apart, since both are known only after entry. `session` hides
+ * the factors a session filter makes meaningless.
  */
 export function outcomeFactors(trips, { tzOffsetMin = 0, session = null } = {}) {
   const sorted = [...(trips || [])].sort((a, b) => a.openTime - b.openTime);
@@ -316,6 +325,7 @@ export function outcomeFactors(trips, { tzOffsetMin = 0, session = null } = {}) 
     worse: verdict.filter(r => r.diff < 0), better: verdict.filter(r => r.diff > 0).reverse(),
     factors,
     waiting: entryCaptured ? [] : FACTORS.filter(f => f.needs === 'entry').map(f => f.label),
-    during: DURING_TRADE.map(def => scoreFactor(def, sorted, days, ctx))
+    during: DURING_TRADE.map(def => scoreFactor(def, sorted, days, ctx)),
+    tags: scoreTags(sorted, days, ctx)
   };
 }

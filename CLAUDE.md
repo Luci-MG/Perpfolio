@@ -27,7 +27,7 @@ expected to say so rather than assert correctness.
 | Volatility-adjusted stops, your real stops | [`docs/stops.md`](docs/stops.md) | `vol-estimator.js`, `stop-check.js`, `lib/stop-suggestion.js`, `routes/volstops.js` |
 | Stress / liquidation maths, calibration | [`docs/stress-engine.md`](docs/stress-engine.md) | `risk-engine.js`, `lib/pools.js` |
 | Unwind planner and drawers | [`docs/unwind.md`](docs/unwind.md) | `risk-engine.js`, `routes/deleverage.js` |
-| Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `trip-context.js`, `habits.js`, `outcome-factors.js`, `lib/history-sync.js`, `lib/trip-enrichment.js`, `lib/entry-context.js`, `lib/equity-snapshots.js` |
+| Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `trip-context.js`, `habits.js`, `outcome-factors.js`, `lib/history-sync.js`, `lib/trip-enrichment.js`, `lib/annotations-store.js`, `lib/entry-context.js`, `lib/equity-snapshots.js` |
 | Trading sessions, the clock and the session filter | [`docs/sessions.md`](docs/sessions.md) | `sessions.js`, `public/js/sessions-view.js` |
 | Market confluences for one coin | [`docs/confluence.md`](docs/confluence.md) | `confluence.js`, `lib/confluence-data.js` |
 | Order feed, request budget, latency, deployment | [`docs/operations.md`](docs/operations.md) | `lib/orders-stream.js`, `lib/binance-client.js` |

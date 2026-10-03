@@ -66,16 +66,17 @@ function intervalBar(b, scale) {
   </span>`;
 }
 
-function factorTable(factors, scale) {
+function factorTable(factors, scale, titled = true) {
   return factors.map(f => {
+    const title = titled ? `<p class="section-label fx-factor">${esc(f.label)}</p>` : '';
     const hidden = f.hiddenBuckets ? `<p class="gl-n">${f.hiddenBuckets} bucket${f.hiddenBuckets > 1 ? 's' : ''} under 20 trips or 8 days</p>` : '';
-    if (!f.buckets.length) return `<p class="section-label fx-factor">${esc(f.label)}</p>${hidden || '<p class="gl-n">no trips</p>'}`;
+    if (!f.buckets.length) return `${title}${hidden || '<p class="gl-n">no trips</p>'}`;
     const rows = f.buckets.map(b => `<tr class="${b.thin ? 'jr-thin' : ''}">
       <td>${esc(b.bucket)}${b.standsOut ? ' <b>•</b>' : ''}</td>
       <td>${signedCell(b.avgNet)}</td><td>${signedCell(b.diff)}</td><td>${intervalBar(b, scale)}</td>
       <td>${factorPct(b.winRate)} <span class="gl-n">${factorPct(b.winCi.lo)}–${factorPct(b.winCi.hi)}</span></td>
       <td>${b.n} <span class="gl-n">${b.days}d</span></td><td class="gl-n">${b.stability}</td><td>${factorFlags(b)}</td></tr>`).join('');
-    return `<p class="section-label fx-factor">${esc(f.label)}</p>
+    return `${title}
       <table class="jr-tbl fx-tbl"><tr><th>bucket</th><th>avg net</th><th>vs rest</th><th>interval</th><th>win</th><th>n</th><th>recent</th><th></th></tr>${rows}</table>${hidden}`;
   }).join('');
 }
@@ -94,11 +95,15 @@ function renderFactorsTab() {
   const toggle = `<button class="st-btn fx-toggle" onclick="toggleFactorsShowAll()">${factorsShowAll ? 'Hide factors' : 'Show all factors'}</button>`;
   const stale = loadErrorHtml('factors', 'fetchFactors()', true);
   if (!factorsShowAll) return `${head}${stale}${session}${verdict}${waiting}${toggle}`;
-  const all = [...d.factors, ...d.during].flatMap(f => f.buckets);
+  const all = [...d.factors, ...d.during, d.tags].flatMap(f => f.buckets);
   const scale = Math.max(1, ...all.flatMap(b => [Math.abs(b.ci.lo), Math.abs(b.ci.hi)]));
   return `${head}${stale}${session}${verdict}${waiting}${toggle}
     ${factorTable(d.factors, scale)}
     <p class="section-label gl-block">During the trade</p>
     <p class="gl-n">Not known at entry, so never ranked with the factors above; the cost of each habit is under Behaviour.</p>
-    ${factorTable(d.during, scale)}`;
+    ${factorTable(d.during, scale)}
+    <p class="section-label gl-block">Your tags</p>
+    <p class="gl-n">Set after the trade, so read with care: a tag can follow the result.</p>
+    ${d.tags.buckets.length || d.tags.hiddenBuckets ? factorTable([d.tags], scale, false)
+      : '<p class="gl-n">Tag trips in Trades to compare them here.</p>'}`;
 }

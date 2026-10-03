@@ -5,8 +5,10 @@ import { enrichedTrips } from '../lib/trip-enrichment.js';
 const CACHE_SIZE = 8;
 const cache = new Map();
 
+const tagsOf = trips => trips.filter(t => t.tags?.length).map(t => `${t.key}=${t.tags.join(',')}`).join(';');
+
 const fingerprint = trips =>
-  `${trips.length}:${trips.reduce((m, t) => Math.max(m, t.closeTime), 0)}:${trips.filter(t => t.entry).length}`;
+  `${trips.length}:${trips.reduce((m, t) => Math.max(m, t.closeTime), 0)}:${trips.filter(t => t.entry).length}:${tagsOf(trips)}`;
 
 function remember(key, compute) {
   if (!cache.has(key)) {
