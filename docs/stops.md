@@ -73,9 +73,37 @@ percentile the current reading sits at, so the label is falsifiable.
 - Returns `{ ok, params, combined, positions }`:
   - `combined`: `portfolioRegime` + `regimeBasis`, `portfolioVolPct`, `totalDollarRisk`,
     `totalEquity`/`hlEquity`/`bnEquity`, `regimeCounts`, `netByAsset`, `betaByAsset`,
-    `rawNet`, `betaAdjustedNet`, `nakedBtcEquiv`, `nettedSymbols`, `hedgePairs`, `hedgeWarnings`
-  - `positions[]`: stop/size fields + `regimeLabel`, `layers{atrPct,bbwAdj,fundingAdj,crossAdj,...}`, `backfilled[]` tags
+    `rawNet`, `betaAdjustedNet`, `nakedBtcEquiv`, `nettedSymbols`, `hedgePairs`, `hedgeWarnings`,
+    `stopVerdicts` (count per verdict)
+  - `positions[]`: stop/size fields + `regimeLabel`, `layers{atrPct,bbwAdj,fundingAdj,crossAdj,...}`, `backfilled[]` tags,
+    and the real stop: `yourStop{price,distancePct,atrMultiple,hit}`, `verdict`, `ratio`, `lockedPct`
 - **Backfill rules** (never skip a position / never show `—`): missing candles → synthetic series (tag `candles`); missing funding → `1.0` (tag `funding`); no BTC candles → cross `1.0` (tag `crossAsset`); short BBW/regime history → neutral + tags; missing equity → total equity / exposure fallback (tag `equity`). Per-position try/catch so one failure can't break the panel.
+
+### Your real stop against the suggestion (`stop-check.js`)
+Pure and unit-tested; the route passes it the orders and candles it already has, so it costs
+no request.
+
+- **Which order is your stop** — the leg's `Stop…` order on the closing side, nearest the
+  mark; take-profits and limit orders never count. One rule everywhere: the Stops tab, the
+  entry capture and the tiles' "no stop" badge (`hasStop` on `/api/dashboard`). The badge used
+  to count any reduce-only order, so a reduce-only limit sitting in profit — a take-profit —
+  passed as a stop.
+- **Distance is from the current mark**, the risk carried now; the suggestion's distance
+  (k × composite vol) is compared on the same basis. `atrMultiple` is that distance in 1h ATRs.
+- **The hit rate is measured, not modelled** — the share of 24h windows on the symbol's own
+  held 1h candles (200 at start, growing to 720 while the server runs) whose move against the
+  leg reached the distance. Windows overlap, so the tooltip gives windows and the roughly
+  windows ÷ 24 independent ones; a normal-returns formula would understate fat tails.
+
+| Verdict | Rule (constants in `stop-check.js`) |
+|---|---|
+| `none` | no stop, and no opposite same-symbol leg |
+| `hedged` | no stop, opposite same-symbol leg open — not flagged |
+| `breakeven` | stop within ±0.05% of entry (about one taker fee, and tick rounding) — risks nothing, so never tight or wide |
+| `locks` | stop further past entry in the profit direction; `lockedPct` |
+| `tight` | under 0.5× the suggestion, or hit in more than 60% of windows |
+| `wide` | over 2× the suggestion |
+| `ok` | otherwise |
 
 ### Frontend (`public/js/stops.js`)
 - 4th view tab **Stops** (`posView==='stops'`); `fetchVolStops()` runs only when the tab is active (not on the 15s poll) to limit candle API load
@@ -87,3 +115,6 @@ percentile the current reading sits at, so the label is falsifiable.
   and is labelled as such.
 - State: `volStopData`, `volRiskPct` (default 1.0), `volK` (default 1.5), `volLoading`
 - Regime colors: low=success, medium=text2, high=warning, extreme=danger; `est` chip when `backfilled[]` non-empty
+- Each tile shows **Your stop** — price, distance from mark, ATRs, ratio to the suggestion, the
+  24h hit rate — with the verdict as the only coloured element; the combined panel adds a
+  *Your stops* cell ("2 without a stop · 2 too tight"), counted over the filtered positions

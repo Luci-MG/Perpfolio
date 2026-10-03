@@ -107,6 +107,8 @@ Each position object (both exchanges, normalised — no realizedPnl):
 Binance positions additionally carry the fields the stress engine needs:
 `asset`, `quote`, `symbol`, `positionSide`, `sizeRaw` (signed float — `size` is a display
 string), `isolated`, `isolatedWallet`, `reportedMm`, `reportedLiqPrice`.
+On `/api/dashboard` every position also carries `hasStop` — whether a closing `Stop…` order
+protects the leg (the rule in `docs/stops.md`).
 
 ## Order data shape
 Each order object (both exchanges, normalised):

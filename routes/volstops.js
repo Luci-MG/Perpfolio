@@ -4,6 +4,7 @@ import { getBinanceData } from '../lib/binance-account.js';
 import { getHyperliquidData } from '../lib/hyperliquid.js';
 import { getBinanceKlines, getHlCandles } from '../lib/market-data.js';
 import { suggestStop } from '../lib/stop-suggestion.js';
+import { checkLegStop, hasOppositeLeg, stopOrders } from '../stop-check.js';
 import { isEnabled } from '../lib/venues.js';
 
 // ── Dynamic Stop Width endpoint ───────────────────────────────────────────
@@ -58,6 +59,7 @@ export function register(app) {
 
       const totalEquity = (hlData.equity + bnData.equity) || 0;
 
+      const orders = stopOrders(bnData.openOrders, hlData.openOrders);
       const results = [];
       const candlesByAsset = {};
       const volHistories = [];
@@ -70,7 +72,10 @@ export function register(app) {
           if (!candlesByAsset[assetKey] && !candlesBackfilled) candlesByAsset[assetKey] = candles;
           volHistories.push({ key: `${p.exchange}:${p.pair}:${p.side}`, series: volSeries,
                               weight: Math.abs(p.sizeUsd) || 1 });
-          results.push(result);
+          results.push({ ...result, ...checkLegStop({
+            position: p, orders, hedged: hasOppositeLeg(p, positions), suggestedPct: result.stopDistPct,
+            atrPct: result.layers.atrPct, candles: candlesBackfilled ? null : candles
+          }) });
         } catch (perr) {
           // Never let one position break the panel.
           results.push({
@@ -184,7 +189,8 @@ export function register(app) {
           unmatchedShort,
           nettedSymbols,
           hedgePairs,
-          hedgeWarnings
+          hedgeWarnings,
+          stopVerdicts:    valid.reduce((acc, r) => ({ ...acc, [r.verdict]: (acc[r.verdict] || 0) + 1 }), {})
         },
         positions: results
       });

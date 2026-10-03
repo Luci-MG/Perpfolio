@@ -139,6 +139,27 @@ test('the Trades table sorts, filters, pages and exports what it shows', async (
   assert.ok(csv.slice(1).every(line => line.startsWith('ETHUSDT,Long,')));
 });
 
+test('every stop verdict renders on the Stops tab, and the tile badge follows hasStop', async () => {
+  const { markup, run, settle } = await bootPage();
+  run(`setView('stops')`);
+  await settle('volStopData && !volLoading', 'the stops');
+  run(`const base = volStopData.positions[0];
+    volStopData.positions = ['none', 'hedged', 'tight', 'wide', 'breakeven', 'locks', 'ok'].map(verdict => ({ ...base, verdict,
+      ratio: verdict === 'locks' ? null : 0.8, lockedPct: verdict === 'locks' ? 1.5 : null,
+      yourStop: ['none', 'hedged'].includes(verdict) ? null
+        : { price: 95, distancePct: 1.2, atrMultiple: 1.4, hit: { rate: 0.41, windows: 176, independent: 7, days: 8.3 } } }));
+    riskForceRender = true; render(lastData)`);
+  const html = markup.get('content');
+  for (const label of ['No stop', 'Hedged', 'Too tight', 'Too wide', 'Breakeven', 'Locks profit', 'OK']) assert.match(html, new RegExp(label));
+  assert.match(html, /hit within 24h in 41% of windows/);
+  assert.match(html, /1 without a stop · 1 too tight · 1 too wide/);
+  assert.deepEqual(strayValues(html), []);
+
+  run(`setView('tiles')`);
+  assert.equal((markup.get('content').match(/class="sl-alert"/g) || []).length, 3,
+    'ETH, ENA and SOL have no stop and no hedge; the BTC legs are a hedge and the long has a stop');
+});
+
 test('the tool widgets open each tool and toggle back to the last positions view', async () => {
   const { markup, run } = await bootPage();
   assert.equal(run('TOOLS.every(t => VIEWS.includes(t.view))'), true);

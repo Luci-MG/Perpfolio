@@ -106,23 +106,6 @@ function renderPositionTiles(positions) {
     }
   }
 
-  // Build two separate order lookup sets keyed exchange:normalizedPair:side
-  // slSet  — genuine stop-loss orders only (stop market/limit, or reduceOnly limit)
-  // tpSet  — take-profit orders (TP suppresses TP badge but NOT the SL glow)
-  const slSet = new Set();
-  const tpSet = new Set();
-  if (lastData) {
-    [...(lastData.hyperliquid?.orders || []), ...(lastData.binance?.orders || [])].forEach(o => {
-      const t   = (o.type || '').toLowerCase();
-      const key = `${o.exchange}:${normalizePairKey(o.pair)}:${o.side}`;
-      if (t.includes('take profit')) {
-        tpSet.add(key);                         // TP only — does NOT count as SL
-      } else if (o.reduceOnly || t.includes('stop')) {
-        slSet.add(key);                         // genuine stop / reduceOnly = real SL
-      }
-    });
-  }
-
   const compact = orderedPositions.length > 10;
 
   const tiles = orderedPositions.map(p => {
@@ -141,11 +124,7 @@ function renderPositionTiles(positions) {
     const threadDot = tc ? `<span style="width:5px;height:5px;border-radius:50%;background:${tc};flex-shrink:0;opacity:0.9;box-shadow:0 0 4px ${tc}88"></span>` : '';
 
     const isHedged = !!tc;
-    const slSide = p.side === 'Long' ? 'Sell' : 'Buy';
-    const orderKey = `${p.exchange}:${key}:${slSide}`;
-    const hasStopLoss = slSet.has(orderKey);   // only real stop orders count
-    // Show the SL glow if: not hedged AND no genuine stop order (TP alone does NOT suppress it)
-    const noSlBadge = (!isHedged && !hasStopLoss)
+    const noSlBadge = (!isHedged && !p.hasStop)
       ? `<span class="sl-alert" title="No stop loss order detected" style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--danger);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto"><span style="width:3px;height:3px;border-radius:50%;background:var(--danger);display:block"></span></span>`
       : '';
 

@@ -88,6 +88,7 @@
      "fundingIntervalHours": 8,
      "fundingPerDayPct": 0.03,
      "fundingRate": 0.01,
+     "hasStop": true,
      "isolated": false,
      "isolatedWallet": 0,
      "leverage": "10×",
@@ -119,6 +120,7 @@
      "fundingIntervalHours": 8,
      "fundingPerDayPct": 0.03,
      "fundingRate": 0.01,
+     "hasStop": false,
      "isolated": false,
      "isolatedWallet": 0,
      "leverage": "10×",
@@ -150,6 +152,7 @@
      "fundingIntervalHours": 4,
      "fundingPerDayPct": 0.12,
      "fundingRate": 0.02,
+     "hasStop": false,
      "isolated": false,
      "isolatedWallet": 0,
      "leverage": "5×",
@@ -181,6 +184,7 @@
      "fundingIntervalHours": 4,
      "fundingPerDayPct": 0.09,
      "fundingRate": 0.015,
+     "hasStop": false,
      "isolated": false,
      "isolatedWallet": 0,
      "leverage": "3×",
@@ -220,6 +224,7 @@
      "funding8h": "+0.0010%",
      "fundingIntervalHours": 1,
      "fundingRate": 0.001,
+     "hasStop": false,
      "leverage": "5×",
      "liqPrice": 290,
      "mark": 200,
@@ -390,6 +395,11 @@
     "low": 2,
     "medium": 2
    },
+   "stopVerdicts": {
+    "hedged": 1,
+    "none": 3,
+    "wide": 1
+   },
    "totalDollarRisk": 947.6,
    "totalEquity": 25940,
    "unmatchedLong": 9488,
@@ -421,16 +431,20 @@
      "crossRatio": 1.01,
      "fundingAdj": 1
     },
+    "lockedPct": null,
     "mark": 200,
     "notionalValue": 2836.73,
     "pair": "SOL-PERP",
     "positionSize": 13.508249,
+    "ratio": null,
     "regimeLabel": "low",
     "regimeMult": 1,
     "side": "Short",
     "stopDistPct": 1.058,
     "stopPrice": 212.2209,
-    "targetPrice": 205.5583
+    "targetPrice": 205.5583,
+    "verdict": "none",
+    "yourStop": null
    },
    {
     "accountSize": 22940,
@@ -452,16 +466,30 @@
      "crossRatio": 1.01,
      "fundingAdj": 1.1
     },
+    "lockedPct": null,
     "mark": 100000,
     "notionalValue": 14125.17,
     "pair": "BTC/USDT",
     "positionSize": 0.144134,
+    "ratio": 8.21,
     "regimeLabel": "medium",
     "regimeMult": 0.75,
     "side": "Long",
     "stopDistPct": 1.218,
     "stopPrice": 96806.32,
-    "targetPrice": 100387.35
+    "targetPrice": 100387.35,
+    "verdict": "wide",
+    "yourStop": {
+     "atrMultiple": 12.87,
+     "distancePct": 10,
+     "hit": {
+      "days": 8.3,
+      "independent": 7,
+      "rate": 0,
+      "windows": 176
+     },
+     "price": 90000
+    }
    },
    {
     "accountSize": 22940,
@@ -483,16 +511,20 @@
      "crossRatio": 1.01,
      "fundingAdj": 1.1
     },
+    "lockedPct": null,
     "mark": 100000,
     "notionalValue": 14125.17,
     "pair": "BTC/USDT",
     "positionSize": 0.137138,
+    "ratio": null,
     "regimeLabel": "medium",
     "regimeMult": 0.75,
     "side": "Short",
     "stopDistPct": 1.218,
     "stopPrice": 104254.58,
-    "targetPrice": 100490.84
+    "targetPrice": 100490.84,
+    "verdict": "hedged",
+    "yourStop": null
    },
    {
     "accountSize": 22940,
@@ -514,16 +546,20 @@
      "crossRatio": 1.01,
      "fundingAdj": 1.1
     },
+    "lockedPct": null,
     "mark": 4000,
     "notionalValue": 1526.73,
     "pair": "ETH/USDT",
     "positionSize": 0.372373,
+    "ratio": null,
     "regimeLabel": "extreme",
     "regimeMult": 0.1,
     "side": "Long",
     "stopDistPct": 1.503,
     "stopPrice": 4038.4,
-    "targetPrice": 4223.21
+    "targetPrice": 4223.21,
+    "verdict": "none",
+    "yourStop": null
    },
    {
     "accountSize": 22940,
@@ -545,16 +581,20 @@
      "crossRatio": 1.01,
      "fundingAdj": 1.1
     },
+    "lockedPct": null,
     "mark": 0.25,
     "notionalValue": 19480.72,
     "pair": "ENA/USDC",
     "positionSize": 72150.815148,
+    "ratio": null,
     "regimeLabel": "low",
     "regimeMult": 1,
     "side": "Long",
     "stopDistPct": 1.178,
     "stopPrice": 0.266821,
-    "targetPrice": 0.276359
+    "targetPrice": 0.276359,
+    "verdict": "none",
+    "yourStop": null
    }
   ]
  },

@@ -1,5 +1,19 @@
 # Changelog
 
+## Stops: real vs suggested (2026-10-03)
+
+- Every Stops tile shows your real stop beside the suggestion: distance from mark, in ATRs,
+  as a multiple of the suggestion, and how often a 24h move that size happened on the
+  symbol's own candles — with a verdict: no stop, hedged, too tight, too wide, breakeven,
+  locks profit, OK. The combined panel counts them. No extra request.
+- A stop at entry read "too tight" on a short whose 24h hit rate was 60.2%: "locks" needed
+  strictly positive locked profit, so a breakeven stop fell through to the risk checks. A
+  stop within ±0.05% of entry is now `breakeven` and exempt from them.
+- One rule for "your stop" (a closing `Stop…` order) across the Stops tab, the entry
+  capture and the tiles' badge, via `hasStop` on `/api/dashboard`. The badge no longer counts
+  a reduce-only limit order — a take-profit — as a stop.
+- New pure engine `stop-check.js`; `legStop` moved there from `trip-context.js`.
+
 ## Journal: context at entry (2026-10-03)
 
 - Every increasing fill on the order stream records, once per order: equity, margin %, free

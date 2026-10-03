@@ -11,7 +11,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 | P0 | [USDC in assets](#p0--usdc-in-assets) | done (2026-10-03) |
 | P1 | [Venue on/off](#p1--venue-onoff) | done (2026-10-03) |
 | P2 | [Tools in the sidebar](#p2--tools-in-the-sidebar) | done (2026-10-03) |
-| P3 | [Stops: real vs suggested](#p3--stops-real-vs-suggested) | planned |
+| P3 | [Stops: real vs suggested](#p3--stops-real-vs-suggested) | done (2026-10-03) |
 | P3 | [Journal: Overview and Behaviour](#p3--journal-overview-and-behaviour) | planned |
 | P3 | [Journal: richer Trades](#p3--journal-richer-trades) | done (2026-10-03) |
 | P3 | [Journal: context at entry](#p3--journal-context-at-entry) | done (2026-10-03) |
@@ -116,9 +116,10 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
   the gap in ATR, distance in ATR, and the probability of being hit within N hours from the
   composite volatility. Flags "too tight" / "too wide" / "no stop". Compare only; the key is
   read-only and nothing is placed.
-- **Done when:** every position with a stop order shows both stops and a hit probability, and
-  the sidebar hint counts the flagged ones.
+- **Done when:** every position with a stop order shows both stops and a hit probability.
 - **Depends on:** —
+- **Status:** done (2026-10-03) — see `docs/stops.md`, *Your real stop*. The hit rate is
+  measured on the symbol's candles, not modelled; the sidebar hint was dropped with the hints.
 
 ## P3 — Journal: Overview and Behaviour
 

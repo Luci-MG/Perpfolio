@@ -60,6 +60,24 @@ test('volstops covers every position on both venues', async () => {
   record('volstops', body);
 });
 
+test('each leg\'s real stop is judged against the suggestion, and the tiles agree on who has one', async () => {
+  const stops = (await get('/api/volstops?risk=0.01&k=1.5')).body;
+  const verdictOf = (pair, side) => stops.positions.find(p => p.pair === pair && p.side === side);
+  const btcLong = verdictOf('BTC/USDT', 'Long');
+  assert.deepEqual(btcLong.yourStop.price, 90000);
+  assert.equal(btcLong.yourStop.distancePct, 10);
+  assert.ok(btcLong.yourStop.hit.windows > 0 && btcLong.yourStop.atrMultiple > 0);
+  assert.ok(['ok', 'wide', 'tight'].includes(btcLong.verdict));
+  assert.equal(verdictOf('BTC/USDT', 'Short').verdict, 'hedged');
+  assert.equal(verdictOf('ETH/USDT', 'Long').verdict, 'none', 'a reduce-only take-profit is not a stop');
+  assert.equal(verdictOf('SOL-PERP', 'Short').verdict, 'none');
+  assert.equal(Object.values(stops.combined.stopVerdicts).reduce((a, b) => a + b, 0), 5);
+
+  const dash = (await get('/api/dashboard')).body;
+  const withStop = [...dash.binance.positions, ...dash.hyperliquid.positions].filter(p => p.hasStop).map(p => p.pair);
+  assert.deepEqual(withStop, ['BTC/USDT']);
+});
+
 test('riskbook reproduces the exchange\'s own margin figures exactly', async () => {
   const { status, body } = await get('/api/riskbook');
   assert.equal(status, 200);

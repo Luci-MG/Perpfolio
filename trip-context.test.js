@@ -106,19 +106,3 @@ test('only a fill that grows its leg starts a capture', () => {
   assert.equal(tc.isIncreasingFill(o({ ps: 'BOTH', S: 'SELL', R: true })), false);
   assert.equal(tc.isIncreasingFill(o({ ps: 'LONG', S: 'BUY', x: 'NEW' })), false);
 });
-
-test('the stop picked is the leg\'s nearest closing stop, never a take-profit or the other leg', () => {
-  const order = x => ({ symbol: 'XUSDT', positionSide: 'LONG', side: 'Sell', type: 'Stop market', stopPrice: 90, ...x });
-  const orders = [
-    order({ stopPrice: 85 }),
-    order({ stopPrice: 95 }),
-    order({ type: 'Take profit market', stopPrice: 99 }),
-    order({ positionSide: 'SHORT', side: 'Buy', stopPrice: 98 }),
-    order({ symbol: 'YUSDT', stopPrice: 99.5 })
-  ];
-  const leg = { symbol: 'XUSDT', positionSide: 'LONG', side: 'Long', entry: 100 };
-  assert.deepEqual(tc.pickStop(orders, leg), { price: 95, distancePct: 5 });
-  assert.equal(tc.pickStop(orders.slice(2), leg), null);
-  assert.equal(tc.stopVsSuggested({ distancePct: 5 }, { distancePct: 2 }), 2.5);
-  assert.equal(tc.stopVsSuggested(null, { distancePct: 2 }), null);
-});

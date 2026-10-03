@@ -24,7 +24,7 @@ expected to say so rather than assert correctness.
 | How the pieces fit, recipes for common changes | [`docs/architecture.md`](docs/architecture.md) | `server.js`, `lib/`, `routes/` |
 | Routes, payload shapes, exchange endpoints | [`docs/api.md`](docs/api.md) | `routes/`, `lib/binance-*.js`, `lib/hyperliquid.js` |
 | Views, mounted panels, drawers, theming | [`docs/frontend.md`](docs/frontend.md) | `public/js/`, `public/css/app.css` |
-| Volatility-adjusted stops | [`docs/stops.md`](docs/stops.md) | `vol-estimator.js`, `routes/volstops.js` |
+| Volatility-adjusted stops, your real stops | [`docs/stops.md`](docs/stops.md) | `vol-estimator.js`, `stop-check.js`, `lib/stop-suggestion.js`, `routes/volstops.js` |
 | Stress / liquidation maths, calibration | [`docs/stress-engine.md`](docs/stress-engine.md) | `risk-engine.js`, `lib/pools.js` |
 | Unwind planner and drawers | [`docs/unwind.md`](docs/unwind.md) | `risk-engine.js`, `routes/deleverage.js` |
 | Trade history, journal, hedge ledger | [`docs/journal.md`](docs/journal.md) | `history-store.js`, `trade-analytics.js`, `trip-context.js`, `lib/history-sync.js`, `lib/trip-enrichment.js`, `lib/entry-context.js` |
@@ -42,6 +42,7 @@ crypto-dashboard/
 ├── routes/                # one register(app) per area
 ├── risk-engine.js         # stress / liquidation / unwind maths — also served to the browser
 ├── vol-estimator.js       # composite volatility for dynamic stops
+├── stop-check.js          # your real stop against the suggestion
 ├── confluence.js          # market signals, regime gating, self-calibration
 ├── trade-analytics.js     # round trips and statistics
 ├── trip-context.js        # per-trip funding, price path, market at entry

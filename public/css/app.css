@@ -736,3 +736,9 @@ tr:last-child td { border-bottom: none; }
 .jt-sort:hover { color: var(--text2); }
 .jt-sort:focus-visible { outline: 2px solid var(--border2); }
 .jt-gap { color: var(--text3); cursor: help; }
+
+/* Stops: your real stop against the suggestion */
+.vt-yours { border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); padding: 8px 0; margin-bottom: 10px; display: flex; flex-direction: column; gap: 3px; }
+.vt-yours-head { display: flex; align-items: center; justify-content: space-between; }
+.vt-yours-val { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.vt-yours-val span { font-size: 10px; font-weight: 400; color: var(--text3); margin-left: 4px; }
