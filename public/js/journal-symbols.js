@@ -41,7 +41,7 @@ function sortedSymbolRows(rows) {
 
 function symbolsTableHtml(s) {
   const shown = symbolsShowAll ? s.rows : s.rows.filter(r => s.shown.includes(r.symbol));
-  const head = SYMBOL_COLUMNS.map(c => `<th><button onclick="sortSymbols('${c.key}')">${c.label}${symbolsSort.key === c.key ? (symbolsSort.dir > 0 ? ' ▲' : ' ▼') : ''}</button></th>`).join('');
+  const head = SYMBOL_COLUMNS.map(c => `<th><button onclick="sortSymbols(${jsArg(c.key)})">${c.label}${symbolsSort.key === c.key ? (symbolsSort.dir > 0 ? ' ▲' : ' ▼') : ''}</button></th>`).join('');
   const rows = sortedSymbolRows(shown).map(r => `<tr class="${r.needs ? 'jr-thin' : ''}">${SYMBOL_COLUMNS.map(c => `<td>${symbolCell(r, c.key)}</td>`).join('')}</tr>`).join('');
   const rest = !symbolsShowAll && s.rest.symbols ? `<tr class="jr-thin"><td colspan="2">rest: ${s.rest.symbols} symbols, ${s.rest.units} units</td>
     <td class="${ovTone(s.rest.net)}">${fmtPlusUsd(s.rest.net)}</td><td colspan="4"></td></tr>` : '';

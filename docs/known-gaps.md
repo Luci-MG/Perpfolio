@@ -24,8 +24,8 @@
 - **Reconcile can race a websocket event** — a CANCELED arriving while the 60s snapshot is in
   flight is overwritten by the pre-cancel snapshot; a phantom order can show for up to a
   minute and a false drift is logged. Self-heals on the next reconcile
-- **Stress slider cost grows with book size** — ~11ms/frame on this book, but a probe with 15
-  assets / 25 legs / 10-tier brackets measured 43–57ms. A piecewise-analytic kill price (the
+- **Stress slider cost grows with book size** — ~11ms/frame on this book; a probe with 15
+  assets / 25 legs / 10-tier brackets measured 43–57ms, about 15ms since brackets are sorted once. A piecewise-analytic kill price (the
   buffer is linear between tier floors, clamp kinks and triggers) would be exact and cheaper
 - **The unwind planner treats a cross-asset hedge as two naked legs** — `grossNetDelta` works
   per asset, so closing the BTC side of a BTC-long / ETH-short pair scores as de-risking.
@@ -35,6 +35,10 @@
 - **Slippage is not measured** — it needs the price at the moment each order was sent; fills carry
   only the price they filled at
 - **Costs cover Binance only** — Hyperliquid has no fill history in the dashboard
+- **Confluence: two modelling choices left as they are** — the crowding cap also applies on the
+  1d timeframe, where leverage is shown for information only, and the BTC discount changes the
+  displayed alt score while the calibrated composite beside it is undiscounted. Both want their
+  own research before the maths changes (`docs/confluence.md`)
 - **Alerts** — thresholds are visible in the Stress tab but there is no push or sound (roadmap P6)
 - **No streaming for market data** — positions and marks are a 15s REST poll. Only the
   Binance user-data stream is a websocket, and *that* is an accelerator over a 60s REST

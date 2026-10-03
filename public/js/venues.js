@@ -21,7 +21,7 @@ function offOr(venue, html) { return venueOn(venue) ? html : '<span class="b-val
 function venueOffHtml(venue) {
   return `<div class="venue-off">
     <p>${VENUE_LABEL[venue]} is switched off, so there is nothing to read here.</p>
-    <button class="st-btn" onclick="setVenue('${venue}', true)">Switch ${VENUE_LABEL[venue]} on</button>
+    <button class="st-btn" onclick="setVenue(${jsArg(venue)}, true)">Switch ${VENUE_LABEL[venue]} on</button>
   </div>`;
 }
 
@@ -86,7 +86,7 @@ function renderVenuePopover() {
       <span class="vp-name">${VENUE_LABEL[v]}</span>
       <span class="vp-status">${venueStatusText(s)}</span>
       <label class="vp-switch" title="${s.configured ? `Switch ${VENUE_LABEL[v]} ${s.enabled ? 'off' : 'on'}` : 'Add credentials to .env first'}">
-        <input type="checkbox" ${s.enabled ? 'checked' : ''} ${s.configured ? '' : 'disabled'} onchange="setVenue('${v}', this.checked, this)"><span></span>
+        <input type="checkbox" ${s.enabled ? 'checked' : ''} ${s.configured ? '' : 'disabled'} onchange="setVenue(${jsArg(v)}, this.checked, this)"><span></span>
       </label>
       ${issues.map(i => `<div class="vp-issue ${i.level}">${esc(i.text)}</div>`).join('')}
     </div>`;

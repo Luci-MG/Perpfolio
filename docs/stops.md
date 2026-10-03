@@ -7,14 +7,13 @@ Composite volatility estimate that adapts stop distance + position size per open
 ### Module: `vol-estimator.js` (ESM)
 Pure functions, no I/O. Layers (Phases 1–3 implemented; Kronos L5 not built):
 - `computeATR(candles, 14)` — L1 base, ATR as % of close
-- `getBBWAdjustment(candles, bbwHistory)` / `computeBBW` / `buildBbwSeries` — L2 squeeze multiplier
+- `getBBWAdjustment(candles, bbwHistory)` / `buildBbwSeries` — L2 squeeze multiplier
 - `getFundingAdjustment(rate8h)` — L3 crowded-positioning multiplier (rate as fraction, e.g. 0.00012).
   `suggestStop` passes each position's rate restated per 8 hours (`rate × 8 / fundingIntervalHours`),
   so 1h and 4h Binance symbols and Hyperliquid's hourly rate are judged on the same scale
 - `getCrossAssetAdj(btcCandles, assetCandles, btcAtrHistory)` / `buildAtrSeries` — L4 BTC→alt vol lead
 - `computeCompositeVol({atrPct, bbwAdj, fundingAdj, crossAssetAdj, kronosVol})` — `atr × bbwAdj × fundingAdj × crossAdj`
 - `classifyRegime(vol, volHistory)` → `low|medium|high|extreme` (relative percentile bands)
-- `shouldTakeEntry(regime, strategy)` — entry gate
 - `computeDynamicStop({entryPrice, accountSize, riskPct, compositeVolPct, k, regimeLabel, direction})` — stop/size engine.
   Stop and target are rounded relative to price magnitude (2→8 decimals); a flat 2-decimal
   round returns `0` for a 1e-5 asset and erases a sub-dollar one. The frontend renders them

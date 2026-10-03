@@ -256,6 +256,7 @@ function binance(url) {
     return Object.keys(SYMBOLS).map(s => ({ symbol: s, notionalCoef: 1, brackets: TIERS }));
   }
   if (path === '/fapi/v1/listenKey') return { listenKey: 'fake' };
+  if (path === '/fapi/v1/time') return { serverTime: Date.now() };
   if (path === '/fapi/v1/premiumIndex') {
     return Object.entries(SYMBOLS).map(([s, v]) => ({ symbol: s, markPrice: String(v.base),
       lastFundingRate: String(v.fundingRate), nextFundingTime: NOW + v.intervalHours * HOUR }));
@@ -350,16 +351,22 @@ export function installFakeExchange() {
   const realFetch = globalThis.fetch;
   const calls = [];
   const signedCalls = [];
-  let bannedUntil = 0;
+  let bannedUntil = 0, banSeconds = 1;
   const failing = new Map();
-  const injected = route => failing.has(route) && json({ code: -1000, msg: 'injected failure' }, { status: failing.get(route) });
+  const slow = new Map();
+  const injected = route => {
+    const f = failing.get(route);
+    if (--f.times <= 0) failing.delete(route);
+    return json({ code: -1000, msg: 'injected failure' }, { status: f.status, headers: f.headers });
+  };
 
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
     if (url.hostname === 'fapi.binance.com') {
       calls.push(url.pathname);
       if (url.searchParams.has('signature')) signedCalls.push(url.pathname);
-      if (Date.now() < bannedUntil) return json({ code: -1003, msg: 'banned' }, { status: 418, headers: { 'Retry-After': '1' } });
+      if (Date.now() < bannedUntil) return json({ code: -1003, msg: 'banned' }, { status: 418, headers: { 'Retry-After': String(banSeconds) } });
+      if (slow.has(url.pathname)) await new Promise(r => setTimeout(r, slow.get(url.pathname)));
       if (failing.has(url.pathname)) return injected(url.pathname);
       const out = binance(url);
       return out?.status ? json(out.body, { status: out.status }) : json(out);
@@ -376,9 +383,10 @@ export function installFakeExchange() {
   return {
     calls,
     signedCalls,
-    ban(seconds) { bannedUntil = Date.now() + seconds * 1000; },
-    fail(route, status = 500) { failing.set(route, status); },
-    heal() { failing.clear(); reportedMarks.clear(); },
+    ban(seconds) { banSeconds = seconds; bannedUntil = Date.now() + seconds * 1000; },
+    fail(route, status = 500, { times = Infinity, headers = {} } = {}) { failing.set(route, { status, times, headers }); },
+    delay(route, ms) { slow.set(route, ms); },
+    heal() { failing.clear(); slow.clear(); reportedMarks.clear(); },
     reportMark(symbol, price) { reportedMarks.set(symbol, price); },
     restore() { globalThis.fetch = realFetch; }
   };

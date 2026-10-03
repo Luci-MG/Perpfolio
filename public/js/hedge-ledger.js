@@ -58,7 +58,7 @@ function renderLegSwing(inf) {
   const rows = legs.map(l => {
     const swing = l.far.upnl - l.upnl;
     return `<div class="hl-row">
-      <span class="k">${l.asset} ${l.positionSide.toLowerCase()}</span>
+      <span class="k">${esc(l.asset)} ${l.positionSide.toLowerCase()}</span>
       <span><span class="${swing >= 0 ? 'up' : 'dn'}">${fmtSignedUsd(swing)}</span>
         <span class="k"> · margin ${fmtUsd(l.im)}→${fmtUsd(l.far.im)}</span></span>
     </div>`;

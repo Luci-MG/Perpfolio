@@ -367,7 +367,7 @@ function renderScenarioTable(P, poolIdx) {
       <td class="num">${cell(rawPct, s.raw.scannedTo)}</td>
       <td class="num ${worse ? 'st-worse' : (stopPct != null && rawPct != null && stopPct > rawPct ? 'st-better' : '')}">${cell(stopPct, s.stopped.scannedTo)}</td>
       <td style="color:var(--text3)">${rawPct == null ? '—' : moves}</td>
-      <td class="num">${rawPct == null ? '' : `<button class="st-btn" onclick="snapToKill(${poolIdx},'${s.mode}',${s.sign})"
+      <td class="num">${rawPct == null ? '' : `<button class="st-btn" onclick="snapToKill(${poolIdx},${jsArg(s.mode)},${s.sign})"
              title="Move every slider to this kill${riskHonorStops ? ', with reduce-only stops honoured' : ''}">snap</button>`}</td>
     </tr>`;
   }).join('');

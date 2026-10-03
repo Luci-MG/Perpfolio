@@ -191,7 +191,7 @@ function renderJournal() {
   const tabs = `<div class="jr-subtabs">${
     [['overview','Overview'],['goals','Goals'],['performance','Performance'],['behaviour','Behaviour'],['factors','Factors'],
      ['timing','Timing'],['symbols','Symbols'],['costs','Costs'],['trades','Trades']]
-      .map(([k, l]) => `<button class="jr-subtab${jrTab === k ? ' on' : ''}" onclick="setJrTab('${k}')">${l}</button>`)
+      .map(([k, l]) => `<button class="jr-subtab${jrTab === k ? ' on' : ''}" onclick="setJrTab(${jsArg(k)})">${l}</button>`)
       .join('')}</div>`;
 
   let body = '';

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Unified Hyperliquid + Binance portfolio dashboard",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

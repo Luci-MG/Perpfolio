@@ -130,3 +130,12 @@ test('stop and target survive sub-dollar and micro-cap prices', () => {
       `stop ${s.stopPrice} should sit ~2.7% below ${entry}`);
   }
 });
+
+test('a position without candles gets a synthetic series around its mark, wide enough to measure and never flat', () => {
+  const s = vol.synthSeriesFromPosition({ entry: 100, mark: 110, prevDayPx: 100 });
+  assert.equal(s.length, 30);
+  assert.ok(s.every(c => c.low <= c.close && c.close <= c.high && Math.abs(c.close - 110) < 110 * 0.05));
+  assert.ok(vol.computeATR(s) > 0);
+  const flat = vol.synthSeriesFromPosition({ entry: 50, mark: 50 });
+  assert.ok(flat.every(c => c.high - c.low >= 50 * 0.003 - 1e-9), 'a floor keeps vol above zero');
+});

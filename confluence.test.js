@@ -90,7 +90,7 @@ test('donchian excludes the current bar', () => {
 
 test('anchored vwap restarts at each UTC day', () => {
   const c = candles(48, i => 100 + i, { step: 3600e3 });
-  const v = cf.anchoredVwap(c, 'day');
+  const v = cf.buildIndicators(c, { tf: '15m' }).vwap;
   const tp = k => (k.high + k.low + k.close) / 3;
   assert.ok(Math.abs(v[24] - tp(c[24])) < 1e-9);
   assert.ok(Math.abs(v[23] - tp(c[23])) > 1);

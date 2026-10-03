@@ -1,5 +1,25 @@
 # Changelog
 
+## Guardrails, exchange hygiene and docs, batch 5 of the 2026-10-03 review (2026-10-03)
+
+- **The rules have checks**: `npm run check` now fails on an `await` inside a loop over the
+  book, a value passed to an inline handler in quotes, exchange text reaching the page without
+  `esc()`, a request value used as an object key without `Object.hasOwn`, equity read from the
+  wallet, funding multiplied by 3 anywhere, and a docs map or script order that no longer
+  matches the code. Each would have caught a bug this review found.
+- **The exchange client is harder to trip**: signed calls carry a receive window and Binance's
+  own time; errors say what Binance said; a 403 pauses calls like a 429; the listenKey
+  keep-alive goes through the ban guard; an old weight reading lapses; a failed commission
+  rate is not cached; concurrent cold table reads share one request.
+- **Tests guard the rules too**: shared reads across tabs, cache-only-success, the
+  bracket-table fallback, the Hyperliquid 429 backoff and the synthetic candle series. The
+  golden snapshot now fails when missing under CI or when a route is added without it, and
+  compares floats to ten digits.
+- **Docs match the code**: the architecture map and script order, the funding rule in
+  CLAUDE.md, the API's payload fields and parameters, and Node 20 as the minimum.
+- About 35 exports used only inside their own module are private now; an unused entry gate and
+  VWAP wrapper are gone. `npm run check` runs its syntax pass in parallel.
+
 ## Frontend, batch 4 of the 2026-10-03 review (2026-10-03)
 
 - **Exchange text is always text**: every symbol, pair, order type and warning reaching the

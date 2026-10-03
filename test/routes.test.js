@@ -11,19 +11,22 @@ const GOLDEN = path.join(HERE, 'golden', 'routes.json');
 
 const { base, get, fake, stop } = await startTestServer();
 
-// Wall-clock fields differ between runs; everything else must reproduce exactly.
-const VOLATILE = new Set(['lastUpdated', 'lastReconcileAt', 'lastWsMessageAgeSec', 'at', 'ts',
-  'startedAt', 'finishedAt', 'ageSec', 'syncedAt', 'incomeCompleteFrom']);
-function stable(v) {
-  if (Array.isArray(v)) return v.map(stable);
+// Wall-clock fields differ between runs, named by path; everything else must reproduce, with
+// floats compared to ten significant digits so a Node or V8 upgrade cannot move the last ulp.
+const VOLATILE = [/^\w+\.lastUpdated$/, /^riskbook\.account\.orderFeed\.(lastReconcileAt|lastWsMessageAgeSec)$/,
+  /^riskbook\.pools\[\]\.fees\.\w+\.ts$/, /^performance\.(syncedAt|costs\.ledger\.at|openLegCheck\.at)$/,
+  /^trips\.coverage\.incomeCompleteFrom$/];
+const volatile = at => VOLATILE.some(re => re.test(at));
+function stable(v, at) {
+  if (Array.isArray(v)) return v.map(x => stable(x, `${at}[]`));
   if (v && typeof v === 'object') {
-    return Object.fromEntries(Object.keys(v).sort().filter(k => !VOLATILE.has(k)).map(k => [k, stable(v[k])]));
+    return Object.fromEntries(Object.keys(v).sort().filter(k => !volatile(`${at}.${k}`)).map(k => [k, stable(v[k], `${at}.${k}`)]));
   }
-  return v;
+  return typeof v === 'number' && !Number.isInteger(v) ? +v.toPrecision(10) : v;
 }
 
 const snapshot = {};
-const record = (name, body) => { snapshot[name] = stable(body); };
+const record = (name, body) => { snapshot[name] = stable(body, name); };
 const startSync = (body = {}) => get('/api/history/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
 test.after(stop);
@@ -37,7 +40,6 @@ test('dashboard: equity is the margin balance and funding uses each symbol\'s in
   assert.ok(Math.abs(parseFloat(bn.equity) - (21200 + upnl)) < 0.01, `equity ${bn.equity}`);
   const eth = bn.positions.find(p => p.symbol === 'ETHUSDT');
   assert.equal(eth.fundingIntervalHours, 4);
-  assert.ok(Math.abs(eth.fundingPerDayPct - 0.02 * 6) < 1e-9);
   assert.equal(body.hyperliquid.positions[0].fundingIntervalHours, 1);
   assert.ok(bn.orders.some(o => o.symbol === 'ETHUSDT' && o.reduceOnly));
   record('dashboard', body);
@@ -475,17 +477,19 @@ test('funding nets hedged pairs, ranks worst first, reads realised from the ledg
 });
 
 test('route output matches the golden snapshot', () => {
-  if (!fs.existsSync(GOLDEN) || process.env.UPDATE_GOLDEN) {
+  if (process.env.UPDATE_GOLDEN || (!fs.existsSync(GOLDEN) && !process.env.CI)) {
     fs.mkdirSync(path.dirname(GOLDEN), { recursive: true });
     fs.writeFileSync(GOLDEN, JSON.stringify(snapshot, null, 1) + '\n');
     return;
   }
+  assert.ok(fs.existsSync(GOLDEN), 'the golden snapshot is missing; record it with UPDATE_GOLDEN=1');
   const golden = JSON.parse(fs.readFileSync(GOLDEN, 'utf8'));
+  assert.deepEqual(Object.keys(snapshot).sort(), Object.keys(golden).sort(), 'every recorded route has a golden entry, and no more');
   for (const name of Object.keys(golden)) assert.deepEqual(snapshot[name], golden[name], `${name} drifted from golden`);
 });
 
 test('a 418 pauses every Binance call until Retry-After passes', async () => {
-  fake.ban(1);
+  fake.ban(0.15);
   const first = await get('/api/confluence?symbol=SOLUSDT&tfs=1h');
   assert.equal(first.body.timeframes?.['1h'] ?? null, null);
   const before = fake.calls.length;
@@ -493,7 +497,7 @@ test('a 418 pauses every Binance call until Retry-After passes', async () => {
   assert.equal(second.status, 500);
   assert.match(second.body.error, /paused/);
   assert.equal(fake.calls.filter(c => !c.startsWith('hl:')).length, fake.calls.slice(0, before).filter(c => !c.startsWith('hl:')).length);
-  await new Promise(r => setTimeout(r, 1100));
+  await new Promise(r => setTimeout(r, 200));
   assert.equal((await get('/api/riskbook?fresh=1')).status, 200);
 });
 

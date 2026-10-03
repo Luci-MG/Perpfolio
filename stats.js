@@ -3,7 +3,7 @@
 // throughout, seeded so the same history always gives the same answer. Method and sources:
 // docs/research/outcome-factors.md. Pure.
 
-export const Z90 = 1.6448536;
+const Z90 = 1.6448536;
 export const BOOTSTRAP_DRAWS = 2000;
 const SEED = 20261003;
 const FDR_Q = 0.10;
@@ -22,7 +22,7 @@ export function seededRandom(seed = SEED) {
 
 export const mean = xs => xs.reduce((s, x) => s + x, 0) / xs.length;
 
-export function variance(xs) {
+function variance(xs) {
   const m = mean(xs);
   return xs.reduce((s, x) => s + (x - m) ** 2, 0) / (xs.length - 1);
 }

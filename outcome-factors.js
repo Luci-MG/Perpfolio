@@ -10,8 +10,8 @@ import { wallTime } from './local-time.js';
 import { periodStarts } from './trade-analytics.js';
 
 export const MIN_TRIPS = 20;
-export const MIN_DAYS = 8;
-export const THIN_BELOW = 40;
+const MIN_DAYS = 8;
+const THIN_BELOW = 40;
 const RECENT_SHARE = 0.3;
 const STABILITY_MIN_TRIPS = 10;
 const STRATUM_MIN_TRIPS = 5;

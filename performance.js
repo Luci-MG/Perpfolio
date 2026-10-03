@@ -10,7 +10,7 @@ import { localDate, localDayStart, nextLocalDay } from './local-time.js';
 import { dayBootstrap, groupByDay, mean, median, normalCdf, seededRandom, wilson } from './stats.js';
 
 export const MIN_DAILY_RETURNS = 60;
-export const MIN_UNITS_PROFIT_FACTOR = 30;
+const MIN_UNITS_PROFIT_FACTOR = 30;
 const MIN_DAYS_ZERO_EDGE = 10;
 const ANNUAL_DAYS = 365;
 const SHUFFLES = 2000;

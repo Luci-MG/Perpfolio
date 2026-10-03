@@ -44,5 +44,5 @@ npm run dev      # restart on change
 npm run verify   # static checks and the full test suite
 ```
 
-Node 18+. The only dependencies are Express, dotenv and ws, and there is no build step. Design
+Node 20 or later. The only dependencies are Express, dotenv and ws, and there is no build step. Design
 notes are in [`docs/`](docs/); start with [`docs/architecture.md`](docs/architecture.md).

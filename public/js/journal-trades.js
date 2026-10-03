@@ -174,7 +174,7 @@ function tradesTableHtml() {
   const rows = sortedTrips(filteredTrips());
   const shown = tradesShowAll ? rows : rows.slice(0, TRADES_PAGE);
   const arrow = c => (c.id === tradesSort.id ? (tradesSort.dir > 0 ? ' ↑' : ' ↓') : '');
-  const head = cols.map(c => `<th><button class="jt-sort" onclick="sortTrades('${c.id}')">${c.label}${arrow(c)}</button></th>`).join('');
+  const head = cols.map(c => `<th><button class="jt-sort" onclick="sortTrades(${jsArg(c.id)})">${c.label}${arrow(c)}</button></th>`).join('');
   const body = shown.map(t => `<tr>${cols.map(c => `<td>${c.cell(t)}</td>`).join('')}</tr>${
     noteEditing === t.key ? `<tr class="jt-edit"><td colspan="${cols.length}">${noteEditorHtml(t)}</td></tr>` : ''}`).join('');
   const more = rows.length > shown.length
@@ -277,7 +277,7 @@ function exportTradesCsv() {
 }
 
 function tradesSelect(key, options) {
-  return `<select class="st-btn" onchange="filterTrades('${key}', this.value)">${options.map(([v, l]) =>
+  return `<select class="st-btn" onchange="filterTrades(${jsArg(key)}, this.value)">${options.map(([v, l]) =>
     `<option value="${esc(v)}"${tradesFilter[key] === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
 }
 

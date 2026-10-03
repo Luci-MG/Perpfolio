@@ -49,7 +49,7 @@ function renderCalcPicker() {
 
 function poolLegFor(p) {
   if (p?.exchange !== 'binance' || !riskBook?.pools || !riskEngine) return null;
-  const key = `${p.symbol}:${p.positionSide}`;
+  const key = [p.symbol, p.positionSide].join(':');
   const P = riskBook.pools.find(pool => pool.pool.positions.some(x => x.key === key));
   return P ? { P, pos: P.pool.positions.find(x => x.key === key) } : null;
 }
