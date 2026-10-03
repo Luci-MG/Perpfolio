@@ -120,12 +120,12 @@ function togglePnlSizeMode() {
   if (pnlSizeMode === 'usdt') {
     pnlSizeMode = 'qty';
     document.getElementById('pnlSizeLbl').textContent = 'Position size (units)';
-    document.querySelector('[onclick="togglePnlSizeMode()"]').textContent = 'Switch to USDT';
+    document.querySelector('[onclick="togglePnlSizeMode()"]').textContent = 'Switch to USD';
     // convert USDT → qty using entry price
     if (cur && entry) document.getElementById('pnlInvested').value = fmt(cur / entry, 6);
   } else {
     pnlSizeMode = 'usdt';
-    document.getElementById('pnlSizeLbl').textContent = 'Amount invested (USDT)';
+    document.getElementById('pnlSizeLbl').textContent = 'Amount invested (USD)';
     document.querySelector('[onclick="togglePnlSizeMode()"]').textContent = 'Switch to qty';
     // convert qty → USDT using entry price
     if (cur && entry) document.getElementById('pnlInvested').value = fmt(cur * entry, 2);
@@ -139,11 +139,11 @@ function toggleAvgSizeMode() {
   if (avgSizeMode === 'usdt') {
     avgSizeMode = 'qty';
     document.getElementById('avgSizeLbl').textContent = 'Position size (units)';
-    document.querySelector('[onclick="toggleAvgSizeMode()"]').textContent = 'Switch to USDT';
+    document.querySelector('[onclick="toggleAvgSizeMode()"]').textContent = 'Switch to USD';
     if (cur && entry) document.getElementById('avgInvested').value = fmt(cur / entry, 6);
   } else {
     avgSizeMode = 'usdt';
-    document.getElementById('avgSizeLbl').textContent = 'Amount invested (USDT)';
+    document.getElementById('avgSizeLbl').textContent = 'Amount invested (USD)';
     document.querySelector('[onclick="toggleAvgSizeMode()"]').textContent = 'Switch to qty';
     if (cur && entry) document.getElementById('avgInvested').value = fmt(cur * entry, 2);
   }

@@ -8,7 +8,7 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 
 | Priority | Card | Status |
 |---|---|---|
-| P0 | [USDC in assets](#p0--usdc-in-assets) | planned |
+| P0 | [USDC in assets](#p0--usdc-in-assets) | done (2026-10-03) |
 | P1 | [Venue on/off](#p1--venue-onoff) | planned |
 | P2 | [Tools in the sidebar](#p2--tools-in-the-sidebar) | planned |
 | P3 | [Stops: real vs suggested](#p3--stops-real-vs-suggested) | planned |
@@ -41,6 +41,8 @@ Each card: **Problem · Scope · Done when · Depends on · Status**. Status is 
 - **Done when:** a USDC balance appears in the asset list and in total equity, and the
   route test fails if either drops it.
 - **Depends on:** —
+- **Status:** done (2026-10-03) — see the changelog. Stress was already per-pool and
+  unaffected.
 
 ## P1 — Venue on/off
 

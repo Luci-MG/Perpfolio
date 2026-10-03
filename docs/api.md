@@ -60,11 +60,21 @@ Returns unified JSON:
   },
   "binance": {
     "equity", "walletBalance", "marginPct", "marginUsed", "freeMargin", "maintMargin",
+    "assets": [{ "asset", "collateral", "wallet", "marginBalance", "unrealizedProfit",
+                 "availableBalance", "usdPrice", "usdValue" }],
     "positions": [...],
     "orders": [...]
   }
 }
 ```
+
+**Binance totals are summed across collateral assets.** In single-asset mode Binance's
+`total*` fields and `availableBalance` cover USDT only, so a USDC pool would be missing
+from equity, margin used, maintenance and free margin. With multi-assets mode off,
+`lib/binance-account.js` sums the per-asset rows instead (USD stables only, valued at the
+`<ASSET>USDT` mark, else 1). In multi-assets mode the totals are already USD across assets
+and are used as reported. `assets` lists every asset with a balance; `collateral` marks the
+ones counted.
 
 ---
 

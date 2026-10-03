@@ -50,6 +50,7 @@ export function register(app) {
           marginUsed:  bnData.marginUsed.toFixed(2),
           freeMargin:  bnData.freeMargin.toFixed(2),
           maintMargin: bnData.maintMargin.toFixed(2),
+          assets:      bnData.assets,
           positions:   bnData.openPositions,
           orders:      bnData.openOrders
         },

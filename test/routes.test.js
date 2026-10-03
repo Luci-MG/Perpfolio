@@ -41,6 +41,17 @@ test('dashboard: equity is the margin balance and funding uses each symbol\'s in
   record('dashboard', body);
 });
 
+test('dashboard: a USDC pool counts in single-asset mode, where Binance totals are USDT only', async () => {
+  const { body } = await get('/api/dashboard');
+  const bn = body.binance;
+  const usdc = bn.assets.find(a => a.asset === 'USDC');
+  const usdt = bn.assets.find(a => a.asset === 'USDT');
+  assert.ok(usdc && usdc.collateral, 'USDC listed as collateral');
+  assert.ok(Math.abs(parseFloat(bn.equity) - (usdt.usdValue + usdc.usdValue)) < 0.01);
+  const usdcUpnl = bn.positions.filter(p => p.symbol.endsWith('USDC')).reduce((a, p) => a + p.upnl, 0);
+  assert.ok(Math.abs(usdc.marginBalance - (1200 + usdcUpnl)) < 0.01);
+});
+
 test('volstops covers every position on both venues', async () => {
   const { status, body } = await get('/api/volstops?risk=0.01&k=1.5');
   assert.equal(status, 200);

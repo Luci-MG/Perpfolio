@@ -1,6 +1,28 @@
 {
  "dashboard": {
   "binance": {
+   "assets": [
+    {
+     "asset": "USDT",
+     "availableBalance": 10350,
+     "collateral": true,
+     "marginBalance": 21900,
+     "unrealizedProfit": 1900,
+     "usdPrice": 1,
+     "usdValue": 21900,
+     "wallet": 20000
+    },
+    {
+     "asset": "USDC",
+     "availableBalance": 373.33333333333314,
+     "collateral": true,
+     "marginBalance": 1039.9999999999998,
+     "unrealizedProfit": -160.00000000000023,
+     "usdPrice": 1,
+     "usdValue": 1039.9999999999998,
+     "wallet": 1200
+    }
+   ],
    "equity": "22940.00",
    "freeMargin": "10723.33",
    "maintMargin": "406.00",

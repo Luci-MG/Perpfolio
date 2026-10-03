@@ -1,5 +1,15 @@
 # Changelog
 
+## USDC collateral (2026-10-03)
+
+- **Binance equity left out the USDC pool.** In single-asset mode every account total covers
+  USDT only (Binance docs, confirmed on the live account: USDT + USDC held, three
+  USDC-margined positions, totals equal to the USDT pool). Equity, margin used, maintenance
+  and free margin now sum the collateral pools; `/api/dashboard` returns `binance.assets`,
+  and the sidebar splits BN equity by asset when more than one is held.
+- The fake exchange follows the same rule, so the route test fails if USDC is dropped.
+- `baseAsset` in `routes/volstops.js` strips `/USDC`; calculator labels say USD, not USDT.
+
 ## Maintainability restructure (2026-09-29, after the review)
 
 No behaviour change except the two additions at the end; each step was checked against a

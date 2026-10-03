@@ -64,6 +64,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 .metric .b-row { display: flex; align-items: center; gap: 5px; font-size: 11px; }
 .metric .b-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .metric .b-label { color: var(--text3); }
+.metric .b-sub { padding-left: 11px; font-size: 10px; }
 .metric .b-val { margin-left: auto; font-weight: 500; }
 .up { color: var(--success); } .dn { color: var(--danger); } .nu { color: var(--text3); }
 

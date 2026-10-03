@@ -219,6 +219,13 @@ function renderSidebarBottomRow(data) {
     </div>`;
 }
 
+function renderBinanceAssetRows(assets) {
+  const collateral = (assets || []).filter(a => a.collateral);
+  if (collateral.length < 2) return '';
+  return collateral.map(a => `
+          <div class="b-row b-sub"><span class="b-label">${esc(a.asset)}</span><span class="b-val">${fmtUsd(a.usdValue)}</span></div>`).join('');
+}
+
 function render(data) {
   lastData = data;
   const s = data.summary;
@@ -346,6 +353,7 @@ function render(data) {
         <div class="breakdown">
           <div class="b-row"><span class="b-dot" style="background:var(--hl)"></span><span class="b-label">HL</span><span class="b-val">${fmtUsd(data.hyperliquid.equity)}</span></div>
           <div class="b-row"><span class="b-dot" style="background:var(--bn)"></span><span class="b-label">BN</span><span class="b-val">${fmtUsd(data.binance.equity)}</span></div>
+          ${renderBinanceAssetRows(data.binance.assets)}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">

@@ -12,7 +12,7 @@ import { getBinanceKlines, getHlCandles } from '../lib/market-data.js';
 
 // Derive the base asset symbol from a normalised pair label.
 function baseAsset(pair) {
-  return pair.replace(/-PERP$/i, '').replace(/\/(USDT?|USD)$/i, '').toUpperCase();
+  return pair.replace(/-PERP$/i, '').replace(/\/(USDT|USDC|USD)$/i, '').toUpperCase();
 }
 
 // Fetch candles for a position; backfill from position context if unavailable.

@@ -109,6 +109,8 @@ function marksFor(quote) {
     .map(p => [p.symbol.replace(quote, ''), mark(p.symbol)]));
 }
 
+// Single-asset mode: Binance's account totals cover USDT only; other collateral appears
+// only in its own assets[] row.
 function accountState() {
   const assets = [];
   const positions = [];
@@ -129,6 +131,7 @@ function accountState() {
       positions.push({ symbol: d.symbol, positionSide: d.positionSide, maintMargin: String(d.mm),
         positionInitialMargin: String(d.im) });
     }
+    if (quote !== 'USDT') continue;
     tWallet += WALLETS[quote]; tMargin += state.equity; tIm += state.im + OPEN_ORDER_IM[quote];
     tMm += state.mm; tAvail += available; tUpnl += upnl;
   }
